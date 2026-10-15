@@ -68,7 +68,6 @@ export function ProjectWorkspace() {
           <Badge variant="secondary" className="capitalize">
             {project.status}
           </Badge>
-          {!canEdit ? <Badge variant="outline">Read-only</Badge> : null}
         </div>
         {project.description ? (
           <p className="text-sm text-muted-foreground">{project.description}</p>

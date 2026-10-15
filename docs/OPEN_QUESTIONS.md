@@ -37,7 +37,7 @@ seed file, config value or code, and update this list.
 | 22 | Hardware for on-prem scenario | Capex in year 0 (bucket `go_live.infrastructure_procurement`) plus hardware AMC % and colocation per O&M year. |
 | 23 | Frontend component library | shadcn/ui-style components are hand-written under `frontend/src/components/ui` (shadcn is copy-in by design); TanStack Table, React Hook Form/Zod and Recharts are added in the milestone that first needs them. |
 | 24 | Login identifier | Email + password; JWT (HS256) access token, 8 h expiry, no refresh token in v1. |
-| 25 | Dev users | `make seed` creates a demo organisation with `admin@`, `finance@`, `estimator@` and `viewer@aakalan.local`, all with password `SEED_USER_PASSWORD` from `.env` (default `aakalan-dev`). Dev only. |
+| 25 | Dev users | Decided by the user: one login for now. `make seed` creates a single full-access user `demo@aakalan.local` (password `SEED_USER_PASSWORD`, default `aakalan-dev`). Role checks remain in the backend and its tests, ready to be switched on later. Dev only. |
 | 26 | Helpdesk sizing | Seats come from a sub-linear tier table by registered users (`maintenance.helpdesk_seats_by_users`) × coverage FTE by support SLA (8×5 = 1.0, 24×7 = 4.2). A linear users-per-seat rule produced absurd numbers for state-wide portals. |
 | 27 | Data-transfer volume | Priced on monthly active users (`hosting.monthly_active_share`, default 10 % of registered users) × MB per active user. |
 | 28 | Per-organisation rate cards | Rate cards, parameter sets, catalog and taxonomy are **global** (admin-managed) in M1. Vendors' own salary costs differ, so per-org rate cards (nullable `org_id`) are a candidate for M5. |

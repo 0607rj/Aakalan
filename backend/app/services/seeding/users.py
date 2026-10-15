@@ -7,22 +7,21 @@ from app.core.security import hash_password
 from app.models import Organisation, Role, User
 
 DEMO_ORG_NAME = "Demo Systems Integrator"
-DEMO_USERS = (
-    ("admin@aakalan.local", "Demo Admin", Role.ADMIN),
-    ("finance@aakalan.local", "Demo Finance", Role.FINANCE),
-    ("estimator@aakalan.local", "Demo Estimator", Role.ESTIMATOR),
-    ("viewer@aakalan.local", "Demo Viewer", Role.VIEWER),
-)
+DEMO_EMAIL = "demo@aakalan.local"
+# Roles are switched off for now: the single demo user has full access (admin).
+DEMO_USERS: tuple[tuple[str, str, Role], ...] = ((DEMO_EMAIL, "Demo User", Role.ADMIN),)
 
 
-def seed_demo_users(session: Session, password: str) -> Organisation:
-    """Create the demo organisation and one user per role. Idempotent."""
+def seed_demo_users(
+    session: Session, password: str, users: tuple[tuple[str, str, Role], ...] = DEMO_USERS
+) -> Organisation:
+    """Create the demo organisation and its users. Idempotent."""
     org = session.scalars(select(Organisation).where(Organisation.name == DEMO_ORG_NAME)).first()
     if org is None:
         org = Organisation(name=DEMO_ORG_NAME)
         session.add(org)
         session.flush()
-    for email, full_name, role in DEMO_USERS:
+    for email, full_name, role in users:
         if session.scalars(select(User).where(User.email == email)).first() is None:
             session.add(
                 User(
