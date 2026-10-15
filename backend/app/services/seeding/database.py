@@ -25,6 +25,7 @@ from app.models import (
 from app.services.engine import reference as ref
 from app.services.seeding.golden import golden_input
 from app.services.seeding.reference import ReferenceData
+from app.services.seeding.users import DEMO_EMAIL
 
 
 def seed_reference(session: Session, data: ReferenceData) -> list[str]:
@@ -146,14 +147,14 @@ DEMO_PROJECT_NAME = "AI chatbot + online empanelment portal (PSU) — demo"
 
 def seed_demo_project(session: Session, org: Organisation, data: ReferenceData) -> Project | None:
     """The medium golden example as a ready-to-price demo project (requirements and components
-    already confirmed by the demo estimator)."""
+    already confirmed by the demo user)."""
     exists = session.scalars(
         select(Project).where(Project.org_id == org.id, Project.name == DEMO_PROJECT_NAME)
     ).first()
     if exists is not None:
         return None
     user = session.scalars(
-        select(User).where(User.org_id == org.id, User.email == "estimator@aakalan.local")
+        select(User).where(User.org_id == org.id, User.email == DEMO_EMAIL)
     ).first()
     user_id = user.id if user else None
     now = datetime.now(UTC)

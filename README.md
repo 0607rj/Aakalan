@@ -18,8 +18,9 @@ make install          # or: python scripts/tasks.py install
 make dev              # migrates, seeds demo users, runs API :8000, web :3000 and the worker
 ```
 
-Sign in at http://localhost:3000 as `admin@aakalan.local` (also `finance@`, `estimator@`,
-`viewer@`) with the password from `SEED_USER_PASSWORD` (default `aakalan-dev`).
+Sign in at http://localhost:3000 as `demo@aakalan.local` with the password from
+`SEED_USER_PASSWORD` (default `aakalan-dev`). This single user can do everything; role-based
+access (admin / estimator / finance / viewer) exists in the backend but is switched off for now.
 API docs: http://localhost:8000/docs.
 
 `make seed` also creates a demo project ("AI chatbot + online empanelment portal (PSU) — demo")

@@ -20,8 +20,11 @@ from sqlalchemy.orm import Session  # noqa: E402
 
 from app.core import db as db_module  # noqa: E402
 from app.core.config import BACKEND_DIR, get_settings  # noqa: E402
+from app.models import Role  # noqa: E402
 
 TEST_PASSWORD = "test-password-123"
+# Role checks stay tested even though the demo seed has a single full-access user.
+TEST_USERS = tuple((f"{role.value}@aakalan.local", f"Test {role.value}", role) for role in Role)
 
 
 @pytest.fixture(scope="session")
@@ -44,7 +47,7 @@ def seeded(database_url: str) -> None:
 
     with db_module.get_session_factory()() as session:
         assert seed_reference(session, load_reference(get_settings().seeds_dir)) == []
-        seed_demo_users(session, TEST_PASSWORD)
+        seed_demo_users(session, TEST_PASSWORD, TEST_USERS)
         session.commit()
 
 
