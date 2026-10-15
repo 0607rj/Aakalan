@@ -42,6 +42,11 @@ export type Scenario = Schemas["Scenario"];
 export type ScenarioResult = Schemas["ScenarioResult"];
 export type ScenariosOut = Schemas["ScenariosOut"];
 export type GroupTotal = Schemas["GroupTotal"];
+export type QuickOptions = Schemas["QuickOptions"];
+export type QuickQuestion = Schemas["QuestionOut"];
+export type QuickRequest = Schemas["QuickRequest"];
+export type QuickSummary = Schemas["QuickSummary"];
+export type PlainPart = Schemas["PlainPart"];
 
 export class ApiError extends Error {
   constructor(
@@ -188,6 +193,13 @@ export const api = {
     }),
   repriceEstimate: (estimateId: string) =>
     send<Estimate>("POST", `/estimates/${estimateId}/reprice`),
+
+  quickOptions: () => request<QuickOptions>("/quick-estimate/options"),
+  createQuickEstimate: (body: QuickRequest) =>
+    send<QuickSummary>("POST", "/quick-estimates", body),
+  listQuickEstimates: () => request<QuickSummary[]>("/quick-estimates"),
+  getEstimateSummary: (estimateId: string) =>
+    request<QuickSummary>(`/estimates/${estimateId}/summary`),
 };
 
 export function errorText(error: unknown): string {

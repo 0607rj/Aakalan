@@ -385,6 +385,61 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/quick-estimate/options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Options */
+        get: operations["options_quick_estimate_options_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/quick-estimates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Summaries
+         * @description Latest estimate of every project, newest first.
+         */
+        get: operations["list_summaries_quick_estimates_get"];
+        put?: never;
+        /** Create */
+        post: operations["create_quick_estimates_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/estimates/{estimate_id}/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Summary */
+        get: operations["summary_estimates__estimate_id__summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -742,6 +797,15 @@ export interface components {
             /** Parent Estimate Id */
             parent_estimate_id: string | null;
         };
+        /** FeatureOut */
+        FeatureOut: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Hint */
+            hint: string;
+        };
         /** GroupTotal */
         GroupTotal: {
             /** Key */
@@ -823,6 +887,15 @@ export interface components {
             /** Average Fte */
             average_fte: string;
         };
+        /** OptionOut */
+        OptionOut: {
+            /** Value */
+            value: string | number;
+            /** Label */
+            label: string;
+            /** Hint */
+            hint: string;
+        };
         /** ParameterSetSummary */
         ParameterSetSummary: {
             /** Version */
@@ -842,6 +915,17 @@ export interface components {
             build_effort_pd: string;
             /** Natural Duration Months */
             natural_duration_months: string;
+        };
+        /** PlainPart */
+        PlainPart: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Amount Paise */
+            amount_paise: number;
+            /** Share Percent */
+            share_percent: number;
         };
         /** ProjectCreate */
         ProjectCreate: {
@@ -897,6 +981,17 @@ export interface components {
             /** Description */
             description?: string | null;
         };
+        /** QuestionOut */
+        QuestionOut: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Default */
+            default: string | number;
+            /** Options */
+            options: components["schemas"]["OptionOut"][];
+        };
         /** QuestionnaireField */
         QuestionnaireField: {
             /** Key */
@@ -935,6 +1030,71 @@ export interface components {
         QuestionnairePut: {
             /** Answers */
             answers: components["schemas"]["AnswerIn"][];
+        };
+        /** QuickOptions */
+        QuickOptions: {
+            /** Features */
+            features: components["schemas"]["FeatureOut"][];
+            /** Questions */
+            questions: components["schemas"]["QuestionOut"][];
+        };
+        /** QuickRequest */
+        QuickRequest: {
+            /** Name */
+            name: string;
+            /** Features */
+            features: string[];
+            /**
+             * Choices
+             * @default {}
+             */
+            choices: {
+                [key: string]: string | number;
+            };
+            /** Deadline Months */
+            deadline_months?: number | null;
+        };
+        /** QuickSummary */
+        QuickSummary: {
+            /** Project Id */
+            project_id: string;
+            /** Estimate Id */
+            estimate_id: string;
+            /** Name */
+            name: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Feasible */
+            feasible: boolean;
+            /** Message */
+            message: string | null;
+            /** Low Paise */
+            low_paise: number | null;
+            /** Likely Paise */
+            likely_paise: number | null;
+            /** High Paise */
+            high_paise: number | null;
+            /** Planned Paise */
+            planned_paise: number;
+            /** Risk Allowance Paise */
+            risk_allowance_paise: number | null;
+            /** Build Only Paise */
+            build_only_paise: number;
+            /** Build Months */
+            build_months: string;
+            /** Support Years */
+            support_years: number;
+            /** Parts */
+            parts: components["schemas"]["PlainPart"][];
+            /** Biggest Uncertainty */
+            biggest_uncertainty: string | null;
+            /** Features */
+            features: string[];
+            /** Indicative */
+            indicative: boolean;
         };
         /** RangeDriver */
         RangeDriver: {
@@ -2243,6 +2403,110 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Catalog"];
+                };
+            };
+        };
+    };
+    options_quick_estimate_options_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuickOptions"];
+                };
+            };
+        };
+    };
+    list_summaries_quick_estimates_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuickSummary"][];
+                };
+            };
+        };
+    };
+    create_quick_estimates_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QuickRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuickSummary"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    summary_estimates__estimate_id__summary_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                estimate_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuickSummary"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

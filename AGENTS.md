@@ -55,10 +55,12 @@ backend/
       hosting/            # infra sizing -> cloud line items (pure, used by engine)
       estimates/          # DB rows -> EstimateInput snapshot -> engine -> persisted Estimate
       seeding/            # seed YAML loading, DB seeding, demo data, golden fixtures
+      quick/              # simple mode: plain features/questions -> project -> estimate -> summary
       documents/ extraction/ retrieval/ mapping/ reports/ templates/   # later milestones
     llm/                  # LLMClient interface + implementations + prompts/ (M3+)
     jobs/                 # Huey instance and tasks
-  seeds/                  # taxonomy.yaml, catalog.yaml, rate_cards/v1.yaml, parameters/v1.yaml
+  seeds/                  # taxonomy.yaml, catalog.yaml, rate_cards/v1.yaml, parameters/v1.yaml,
+                          #   quick_estimate.yaml (plain features/questions for simple mode)
                           #   (every value has a `source`; `placeholder` = uncalibrated)
   migrations/             # Alembic
   tests/                  # api/, core/, engine/ (unit, property, golden/*.yaml + *.expected.json)

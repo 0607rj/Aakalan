@@ -95,6 +95,15 @@ POST /projects → POST /projects/{id}/requirements (manual, confirmed)
 (`estimates`, `cost_lines` with trace JSON, `assumptions`). Margin lines, margin inputs and the
 `margin_percent` answer are redacted for `estimator` and `viewer`.
 
+## Quick estimate (simple mode)
+
+`api/quick.py` + `services/quick/`: `POST /quick-estimates` takes a project name, ticked
+feature keys and plain answers, creates a confirmed project (features → requirements,
+components from `seeds/quick_estimate.yaml`, answers → questionnaire), runs the normal estimate
+and returns a `QuickSummary` (headline range, five plain parts, build-only cost, build months,
+biggest uncertainty in words). `GET /estimates/{id}/summary` rebuilds the summary for any
+estimate. The summary only regroups integer paise produced by the engine.
+
 ## Frontend
 
 Next.js 16 App Router under `frontend/src/app`. Hand-written shadcn/ui-style primitives in

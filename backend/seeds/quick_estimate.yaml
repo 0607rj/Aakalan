@@ -1,0 +1,151 @@
+# Quick estimate: plain-language features and questions for non-technical users.
+# Each ticked feature becomes a confirmed requirement and adds catalog components; each simple
+# answer sets questionnaire drivers. Sizes follow the chosen scale (small -> S, medium -> M,
+# large -> L) unless a component pins its own size. Every mapping is an uncalibrated placeholder.
+version: v1
+source: placeholder
+# A ticked feature says *what* is needed but not how much, so clarity is neutral (1-5 scale).
+requirement_clarity: 3
+
+# Always part of a project, whatever is ticked.
+base_components:
+  - discovery_requirement_study
+  - solution_architecture
+  - ui_ux_design
+  - user_management_rbac
+  - responsive_frontend
+  - audit_trail_logging
+  - security_hardening
+  - notifications
+  - integration_sms_email_gateway
+  - functional_testing_uat_support
+  - vapt_remediation
+  - documentation_manuals
+  - devops_cicd_setup
+
+features:
+  - key: online_forms
+    label: Online application or registration forms
+    hint: People fill forms online and upload documents instead of visiting an office.
+    components: [registration_empanelment, master_data_management]
+  - key: approval_workflow
+    label: Files go from officer to officer for approval
+    hint: Applications are checked and approved in steps, with time limits.
+    components: [workflow_engine]
+  - key: documents
+    label: Store and manage documents
+    hint: Upload, keep versions of and find certificates and files.
+    components: [document_management, search_module]
+  - key: dashboards
+    label: Reports and dashboards for officers
+    hint: Charts and standard reports that can be downloaded.
+    components: [dashboard_mis_reports]
+  - key: ai_chatbot
+    label: AI chatbot that answers people's questions
+    hint: A chat assistant trained on your rules, circulars and FAQs.
+    components: [ai_chatbot_rag, ai_knowledge_ingestion, ai_guardrails_safety, ai_evaluation_set]
+  - key: payments
+    label: Online fee payment
+    hint: Pay fees through a payment gateway.
+    components: [integration_payment_gateway]
+  - key: aadhaar_digilocker
+    label: Login or verification with Aadhaar / DigiLocker
+    hint: Verify people and fetch their documents from government systems.
+    components: [integration_aadhaar_ekyc, integration_digilocker]
+  - key: staff_login
+    label: Staff log in with their existing government account
+    hint: Single sign-on (for example Parichay or the office directory).
+    components: [integration_sso_identity]
+  - key: connect_existing
+    label: Connect to existing systems (SAP, old software)
+    hint: Share data with software the department already uses.
+    components: [integration_erp_legacy]
+  - key: languages
+    label: Available in Indian languages
+    hint: Hindi and regional languages, with translation.
+    components: [multilingual_i18n, integration_bhashini_translation]
+    sets: {languages: 3}
+  - key: accessibility
+    label: Accessible to people with disabilities (GIGW)
+    hint: Required for most government websites.
+    components: [accessibility_gigw_compliance]
+    sets: {gigw_accessibility: true}
+  - key: public_website
+    label: Public website with notices and news
+    hint: Pages the public can read, updated by staff.
+    components: [cms_public_website]
+  - key: grievances
+    label: Complaints and helpdesk tickets
+    hint: People raise complaints and track them.
+    components: [grievance_helpdesk]
+  - key: old_data
+    label: Move data from the old system
+    hint: Bring existing records into the new software.
+    components: [data_migration]
+
+questions:
+  scale:
+    label: How many people will use it?
+    default: medium
+    options:
+      - value: small
+        label: Small
+        component_size: S
+        hint: Up to about 5,000 users
+        answers: {users_total: 5000, peak_concurrent_users: 100, documents_per_month: 500, chatbot_queries_per_day: 300}
+        extra_components: []
+      - value: medium
+        label: Medium
+        component_size: M
+        hint: Up to about 1 lakh users
+        answers: {users_total: 100000, peak_concurrent_users: 1000, documents_per_month: 5000, chatbot_queries_per_day: 5000}
+        extra_components: [performance_load_testing]
+      - value: large
+        label: Large
+        component_size: L
+        hint: Lakhs to crores of users, state or national level
+        answers: {users_total: 5000000, peak_concurrent_users: 10000, documents_per_month: 100000, chatbot_queries_per_day: 50000}
+        extra_components: [performance_load_testing]
+  support_years:
+    label: For how many years should we run and support it after launch?
+    default: 3
+    options:
+      - {value: 1, label: 1 year, answers: {om_years: 1}}
+      - {value: 3, label: 3 years, answers: {om_years: 3}}
+      - {value: 5, label: 5 years, answers: {om_years: 5}}
+  availability:
+    label: How important is it that the system never goes down?
+    default: normal
+    options:
+      - {value: basic, label: Basic, hint: "Short breaks are acceptable", answers: {uptime_sla: "99.0"}}
+      - {value: normal, label: Normal, hint: "Rarely down (99.5%)", answers: {uptime_sla: "99.5"}}
+      - {value: high, label: High, hint: "Almost never down (99.9%)", answers: {uptime_sla: "99.9"}}
+      - {value: critical, label: Critical, hint: "With a backup site for disasters", answers: {uptime_sla: "99.95"}}
+  hosting:
+    label: Where should it run?
+    default: aws
+    options:
+      - {value: aws, label: Amazon cloud (India region), answers: {hosting_provider: aws}}
+      - {value: indian_cloud, label: Government-approved Indian cloud, answers: {hosting_provider: indian_cloud}}
+      - {value: on_prem, label: Department's own server room, answers: {hosting_provider: on_prem}}
+  support_hours:
+    label: When should the helpdesk be available?
+    default: office
+    options:
+      - {value: office, label: Office hours, hint: "8 hours a day, 5 days a week", answers: {support_sla: 8x5}}
+      - {value: always, label: Round the clock, hint: "24 hours, 7 days", answers: {support_sla: 24x7}}
+
+# Plain words for the biggest sources of uncertainty (taxonomy bucket -> phrase).
+plain_drivers:
+  run.ai_runtime: how much people use the AI chatbot
+  run.helpdesk: helpdesk staffing
+  run.hosting: cloud hosting
+  run.dr: the disaster-recovery site
+  run.onsite_resources: staff placed at the client's office
+  run.patching_bugfix: bug fixing and upgrades
+  run.change_requests: changes asked for after launch
+  build.integrations: connecting to other systems
+  build.ai_ml: building the AI chatbot
+  build.module_development: building the main screens and features
+  build.data_migration: moving old data
+  programme.project_management: project management
