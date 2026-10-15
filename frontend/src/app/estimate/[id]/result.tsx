@@ -132,7 +132,8 @@ function SummaryView({ summary }: { summary: QuickSummary }) {
 
       {summary.indicative ? (
         <p className="rounded-xl border border-warning/30 bg-warning-muted px-4 py-3 text-sm text-warning">
-          These figures use sample prices, so treat them as a rough guide.
+          These figures use public market prices and typical effort, not your
+          company’s own costs, so treat them as a guide.
         </p>
       ) : null}
 

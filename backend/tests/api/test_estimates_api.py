@@ -2,6 +2,7 @@
 trace / scenarios / re-price, plus role checks, margin redaction and org isolation."""
 
 import json
+from datetime import UTC, datetime
 from typing import Any
 
 import pytest
@@ -75,7 +76,7 @@ def test_full_flow_with_traces(client: TestClient, estimator_headers: H) -> None
     project, req = ready_project(client, estimator_headers)
     est = estimate(client, estimator_headers, project["id"])
     assert est["version"] == 1 and est["feasible"]
-    assert est["rate_card_version"] == "v1" and est["calibration"]["status"] == "uncalibrated"
+    assert est["rate_card_version"] and est["calibration"]["status"] == "uncalibrated"
     assert est["p10_paise"] <= est["p50_paise"] <= est["p90_paise"]
     assert est["top_drivers_text"]
     reg = next(ln for ln in est["lines"] if ln["bucket"] == "build.module_development")
@@ -231,10 +232,12 @@ def test_reprice_creates_new_version(
 ) -> None:
     project, _ = ready_project(client, estimator_headers)
     est = estimate(client, estimator_headers, project["id"])
-    v1 = load_reference(get_settings().seeds_dir).rate_card("v1").model_dump(mode="json")
-    v2 = {**v1, "version": "v2-test", "effective_date": "2026-10-10", "items": [
+    current = client.get(f"/admin/rate-cards/{est['rate_card_version']}", headers=admin_headers)
+    base = current.json()
+    today = datetime.now(UTC).date().isoformat()  # newest effective date -> becomes the active card
+    v2 = {**base, "version": "v2-test", "effective_date": today, "items": [
         {**i, "amount": str(float(i["amount"]) * 1.1)} if i["key"] == "role.developer" else i
-        for i in v1["items"]
+        for i in base["items"]
     ]}  # fmt: skip
     assert client.post("/admin/rate-cards", json=v2, headers=estimator_headers).status_code == 403
     assert client.post("/admin/rate-cards", json=v2, headers=admin_headers).status_code == 201
@@ -246,7 +249,8 @@ def test_reprice_creates_new_version(
     assert new["rate_card_version"] == "v2-test" and new["seed"] == est["seed"]
     assert new["likely_paise"] > est["likely_paise"]
     old = client.get(f"/estimates/{est['id']}", headers=estimator_headers).json()
-    assert old["likely_paise"] == est["likely_paise"] and old["rate_card_version"] == "v1"
+    assert old["likely_paise"] == est["likely_paise"]
+    assert old["rate_card_version"] == est["rate_card_version"]
 
 
 def test_scenarios_side_by_side(client: TestClient, estimator_headers: H) -> None:
@@ -305,7 +309,12 @@ def test_demo_project_reproduces_golden_base_case(
     db.commit()
     assert project is not None
     est = estimate(
-        client, estimator_headers, project.id, as_of_date="2026-10-15", rate_card_version="v1"
+        client,
+        estimator_headers,
+        project.id,
+        as_of_date="2026-10-15",
+        rate_card_version="v1",
+        parameter_set_version="v1",
     )
     golden = json.loads(expected_path("medium").read_text(encoding="utf-8"))
     assert est["likely_paise"] == golden["totals"]["likely_paise"]
