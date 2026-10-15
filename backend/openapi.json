@@ -1312,6 +1312,154 @@
           }
         ]
       }
+    },
+    "/quick-estimate/options": {
+      "get": {
+        "tags": [
+          "quick estimate"
+        ],
+        "summary": "Options",
+        "operationId": "options_quick_estimate_options_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuickOptions"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/quick-estimates": {
+      "get": {
+        "tags": [
+          "quick estimate"
+        ],
+        "summary": "List Summaries",
+        "description": "Latest estimate of every project, newest first.",
+        "operationId": "list_summaries_quick_estimates_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/QuickSummary"
+                  },
+                  "type": "array",
+                  "title": "Response List Summaries Quick Estimates Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "quick estimate"
+        ],
+        "summary": "Create",
+        "operationId": "create_quick_estimates_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuickRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuickSummary"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/estimates/{estimate_id}/summary": {
+      "get": {
+        "tags": [
+          "quick estimate"
+        ],
+        "summary": "Summary",
+        "operationId": "summary_estimates__estimate_id__summary_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "estimate_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Estimate Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuickSummary"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -2381,6 +2529,29 @@
         ],
         "title": "EstimateSummary"
       },
+      "FeatureOut": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "hint": {
+            "type": "string",
+            "title": "Hint"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "label",
+          "hint"
+        ],
+        "title": "FeatureOut"
+      },
       "GroupTotal": {
         "properties": {
           "key": {
@@ -2612,6 +2783,36 @@
         ],
         "title": "ManpowerRow"
       },
+      "OptionOut": {
+        "properties": {
+          "value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              }
+            ],
+            "title": "Value"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "hint": {
+            "type": "string",
+            "title": "Hint"
+          }
+        },
+        "type": "object",
+        "required": [
+          "value",
+          "label",
+          "hint"
+        ],
+        "title": "OptionOut"
+      },
       "ParameterSetSummary": {
         "properties": {
           "version": {
@@ -2666,6 +2867,34 @@
           "natural_duration_months"
         ],
         "title": "PhaseSuggestion"
+      },
+      "PlainPart": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "amount_paise": {
+            "type": "integer",
+            "title": "Amount Paise"
+          },
+          "share_percent": {
+            "type": "integer",
+            "title": "Share Percent"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "label",
+          "amount_paise",
+          "share_percent"
+        ],
+        "title": "PlainPart"
       },
       "ProjectCreate": {
         "properties": {
@@ -2809,6 +3038,44 @@
         "type": "object",
         "title": "ProjectUpdate"
       },
+      "QuestionOut": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "default": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              }
+            ],
+            "title": "Default"
+          },
+          "options": {
+            "items": {
+              "$ref": "#/components/schemas/OptionOut"
+            },
+            "type": "array",
+            "title": "Options"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "label",
+          "default",
+          "options"
+        ],
+        "title": "QuestionOut"
+      },
       "QuestionnaireField": {
         "properties": {
           "key": {
@@ -2899,6 +3166,229 @@
           "answers"
         ],
         "title": "QuestionnairePut"
+      },
+      "QuickOptions": {
+        "properties": {
+          "features": {
+            "items": {
+              "$ref": "#/components/schemas/FeatureOut"
+            },
+            "type": "array",
+            "title": "Features"
+          },
+          "questions": {
+            "items": {
+              "$ref": "#/components/schemas/QuestionOut"
+            },
+            "type": "array",
+            "title": "Questions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "features",
+          "questions"
+        ],
+        "title": "QuickOptions"
+      },
+      "QuickRequest": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "features": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Features"
+          },
+          "choices": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "object",
+            "title": "Choices",
+            "default": {}
+          },
+          "deadline_months": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 60.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deadline Months"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "features"
+        ],
+        "title": "QuickRequest"
+      },
+      "QuickSummary": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "title": "Project Id"
+          },
+          "estimate_id": {
+            "type": "string",
+            "title": "Estimate Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          },
+          "feasible": {
+            "type": "boolean",
+            "title": "Feasible"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
+          "low_paise": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Low Paise"
+          },
+          "likely_paise": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Likely Paise"
+          },
+          "high_paise": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "High Paise"
+          },
+          "planned_paise": {
+            "type": "integer",
+            "title": "Planned Paise"
+          },
+          "risk_allowance_paise": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk Allowance Paise"
+          },
+          "build_only_paise": {
+            "type": "integer",
+            "title": "Build Only Paise"
+          },
+          "build_months": {
+            "type": "string",
+            "title": "Build Months"
+          },
+          "support_years": {
+            "type": "integer",
+            "title": "Support Years"
+          },
+          "parts": {
+            "items": {
+              "$ref": "#/components/schemas/PlainPart"
+            },
+            "type": "array",
+            "title": "Parts"
+          },
+          "biggest_uncertainty": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Biggest Uncertainty"
+          },
+          "features": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Features"
+          },
+          "indicative": {
+            "type": "boolean",
+            "title": "Indicative"
+          }
+        },
+        "type": "object",
+        "required": [
+          "project_id",
+          "estimate_id",
+          "name",
+          "created_at",
+          "feasible",
+          "message",
+          "low_paise",
+          "likely_paise",
+          "high_paise",
+          "planned_paise",
+          "risk_allowance_paise",
+          "build_only_paise",
+          "build_months",
+          "support_years",
+          "parts",
+          "biggest_uncertainty",
+          "features",
+          "indicative"
+        ],
+        "title": "QuickSummary"
       },
       "RangeDriver": {
         "properties": {

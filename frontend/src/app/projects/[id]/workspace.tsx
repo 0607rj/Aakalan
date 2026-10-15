@@ -52,10 +52,10 @@ export function ProjectWorkspace() {
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-2">
         <Link
-          href="/projects"
+          href="/projects/all"
           className="text-sm text-muted-foreground hover:underline"
         >
-          ← Projects
+          ← Detailed projects
         </Link>
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-2xl font-semibold tracking-tight">
