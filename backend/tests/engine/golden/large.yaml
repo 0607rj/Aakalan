@@ -1,0 +1,85 @@
+# Golden estimate: LARGE — state-wide citizen services portal with multilingual AI assistant,
+# HA + DR, 24x7 support, self-hosted GPU inference, licensed BPM/CMS, 5 years of O&M and an
+# extended (18-month) deadline.
+project: {name: "State citizen services portal with AI assistant", buyer_type: govt, domain: citizen_services}
+as_of_date: 2026-10-15
+seed: 99
+template_match: none
+requirements:
+  - {id: L-R01, code: REQ-001, category: functional, clarity_score: 3, text: "Citizens shall apply online for 40 department services with document upload and fee payment.", source_refs: [{clause_ref: "5.1.1", page: 34}]}
+  - {id: L-R02, code: REQ-002, category: functional, clarity_score: 2, text: "Each service follows a configurable workflow across district, division and state offices.", source_refs: [{clause_ref: "5.1.2", page: 36}]}
+  - {id: L-R03, code: REQ-003, category: functional, clarity_score: 3, text: "Aadhaar-based eKYC and DigiLocker document fetch for citizen applications.", source_refs: [{clause_ref: "5.4.1", page: 48}]}
+  - {id: L-R04, code: REQ-004, category: functional, clarity_score: 2, text: "A multilingual AI assistant in 12 Indian languages (text and voice) shall guide citizens.", source_refs: [{clause_ref: "5.6.1", page: 55}]}
+  - {id: L-R05, code: REQ-005, category: NFR, clarity_score: 4, text: "99.95% availability with a DR site; RPO 15 minutes, RTO 2 hours.", source_refs: [{clause_ref: "6.1", page: 61}]}
+  - {id: L-R06, code: REQ-006, category: NFR, clarity_score: 4, text: "1 crore registered citizens; 20,000 concurrent users at peak.", source_refs: [{clause_ref: "6.2", page: 62}]}
+  - {id: L-R07, code: REQ-007, category: NFR, clarity_score: 3, text: "Security per OWASP ASVS L3 and state IT security policy.", source_refs: [{clause_ref: "6.4", page: 64}]}
+  - {id: L-R08, code: REQ-008, category: integration, clarity_score: 2, text: "Integration with 8 existing departmental systems and the state payment gateway.", source_refs: [{clause_ref: "5.4.3", page: 50}]}
+  - {id: L-R09, code: REQ-009, category: functional, clarity_score: 3, text: "Migration of 50 lakh legacy application records.", source_refs: [{clause_ref: "5.7", page: 58}]}
+  - {id: L-R10, code: REQ-010, category: O&M, clarity_score: 4, text: "Five years of O&M with 24x7 helpdesk and 3 onsite engineers.", source_refs: [{clause_ref: "9.1", page: 80}]}
+  - {id: L-R11, code: REQ-011, category: compliance, clarity_score: 5, text: "CERT-In audit and STQC certification before go-live.", source_refs: [{clause_ref: "7.3", page: 70}]}
+  - {id: L-R12, code: REQ-012, category: commercial, clarity_score: 4, text: "Go-live within 18 months; EMD Rs 50 lakh; PBG 5%.", source_refs: [{clause_ref: "2.4", page: 5}]}
+  - {id: L-R13, code: REQ-013, category: functional, clarity_score: 3, text: "AI model to be hosted within the state data centre / India region; no data leaves India.", source_refs: [{clause_ref: "5.6.4", page: 57}]}
+  - {id: L-R14, code: REQ-014, category: functional, clarity_score: 3, text: "Dashboards for department heads and the Chief Secretary.", source_refs: [{clause_ref: "5.3", page: 46}]}
+  - {id: L-R15, code: REQ-015, category: functional, clarity_score: 3, text: "Public portal content managed through a licensed CMS.", source_refs: [{clause_ref: "5.2", page: 44}]}
+components:
+  - {id: L-C01, catalog_key: discovery_requirement_study, size: L}
+  - {id: L-C02, catalog_key: solution_architecture, size: L, requirement_ids: [L-R05, L-R06, L-R07]}
+  - {id: L-C03, catalog_key: ui_ux_design, size: L}
+  - {id: L-C04, catalog_key: user_management_rbac, size: L, requirement_ids: [L-R01]}
+  - {id: L-C05, catalog_key: registration_empanelment, size: L, quantity: 4, complexity: high, requirement_ids: [L-R01]}
+  - {id: L-C06, catalog_key: workflow_engine, size: L, complexity: very_high, requirement_ids: [L-R02]}
+  - {id: L-C07, catalog_key: document_management, size: L, requirement_ids: [L-R01]}
+  - {id: L-C08, catalog_key: dashboard_mis_reports, size: L, requirement_ids: [L-R14]}
+  - {id: L-C09, catalog_key: notifications, size: M}
+  - {id: L-C10, catalog_key: cms_public_website, size: M, requirement_ids: [L-R15]}
+  - {id: L-C11, catalog_key: search_module, size: M}
+  - {id: L-C12, catalog_key: audit_trail_logging, size: L, requirement_ids: [L-R07]}
+  - {id: L-C13, catalog_key: grievance_helpdesk, size: M}
+  - {id: L-C14, catalog_key: master_data_management, size: M}
+  - {id: L-C15, catalog_key: responsive_frontend, size: L}
+  - {id: L-C16, catalog_key: multilingual_i18n, size: L, requirement_ids: [L-R04]}
+  - {id: L-C17, catalog_key: accessibility_gigw_compliance, size: L}
+  - {id: L-C18, catalog_key: security_hardening, size: L, requirement_ids: [L-R07]}
+  - {id: L-C19, catalog_key: integration_aadhaar_ekyc, size: M, requirement_ids: [L-R03]}
+  - {id: L-C20, catalog_key: integration_digilocker, size: M, requirement_ids: [L-R03]}
+  - {id: L-C21, catalog_key: integration_payment_gateway, size: M, requirement_ids: [L-R08]}
+  - {id: L-C22, catalog_key: integration_erp_legacy, size: M, quantity: 8, requirement_ids: [L-R08]}
+  - {id: L-C23, catalog_key: integration_sso_identity, size: M}
+  - {id: L-C24, catalog_key: integration_sms_email_gateway, size: M}
+  - {id: L-C25, catalog_key: integration_bhashini_translation, size: L, requirement_ids: [L-R04]}
+  - {id: L-C26, catalog_key: ai_chatbot_rag, size: L, complexity: high, requirement_ids: [L-R04, L-R13]}
+  - {id: L-C27, catalog_key: ai_knowledge_ingestion, size: L, requirement_ids: [L-R04]}
+  - {id: L-C28, catalog_key: ai_guardrails_safety, size: L, requirement_ids: [L-R04]}
+  - {id: L-C29, catalog_key: ai_evaluation_set, size: L, requirement_ids: [L-R04]}
+  - {id: L-C30, catalog_key: data_migration, size: L, complexity: high, requirement_ids: [L-R09]}
+  - {id: L-C31, catalog_key: functional_testing_uat_support, size: L}
+  - {id: L-C32, catalog_key: performance_load_testing, size: L, requirement_ids: [L-R06]}
+  - {id: L-C33, catalog_key: vapt_remediation, size: L, requirement_ids: [L-R11]}
+  - {id: L-C34, catalog_key: documentation_manuals, size: L}
+  - {id: L-C35, catalog_key: devops_cicd_setup, size: L, requirement_ids: [L-R05]}
+answers:
+  - {key: users_total, value: 10000000, requirement_ids: [L-R06]}
+  - {key: peak_concurrent_users, value: 20000, requirement_ids: [L-R06]}
+  - {key: uptime_sla, value: "99.95", requirement_ids: [L-R05]}
+  - {key: languages, value: 12, requirement_ids: [L-R04]}
+  - {key: security_level, value: very_high, requirement_ids: [L-R07]}
+  - {key: om_years, value: 5, requirement_ids: [L-R10]}
+  - {key: support_sla, value: 24x7, requirement_ids: [L-R10]}
+  - {key: onsite_resources, value: [{role: role.senior_developer, count: 1}, {role: role.devops_engineer, count: 1}, {role: role.developer, count: 1}], requirement_ids: [L-R10]}
+  - {key: deadline_months, value: 18, requirement_ids: [L-R12]}
+  - {key: hosting_provider, value: indian_cloud, requirement_ids: [L-R13]}
+  - {key: hosting_pricing, value: reserved}
+  - {key: ai_runtime_mode, value: self_hosted_gpu, requirement_ids: [L-R13]}
+  - {key: licensing, value: licensed, requirement_ids: [L-R15]}
+  - {key: chatbot_queries_per_day, value: 100000, requirement_ids: [L-R04]}
+  - {key: documents_per_month, value: 200000, requirement_ids: [L-R01]}
+  - {key: avg_document_mb, value: 1.5}
+  - {key: team_ai_maturity, value: high}
+  - {key: cert_in_audit, value: true, requirement_ids: [L-R11]}
+  - {key: stqc_certification, value: true, requirement_ids: [L-R11]}
+  - {key: training_sessions, value: 40}
+  - {key: training_outstation_sessions, value: 30}
+  - {key: hypercare_weeks, value: 8}
+  - {key: emd_paise, value: 500000000, requirement_ids: [L-R12]}
+  - {key: emd_lock_months, value: 9}
+  - {key: pbg_percent, value: 0.05, requirement_ids: [L-R12]}

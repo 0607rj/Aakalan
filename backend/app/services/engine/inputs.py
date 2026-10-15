@@ -1,0 +1,161 @@
+"""Engine inputs. `EstimateInput` is a complete, self-contained snapshot: given the same
+snapshot (including seed) the engine returns an identical result (rule 3). It is stored as
+JSON on every Estimate row."""
+
+from datetime import date
+from decimal import Decimal
+from typing import Literal
+
+from pydantic import BaseModel, ConfigDict, Field, model_validator
+
+from app.services.engine.reference import (
+    Catalog,
+    Complexity,
+    ParameterSet,
+    RateCard,
+    Size,
+    Taxonomy,
+)
+
+
+class Strict(BaseModel):
+    model_config = ConfigDict(frozen=True, extra="forbid")
+
+
+class SourceRef(Strict):
+    """Where a requirement comes from in the tender document."""
+
+    clause_ref: str
+    page: int | None = None
+    document: str | None = None
+    chunk_id: str | None = None
+
+
+class RequirementIn(Strict):
+    id: str
+    code: str
+    text: str
+    category: str
+    clarity_score: int = Field(ge=1, le=5)
+    source_refs: list[SourceRef] = []
+
+
+class ComponentInstanceIn(Strict):
+    id: str
+    catalog_key: str
+    label: str | None = None
+    size: Size
+    complexity: Complexity = Complexity.MEDIUM
+    quantity: int = Field(default=1, ge=1)
+    requirement_ids: list[str] = []
+
+
+class OnsiteResource(Strict):
+    role: str = Field(pattern=r"^role\.[a-z_]+$")  # rate key, e.g. "role.developer"
+    count: Decimal = Field(gt=0)
+
+
+class PaymentMilestone(Strict):
+    at_build_fraction: Decimal = Field(ge=0, le=1)
+    offset_months: Decimal = Field(default=Decimal(0), ge=0)
+    percent: Decimal = Field(gt=0, le=1)
+
+
+class Questionnaire(Strict):
+    """Project drivers. Every field is required here; `resolve_questionnaire` fills gaps from
+    `ParameterSet.defaults` and records each default as an assumption."""
+
+    om_years: int = Field(ge=0, le=10)
+    team_ai_maturity: Literal["low", "medium", "high"]
+    deadline_months: Decimal | None = Field(gt=0)
+    uptime_sla: Literal["99.0", "99.5", "99.9", "99.95"]
+    security_level: Literal["standard", "high", "very_high"]
+    languages: int = Field(ge=1)
+    gigw_accessibility: bool
+    users_total: int = Field(ge=0)
+    peak_concurrent_users: int = Field(ge=0)
+    documents_per_month: int = Field(ge=0)
+    avg_document_mb: Decimal = Field(ge=0)
+    chatbot_queries_per_day: int = Field(ge=0)
+    tokens_in_per_query: int = Field(ge=0)
+    tokens_out_per_query: int = Field(ge=0)
+    hosting_provider: Literal["aws", "indian_cloud", "on_prem"]
+    hosting_pricing: Literal["on_demand", "reserved"]
+    ai_runtime_mode: Literal["api", "self_hosted_gpu"]
+    licensing: Literal["open_source", "licensed"]
+    support_sla: Literal["8x5", "24x7"]
+    onsite_resources: list[OnsiteResource]
+    change_request_pd_per_year: Decimal | None = Field(ge=0)
+    cert_in_audit: bool
+    stqc_certification: bool
+    training_sessions: int = Field(ge=0)
+    training_outstation_sessions: int = Field(ge=0)
+    hypercare_weeks: int = Field(ge=0)
+    emd_paise: int = Field(ge=0)
+    emd_lock_months: Decimal = Field(ge=0)
+    pbg_percent: Decimal = Field(ge=0, le=1)
+    pbg_validity_months: Decimal | None = Field(ge=0)
+    payment_schedule: list[PaymentMilestone]
+    margin_percent: Decimal = Field(ge=0, le=1)
+    contingency_percent: Decimal | None = Field(ge=0, le=1)
+    gst_percent: Decimal | None = Field(ge=0, le=1)
+    escalation_labour: Decimal | None = Field(ge=0, le=1)
+    escalation_prices: Decimal | None = Field(ge=0, le=1)
+
+    @model_validator(mode="after")
+    def _schedule(self) -> "Questionnaire":
+        if self.payment_schedule and sum(m.percent for m in self.payment_schedule) != 1:
+            raise ValueError("payment_schedule percentages must sum to 1")
+        if self.training_outstation_sessions > self.training_sessions:
+            raise ValueError("training_outstation_sessions cannot exceed training_sessions")
+        return self
+
+
+QUESTIONNAIRE_KEYS: tuple[str, ...] = tuple(Questionnaire.model_fields)
+
+
+class AnswerIn(Strict):
+    """A user's answer to one questionnaire key, optionally citing requirements (traceability)."""
+
+    key: str
+    value: object
+    requirement_ids: list[str] = []
+
+
+class ProjectInfo(Strict):
+    name: str
+    buyer_type: str
+    domain: str
+
+
+class EstimateInput(Strict):
+    project: ProjectInfo
+    as_of_date: date
+    seed: int = Field(ge=0)
+    template_match: Literal["none", "weak", "strong"] = "none"
+    requirements: list[RequirementIn]
+    components: list[ComponentInstanceIn]
+    answers: list[AnswerIn] = []
+    taxonomy: Taxonomy
+    catalog: Catalog
+    rate_card: RateCard
+    parameters: ParameterSet
+    monte_carlo_runs: int | None = Field(default=None, ge=100)
+
+    @model_validator(mode="after")
+    def _refs(self) -> "EstimateInput":
+        req_ids = {r.id for r in self.requirements}
+        catalog_keys = {c.key for c in self.catalog.components}
+        for c in self.components:
+            if c.catalog_key not in catalog_keys:
+                raise ValueError(f"component {c.id}: {c.catalog_key!r} not in catalog")
+            missing = set(c.requirement_ids) - req_ids
+            if missing:
+                raise ValueError(f"component {c.id} links unknown requirements {sorted(missing)}")
+        keys = [a.key for a in self.answers]
+        unknown = set(keys) - set(QUESTIONNAIRE_KEYS)
+        if unknown:
+            raise ValueError(f"unknown questionnaire keys {sorted(unknown)}")
+        if len(keys) != len(set(keys)):
+            raise ValueError("duplicate questionnaire answers")
+        return self

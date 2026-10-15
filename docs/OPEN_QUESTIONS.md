@@ -38,3 +38,17 @@ seed file, config value or code, and update this list.
 | 23 | Frontend component library | shadcn/ui-style components are hand-written under `frontend/src/components/ui` (shadcn is copy-in by design); TanStack Table, React Hook Form/Zod and Recharts are added in the milestone that first needs them. |
 | 24 | Login identifier | Email + password; JWT (HS256) access token, 8 h expiry, no refresh token in v1. |
 | 25 | Dev users | `make seed` creates a demo organisation with `admin@`, `finance@`, `estimator@` and `viewer@aakalan.local`, all with password `SEED_USER_PASSWORD` from `.env` (default `aakalan-dev`). Dev only. |
+| 26 | Helpdesk sizing | Seats come from a sub-linear tier table by registered users (`maintenance.helpdesk_seats_by_users`) × coverage FTE by support SLA (8×5 = 1.0, 24×7 = 4.2). A linear users-per-seat rule produced absurd numbers for state-wide portals. |
+| 27 | Data-transfer volume | Priced on monthly active users (`hosting.monthly_active_share`, default 10 % of registered users) × MB per active user. |
+| 28 | Per-organisation rate cards | Rate cards, parameter sets, catalog and taxonomy are **global** (admin-managed) in M1. Vendors' own salary costs differ, so per-org rate cards (nullable `org_id`) are a candidate for M5. |
+| 29 | Base case vs P50 | Line spreads are right-skewed, so the sum of most-likely values ("base case") is often *below* P10. The headline Low / Likely / High is P10 / P50 / P90 from the simulation; the base case is shown separately. |
+| 30 | Catalog effort scale | First-draft base efforts were tripled so the golden examples land in a plausible range (small ≈ ₹2 Cr, medium ≈ ₹11 Cr, large ≈ ₹93 Cr incl. GST and margin). Still placeholders. |
+| 31 | Year view of commercial lines | Derived commercial lines (contingency, working capital, PBG, penalty reserve, margin, GST) and EMD / exit are reported in year 0. |
+| 32 | Commercial-layer bases | Working capital and LD reserve on year-0 base costs; penalty reserve on O&M costs; PBG on (base + contingency), i.e. pre-margin; margin on all costs before GST; GST at each line's bucket rate (default 18 %). |
+| 33 | Escalation bucket | Escalation is applied inside each O&M line (factor shown in its trace) rather than as a separate "escalation" line. |
+| 34 | Scenario persistence | Scenarios are re-priced on demand from the stored snapshot and not saved. |
+| 35 | Review status of manual entries | Requirements typed in by a user are created `confirmed`; saving the component mapping (`PUT /projects/{id}/components`) is the user's confirmation. Pricing is refused while any requirement is `extracted` or any component is unconfirmed. |
+| 36 | Component edits | `PUT /projects/{id}/components` replaces the whole mapping (new instance ids). Estimates are unaffected because they keep their own snapshot. |
+| 37 | Margin edits by non-finance users | Rejected with 403; when an estimator saves other answers, an existing finance-set margin is preserved. |
+| 39 | Working-capital granularity | The unfunded balance is integrated continuously (exact piecewise-linear integral), not summed by whole months: month-stepping made the cost jump when a milestone crossed a month boundary and broke the "shorter deadline never lowers cost" property. |
+| 38 | Audit log | Deferred to M5 as in brief Section 12 (no AuditLog table yet). |

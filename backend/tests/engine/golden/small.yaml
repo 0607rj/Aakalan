@@ -1,0 +1,36 @@
+# Golden estimate: SMALL — vendor empanelment portal with a basic FAQ chatbot for a small PSU.
+project: {name: "Vendor empanelment portal (small PSU)", buyer_type: psu, domain: empanelment}
+as_of_date: 2026-10-15
+seed: 20261015
+requirements:
+  - {id: S-R1, code: REQ-001, category: functional, clarity_score: 4, text: "Vendors shall register online and submit empanelment applications with supporting documents.", source_refs: [{clause_ref: "3.1", page: 8}]}
+  - {id: S-R2, code: REQ-002, category: functional, clarity_score: 4, text: "Applications shall pass two-level scrutiny and approval by the department.", source_refs: [{clause_ref: "3.2", page: 9}]}
+  - {id: S-R3, code: REQ-003, category: functional, clarity_score: 3, text: "The portal shall provide an FAQ chatbot answering queries on empanelment rules.", source_refs: [{clause_ref: "3.5", page: 11}]}
+  - {id: S-R4, code: REQ-004, category: functional, clarity_score: 4, text: "Email and SMS alerts shall be sent at each status change.", source_refs: [{clause_ref: "3.3", page: 10}]}
+  - {id: S-R5, code: REQ-005, category: NFR, clarity_score: 3, text: "The portal shall be bilingual (English and Hindi) and GIGW compliant.", source_refs: [{clause_ref: "5.2", page: 15}]}
+  - {id: S-R6, code: REQ-006, category: compliance, clarity_score: 5, text: "A CERT-In empanelled auditor shall certify the application before go-live.", source_refs: [{clause_ref: "6.1", page: 18}]}
+  - {id: S-R7, code: REQ-007, category: O&M, clarity_score: 4, text: "The bidder shall provide operations and maintenance for three years after go-live.", source_refs: [{clause_ref: "7.1", page: 20}]}
+  - {id: S-R8, code: REQ-008, category: NFR, clarity_score: 3, text: "Around 2,000 registered vendors with up to 100 concurrent users.", source_refs: [{clause_ref: "5.1", page: 14}]}
+components:
+  - {id: S-C01, catalog_key: discovery_requirement_study, size: S}
+  - {id: S-C02, catalog_key: ui_ux_design, size: S, requirement_ids: [S-R5]}
+  - {id: S-C03, catalog_key: user_management_rbac, size: S, requirement_ids: [S-R1]}
+  - {id: S-C04, catalog_key: registration_empanelment, size: M, requirement_ids: [S-R1]}
+  - {id: S-C05, catalog_key: workflow_engine, size: S, requirement_ids: [S-R2]}
+  - {id: S-C06, catalog_key: notifications, size: S, requirement_ids: [S-R4]}
+  - {id: S-C07, catalog_key: integration_sms_email_gateway, size: S, requirement_ids: [S-R4]}
+  - {id: S-C08, catalog_key: ai_chatbot_rag, size: S, complexity: low, requirement_ids: [S-R3]}
+  - {id: S-C09, catalog_key: multilingual_i18n, size: S, requirement_ids: [S-R5]}
+  - {id: S-C10, catalog_key: functional_testing_uat_support, size: S}
+  - {id: S-C11, catalog_key: documentation_manuals, size: S}
+answers:
+  - {key: users_total, value: 2000, requirement_ids: [S-R8]}
+  - {key: peak_concurrent_users, value: 100, requirement_ids: [S-R8]}
+  - {key: languages, value: 2, requirement_ids: [S-R5]}
+  - {key: om_years, value: 3, requirement_ids: [S-R7]}
+  - {key: uptime_sla, value: "99.0"}
+  - {key: chatbot_queries_per_day, value: 300, requirement_ids: [S-R3]}
+  - {key: documents_per_month, value: 200}
+  - {key: cert_in_audit, value: true, requirement_ids: [S-R6]}
+  - {key: training_sessions, value: 2}
+  - {key: hypercare_weeks, value: 2}

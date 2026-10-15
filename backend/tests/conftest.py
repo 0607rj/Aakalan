@@ -38,9 +38,12 @@ def database_url() -> Iterator[str]:
 
 @pytest.fixture(scope="session")
 def seeded(database_url: str) -> None:
+    from app.services.seeding.database import seed_reference
+    from app.services.seeding.reference import load_reference
     from app.services.seeding.users import seed_demo_users
 
     with db_module.get_session_factory()() as session:
+        assert seed_reference(session, load_reference(get_settings().seeds_dir)) == []
         seed_demo_users(session, TEST_PASSWORD)
         session.commit()
 
