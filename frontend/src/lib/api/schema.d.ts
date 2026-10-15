@@ -55,10 +55,706 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/projects": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Projects */
+        get: operations["list_projects_projects_get"];
+        put?: never;
+        /** Create Project */
+        post: operations["create_project_projects_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/projects/{project_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Project */
+        get: operations["get_project_projects__project_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Update Project */
+        patch: operations["update_project_projects__project_id__patch"];
+        trace?: never;
+    };
+    "/projects/{project_id}/requirements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Requirements */
+        get: operations["list_requirements_projects__project_id__requirements_get"];
+        put?: never;
+        /**
+         * Create Requirement
+         * @description Manual entry by a user counts as reviewed, so it is created as `confirmed`.
+         */
+        post: operations["create_requirement_projects__project_id__requirements_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/requirements/{requirement_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Delete Requirement */
+        delete: operations["delete_requirement_requirements__requirement_id__delete"];
+        options?: never;
+        head?: never;
+        /** Update Requirement */
+        patch: operations["update_requirement_requirements__requirement_id__patch"];
+        trace?: never;
+    };
+    "/projects/{project_id}/requirements/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Confirm Requirements */
+        post: operations["confirm_requirements_projects__project_id__requirements_confirm_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/projects/{project_id}/questionnaire": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Questionnaire */
+        get: operations["get_questionnaire_projects__project_id__questionnaire_get"];
+        /**
+         * Put Questionnaire
+         * @description Replace the project's answers. Keys left out fall back to parameter-set defaults.
+         *     Restricted keys (margin) can only be changed by finance/admin and are kept otherwise.
+         */
+        put: operations["put_questionnaire_projects__project_id__questionnaire_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/catalog": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Catalog */
+        get: operations["catalog_catalog_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/projects/{project_id}/components": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Components */
+        get: operations["list_components_projects__project_id__components_get"];
+        /**
+         * Put Components
+         * @description Replace the component mapping; saving it is the user's confirmation (rule 6).
+         */
+        put: operations["put_components_projects__project_id__components_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/projects/{project_id}/estimates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Estimates */
+        get: operations["list_estimates_projects__project_id__estimates_get"];
+        put?: never;
+        /** Create Estimate */
+        post: operations["create_estimate_projects__project_id__estimates_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/estimates/{estimate_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Estimate */
+        get: operations["get_estimate_estimates__estimate_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/estimates/{estimate_id}/lines/{line_id}/trace": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Trace */
+        get: operations["get_trace_estimates__estimate_id__lines__line_id__trace_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/estimates/{estimate_id}/scenarios": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Run Scenarios
+         * @description Side-by-side re-pricing of the same snapshot with questionnaire overrides. Not saved.
+         */
+        post: operations["run_scenarios_estimates__estimate_id__scenarios_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/estimates/{estimate_id}/reprice": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reprice
+         * @description Re-price at current rates: a new estimate version; the original never changes.
+         */
+        post: operations["reprice_estimates__estimate_id__reprice_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/rate-cards": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Rate Cards */
+        get: operations["list_rate_cards_admin_rate_cards_get"];
+        put?: never;
+        /** Create Rate Card */
+        post: operations["create_rate_card_admin_rate_cards_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/rate-cards/{version}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Rate Card */
+        get: operations["get_rate_card_admin_rate_cards__version__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/parameter-sets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Parameter Sets */
+        get: operations["list_parameter_sets_admin_parameter_sets_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/parameter-sets/{version}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Parameter Set */
+        get: operations["get_parameter_set_admin_parameter_sets__version__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/admin/catalog": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Full Catalog */
+        get: operations["get_full_catalog_admin_catalog_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /** AnswerIn */
+        AnswerIn: {
+            /** Key */
+            key: string;
+            /** Value */
+            value?: unknown;
+            /**
+             * Requirement Ids
+             * @default []
+             */
+            requirement_ids: string[];
+        };
+        /** AssumptionOut */
+        AssumptionOut: {
+            /** Key */
+            key: string;
+            /** Text */
+            text: string;
+            /** Value */
+            value: unknown;
+            /** Overridden */
+            overridden: boolean;
+        };
+        /** Calibration */
+        Calibration: {
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "calibrated" | "uncalibrated";
+            /** Placeholder Refs */
+            placeholder_refs: string[];
+        };
+        /** Catalog */
+        Catalog: {
+            /** Version */
+            version: string;
+            /** Components */
+            components: components["schemas"]["CatalogComponent"][];
+        };
+        /** CatalogComponent */
+        CatalogComponent: {
+            /** Source */
+            source: string;
+            /** Key */
+            key: string;
+            /** Name */
+            name: string;
+            /** Category */
+            category: string;
+            /** Bucket */
+            bucket: string;
+            /**
+             * Description
+             * @default
+             */
+            description: string;
+            /** Task Mix */
+            task_mix: {
+                [key: string]: string;
+            };
+            /** Base Effort Pd */
+            base_effort_pd: {
+                [key: string]: string;
+            };
+            /**
+             * Applicable Drivers
+             * @default []
+             */
+            applicable_drivers: components["schemas"]["Driver"][];
+            /**
+             * Tags
+             * @default []
+             */
+            tags: ("integration" | "ai" | "data_migration")[];
+            licence?: components["schemas"]["ComponentLicence"] | null;
+        };
+        /** CatalogComponentOut */
+        CatalogComponentOut: {
+            /** Key */
+            key: string;
+            /** Name */
+            name: string;
+            /** Category */
+            category: string;
+            /** Bucket */
+            bucket: string;
+            /** Description */
+            description: string;
+            /** Base Effort Pd */
+            base_effort_pd: {
+                [key: string]: string;
+            };
+            /** Applicable Drivers */
+            applicable_drivers: string[];
+            /** Tags */
+            tags: string[];
+            /** Licensable */
+            licensable: boolean;
+            /** Source */
+            source: string;
+        };
+        /** CatalogOut */
+        CatalogOut: {
+            /** Version */
+            version: string;
+            /** Components */
+            components: components["schemas"]["CatalogComponentOut"][];
+        };
+        /**
+         * Complexity
+         * @enum {string}
+         */
+        Complexity: "low" | "medium" | "high" | "very_high";
+        /** ComponentIn */
+        ComponentIn: {
+            /** Catalog Key */
+            catalog_key: string;
+            /** Label */
+            label?: string | null;
+            size: components["schemas"]["Size"];
+            /** @default medium */
+            complexity: components["schemas"]["Complexity"];
+            /**
+             * Quantity
+             * @default 1
+             */
+            quantity: number;
+            /**
+             * Requirement Ids
+             * @default []
+             */
+            requirement_ids: string[];
+        };
+        /** ComponentLicence */
+        ComponentLicence: {
+            /** Rate Key */
+            rate_key: string;
+            /** Effort Factor */
+            effort_factor: string;
+        };
+        /** ComponentOut */
+        ComponentOut: {
+            /** Id */
+            id: string;
+            /** Catalog Key */
+            catalog_key: string;
+            /** Label */
+            label: string | null;
+            /** Size */
+            size: string;
+            /** Complexity */
+            complexity: string;
+            /** Quantity */
+            quantity: number;
+            /** Requirement Ids */
+            requirement_ids: string[];
+            /** Status */
+            status: string;
+            /** Confirmed At */
+            confirmed_at: string | null;
+        };
+        /** ComponentsPut */
+        ComponentsPut: {
+            /** Components */
+            components: components["schemas"]["ComponentIn"][];
+        };
+        /** ConfidenceOut */
+        ConfidenceOut: {
+            /**
+             * Label
+             * @enum {string}
+             */
+            label: "high" | "medium" | "low";
+            /** Score */
+            score: string;
+            /** Clarity Component */
+            clarity_component: string;
+            /** Template Component */
+            template_component: string;
+            /** Freshness Component */
+            freshness_component: string;
+            /** Rate Card Age Days */
+            rate_card_age_days: number;
+        };
+        /** ConfirmRequest */
+        ConfirmRequest: {
+            /** Requirement Ids */
+            requirement_ids?: string[] | null;
+        };
+        /** CostLineOut */
+        CostLineOut: {
+            /** Id */
+            id: string;
+            /** Line Key */
+            line_key: string;
+            /** Stage */
+            stage: string;
+            /** Bucket */
+            bucket: string;
+            /** Year */
+            year: number;
+            /** Label */
+            label: string;
+            /** Component Instance Id */
+            component_instance_id: string | null;
+            /** Formula Id */
+            formula_id: string;
+            /** Low Paise */
+            low_paise: number | null;
+            /** Likely Paise */
+            likely_paise: number | null;
+            /** High Paise */
+            high_paise: number | null;
+            /** Requirement Ids */
+            requirement_ids: string[];
+            /** Derived */
+            derived: boolean;
+            /**
+             * Redacted
+             * @default false
+             */
+            redacted: boolean;
+        };
+        /**
+         * Driver
+         * @description NFR drivers a catalog component can be sensitive to.
+         * @enum {string}
+         */
+        Driver: "uptime_sla" | "security_level" | "languages" | "accessibility" | "concurrency";
+        /** EstimateCreate */
+        EstimateCreate: {
+            /** Seed */
+            seed?: number | null;
+            /** Rate Card Version */
+            rate_card_version?: string | null;
+            /** Parameter Set Version */
+            parameter_set_version?: string | null;
+            /** As Of Date */
+            as_of_date?: string | null;
+            /** Monte Carlo Runs */
+            monte_carlo_runs?: number | null;
+        };
+        /** EstimateOut */
+        EstimateOut: {
+            /** Id */
+            id: string;
+            /** Project Id */
+            project_id: string;
+            /** Version */
+            version: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Rate Card Version */
+            rate_card_version: string;
+            /** Parameter Set Version */
+            parameter_set_version: string;
+            /** Seed */
+            seed: number;
+            /** Feasible */
+            feasible: boolean;
+            /** Likely Paise */
+            likely_paise: number | null;
+            /** P10 Paise */
+            p10_paise: number | null;
+            /** P50 Paise */
+            p50_paise: number | null;
+            /** P90 Paise */
+            p90_paise: number | null;
+            /** Confidence */
+            confidence: string;
+            /** Calibration Status */
+            calibration_status: string;
+            /** Parent Estimate Id */
+            parent_estimate_id: string | null;
+            /** Engine Version */
+            engine_version: string;
+            /** Catalog Version */
+            catalog_version: string;
+            /** Taxonomy Version */
+            taxonomy_version: string;
+            /**
+             * As Of Date
+             * Format: date
+             */
+            as_of_date: string;
+            /** Frozen */
+            frozen: boolean;
+            /** Margin Visible */
+            margin_visible: boolean;
+            totals: components["schemas"]["Totals"] | null;
+            infeasibility: components["schemas"]["Infeasibility"] | null;
+            timeline: components["schemas"]["Timeline"];
+            confidence_detail: components["schemas"]["ConfidenceOut"];
+            calibration: components["schemas"]["Calibration"];
+            /** By Stage */
+            by_stage: components["schemas"]["GroupTotal"][];
+            /** By Bucket */
+            by_bucket: components["schemas"]["GroupTotal"][];
+            /** By Year */
+            by_year: components["schemas"]["GroupTotal"][];
+            /** Manpower */
+            manpower: components["schemas"]["ManpowerRow"][];
+            /** Top Drivers */
+            top_drivers: components["schemas"]["RangeDriver"][];
+            /** Top Drivers Text */
+            top_drivers_text: string;
+            /** Sanity Checks */
+            sanity_checks: components["schemas"]["SanityCheck"][];
+            /** Assumptions */
+            assumptions: components["schemas"]["AssumptionOut"][];
+            /** Lines */
+            lines: components["schemas"]["CostLineOut"][];
+        };
+        /** EstimateSummary */
+        EstimateSummary: {
+            /** Id */
+            id: string;
+            /** Project Id */
+            project_id: string;
+            /** Version */
+            version: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Rate Card Version */
+            rate_card_version: string;
+            /** Parameter Set Version */
+            parameter_set_version: string;
+            /** Seed */
+            seed: number;
+            /** Feasible */
+            feasible: boolean;
+            /** Likely Paise */
+            likely_paise: number | null;
+            /** P10 Paise */
+            p10_paise: number | null;
+            /** P50 Paise */
+            p50_paise: number | null;
+            /** P90 Paise */
+            p90_paise: number | null;
+            /** Confidence */
+            confidence: string;
+            /** Calibration Status */
+            calibration_status: string;
+            /** Parent Estimate Id */
+            parent_estimate_id: string | null;
+        };
+        /** GroupTotal */
+        GroupTotal: {
+            /** Key */
+            key: string;
+            /** Name */
+            name: string;
+            /** Likely Paise */
+            likely_paise: number;
+            /** Low Paise */
+            low_paise: number;
+            /** High Paise */
+            high_paise: number;
+        };
         /** HTTPValidationError */
         HTTPValidationError: {
             /** Detail */
@@ -73,6 +769,38 @@ export interface components {
             /** Database */
             database: string;
         };
+        /** Infeasibility */
+        Infeasibility: {
+            /** Message */
+            message: string;
+            /** Minimum Feasible Months */
+            minimum_feasible_months: string;
+            /** Phases */
+            phases: components["schemas"]["PhaseSuggestion"][];
+        };
+        /**
+         * LineTrace
+         * @description The full chain for one number: clause + page -> requirement -> component -> drivers ->
+         *     rate-card entries -> formula -> value (rule 2).
+         */
+        LineTrace: {
+            /** Requirements */
+            requirements: components["schemas"]["TraceRequirement"][];
+            component: components["schemas"]["TraceComponent"] | null;
+            /** Drivers */
+            drivers: components["schemas"]["TraceAnswer"][];
+            /** Rate Items */
+            rate_items: components["schemas"]["TraceRate"][];
+            /** Parameters */
+            parameters: components["schemas"]["TraceParameter"][];
+            /** Formula Id */
+            formula_id: string;
+            /** Formula */
+            formula: string;
+            /** Steps */
+            steps: components["schemas"]["TraceStep"][];
+            spread: components["schemas"]["Spread"];
+        };
         /** LoginRequest */
         LoginRequest: {
             /** Email */
@@ -80,11 +808,425 @@ export interface components {
             /** Password */
             password: string;
         };
+        /** ManpowerRow */
+        ManpowerRow: {
+            /** Role */
+            role: string;
+            /** Stage */
+            stage: string;
+            /** Year */
+            year: number;
+            /** Person Days */
+            person_days: string;
+            /** Person Months */
+            person_months: string;
+            /** Average Fte */
+            average_fte: string;
+        };
+        /** ParameterSetSummary */
+        ParameterSetSummary: {
+            /** Version */
+            version: string;
+            /** Effective Date */
+            effective_date: string;
+            /** Status */
+            status: string;
+        };
+        /** PhaseSuggestion */
+        PhaseSuggestion: {
+            /** Phase */
+            phase: number;
+            /** Component Instance Ids */
+            component_instance_ids: string[];
+            /** Build Effort Pd */
+            build_effort_pd: string;
+            /** Natural Duration Months */
+            natural_duration_months: string;
+        };
+        /** ProjectCreate */
+        ProjectCreate: {
+            /** Name */
+            name: string;
+            /**
+             * Buyer Type
+             * @default psu
+             * @enum {string}
+             */
+            buyer_type: "govt" | "psu" | "private";
+            /**
+             * Domain
+             * @default general
+             */
+            domain: string;
+            /**
+             * Description
+             * @default
+             */
+            description: string;
+        };
+        /** ProjectOut */
+        ProjectOut: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Buyer Type */
+            buyer_type: string;
+            /** Domain */
+            domain: string;
+            /** Mode */
+            mode: string;
+            /** Status */
+            status: string;
+            /** Description */
+            description: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /** ProjectUpdate */
+        ProjectUpdate: {
+            /** Name */
+            name?: string | null;
+            /** Buyer Type */
+            buyer_type?: ("govt" | "psu" | "private") | null;
+            /** Domain */
+            domain?: string | null;
+            /** Description */
+            description?: string | null;
+        };
+        /** QuestionnaireField */
+        QuestionnaireField: {
+            /** Key */
+            key: string;
+            /** Title */
+            title: string;
+            /** Schema */
+            schema: {
+                [key: string]: unknown;
+            };
+            /** Default */
+            default: unknown;
+            /** Value */
+            value: unknown;
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "user" | "default";
+            /** Requirement Ids */
+            requirement_ids: string[];
+            /**
+             * Restricted
+             * @default false
+             */
+            restricted: boolean;
+        };
+        /** QuestionnaireOut */
+        QuestionnaireOut: {
+            /** Parameter Set Version */
+            parameter_set_version: string;
+            /** Fields */
+            fields: components["schemas"]["QuestionnaireField"][];
+        };
+        /** QuestionnairePut */
+        QuestionnairePut: {
+            /** Answers */
+            answers: components["schemas"]["AnswerIn"][];
+        };
+        /** RangeDriver */
+        RangeDriver: {
+            /** Bucket */
+            bucket: string;
+            /** Name */
+            name: string;
+            /** Variance Share */
+            variance_share: string;
+        };
+        /** RateCard */
+        "RateCard-Input": {
+            /** Source */
+            source: string;
+            /** Version */
+            version: string;
+            /**
+             * Effective Date
+             * Format: date
+             */
+            effective_date: string;
+            /**
+             * Status
+             * @default active
+             * @enum {string}
+             */
+            status: "draft" | "active" | "retired";
+            /** Items */
+            items: components["schemas"]["RateItem-Input"][];
+        };
+        /** RateCard */
+        "RateCard-Output": {
+            /** Source */
+            source: string;
+            /** Version */
+            version: string;
+            /**
+             * Effective Date
+             * Format: date
+             */
+            effective_date: string;
+            /**
+             * Status
+             * @default active
+             * @enum {string}
+             */
+            status: "draft" | "active" | "retired";
+            /** Items */
+            items: components["schemas"]["RateItem-Output"][];
+        };
+        /** RateCardSummary */
+        RateCardSummary: {
+            /** Version */
+            version: string;
+            /** Effective Date */
+            effective_date: string;
+            /** Status */
+            status: string;
+            /** Source */
+            source: string;
+            /** Item Count */
+            item_count: number;
+            /** Placeholder Count */
+            placeholder_count: number;
+        };
+        /** RateItem */
+        "RateItem-Input": {
+            /** Source */
+            source: string;
+            /** Key */
+            key: string;
+            kind: components["schemas"]["RateKind"];
+            /** Unit */
+            unit: string;
+            /** Amount */
+            amount: number | string;
+            /**
+             * Currency
+             * @default INR
+             */
+            currency: string;
+            /** Region */
+            region?: string | null;
+            /** Source Url */
+            source_url?: string | null;
+        };
+        /** RateItem */
+        "RateItem-Output": {
+            /** Source */
+            source: string;
+            /** Key */
+            key: string;
+            kind: components["schemas"]["RateKind"];
+            /** Unit */
+            unit: string;
+            /** Amount */
+            amount: string;
+            /**
+             * Currency
+             * @default INR
+             */
+            currency: string;
+            /** Region */
+            region?: string | null;
+            /** Source Url */
+            source_url?: string | null;
+        };
+        /**
+         * RateKind
+         * @enum {string}
+         */
+        RateKind: "role" | "cloud_sku" | "llm_token" | "gpu_hour" | "licence" | "audit_fee" | "bank_charge" | "other";
+        /** RequirementCreate */
+        RequirementCreate: {
+            /** Code */
+            code?: string | null;
+            /** Text */
+            text: string;
+            /**
+             * Category
+             * @default functional
+             * @enum {string}
+             */
+            category: "functional" | "NFR" | "integration" | "compliance" | "commercial" | "O&M" | "manpower";
+            /**
+             * Clarity Score
+             * @default 3
+             */
+            clarity_score: number;
+            /** Source Refs */
+            source_refs: components["schemas"]["SourceRef"][];
+        };
+        /** RequirementOut */
+        RequirementOut: {
+            /** Id */
+            id: string;
+            /** Project Id */
+            project_id: string;
+            /** Code */
+            code: string;
+            /** Text */
+            text: string;
+            /** Category */
+            category: string;
+            /** Clarity Score */
+            clarity_score: number;
+            /** Status */
+            status: string;
+            /** Source Refs */
+            source_refs: components["schemas"]["SourceRef"][];
+            /** Confirmed At */
+            confirmed_at: string | null;
+        };
+        /** RequirementUpdate */
+        RequirementUpdate: {
+            /** Text */
+            text?: string | null;
+            /** Category */
+            category?: ("functional" | "NFR" | "integration" | "compliance" | "commercial" | "O&M" | "manpower") | null;
+            /** Clarity Score */
+            clarity_score?: number | null;
+            /** Source Refs */
+            source_refs?: components["schemas"]["SourceRef"][] | null;
+            /** Status */
+            status?: ("confirmed" | "rejected") | null;
+        };
         /**
          * Role
          * @enum {string}
          */
         Role: "admin" | "estimator" | "finance" | "viewer";
+        /** SanityCheck */
+        SanityCheck: {
+            /** Key */
+            key: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "ok" | "flag";
+            /** Message */
+            message: string;
+        };
+        /** Scenario */
+        Scenario: {
+            /** Name */
+            name: string;
+            /** Overrides */
+            overrides: {
+                [key: string]: unknown;
+            };
+        };
+        /** ScenarioResult */
+        ScenarioResult: {
+            /** Name */
+            name: string;
+            /** Overrides */
+            overrides: {
+                [key: string]: unknown;
+            };
+            /** Feasible */
+            feasible: boolean;
+            /** Message */
+            message: string | null;
+            totals: components["schemas"]["Totals"] | null;
+            /** By Stage */
+            by_stage: components["schemas"]["GroupTotal"][];
+            timeline: components["schemas"]["Timeline"];
+            confidence: components["schemas"]["ConfidenceOut"];
+        };
+        /** ScenariosOut */
+        ScenariosOut: {
+            /** Estimate Id */
+            estimate_id: string;
+            /** Results */
+            results: components["schemas"]["ScenarioResult"][];
+        };
+        /** ScenariosRequest */
+        ScenariosRequest: {
+            /** Scenarios */
+            scenarios: components["schemas"]["Scenario"][];
+        };
+        /**
+         * Size
+         * @enum {string}
+         */
+        Size: "S" | "M" | "L";
+        /**
+         * SourceRef
+         * @description Where a requirement comes from in the tender document.
+         */
+        SourceRef: {
+            /** Clause Ref */
+            clause_ref: string;
+            /** Page */
+            page?: number | null;
+            /** Document */
+            document?: string | null;
+            /** Chunk Id */
+            chunk_id?: string | null;
+        };
+        /** Spread */
+        Spread: {
+            /** Down */
+            down: string;
+            /** Up */
+            up: string;
+            /** Factors */
+            factors: components["schemas"]["SpreadFactor"][];
+        };
+        /** SpreadFactor */
+        SpreadFactor: {
+            /** Name */
+            name: string;
+            /** Down */
+            down: string;
+            /** Up */
+            up: string;
+        };
+        /**
+         * TaskType
+         * @enum {string}
+         */
+        TaskType: "analysis" | "architecture" | "ui_design" | "crud" | "integration" | "ai_engineering" | "data_migration" | "tests" | "security_testing" | "devops" | "documentation" | "review_uat" | "pm" | "training";
+        /** Timeline */
+        Timeline: {
+            /** Build Effort Pd */
+            build_effort_pd: string;
+            /** Build Effort Person Months */
+            build_effort_person_months: string;
+            /** Max Team */
+            max_team: string;
+            /** Natural Duration Months */
+            natural_duration_months: string;
+            /** Deadline Months */
+            deadline_months: string | null;
+            /** Delivery Duration Months */
+            delivery_duration_months: string;
+            /** Programme Duration Months */
+            programme_duration_months: string;
+            /** Compression Ratio */
+            compression_ratio: string | null;
+            /** Compression Multiplier */
+            compression_multiplier: string;
+            /** Size Band */
+            size_band: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "natural" | "compressed" | "extended" | "not_feasible";
+        };
         /** TokenResponse */
         TokenResponse: {
             /** Access Token */
@@ -95,6 +1237,118 @@ export interface components {
              */
             token_type: string;
             user: components["schemas"]["UserOut"];
+        };
+        /** Totals */
+        Totals: {
+            /** Likely Paise */
+            likely_paise: number;
+            /** Low Sum Paise */
+            low_sum_paise: number;
+            /** High Sum Paise */
+            high_sum_paise: number;
+            /** P10 Paise */
+            p10_paise: number;
+            /** P50 Paise */
+            p50_paise: number;
+            /** P90 Paise */
+            p90_paise: number;
+        };
+        /**
+         * TraceAnswer
+         * @description A questionnaire driver used by the line, with where its value came from.
+         */
+        TraceAnswer: {
+            /** Key */
+            key: string;
+            /** Value */
+            value: unknown;
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "user" | "default";
+            /** Requirement Ids */
+            requirement_ids: string[];
+        };
+        /** TraceComponent */
+        TraceComponent: {
+            /** Id */
+            id: string;
+            /** Catalog Key */
+            catalog_key: string;
+            /** Name */
+            name: string;
+            /** Size */
+            size: string;
+            /** Complexity */
+            complexity: string;
+            /** Quantity */
+            quantity: number;
+        };
+        /** TraceOut */
+        TraceOut: {
+            /** Estimate Id */
+            estimate_id: string;
+            line: components["schemas"]["CostLineOut"];
+            /** Inputs */
+            inputs: {
+                [key: string]: unknown;
+            };
+            /** Gst Percent */
+            gst_percent: string;
+            trace: components["schemas"]["LineTrace"] | null;
+        };
+        /** TraceParameter */
+        TraceParameter: {
+            /** Path */
+            path: string;
+            /** Value */
+            value: unknown;
+            /** Parameter Set Version */
+            parameter_set_version: string;
+            /** Source */
+            source: string;
+        };
+        /** TraceRate */
+        TraceRate: {
+            /** Key */
+            key: string;
+            /** Kind */
+            kind: string;
+            /** Unit */
+            unit: string;
+            /** Amount */
+            amount: string;
+            /** Currency */
+            currency: string;
+            /** Rate Card Version */
+            rate_card_version: string;
+            /** Source */
+            source: string;
+            /** Source Url */
+            source_url: string | null;
+        };
+        /** TraceRequirement */
+        TraceRequirement: {
+            /** Id */
+            id: string;
+            /** Code */
+            code: string;
+            /** Text */
+            text: string;
+            /** Clause Ref */
+            clause_ref: string | null;
+            /** Page */
+            page: number | null;
+        };
+        /** TraceStep */
+        TraceStep: {
+            /** Label */
+            label: string;
+            /** Expression */
+            expression: string;
+            /** Value */
+            value: string;
         };
         /** UserOut */
         UserOut: {
@@ -201,6 +1455,794 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["UserOut"];
+                };
+            };
+        };
+    };
+    list_projects_projects_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProjectOut"][];
+                };
+            };
+        };
+    };
+    create_project_projects_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProjectCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProjectOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_project_projects__project_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProjectOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_project_projects__project_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ProjectUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProjectOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_requirements_projects__project_id__requirements_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RequirementOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_requirement_projects__project_id__requirements_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RequirementCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RequirementOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_requirement_requirements__requirement_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                requirement_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    update_requirement_requirements__requirement_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                requirement_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RequirementUpdate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RequirementOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    confirm_requirements_projects__project_id__requirements_confirm_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ConfirmRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RequirementOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_questionnaire_projects__project_id__questionnaire_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuestionnaireOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_questionnaire_projects__project_id__questionnaire_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QuestionnairePut"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuestionnaireOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    catalog_catalog_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CatalogOut"];
+                };
+            };
+        };
+    };
+    list_components_projects__project_id__components_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComponentOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    put_components_projects__project_id__components_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ComponentsPut"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ComponentOut"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_estimates_projects__project_id__estimates_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EstimateSummary"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    create_estimate_projects__project_id__estimates_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EstimateCreate"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EstimateOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_estimate_estimates__estimate_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                estimate_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EstimateOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_trace_estimates__estimate_id__lines__line_id__trace_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                estimate_id: string;
+                line_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TraceOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    run_scenarios_estimates__estimate_id__scenarios_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                estimate_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ScenariosRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ScenariosOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reprice_estimates__estimate_id__reprice_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                estimate_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EstimateOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_rate_cards_admin_rate_cards_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RateCardSummary"][];
+                };
+            };
+        };
+    };
+    create_rate_card_admin_rate_cards_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["RateCard-Input"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RateCard-Output"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_rate_card_admin_rate_cards__version__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                version: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RateCard-Output"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_parameter_sets_admin_parameter_sets_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ParameterSetSummary"][];
+                };
+            };
+        };
+    };
+    get_parameter_set_admin_parameter_sets__version__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                version: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_full_catalog_admin_catalog_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Catalog"];
                 };
             };
         };

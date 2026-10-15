@@ -1,0 +1,74 @@
+# Golden estimate: MEDIUM — the running example: AI chatbot + online empanelment portal for a
+# PSU, with 3 years of O&M, a 7-month deadline and an EMD.
+project: {name: "AI chatbot + online empanelment portal (PSU)", buyer_type: psu, domain: empanelment}
+as_of_date: 2026-10-15
+seed: 7
+requirements:
+  - {id: M-R01, code: REQ-001, category: functional, clarity_score: 4, text: "Online registration and empanelment of vendors across 12 categories with document upload.", source_refs: [{clause_ref: "4.1.1", page: 21}]}
+  - {id: M-R02, code: REQ-002, category: functional, clarity_score: 3, text: "Configurable multi-level scrutiny, clarification and approval workflow with SLA tracking.", source_refs: [{clause_ref: "4.1.3", page: 23}]}
+  - {id: M-R03, code: REQ-003, category: functional, clarity_score: 3, text: "Document management with versioning for all submitted certificates.", source_refs: [{clause_ref: "4.1.4", page: 24}]}
+  - {id: M-R04, code: REQ-004, category: functional, clarity_score: 4, text: "Role-wise dashboards and 25 standard MIS reports with Excel/PDF export.", source_refs: [{clause_ref: "4.2.1", page: 26}]}
+  - {id: M-R05, code: REQ-005, category: functional, clarity_score: 2, text: "An AI chatbot shall answer vendor and citizen queries using the PSU's policies and circulars, in English and Hindi.", source_refs: [{clause_ref: "4.3.1", page: 28}]}
+  - {id: M-R06, code: REQ-006, category: functional, clarity_score: 2, text: "The chatbot shall not disclose personal data and must refuse out-of-scope questions.", source_refs: [{clause_ref: "4.3.4", page: 29}]}
+  - {id: M-R07, code: REQ-007, category: integration, clarity_score: 3, text: "Single sign-on for PSU staff through the existing LDAP / Parichay.", source_refs: [{clause_ref: "4.4.1", page: 31}]}
+  - {id: M-R08, code: REQ-008, category: integration, clarity_score: 3, text: "Online payment of empanelment fees through the PSU's payment gateway.", source_refs: [{clause_ref: "4.4.2", page: 31}]}
+  - {id: M-R09, code: REQ-009, category: integration, clarity_score: 2, text: "Integration with the PSU's SAP system for vendor master synchronisation.", source_refs: [{clause_ref: "4.4.3", page: 32}]}
+  - {id: M-R10, code: REQ-010, category: integration, clarity_score: 4, text: "SMS and email notifications through NIC gateways.", source_refs: [{clause_ref: "4.4.4", page: 32}]}
+  - {id: M-R11, code: REQ-011, category: NFR, clarity_score: 4, text: "99.9% availability; 50,000 registered users; 1,000 concurrent users at peak.", source_refs: [{clause_ref: "5.1", page: 35}]}
+  - {id: M-R12, code: REQ-012, category: NFR, clarity_score: 4, text: "Bilingual (English, Hindi) and compliant with GIGW 3.0 and WCAG 2.1 AA.", source_refs: [{clause_ref: "5.3", page: 36}]}
+  - {id: M-R13, code: REQ-013, category: NFR, clarity_score: 3, text: "Application security per OWASP ASVS L2; data encrypted at rest and in transit.", source_refs: [{clause_ref: "5.4", page: 37}]}
+  - {id: M-R14, code: REQ-014, category: compliance, clarity_score: 5, text: "CERT-In empanelled security audit before go-live and annually thereafter.", source_refs: [{clause_ref: "6.2", page: 41}]}
+  - {id: M-R15, code: REQ-015, category: functional, clarity_score: 3, text: "Migration of about 8,000 existing vendor records from the legacy system.", source_refs: [{clause_ref: "4.5", page: 33}]}
+  - {id: M-R16, code: REQ-016, category: O&M, clarity_score: 4, text: "Three years of O&M after go-live with an 8x5 helpdesk and one onsite developer.", source_refs: [{clause_ref: "8.1", page: 47}]}
+  - {id: M-R17, code: REQ-017, category: commercial, clarity_score: 5, text: "EMD of Rs 10,00,000; PBG of 3% of contract value valid till end of O&M.", source_refs: [{clause_ref: "2.6", page: 6}]}
+  - {id: M-R18, code: REQ-018, category: commercial, clarity_score: 4, text: "Go-live within 7 months of the work order.", source_refs: [{clause_ref: "2.9", page: 7}]}
+  - {id: M-R19, code: REQ-019, category: functional, clarity_score: 3, text: "Training for 200 departmental users at the head office and 3 regional offices.", source_refs: [{clause_ref: "7.2", page: 44}]}
+  - {id: M-R20, code: REQ-020, category: functional, clarity_score: 3, text: "Grievance submission and tracking for vendors.", source_refs: [{clause_ref: "4.1.6", page: 25}]}
+components:
+  - {id: M-C01, catalog_key: discovery_requirement_study, size: M}
+  - {id: M-C02, catalog_key: solution_architecture, size: M, requirement_ids: [M-R11, M-R13]}
+  - {id: M-C03, catalog_key: ui_ux_design, size: M, requirement_ids: [M-R12]}
+  - {id: M-C04, catalog_key: user_management_rbac, size: M, requirement_ids: [M-R01, M-R07]}
+  - {id: M-C05, catalog_key: registration_empanelment, size: L, requirement_ids: [M-R01]}
+  - {id: M-C06, catalog_key: workflow_engine, size: M, complexity: high, requirement_ids: [M-R02]}
+  - {id: M-C07, catalog_key: document_management, size: M, requirement_ids: [M-R03]}
+  - {id: M-C08, catalog_key: dashboard_mis_reports, size: M, requirement_ids: [M-R04]}
+  - {id: M-C09, catalog_key: notifications, size: M, requirement_ids: [M-R10]}
+  - {id: M-C10, catalog_key: grievance_helpdesk, size: S, requirement_ids: [M-R20]}
+  - {id: M-C11, catalog_key: audit_trail_logging, size: M, requirement_ids: [M-R13]}
+  - {id: M-C12, catalog_key: multilingual_i18n, size: S, requirement_ids: [M-R12]}
+  - {id: M-C13, catalog_key: accessibility_gigw_compliance, size: M, requirement_ids: [M-R12]}
+  - {id: M-C14, catalog_key: security_hardening, size: M, requirement_ids: [M-R13]}
+  - {id: M-C15, catalog_key: integration_sso_identity, size: M, requirement_ids: [M-R07]}
+  - {id: M-C16, catalog_key: integration_payment_gateway, size: M, requirement_ids: [M-R08]}
+  - {id: M-C17, catalog_key: integration_erp_legacy, size: M, complexity: high, requirement_ids: [M-R09]}
+  - {id: M-C18, catalog_key: integration_sms_email_gateway, size: S, requirement_ids: [M-R10]}
+  - {id: M-C19, catalog_key: ai_chatbot_rag, size: M, requirement_ids: [M-R05]}
+  - {id: M-C20, catalog_key: ai_knowledge_ingestion, size: M, requirement_ids: [M-R05]}
+  - {id: M-C21, catalog_key: ai_guardrails_safety, size: M, requirement_ids: [M-R06]}
+  - {id: M-C22, catalog_key: ai_evaluation_set, size: S, requirement_ids: [M-R05, M-R06]}
+  - {id: M-C23, catalog_key: data_migration, size: M, requirement_ids: [M-R15]}
+  - {id: M-C24, catalog_key: functional_testing_uat_support, size: M}
+  - {id: M-C25, catalog_key: performance_load_testing, size: M, requirement_ids: [M-R11]}
+  - {id: M-C26, catalog_key: vapt_remediation, size: M, requirement_ids: [M-R14]}
+  - {id: M-C27, catalog_key: documentation_manuals, size: M}
+  - {id: M-C28, catalog_key: devops_cicd_setup, size: M, requirement_ids: [M-R11]}
+answers:
+  - {key: users_total, value: 50000, requirement_ids: [M-R11]}
+  - {key: peak_concurrent_users, value: 1000, requirement_ids: [M-R11]}
+  - {key: uptime_sla, value: "99.9", requirement_ids: [M-R11]}
+  - {key: languages, value: 2, requirement_ids: [M-R12]}
+  - {key: gigw_accessibility, value: true, requirement_ids: [M-R12]}
+  - {key: security_level, value: high, requirement_ids: [M-R13]}
+  - {key: om_years, value: 3, requirement_ids: [M-R16]}
+  - {key: support_sla, value: 8x5, requirement_ids: [M-R16]}
+  - {key: onsite_resources, value: [{role: role.developer, count: 1}], requirement_ids: [M-R16]}
+  - {key: deadline_months, value: 7, requirement_ids: [M-R18]}
+  - {key: chatbot_queries_per_day, value: 5000, requirement_ids: [M-R05]}
+  - {key: documents_per_month, value: 3000, requirement_ids: [M-R03]}
+  - {key: avg_document_mb, value: 2}
+  - {key: cert_in_audit, value: true, requirement_ids: [M-R14]}
+  - {key: training_sessions, value: 6, requirement_ids: [M-R19]}
+  - {key: training_outstation_sessions, value: 3, requirement_ids: [M-R19]}
+  - {key: emd_paise, value: 100000000, requirement_ids: [M-R17]}
+  - {key: pbg_percent, value: 0.03, requirement_ids: [M-R17]}

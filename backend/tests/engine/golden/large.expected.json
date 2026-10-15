@@ -1,0 +1,914 @@
+{
+  "engine_version": "1.0.0",
+  "versions": {
+    "rate_card": "v1",
+    "parameters": "v1",
+    "catalog": "v1",
+    "taxonomy": "v1"
+  },
+  "feasible": true,
+  "totals": {
+    "likely_paise": 85267563583,
+    "low_sum_paise": 73643365469,
+    "high_sum_paise": 119770980736,
+    "p10_paise": 88366396351,
+    "p50_paise": 92745546161,
+    "p90_paise": 97602799770
+  },
+  "timeline": {
+    "build_effort_pd": "5935.797843750000",
+    "build_effort_person_months": "269.8089928977272727272727273",
+    "max_team": "16.05732689098011363636363637",
+    "natural_duration_months": "16.9",
+    "deadline_months": "18",
+    "delivery_duration_months": "18",
+    "programme_duration_months": "18",
+    "compression_ratio": "1.065088757396449704142011834",
+    "compression_multiplier": "1",
+    "size_band": "large",
+    "status": "extended"
+  },
+  "by_stage": {
+    "pre_build": [
+      526347900,
+      607345875,
+      846971831
+    ],
+    "build": [
+      4026583155,
+      4828250467,
+      7749027615
+    ],
+    "go_live": [
+      360200000,
+      408000000,
+      524000000
+    ],
+    "run": [
+      40809602388,
+      47048080988,
+      65185326600
+    ],
+    "programme": [
+      2119797733,
+      2493879687,
+      3442383256
+    ],
+    "commercial": [
+      25800834293,
+      29882006566,
+      42023271434
+    ]
+  },
+  "top_drivers": "Run: helpdesk (51%), Run: hosting (28%) and Run: onsite resources (5%) contribute most of the range.",
+  "confidence": "low",
+  "calibration": "uncalibrated",
+  "line_count": 169,
+  "lines": {
+    "pre_build.discovery/L-C01": [
+      86827500,
+      102150000,
+      148117500
+    ],
+    "pre_build.architecture/L-C02": [
+      296381250,
+      336796875,
+      454675781
+    ],
+    "pre_build.ui_ux/L-C03": [
+      143139150,
+      168399000,
+      244178550
+    ],
+    "build.module_development/L-C04": [
+      96083203,
+      113039063,
+      163906641
+    ],
+    "build.module_development/L-C05": [
+      801000900,
+      942354000,
+      1366413300
+    ],
+    "build.module_development/L-C06": [
+      205425000,
+      256781250,
+      410850000
+    ],
+    "build.module_development/L-C07": [
+      94579102,
+      111269531,
+      161340820
+    ],
+    "build.module_development/L-C08": [
+      107788118,
+      126809550,
+      183873848
+    ],
+    "build.module_development/L-C09": [
+      17595000,
+      20700000,
+      30015000
+    ],
+    "build.module_development/L-C10": [
+      24832474,
+      29214675,
+      42361279
+    ],
+    "build.module_development/L-C11": [
+      44011406,
+      51778125,
+      75078281
+    ],
+    "build.module_development/L-C12": [
+      36217969,
+      42609375,
+      61783594
+    ],
+    "build.module_development/L-C13": [
+      32576250,
+      38325000,
+      55571250
+    ],
+    "build.module_development/L-C14": [
+      18933750,
+      22275000,
+      32298750
+    ],
+    "build.module_development/L-C15": [
+      98462385,
+      115838100,
+      167965245
+    ],
+    "build.module_development/L-C16": [
+      37680000,
+      47100000,
+      75360000
+    ],
+    "build.module_development/L-C17": [
+      47238750,
+      55575000,
+      80583750
+    ],
+    "build.module_development/L-C18": [
+      102796875,
+      120937500,
+      175359375
+    ],
+    "build.integrations/L-C19": [
+      70583203,
+      83039063,
+      141166406
+    ],
+    "build.integrations/L-C20": [
+      37198125,
+      43762500,
+      74396250
+    ],
+    "build.integrations/L-C21": [
+      55546875,
+      69433594,
+      128452148
+    ],
+    "build.integrations/L-C22": [
+      753975000,
+      942468750,
+      1743567188
+    ],
+    "build.integrations/L-C23": [
+      46497656,
+      54703125,
+      92995313
+    ],
+    "build.integrations/L-C24": [
+      18885938,
+      22218750,
+      37771875
+    ],
+    "build.integrations/L-C25": [
+      74655000,
+      93318750,
+      172639688
+    ],
+    "build.ai_ml/L-C26": [
+      344205176,
+      404947266,
+      668162988
+    ],
+    "build.ai_ml/L-C27": [
+      113925000,
+      142406250,
+      256331250
+    ],
+    "build.ai_ml/L-C28": [
+      106200000,
+      132750000,
+      238950000
+    ],
+    "build.ai_ml/L-C29": [
+      80703000,
+      100878750,
+      181581750
+    ],
+    "build.data_migration/L-C30": [
+      175567500,
+      206550000,
+      340807500
+    ],
+    "build.testing/L-C31": [
+      84787500,
+      99750000,
+      144637500
+    ],
+    "build.testing/L-C32": [
+      42322500,
+      48093750,
+      64926563
+    ],
+    "build.testing/L-C33": [
+      135675000,
+      150750000,
+      188437500
+    ],
+    "build.documentation/L-C34": [
+      37128000,
+      43680000,
+      63336000
+    ],
+    "build.devops/L-C35": [
+      83506500,
+      94893750,
+      128106563
+    ],
+    "go_live.security_audit/cert_in": [
+      57000000,
+      60000000,
+      69000000
+    ],
+    "go_live.security_audit/cert_in_reaudit": [
+      22800000,
+      24000000,
+      27600000
+    ],
+    "go_live.certification/stqc": [
+      47500000,
+      50000000,
+      57500000
+    ],
+    "go_live.training/labour": [
+      30600000,
+      36000000,
+      48600000
+    ],
+    "go_live.training/travel": [
+      127500000,
+      150000000,
+      202500000
+    ],
+    "go_live.hypercare/team": [
+      74800000,
+      88000000,
+      118800000
+    ],
+    "run.hosting/compute/y1": [
+      1679616000,
+      1866240000,
+      2332800000
+    ],
+    "run.hosting/database/y1": [
+      102643200,
+      114048000,
+      142560000
+    ],
+    "run.hosting/load_balancer/y1": [
+      2916000,
+      3240000,
+      4050000
+    ],
+    "run.hosting/monitoring/y1": [
+      3499200,
+      3888000,
+      4860000
+    ],
+    "run.hosting/storage/y1": [
+      8364546,
+      9293940,
+      11617425
+    ],
+    "run.hosting/transfer/y1": [
+      341718750,
+      379687500,
+      474609375
+    ],
+    "run.hosting/compute/y2": [
+      1813985280,
+      2015539200,
+      2579890176
+    ],
+    "run.hosting/database/y2": [
+      110854656,
+      123171840,
+      157659955
+    ],
+    "run.hosting/load_balancer/y2": [
+      3149280,
+      3499200,
+      4478976
+    ],
+    "run.hosting/monitoring/y2": [
+      3779136,
+      4199040,
+      5374771
+    ],
+    "run.hosting/storage/y2": [
+      17891060,
+      19878955,
+      25445063
+    ],
+    "run.hosting/transfer/y2": [
+      369056250,
+      410062500,
+      524880000
+    ],
+    "run.hosting/compute/y3": [
+      1959104102,
+      2176782336,
+      2851584860
+    ],
+    "run.hosting/database/y3": [
+      119723028,
+      133025587,
+      174263519
+    ],
+    "run.hosting/load_balancer/y3": [
+      3401222,
+      3779136,
+      4950668
+    ],
+    "run.hosting/monitoring/y3": [
+      4081467,
+      4534963,
+      5940802
+    ],
+    "run.hosting/storage/y3": [
+      28888282,
+      32098092,
+      42048500
+    ],
+    "run.hosting/transfer/y3": [
+      398580750,
+      442867500,
+      580156425
+    ],
+    "run.hosting/compute/y4": [
+      2115832431,
+      2350924923,
+      3150239397
+    ],
+    "run.hosting/database/y4": [
+      129300871,
+      143667634,
+      192514630
+    ],
+    "run.hosting/load_balancer/y4": [
+      3673320,
+      4081467,
+      5469166
+    ],
+    "run.hosting/monitoring/y4": [
+      4407984,
+      4897760,
+      6562999
+    ],
+    "run.hosting/storage/y4": [
+      41530558,
+      46145065,
+      61834386
+    ],
+    "run.hosting/transfer/y4": [
+      430467210,
+      478296900,
+      640917846
+    ],
+    "run.hosting/compute/y5": [
+      2285099025,
+      2538998917,
+      3478428516
+    ],
+    "run.hosting/database/y5": [
+      139644940,
+      155161045,
+      212570632
+    ],
+    "run.hosting/load_balancer/y5": [
+      3967186,
+      4407984,
+      6038938
+    ],
+    "run.hosting/monitoring/y5": [
+      4760623,
+      5289581,
+      7246726
+    ],
+    "run.hosting/storage/y5": [
+      56010713,
+      62234125,
+      85260752
+    ],
+    "run.hosting/transfer/y5": [
+      464904587,
+      516560652,
+      707688093
+    ],
+    "run.backups/backup/y1": [
+      25093638,
+      27881820,
+      34852275
+    ],
+    "run.backups/backup/y2": [
+      53673179,
+      59636866,
+      76335188
+    ],
+    "run.backups/backup/y3": [
+      86664847,
+      96294275,
+      126145500
+    ],
+    "run.backups/backup/y4": [
+      124591674,
+      138435194,
+      185503159
+    ],
+    "run.backups/backup/y5": [
+      168032138,
+      186702376,
+      255782255
+    ],
+    "run.dr/dr/y1": [
+      891129600,
+      990144000,
+      1237680000
+    ],
+    "run.dr/dr/y2": [
+      962419968,
+      1069355520,
+      1368775066
+    ],
+    "run.dr/dr/y3": [
+      1039413565,
+      1154903962,
+      1512924190
+    ],
+    "run.dr/dr/y4": [
+      1122566651,
+      1247296279,
+      1671377013
+    ],
+    "run.dr/dr/y5": [
+      1212371983,
+      1347079981,
+      1845499574
+    ],
+    "run.ai_runtime/gpu/y1": [
+      113193552,
+      188655921,
+      377311841
+    ],
+    "run.ai_runtime/gpu/y2": [
+      122249037,
+      203748394,
+      413609240
+    ],
+    "run.ai_runtime/gpu/y3": [
+      198043439,
+      330072399,
+      679949141
+    ],
+    "run.ai_runtime/gpu/y4": [
+      213886914,
+      356478191,
+      745039418
+    ],
+    "run.ai_runtime/gpu/y5": [
+      307997157,
+      513328595,
+      1088256620
+    ],
+    "run.licences/licence.bpm_suite.year/y1": [
+      153900000,
+      162000000,
+      186300000
+    ],
+    "run.licences/licence.chatbot_platform.year/y1": [
+      82080000,
+      86400000,
+      99360000
+    ],
+    "run.licences/licence.cms.year/y1": [
+      41040000,
+      43200000,
+      49680000
+    ],
+    "run.licences/licence.bpm_suite.year/y2": [
+      166212000,
+      174960000,
+      206452800
+    ],
+    "run.licences/licence.chatbot_platform.year/y2": [
+      88646400,
+      93312000,
+      110108160
+    ],
+    "run.licences/licence.cms.year/y2": [
+      44323200,
+      46656000,
+      55054080
+    ],
+    "run.licences/licence.bpm_suite.year/y3": [
+      179508960,
+      188956800,
+      228637728
+    ],
+    "run.licences/licence.chatbot_platform.year/y3": [
+      95738112,
+      100776960,
+      121940122
+    ],
+    "run.licences/licence.cms.year/y3": [
+      47869056,
+      50388480,
+      60970061
+    ],
+    "run.licences/licence.bpm_suite.year/y4": [
+      193869677,
+      204073344,
+      253050947
+    ],
+    "run.licences/licence.chatbot_platform.year/y4": [
+      103397161,
+      108839117,
+      134960505
+    ],
+    "run.licences/licence.cms.year/y4": [
+      51698580,
+      54419558,
+      67480252
+    ],
+    "run.licences/licence.bpm_suite.year/y5": [
+      209379251,
+      220399212,
+      279906999
+    ],
+    "run.licences/licence.chatbot_platform.year/y5": [
+      111668934,
+      117546246,
+      149283733
+    ],
+    "run.licences/licence.cms.year/y5": [
+      55834467,
+      58773123,
+      74641866
+    ],
+    "run.helpdesk/helpdesk/y1": [
+      2035756800,
+      2395008000,
+      3233260800
+    ],
+    "run.helpdesk/helpdesk/y2": [
+      2198617344,
+      2586608640,
+      3569519923
+    ],
+    "run.helpdesk/helpdesk/y3": [
+      2374506732,
+      2793537331,
+      3938887637
+    ],
+    "run.helpdesk/helpdesk/y4": [
+      2564467270,
+      3017020318,
+      4344509257
+    ],
+    "run.helpdesk/helpdesk/y5": [
+      2769624652,
+      3258381943,
+      4789821456
+    ],
+    "run.onsite_resources/onsite0/y1": [
+      242352000,
+      285120000,
+      384912000
+    ],
+    "run.onsite_resources/onsite1/y1": [
+      218116800,
+      256608000,
+      346420800
+    ],
+    "run.onsite_resources/onsite2/y1": [
+      169646400,
+      199584000,
+      269438400
+    ],
+    "run.onsite_resources/onsite0/y2": [
+      261740160,
+      307929600,
+      424942848
+    ],
+    "run.onsite_resources/onsite1/y2": [
+      235566144,
+      277136640,
+      382448563
+    ],
+    "run.onsite_resources/onsite2/y2": [
+      183218112,
+      215550720,
+      297459994
+    ],
+    "run.onsite_resources/onsite0/y3": [
+      282679373,
+      332563968,
+      468915195
+    ],
+    "run.onsite_resources/onsite1/y3": [
+      254411436,
+      299307571,
+      422023675
+    ],
+    "run.onsite_resources/onsite2/y3": [
+      197875561,
+      232794778,
+      328240636
+    ],
+    "run.onsite_resources/onsite0/y4": [
+      305293723,
+      359169085,
+      517203483
+    ],
+    "run.onsite_resources/onsite1/y4": [
+      274764350,
+      323252177,
+      465483135
+    ],
+    "run.onsite_resources/onsite2/y4": [
+      213705606,
+      251418360,
+      362042438
+    ],
+    "run.onsite_resources/onsite0/y5": [
+      329717220,
+      387902612,
+      570216840
+    ],
+    "run.onsite_resources/onsite1/y5": [
+      296745498,
+      349112351,
+      513195156
+    ],
+    "run.onsite_resources/onsite2/y5": [
+      230802054,
+      271531829,
+      399151788
+    ],
+    "run.change_requests/pool/y1": [
+      190717185,
+      224373158,
+      302903764
+    ],
+    "run.change_requests/pool/y2": [
+      205974559,
+      242323011,
+      334405755
+    ],
+    "run.change_requests/pool/y3": [
+      222452524,
+      261708852,
+      369009481
+    ],
+    "run.change_requests/pool/y4": [
+      240248726,
+      282645560,
+      407009607
+    ],
+    "run.change_requests/pool/y5": [
+      259468624,
+      305257205,
+      448728091
+    ],
+    "run.patching_bugfix/bugfix/y1": [
+      228860622,
+      269247790,
+      363484517
+    ],
+    "run.patching_bugfix/patching/y1": [
+      98083124,
+      115391910,
+      155779079
+    ],
+    "run.patching_bugfix/upgrade/y1": [
+      163471873,
+      192319850,
+      259631798
+    ],
+    "run.patching_bugfix/bugfix/y2": [
+      247169471,
+      290787613,
+      401286907
+    ],
+    "run.patching_bugfix/patching/y2": [
+      105929773,
+      124623263,
+      171980103
+    ],
+    "run.patching_bugfix/upgrade/y2": [
+      176549622,
+      207705438,
+      286633505
+    ],
+    "run.patching_bugfix/bugfix/y3": [
+      266943029,
+      314050622,
+      442811378
+    ],
+    "run.patching_bugfix/patching/y3": [
+      114404155,
+      134593124,
+      189776305
+    ],
+    "run.patching_bugfix/upgrade/y3": [
+      190673592,
+      224321873,
+      316293841
+    ],
+    "run.patching_bugfix/bugfix/y4": [
+      288298471,
+      339174672,
+      488411528
+    ],
+    "run.patching_bugfix/patching/y4": [
+      123556488,
+      145360574,
+      209319226
+    ],
+    "run.patching_bugfix/upgrade/y4": [
+      205927480,
+      242267623,
+      348865377
+    ],
+    "run.patching_bugfix/bugfix/y5": [
+      311362349,
+      366308646,
+      538473710
+    ],
+    "run.patching_bugfix/patching/y5": [
+      133441007,
+      156989420,
+      230774447
+    ],
+    "run.patching_bugfix/upgrade/y5": [
+      222401678,
+      261649033,
+      384624078
+    ],
+    "run.annual_audit/audit/y1": [
+      41040000,
+      43200000,
+      49680000
+    ],
+    "run.annual_audit/audit/y2": [
+      44323200,
+      46656000,
+      55054080
+    ],
+    "run.annual_audit/audit/y3": [
+      47869056,
+      50388480,
+      60970061
+    ],
+    "run.annual_audit/audit/y4": [
+      51698580,
+      54419558,
+      67480252
+    ],
+    "run.annual_audit/audit/y5": [
+      55834467,
+      58773123,
+      74641866
+    ],
+    "run.ssl_domain/ssl_domain/y1": [
+      2718900,
+      2862000,
+      3291300
+    ],
+    "run.ssl_domain/ssl_domain/y2": [
+      2936412,
+      3090960,
+      3647333
+    ],
+    "run.ssl_domain/ssl_domain/y3": [
+      3171325,
+      3338237,
+      4039267
+    ],
+    "run.ssl_domain/ssl_domain/y4": [
+      3425031,
+      3605296,
+      4470567
+    ],
+    "run.ssl_domain/ssl_domain/y5": [
+      3699033,
+      3893719,
+      4945024
+    ],
+    "programme.project_management/pm": [
+      942480000,
+      1108800000,
+      1496880000
+    ],
+    "programme.project_management/om_y1": [
+      169646400,
+      199584000,
+      269438400
+    ],
+    "programme.project_management/om_y2": [
+      183218112,
+      215550720,
+      297459994
+    ],
+    "programme.project_management/om_y3": [
+      197875561,
+      232794778,
+      328240636
+    ],
+    "programme.project_management/om_y4": [
+      213705606,
+      251418360,
+      362042438
+    ],
+    "programme.project_management/om_y5": [
+      230802054,
+      271531829,
+      399151788
+    ],
+    "programme.steering_meetings/steering": [
+      7650000,
+      9000000,
+      12150000
+    ],
+    "programme.mis_reports/mis": [
+      13770000,
+      16200000,
+      21870000
+    ],
+    "programme.travel/travel": [
+      38250000,
+      45000000,
+      60750000
+    ],
+    "programme.environments/envs": [
+      122400000,
+      144000000,
+      194400000
+    ],
+    "commercial.emd/lockup": [
+      45000000,
+      45000000,
+      45000000
+    ],
+    "commercial.pbg/total": [
+      255883722,
+      296194177,
+      415670769
+    ],
+    "commercial.working_capital/total": [
+      627918830,
+      745326020,
+      1134229142
+    ],
+    "commercial.penalty_reserve/total": [
+      896473813,
+      1036045177,
+      1445893692
+    ],
+    "commercial.exit_management/exit": [
+      47600000,
+      56000000,
+      75600000
+    ],
+    "commercial.contingency/total": [
+      4553837462,
+      5271222917,
+      7397489384
+    ],
+    "commercial.margin/total": [
+      8140386750,
+      9425301796,
+      13239238843
+    ],
+    "commercial.gst/total": [
+      11233733716,
+      13006916479,
+      18270149604
+    ]
+  }
+}

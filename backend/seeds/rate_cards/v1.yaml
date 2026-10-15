@@ -1,0 +1,81 @@
+# Rate card v1. amount is in major units of `currency` (INR rupees, USD dollars) and stored as a
+# Decimal, never a float. Units ending in "ratio_*" are fractions, not money.
+# Every amount is an uncalibrated placeholder; replace with sourced prices (M5 adds AWS import).
+version: v1
+effective_date: 2026-10-01
+status: active
+source: placeholder
+items:
+  # ---- roles: INR per person-day (fully loaded cost to the vendor) -------------------------
+  - {key: role.project_manager, kind: role, unit: per_person_day, amount: 14000, source: placeholder}
+  - {key: role.solution_architect, kind: role, unit: per_person_day, amount: 18000, source: placeholder}
+  - {key: role.business_analyst, kind: role, unit: per_person_day, amount: 9000, source: placeholder}
+  - {key: role.ui_ux_designer, kind: role, unit: per_person_day, amount: 9000, source: placeholder}
+  - {key: role.senior_developer, kind: role, unit: per_person_day, amount: 10000, source: placeholder}
+  - {key: role.developer, kind: role, unit: per_person_day, amount: 7000, source: placeholder}
+  - {key: role.qa_engineer, kind: role, unit: per_person_day, amount: 6000, source: placeholder}
+  - {key: role.devops_engineer, kind: role, unit: per_person_day, amount: 9000, source: placeholder}
+  - {key: role.ml_engineer, kind: role, unit: per_person_day, amount: 13000, source: placeholder}
+  - {key: role.security_engineer, kind: role, unit: per_person_day, amount: 12000, source: placeholder}
+  - {key: role.data_engineer, kind: role, unit: per_person_day, amount: 8000, source: placeholder}
+  - {key: role.technical_writer, kind: role, unit: per_person_day, amount: 5500, source: placeholder}
+  - {key: role.trainer, kind: role, unit: per_person_day, amount: 6000, source: placeholder}
+  - {key: role.helpdesk_executive, kind: role, unit: per_person_day, amount: 2500, source: placeholder}
+
+  # ---- AWS ap-south-1 (USD, on-demand; reserved discount is a parameter) -------------------
+  - {key: cloud.aws.app_server.month, kind: cloud_sku, unit: per_instance_month, amount: 146.00, currency: USD, region: ap-south-1, source: placeholder}
+  - {key: cloud.aws.db.small.month, kind: cloud_sku, unit: per_instance_month, amount: 73.00, currency: USD, region: ap-south-1, source: placeholder}
+  - {key: cloud.aws.db.medium.month, kind: cloud_sku, unit: per_instance_month, amount: 219.00, currency: USD, region: ap-south-1, source: placeholder}
+  - {key: cloud.aws.db.large.month, kind: cloud_sku, unit: per_instance_month, amount: 876.00, currency: USD, region: ap-south-1, source: placeholder}
+  - {key: cloud.aws.storage.gb_month, kind: cloud_sku, unit: per_gb_month, amount: 0.025, currency: USD, region: ap-south-1, source: placeholder}
+  - {key: cloud.aws.backup.gb_month, kind: cloud_sku, unit: per_gb_month, amount: 0.05, currency: USD, region: ap-south-1, source: placeholder}
+  - {key: cloud.aws.transfer_out.gb, kind: cloud_sku, unit: per_gb, amount: 0.1093, currency: USD, region: ap-south-1, source: placeholder}
+  - {key: cloud.aws.load_balancer.month, kind: cloud_sku, unit: per_month, amount: 25.00, currency: USD, region: ap-south-1, source: placeholder}
+  - {key: cloud.aws.monitoring.month, kind: cloud_sku, unit: per_month, amount: 50.00, currency: USD, region: ap-south-1, source: placeholder}
+
+  # ---- MeitY-empanelled Indian cloud (INR) --------------------------------------------------
+  - {key: cloud.indian_cloud.app_server.month, kind: cloud_sku, unit: per_instance_month, amount: 9000, region: india, source: placeholder}
+  - {key: cloud.indian_cloud.db.small.month, kind: cloud_sku, unit: per_instance_month, amount: 5000, region: india, source: placeholder}
+  - {key: cloud.indian_cloud.db.medium.month, kind: cloud_sku, unit: per_instance_month, amount: 15000, region: india, source: placeholder}
+  - {key: cloud.indian_cloud.db.large.month, kind: cloud_sku, unit: per_instance_month, amount: 55000, region: india, source: placeholder}
+  - {key: cloud.indian_cloud.storage.gb_month, kind: cloud_sku, unit: per_gb_month, amount: 2.00, region: india, source: placeholder}
+  - {key: cloud.indian_cloud.backup.gb_month, kind: cloud_sku, unit: per_gb_month, amount: 3.00, region: india, source: placeholder}
+  - {key: cloud.indian_cloud.transfer_out.gb, kind: cloud_sku, unit: per_gb, amount: 6.00, region: india, source: placeholder}
+  - {key: cloud.indian_cloud.load_balancer.month, kind: cloud_sku, unit: per_month, amount: 2500, region: india, source: placeholder}
+  - {key: cloud.indian_cloud.monitoring.month, kind: cloud_sku, unit: per_month, amount: 3000, region: india, source: placeholder}
+
+  # ---- on-prem (INR capex / opex) -----------------------------------------------------------
+  - {key: onprem.server.unit, kind: other, unit: per_server_capex, amount: 600000, source: placeholder}
+  - {key: onprem.storage.tb, kind: other, unit: per_tb_capex, amount: 40000, source: placeholder}
+  - {key: onprem.colocation.rack_month, kind: other, unit: per_rack_month, amount: 45000, source: placeholder}
+
+  # ---- AI runtime ---------------------------------------------------------------------------
+  - {key: llm_token.default.input, kind: llm_token, unit: per_million_tokens, amount: 3.00, currency: USD, source: placeholder}
+  - {key: llm_token.default.output, kind: llm_token, unit: per_million_tokens, amount: 15.00, currency: USD, source: placeholder}
+  - {key: gpu_hour.l4, kind: gpu_hour, unit: per_gpu_hour, amount: 1.10, currency: USD, region: ap-south-1, source: placeholder}
+
+  # ---- licences (INR per year) --------------------------------------------------------------
+  - {key: licence.bpm_suite.year, kind: licence, unit: per_year, amount: 1500000, source: placeholder}
+  - {key: licence.cms.year, kind: licence, unit: per_year, amount: 400000, source: placeholder}
+  - {key: licence.chatbot_platform.year, kind: licence, unit: per_year, amount: 800000, source: placeholder}
+  - {key: licence.ssl_certificate.year, kind: licence, unit: per_year, amount: 25000, source: placeholder}
+  - {key: licence.domain.year, kind: licence, unit: per_year, amount: 1500, source: placeholder}
+
+  # ---- audits and certification (INR per engagement) ---------------------------------------
+  - {key: audit_fee.cert_in.small, kind: audit_fee, unit: per_audit, amount: 150000, source: placeholder}
+  - {key: audit_fee.cert_in.medium, kind: audit_fee, unit: per_audit, amount: 300000, source: placeholder}
+  - {key: audit_fee.cert_in.large, kind: audit_fee, unit: per_audit, amount: 600000, source: placeholder}
+  - {key: audit_fee.cert_in_reaudit.small, kind: audit_fee, unit: per_audit, amount: 60000, source: placeholder}
+  - {key: audit_fee.cert_in_reaudit.medium, kind: audit_fee, unit: per_audit, amount: 120000, source: placeholder}
+  - {key: audit_fee.cert_in_reaudit.large, kind: audit_fee, unit: per_audit, amount: 240000, source: placeholder}
+  - {key: audit_fee.cert_in_annual.small, kind: audit_fee, unit: per_year, amount: 100000, source: placeholder}
+  - {key: audit_fee.cert_in_annual.medium, kind: audit_fee, unit: per_year, amount: 200000, source: placeholder}
+  - {key: audit_fee.cert_in_annual.large, kind: audit_fee, unit: per_year, amount: 400000, source: placeholder}
+  - {key: audit_fee.stqc, kind: audit_fee, unit: per_certification, amount: 500000, source: placeholder}
+
+  # ---- bank charges, forex, other ----------------------------------------------------------
+  - {key: bank_charge.pbg_commission, kind: bank_charge, unit: ratio_per_year, amount: 0.015, source: placeholder}
+  - {key: forex.USD_INR, kind: other, unit: inr_per_usd, amount: 88.00, source: placeholder}
+  - {key: travel.outstation_trip, kind: other, unit: per_trip, amount: 25000, source: placeholder}
+  - {key: other.steering_meeting, kind: other, unit: per_meeting, amount: 15000, source: placeholder}
+  - {key: other.non_prod_environment.month, kind: other, unit: per_environment_month, amount: 40000, source: placeholder}

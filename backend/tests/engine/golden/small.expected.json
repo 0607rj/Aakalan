@@ -1,0 +1,429 @@
+{
+  "engine_version": "1.0.0",
+  "versions": {
+    "rate_card": "v1",
+    "parameters": "v1",
+    "catalog": "v1",
+    "taxonomy": "v1"
+  },
+  "feasible": true,
+  "totals": {
+    "likely_paise": 1750223395,
+    "low_sum_paise": 1528933877,
+    "high_sum_paise": 2334260988,
+    "p10_paise": 1806037462,
+    "p50_paise": 1870801973,
+    "p90_paise": 1940080935
+  },
+  "timeline": {
+    "build_effort_pd": "349.9585800000",
+    "build_effort_person_months": "15.90720818181818181818181818",
+    "max_team": "4.590720818181818181818181818",
+    "natural_duration_months": "3.5",
+    "deadline_months": null,
+    "delivery_duration_months": "3.5",
+    "programme_duration_months": "3.5",
+    "compression_ratio": null,
+    "compression_multiplier": "1",
+    "size_band": "small",
+    "status": "natural"
+  },
+  "by_stage": {
+    "pre_build": [
+      54393307,
+      62978832,
+      88448306
+    ],
+    "build": [
+      206515789,
+      236542488,
+      335891234
+    ],
+    "go_live": [
+      40894000,
+      44800000,
+      53900000
+    ],
+    "run": [
+      501454974,
+      577044727,
+      766141558
+    ],
+    "programme": [
+      199219592,
+      226385900,
+      287069216
+    ],
+    "commercial": [
+      526456215,
+      602471448,
+      802810674
+    ]
+  },
+  "top_drivers": "Run: helpdesk (35%), Programme: project management (20%) and Run: ai runtime (14%) contribute most of the range.",
+  "confidence": "medium",
+  "calibration": "uncalibrated",
+  "line_count": 72,
+  "lines": {
+    "pre_build.discovery/S-C01": [
+      25264800,
+      28710000,
+      38758500
+    ],
+    "pre_build.ui_ux/S-C02": [
+      29128507,
+      34268832,
+      49689806
+    ],
+    "build.module_development/S-C03": [
+      20633184,
+      23446800,
+      31653180
+    ],
+    "build.module_development/S-C04": [
+      49756861,
+      56541888,
+      76331549
+    ],
+    "build.module_development/S-C05": [
+      38511000,
+      43762500,
+      59079375
+    ],
+    "build.module_development/S-C06": [
+      11024640,
+      12528000,
+      16912800
+    ],
+    "build.module_development/S-C09": [
+      11704500,
+      13770000,
+      19966500
+    ],
+    "build.integrations/S-C07": [
+      10197000,
+      11587500,
+      18540000
+    ],
+    "build.ai_ml/S-C08": [
+      34807500,
+      40950000,
+      67567500
+    ],
+    "build.testing/S-C10": [
+      20710800,
+      23535000,
+      31772250
+    ],
+    "build.documentation/S-C11": [
+      9170304,
+      10420800,
+      14068080
+    ],
+    "go_live.security_audit/cert_in": [
+      14250000,
+      15000000,
+      17250000
+    ],
+    "go_live.security_audit/cert_in_reaudit": [
+      5700000,
+      6000000,
+      6900000
+    ],
+    "go_live.training/labour": [
+      1584000,
+      1800000,
+      2250000
+    ],
+    "go_live.hypercare/team": [
+      19360000,
+      22000000,
+      27500000
+    ],
+    "run.hosting/compute/y1": [
+      15435484,
+      17150538,
+      21438173
+    ],
+    "run.hosting/database/y1": [
+      7717742,
+      8575269,
+      10719086
+    ],
+    "run.hosting/monitoring/y1": [
+      5286125,
+      5873472,
+      7341840
+    ],
+    "run.hosting/storage/y1": [
+      191209,
+      212454,
+      265568
+    ],
+    "run.hosting/transfer/y1": [
+      112846,
+      125385,
+      156731
+    ],
+    "run.hosting/compute/y2": [
+      16670323,
+      18522581,
+      23708904
+    ],
+    "run.hosting/database/y2": [
+      8335162,
+      9261291,
+      11854452
+    ],
+    "run.hosting/monitoring/y2": [
+      5709015,
+      6343350,
+      8119488
+    ],
+    "run.hosting/storage/y2": [
+      213196,
+      236884,
+      303212
+    ],
+    "run.hosting/transfer/y2": [
+      121874,
+      135416,
+      173332
+    ],
+    "run.hosting/compute/y3": [
+      18003949,
+      20004388,
+      26205748
+    ],
+    "run.hosting/database/y3": [
+      9001975,
+      10002194,
+      13102874
+    ],
+    "run.hosting/monitoring/y3": [
+      6165736,
+      6850818,
+      8974571
+    ],
+    "run.hosting/storage/y3": [
+      237477,
+      263864,
+      345661
+    ],
+    "run.hosting/transfer/y3": [
+      131624,
+      146249,
+      191586
+    ],
+    "run.backups/backup/y1": [
+      764836,
+      849818,
+      1062272
+    ],
+    "run.backups/backup/y2": [
+      852784,
+      947538,
+      1212848
+    ],
+    "run.backups/backup/y3": [
+      949909,
+      1055454,
+      1382645
+    ],
+    "run.ai_runtime/llm_api/y1": [
+      7146058,
+      11910096,
+      23820192
+    ],
+    "run.ai_runtime/llm_api/y2": [
+      8217966,
+      13696610,
+      27804119
+    ],
+    "run.ai_runtime/llm_api/y3": [
+      9450661,
+      15751102,
+      32447270
+    ],
+    "run.helpdesk/helpdesk/y1": [
+      62726400,
+      71280000,
+      89100000
+    ],
+    "run.helpdesk/helpdesk/y2": [
+      67744512,
+      76982400,
+      98537472
+    ],
+    "run.helpdesk/helpdesk/y3": [
+      73164073,
+      83140992,
+      108914700
+    ],
+    "run.change_requests/pool/y1": [
+      11641022,
+      13228434,
+      16535543
+    ],
+    "run.change_requests/pool/y2": [
+      12572304,
+      14286709,
+      18286988
+    ],
+    "run.change_requests/pool/y3": [
+      13578088,
+      15429646,
+      20212836
+    ],
+    "run.patching_bugfix/bugfix/y1": [
+      13969227,
+      15874121,
+      19842651
+    ],
+    "run.patching_bugfix/patching/y1": [
+      5986811,
+      6803195,
+      8503993
+    ],
+    "run.patching_bugfix/upgrade/y1": [
+      9978019,
+      11338658,
+      14173322
+    ],
+    "run.patching_bugfix/bugfix/y2": [
+      15086765,
+      17144051,
+      21944385
+    ],
+    "run.patching_bugfix/patching/y2": [
+      6465756,
+      7347450,
+      9404736
+    ],
+    "run.patching_bugfix/upgrade/y2": [
+      10776261,
+      12245751,
+      15674561
+    ],
+    "run.patching_bugfix/bugfix/y3": [
+      16293706,
+      18515575,
+      24255403
+    ],
+    "run.patching_bugfix/patching/y3": [
+      6983017,
+      7935246,
+      10395173
+    ],
+    "run.patching_bugfix/upgrade/y3": [
+      11638361,
+      13225411,
+      17325288
+    ],
+    "run.annual_audit/audit/y1": [
+      10260000,
+      10800000,
+      12420000
+    ],
+    "run.annual_audit/audit/y2": [
+      11080800,
+      11664000,
+      13763520
+    ],
+    "run.annual_audit/audit/y3": [
+      11967264,
+      12597120,
+      15242515
+    ],
+    "run.ssl_domain/ssl_domain/y1": [
+      2718900,
+      2862000,
+      3291300
+    ],
+    "run.ssl_domain/ssl_domain/y2": [
+      2936412,
+      3090960,
+      3647333
+    ],
+    "run.ssl_domain/ssl_domain/y3": [
+      3171325,
+      3338237,
+      4039267
+    ],
+    "programme.project_management/pm": [
+      47432000,
+      53900000,
+      67375000
+    ],
+    "programme.project_management/om_y1": [
+      35126784,
+      39916800,
+      49896000
+    ],
+    "programme.project_management/om_y2": [
+      37936927,
+      43110144,
+      55180984
+    ],
+    "programme.project_management/om_y3": [
+      40971881,
+      46558956,
+      60992232
+    ],
+    "programme.steering_meetings/steering": [
+      2640000,
+      3000000,
+      3750000
+    ],
+    "programme.mis_reports/mis": [
+      2772000,
+      3150000,
+      3937500
+    ],
+    "programme.travel/travel": [
+      7700000,
+      8750000,
+      10937500
+    ],
+    "programme.environments/envs": [
+      24640000,
+      28000000,
+      35000000
+    ],
+    "commercial.pbg/total": [
+      1625302,
+      1860664,
+      2480801
+    ],
+    "commercial.working_capital/total": [
+      17801406,
+      20291581,
+      27565019
+    ],
+    "commercial.penalty_reserve/total": [
+      10024777,
+      11477519,
+      15314503
+    ],
+    "commercial.exit_management/exit": [
+      12320000,
+      14000000,
+      17500000
+    ],
+    "commercial.contingency/total": [
+      82452310,
+      94392346,
+      125852213
+    ],
+    "commercial.margin/total": [
+      169005218,
+      193466108,
+      258024428
+    ],
+    "commercial.gst/total": [
+      233227202,
+      266983230,
+      356073710
+    ]
+  }
+}

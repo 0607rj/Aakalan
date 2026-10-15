@@ -1,0 +1,554 @@
+{
+  "engine_version": "1.0.0",
+  "versions": {
+    "rate_card": "v1",
+    "parameters": "v1",
+    "catalog": "v1",
+    "taxonomy": "v1"
+  },
+  "feasible": true,
+  "totals": {
+    "likely_paise": 9595024243,
+    "low_sum_paise": 7972636736,
+    "high_sum_paise": 14838478055,
+    "p10_paise": 10280599136,
+    "p50_paise": 10781109612,
+    "p90_paise": 11348828683
+  },
+  "timeline": {
+    "build_effort_pd": "1805.89686300000",
+    "build_effort_person_months": "82.08622104545454545454545455",
+    "max_team": "9.472414736363636363636363637",
+    "natural_duration_months": "8.7",
+    "deadline_months": "7",
+    "delivery_duration_months": "7",
+    "programme_duration_months": "8.7",
+    "compression_ratio": "0.8045977011494252873563218391",
+    "compression_multiplier": "1.195402298850574712643678161",
+    "size_band": "medium",
+    "status": "compressed"
+  },
+  "by_stage": {
+    "pre_build": [
+      259855286,
+      297630098,
+      466822238
+    ],
+    "build": [
+      1440892884,
+      1705557578,
+      2993542531
+    ],
+    "go_live": [
+      94640000,
+      106400000,
+      135240000
+    ],
+    "run": [
+      2801404987,
+      3443703501,
+      5113414128
+    ],
+    "programme": [
+      591264036,
+      695604749,
+      949283515
+    ],
+    "commercial": [
+      2784579543,
+      3346128317,
+      5180175643
+    ]
+  },
+  "top_drivers": "Run: ai runtime (59%), Run: onsite resources (7%) and Programme: project management (6%) contribute most of the range.",
+  "confidence": "medium",
+  "calibration": "uncalibrated",
+  "line_count": 97,
+  "lines": {
+    "pre_build.discovery/M-C01": [
+      58344000,
+      68640000,
+      112940414
+    ],
+    "pre_build.architecture/M-C02": [
+      129412815,
+      147060017,
+      227266888
+    ],
+    "pre_build.ui_ux/M-C03": [
+      72098471,
+      81930081,
+      126614936
+    ],
+    "build.module_development/M-C04": [
+      54262902,
+      61662389,
+      95293198
+    ],
+    "build.module_development/M-C05": [
+      124906880,
+      141939636,
+      219353840
+    ],
+    "build.module_development/M-C06": [
+      140070181,
+      164788448,
+      271143292
+    ],
+    "build.module_development/M-C07": [
+      48903337,
+      57533338,
+      94665486
+    ],
+    "build.module_development/M-C08": [
+      58247696,
+      66190563,
+      102291049
+    ],
+    "build.module_development/M-C09": [
+      24710400,
+      28080000,
+      43394897
+    ],
+    "build.module_development/M-C10": [
+      16567501,
+      19491178,
+      32070829
+    ],
+    "build.module_development/M-C11": [
+      22583152,
+      26568414,
+      43715729
+    ],
+    "build.module_development/M-C12": [
+      14485407,
+      16460690,
+      25438388
+    ],
+    "build.module_development/M-C13": [
+      33231228,
+      37762759,
+      58358654
+    ],
+    "build.module_development/M-C14": [
+      58008690,
+      68245517,
+      112291331
+    ],
+    "build.integrations/M-C15": [
+      51168359,
+      60198069,
+      114099558
+    ],
+    "build.integrations/M-C16": [
+      64756810,
+      76184483,
+      144400244
+    ],
+    "build.integrations/M-C17": [
+      156783228,
+      195979034,
+      400855968
+    ],
+    "build.integrations/M-C18": [
+      12189517,
+      13851724,
+      24869417
+    ],
+    "build.ai_ml/M-C19": [
+      129232552,
+      161540690,
+      322338663
+    ],
+    "build.ai_ml/M-C20": [
+      55385379,
+      69231724,
+      138145141
+    ],
+    "build.ai_ml/M-C21": [
+      59140855,
+      73926069,
+      147512248
+    ],
+    "build.ai_ml/M-C22": [
+      22228745,
+      27785931,
+      55444111
+    ],
+    "build.data_migration/M-C23": [
+      69012966,
+      81191724,
+      149831394
+    ],
+    "build.testing/M-C24": [
+      55798690,
+      65645517,
+      108013285
+    ],
+    "build.testing/M-C25": [
+      23957727,
+      27224690,
+      42073098
+    ],
+    "build.testing/M-C26": [
+      72995090,
+      81105655,
+      117230300
+    ],
+    "build.documentation/M-C27": [
+      21176982,
+      24914097,
+      40993712
+    ],
+    "build.devops/M-C28": [
+      51088610,
+      58055239,
+      89718699
+    ],
+    "go_live.security_audit/cert_in": [
+      28500000,
+      30000000,
+      34500000
+    ],
+    "go_live.security_audit/cert_in_reaudit": [
+      11400000,
+      12000000,
+      13800000
+    ],
+    "go_live.training/labour": [
+      4590000,
+      5400000,
+      7290000
+    ],
+    "go_live.training/travel": [
+      12750000,
+      15000000,
+      20250000
+    ],
+    "go_live.hypercare/team": [
+      37400000,
+      44000000,
+      59400000
+    ],
+    "run.hosting/compute/y1": [
+      154354844,
+      171505382,
+      214381728
+    ],
+    "run.hosting/database/y1": [
+      46306453,
+      51451615,
+      64314518
+    ],
+    "run.hosting/load_balancer/y1": [
+      2643062,
+      2936736,
+      3670920
+    ],
+    "run.hosting/monitoring/y1": [
+      5286125,
+      5873472,
+      7341840
+    ],
+    "run.hosting/storage/y1": [
+      370855,
+      412061,
+      515076
+    ],
+    "run.hosting/transfer/y1": [
+      2821159,
+      3134622,
+      3918277
+    ],
+    "run.hosting/compute/y2": [
+      166703232,
+      185225813,
+      237089041
+    ],
+    "run.hosting/database/y2": [
+      50010970,
+      55567744,
+      71126712
+    ],
+    "run.hosting/load_balancer/y2": [
+      2854507,
+      3171675,
+      4059744
+    ],
+    "run.hosting/monitoring/y2": [
+      5709015,
+      6343350,
+      8119488
+    ],
+    "run.hosting/storage/y2": [
+      601231,
+      668034,
+      855084
+    ],
+    "run.hosting/transfer/y2": [
+      3046852,
+      3385391,
+      4333301
+    ],
+    "run.hosting/compute/y3": [
+      180039490,
+      200043878,
+      262057480
+    ],
+    "run.hosting/database/y3": [
+      54011847,
+      60013163,
+      78617244
+    ],
+    "run.hosting/load_balancer/y3": [
+      3082868,
+      3425409,
+      4487286
+    ],
+    "run.hosting/monitoring/y3": [
+      6165736,
+      6850818,
+      8974571
+    ],
+    "run.hosting/storage/y3": [
+      866093,
+      962326,
+      1260647
+    ],
+    "run.hosting/transfer/y3": [
+      3290600,
+      3656223,
+      4789652
+    ],
+    "run.backups/backup/y1": [
+      1483419,
+      1648243,
+      2060304
+    ],
+    "run.backups/backup/y2": [
+      2404922,
+      2672136,
+      3420334
+    ],
+    "run.backups/backup/y3": [
+      3464373,
+      3849303,
+      5042587
+    ],
+    "run.ai_runtime/llm_api/y1": [
+      119100960,
+      198501600,
+      397003200
+    ],
+    "run.ai_runtime/llm_api/y2": [
+      136966104,
+      228276840,
+      463401985
+    ],
+    "run.ai_runtime/llm_api/y3": [
+      157511020,
+      262518366,
+      540787834
+    ],
+    "run.helpdesk/helpdesk/y1": [
+      121176000,
+      142560000,
+      192456000
+    ],
+    "run.helpdesk/helpdesk/y2": [
+      130870080,
+      153964800,
+      212471424
+    ],
+    "run.helpdesk/helpdesk/y3": [
+      141339686,
+      166281984,
+      234457597
+    ],
+    "run.onsite_resources/onsite0/y1": [
+      169646400,
+      199584000,
+      269438400
+    ],
+    "run.onsite_resources/onsite0/y2": [
+      183218112,
+      215550720,
+      297459994
+    ],
+    "run.onsite_resources/onsite0/y3": [
+      197875561,
+      232794778,
+      328240636
+    ],
+    "run.change_requests/pool/y1": [
+      58023466,
+      68262901,
+      92154917
+    ],
+    "run.change_requests/pool/y2": [
+      62665344,
+      73723934,
+      101739028
+    ],
+    "run.change_requests/pool/y3": [
+      67678571,
+      79621848,
+      112266806
+    ],
+    "run.patching_bugfix/bugfix/y1": [
+      69628159,
+      81915482,
+      110585900
+    ],
+    "run.patching_bugfix/patching/y1": [
+      29840640,
+      35106635,
+      47393957
+    ],
+    "run.patching_bugfix/upgrade/y1": [
+      49734400,
+      58511058,
+      78989929
+    ],
+    "run.patching_bugfix/bugfix/y2": [
+      75198412,
+      88468720,
+      122086834
+    ],
+    "run.patching_bugfix/patching/y2": [
+      32227891,
+      37915166,
+      52322929
+    ],
+    "run.patching_bugfix/upgrade/y2": [
+      53713152,
+      63191943,
+      87204881
+    ],
+    "run.patching_bugfix/bugfix/y3": [
+      81214285,
+      95546218,
+      134720167
+    ],
+    "run.patching_bugfix/patching/y3": [
+      34806122,
+      40948379,
+      57737215
+    ],
+    "run.patching_bugfix/upgrade/y3": [
+      58010204,
+      68247298,
+      96228691
+    ],
+    "run.annual_audit/audit/y1": [
+      20520000,
+      21600000,
+      24840000
+    ],
+    "run.annual_audit/audit/y2": [
+      22161600,
+      23328000,
+      27527040
+    ],
+    "run.annual_audit/audit/y3": [
+      23934528,
+      25194240,
+      30485030
+    ],
+    "run.ssl_domain/ssl_domain/y1": [
+      2718900,
+      2862000,
+      3291300
+    ],
+    "run.ssl_domain/ssl_domain/y2": [
+      2936412,
+      3090960,
+      3647333
+    ],
+    "run.ssl_domain/ssl_domain/y3": [
+      3171325,
+      3338237,
+      4039267
+    ],
+    "programme.project_management/pm": [
+      227766000,
+      267960000,
+      361746000
+    ],
+    "programme.project_management/om_y1": [
+      84823200,
+      99792000,
+      134719200
+    ],
+    "programme.project_management/om_y2": [
+      91609056,
+      107775360,
+      148729997
+    ],
+    "programme.project_management/om_y3": [
+      98937780,
+      116397389,
+      164120318
+    ],
+    "programme.steering_meetings/steering": [
+      3825000,
+      4500000,
+      6075000
+    ],
+    "programme.mis_reports/mis": [
+      6655500,
+      7830000,
+      10570500
+    ],
+    "programme.travel/travel": [
+      18487500,
+      21750000,
+      29362500
+    ],
+    "programme.environments/envs": [
+      59160000,
+      69600000,
+      93960000
+    ],
+    "commercial.emd/lockup": [
+      6000000,
+      6000000,
+      6000000
+    ],
+    "commercial.pbg/total": [
+      9171036,
+      11042975,
+      17052658
+    ],
+    "commercial.working_capital/total": [
+      126676930,
+      148873661,
+      245839126
+    ],
+    "commercial.penalty_reserve/total": [
+      51880572,
+      62488959,
+      96583024
+    ],
+    "commercial.exit_management/exit": [
+      23800000,
+      28000000,
+      37800000
+    ],
+    "commercial.contingency/total": [
+      469607147,
+      565460633,
+      873189217
+    ],
+    "commercial.margin/total": [
+      881278932,
+      1060614323,
+      1640214966
+    ],
+    "commercial.gst/total": [
+      1216164926,
+      1463647766,
+      2263496652
+    ]
+  }
+}

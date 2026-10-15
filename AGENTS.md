@@ -50,15 +50,18 @@ backend/
     schemas/              # Pydantic API schemas
     services/
       engine/             # deterministic cost engine — NO llm imports, NO DB access
+                          #   core.calculate(EstimateInput) -> EstimateResult; formulas.py registry;
+                          #   context.LineBuilder records the trace of every line
       hosting/            # infra sizing -> cloud line items (pure, used by engine)
-      estimates/          # loads DB rows -> engine input snapshot -> persists results
-      seeding/            # YAML seed loading + validation
+      estimates/          # DB rows -> EstimateInput snapshot -> engine -> persisted Estimate
+      seeding/            # seed YAML loading, DB seeding, demo data, golden fixtures
       documents/ extraction/ retrieval/ mapping/ reports/ templates/   # later milestones
     llm/                  # LLMClient interface + implementations + prompts/ (M3+)
     jobs/                 # Huey instance and tasks
-  seeds/                  # taxonomy, catalog, rate_cards/, parameters/ (YAML, each value has a source)
+  seeds/                  # taxonomy.yaml, catalog.yaml, rate_cards/v1.yaml, parameters/v1.yaml
+                          #   (every value has a `source`; `placeholder` = uncalibrated)
   migrations/             # Alembic
-  tests/                  # api/, engine/ (golden/ fixtures + expected), core/
+  tests/                  # api/, core/, engine/ (unit, property, golden/*.yaml + *.expected.json)
 frontend/                 # Next.js app (src/app, src/components, src/lib); see frontend/AGENTS.md
 data/                     # gitignored: app.db, huey.db, uploads/, reports/, models/
 ```
@@ -73,7 +76,7 @@ Run from the repo root. `make <target>` and `python scripts/tasks.py <target>` a
 | Install deps (backend via uv, frontend via npm) | `make install` |
 | Dev servers: API :8000, web :3000, Huey worker | `make dev` |
 | Apply migrations | `make migrate` |
-| Load seed data (taxonomy, catalog, rate card, parameters, demo users) | `make seed` |
+| Load seed data (taxonomy, catalog, rate card, parameters, demo users + demo project) | `make seed` |
 | All tests (pytest + frontend typecheck/lint) | `make test` |
 | Backend tests only | `make test-backend` (or `cd backend && uv run pytest`) |
 | Lint / type-check (ruff, ruff format --check, mypy, eslint, prettier) | `make lint` |
@@ -87,6 +90,8 @@ Run from the repo root. `make <target>` and `python scripts/tasks.py <target>` a
 - Python: type hints everywhere; `ruff` + `mypy --strict` clean; Pydantic models at every boundary.
 - Engine (`services/engine`, `services/hosting`): small pure functions; every function documents its formula in its docstring; register each formula id in `engine/formulas.py`; deterministic arithmetic in `Decimal`, rounded to integer paise (`ROUND_HALF_UP`) at each cost line; floats only inside Monte Carlo.
 - No magic numbers in code: rates, multipliers, thresholds and defaults live in `backend/seeds/` YAML with a `source` (`placeholder` until calibrated). Any placeholder used marks the estimate **uncalibrated**.
+- Reference versions are immutable. To change a price or parameter, add a new version file (e.g. `rate_cards/v2.yaml`) — never edit a published version; `make seed` warns if a stored version differs from its file.
+- New engine line types: register the formula in `engine/formulas.py`, build the line through `PricingContext.builder(...)` so the trace is recorded, add a unit test, then `make golden` and review the diff.
 - Every tenant query goes through `app/core/tenancy.py` helpers (`scoped`, `get_owned`) so `org_id` is always applied.
 - Money: integer paise in the DB and API (`*_paise` fields). Rate amounts are `Decimal` strings in major units of their currency.
 - LLM output is validated against Pydantic schemas; document text is fenced in prompts and never treated as instructions.
