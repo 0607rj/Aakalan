@@ -73,7 +73,7 @@ def seed_reference(session: Session, data: ReferenceData) -> list[str]:
         row_card = session.scalars(select(RateCard).where(RateCard.version == card.version)).first()
         if row_card is None:
             add_rate_card(session, card)
-        elif rate_card_model(row_card) != card:
+        elif _sorted_items(rate_card_model(row_card)) != _sorted_items(card):
             warnings.append(f"rate card {card.version} differs from seed; stored version kept")
 
     for params in data.parameter_sets:
@@ -93,6 +93,11 @@ def seed_reference(session: Session, data: ReferenceData) -> list[str]:
             warnings.append(f"parameter set {params.version} differs; stored version kept")
     session.flush()
     return warnings
+
+
+def _sorted_items(card: ref.RateCard) -> ref.RateCard:
+    """Rate cards compare equal regardless of item order (the DB returns items by key)."""
+    return card.model_copy(update={"items": sorted(card.items, key=lambda i: i.key)})
 
 
 def add_rate_card(session: Session, card: ref.RateCard) -> RateCard:
