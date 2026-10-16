@@ -1,9 +1,10 @@
 """Estimates: calculate (new version), read, trace any line, scenarios, re-price."""
 
+import re
 from datetime import UTC, datetime
 from typing import Any
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Response, status
 
 from app.api.deps import CurrentUser, DbSession, EditorUser, can_see_margin
 from app.core.tenancy import get_owned, scoped
@@ -20,6 +21,9 @@ from app.schemas.estimate import (
 from app.services.engine.outputs import AssumptionOut, LineTrace
 from app.services.engine.scenarios import Scenario
 from app.services.estimates import service
+from app.services.reports.data import build_report
+from app.services.reports.excel import build_boq
+from app.services.reports.pdf import build_pdf
 
 router = APIRouter(tags=["estimates"])
 
@@ -191,3 +195,34 @@ def reprice(estimate_id: str, db: DbSession, user: EditorUser) -> EstimateOut:
     project = get_owned(db, Project, estimate.project_id, user.org_id)
     new = service.reprice(db, project, estimate, user, datetime.now(UTC).date())
     return _estimate_out(new, user)
+
+
+def _download_name(project: Project, estimate: Estimate, ext: str) -> str:
+    stem = re.sub(r"[^A-Za-z0-9]+", "-", project.name).strip("-")[:60] or "estimate"
+    return f"{stem}-v{estimate.version}.{ext}"
+
+
+@router.get("/estimates/{estimate_id}/report.pdf")
+def report_pdf(estimate_id: str, db: DbSession, user: CurrentUser) -> Response:
+    estimate = get_owned(db, Estimate, estimate_id, user.org_id)
+    project = get_owned(db, Project, estimate.project_id, user.org_id)
+    data = build_report(db, estimate, project, margin_visible=can_see_margin(user))
+    name = _download_name(project, estimate, "pdf")
+    return Response(
+        build_pdf(data),
+        media_type="application/pdf",
+        headers={"Content-Disposition": f'attachment; filename="{name}"'},
+    )
+
+
+@router.get("/estimates/{estimate_id}/boq.xlsx")
+def boq_xlsx(estimate_id: str, db: DbSession, user: CurrentUser) -> Response:
+    estimate = get_owned(db, Estimate, estimate_id, user.org_id)
+    project = get_owned(db, Project, estimate.project_id, user.org_id)
+    data = build_report(db, estimate, project, margin_visible=can_see_margin(user))
+    name = _download_name(project, estimate, "xlsx")
+    return Response(
+        build_boq(data),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f'attachment; filename="{name}"'},
+    )

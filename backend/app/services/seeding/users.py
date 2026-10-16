@@ -7,7 +7,7 @@ from app.core.security import hash_password
 from app.models import Organisation, Role, User
 
 DEMO_ORG_NAME = "Demo Systems Integrator"
-DEMO_EMAIL = "demo@aakalan.local"
+DEMO_EMAIL = "admin@gmail.com"
 # Roles are switched off for now: the single demo user has full access (admin).
 DEMO_USERS: tuple[tuple[str, str, Role], ...] = ((DEMO_EMAIL, "Demo User", Role.ADMIN),)
 

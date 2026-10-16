@@ -11,138 +11,39 @@ import {
   api,
   errorText,
   type QuickOptions,
-  type QuickQuestion,
+  type TenderDocument,
 } from "@/lib/api/client";
 import { useLoad } from "@/lib/use-load";
 import { cn } from "@/lib/utils";
 
-const STEP_LABELS = ["What to build", "A few questions", "Your cost"];
+import {
+  Calculating,
+  type Choice,
+  FeatureCard,
+  MANUAL_STEPS,
+  orderByImpact,
+  QuestionGroup,
+  StepIndicator,
+  useQuestionImpact,
+} from "./parts";
+import { ReviewForm } from "./review";
+import { UploadStep } from "./upload-step";
 
-type Choice = string | number;
-
-function StepIndicator({ current }: { current: number }) {
-  return (
-    <ol className="flex flex-wrap items-center gap-2 text-sm">
-      {STEP_LABELS.map((label, i) => {
-        const n = i + 1;
-        const done = n < current;
-        const active = n === current;
-        return (
-          <li key={label} className="flex items-center gap-2">
-            <span
-              className={cn(
-                "flex size-7 items-center justify-center rounded-full border text-xs font-semibold",
-                active && "border-primary bg-primary text-primary-foreground",
-                done && "border-primary text-primary",
-                !active && !done && "text-muted-foreground",
-              )}
-            >
-              {done ? "✓" : n}
-            </span>
-            <span
-              className={cn(
-                active ? "font-medium" : "text-muted-foreground",
-                "mr-2",
-              )}
-            >
-              {label}
-            </span>
-            {n < STEP_LABELS.length ? (
-              <span className="mr-2 hidden h-px w-8 bg-border sm:inline-block" />
-            ) : null}
-          </li>
-        );
-      })}
-    </ol>
-  );
-}
-
-function FeatureCard({
-  label,
-  hint,
-  checked,
-  onToggle,
+/** The tick-box path (no document, or the document could not be read). */
+function ManualForm({
+  options,
+  documentId = null,
+  initialName = "",
+  notice = null,
 }: {
-  label: string;
-  hint: string;
-  checked: boolean;
-  onToggle: () => void;
+  options: QuickOptions;
+  documentId?: string | null;
+  initialName?: string;
+  notice?: string | null;
 }) {
-  return (
-    <label
-      className={cn(
-        "flex cursor-pointer items-start gap-3 rounded-xl border bg-card p-4 transition-colors",
-        checked
-          ? "border-primary bg-primary/5 ring-1 ring-primary"
-          : "hover:border-primary/40 hover:bg-muted/40",
-      )}
-    >
-      <input
-        type="checkbox"
-        checked={checked}
-        onChange={onToggle}
-        className="mt-1 size-4 accent-primary"
-      />
-      <span className="flex flex-col gap-1">
-        <span className="font-semibold">{label}</span>
-        <span className="text-sm text-muted-foreground">{hint}</span>
-      </span>
-    </label>
-  );
-}
-
-function QuestionGroup({
-  question,
-  value,
-  onChange,
-}: {
-  question: QuickQuestion;
-  value: Choice;
-  onChange: (value: Choice) => void;
-}) {
-  return (
-    <fieldset className="flex flex-col gap-3">
-      <legend className="mb-3 text-base font-semibold">{question.label}</legend>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {question.options.map((option) => {
-          const selected = option.value === value;
-          return (
-            <label
-              key={String(option.value)}
-              className={cn(
-                "flex cursor-pointer flex-col gap-1 rounded-xl border bg-card p-4 transition-colors",
-                selected
-                  ? "border-primary bg-primary/5 ring-1 ring-primary"
-                  : "hover:border-primary/40 hover:bg-muted/40",
-              )}
-            >
-              <span className="flex items-center gap-2">
-                <input
-                  type="radio"
-                  name={question.key}
-                  checked={selected}
-                  onChange={() => onChange(option.value)}
-                  className="size-4 accent-primary"
-                />
-                <span className="font-semibold">{option.label}</span>
-              </span>
-              {option.hint ? (
-                <span className="pl-6 text-sm text-muted-foreground">
-                  {option.hint}
-                </span>
-              ) : null}
-            </label>
-          );
-        })}
-      </div>
-    </fieldset>
-  );
-}
-
-function WizardForm({ options }: { options: QuickOptions }) {
   const router = useRouter();
   const [step, setStep] = React.useState(1);
-  const [name, setName] = React.useState("");
+  const [name, setName] = React.useState(initialName);
   const [features, setFeatures] = React.useState<string[]>([]);
   const [choices, setChoices] = React.useState<Record<string, Choice>>(() =>
     Object.fromEntries(options.questions.map((q) => [q.key, q.default])),
@@ -158,6 +59,18 @@ function WizardForm({ options }: { options: QuickOptions }) {
       deadlineMonths >= 1 &&
       deadlineMonths <= 60);
   const canContinue = name.trim().length > 0 && features.length > 0;
+  const impacts = useQuestionImpact(
+    step === 2 && canContinue && deadlineValid
+      ? {
+          name: name.trim(),
+          features,
+          choices,
+          deadline_months: deadlineMonths,
+          document_id: documentId,
+          overrides: {},
+        }
+      : null,
+  );
 
   function toggle(key: string) {
     setFeatures((current) =>
@@ -181,6 +94,8 @@ function WizardForm({ options }: { options: QuickOptions }) {
         features,
         choices,
         deadline_months: deadlineMonths,
+        document_id: documentId,
+        overrides: {},
       });
       router.push(`/estimate/${summary.estimate_id}`);
     } catch (e) {
@@ -189,22 +104,12 @@ function WizardForm({ options }: { options: QuickOptions }) {
     }
   }
 
-  if (submitting) {
-    return (
-      <div className="flex flex-col items-center gap-4 py-24 text-center">
-        <StepIndicator current={3} />
-        <div className="mt-8 size-10 animate-spin rounded-full border-4 border-muted border-t-primary" />
-        <p className="text-lg font-medium">Working out your cost…</p>
-        <p className="text-sm text-muted-foreground">
-          This takes a few seconds.
-        </p>
-      </div>
-    );
-  }
+  if (submitting) return <Calculating labels={MANUAL_STEPS} />;
 
   return (
     <div className="flex flex-col gap-8">
-      <StepIndicator current={step} />
+      <StepIndicator labels={MANUAL_STEPS} current={step} />
+      <ErrorNotice message={notice} />
 
       {step === 1 ? (
         <section className="flex flex-col gap-6">
@@ -266,14 +171,16 @@ function WizardForm({ options }: { options: QuickOptions }) {
               A few questions
             </h1>
             <p className="mt-1 text-muted-foreground">
-              We have picked the usual answers. Change any that don&apos;t fit.
+              We have picked the usual answers. Change any that don&apos;t fit —
+              the ones that matter most for the price are first.
             </p>
           </div>
-          {options.questions.map((question) => (
+          {orderByImpact(options.questions, impacts).map((question) => (
             <QuestionGroup
               key={question.key}
               question={question}
               value={choices[question.key] ?? question.default}
+              impact={impacts.get(question.key)}
               onChange={(value) =>
                 setChoices((current) => ({ ...current, [question.key]: value }))
               }
@@ -330,10 +237,120 @@ function WizardForm({ options }: { options: QuickOptions }) {
   );
 }
 
+function StartChoice({
+  onUpload,
+  onManual,
+}: {
+  onUpload: () => void;
+  onManual: () => void;
+}) {
+  const card =
+    "flex flex-col gap-2 rounded-2xl border bg-card p-6 text-left shadow-sm transition-colors hover:border-primary/50 hover:bg-muted/40";
+  return (
+    <section className="flex flex-col gap-6">
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+          How would you like to start?
+        </h1>
+        <p className="mt-1 text-muted-foreground">
+          The quickest way is to upload the tender. We read it and fill in the
+          details for you to check.
+        </p>
+      </div>
+      <div className="grid gap-4 md:grid-cols-2">
+        <button
+          type="button"
+          onClick={onUpload}
+          className={cn(card, "border-primary/40 ring-1 ring-primary/20")}
+        >
+          <span className="text-3xl" aria-hidden>
+            📄
+          </span>
+          <span className="text-lg font-semibold">
+            Upload the tender document{" "}
+            <span className="text-sm font-normal text-primary">
+              (recommended)
+            </span>
+          </span>
+          <span className="text-muted-foreground">
+            PDF or Word. We find what it asks for and show the page each item
+            came from.
+          </span>
+        </button>
+        <button type="button" onClick={onManual} className={card}>
+          <span className="text-3xl" aria-hidden>
+            ✏️
+          </span>
+          <span className="text-lg font-semibold">
+            No document — I&apos;ll describe it myself
+          </span>
+          <span className="text-muted-foreground">
+            Tick what the software should do and answer a few questions.
+          </span>
+        </button>
+      </div>
+    </section>
+  );
+}
+
+type Mode =
+  | { kind: "start" }
+  | { kind: "upload" }
+  | { kind: "manual" }
+  | { kind: "review"; doc: TenderDocument };
+
+function Flow({ options }: { options: QuickOptions }) {
+  const [mode, setMode] = React.useState<Mode>({ kind: "start" });
+
+  function go(next: Mode) {
+    setMode(next);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+
+  switch (mode.kind) {
+    case "start":
+      return (
+        <StartChoice
+          onUpload={() => go({ kind: "upload" })}
+          onManual={() => go({ kind: "manual" })}
+        />
+      );
+    case "upload":
+      return (
+        <UploadStep
+          onUploaded={(doc) => go({ kind: "review", doc })}
+          onBack={() => go({ kind: "start" })}
+        />
+      );
+    case "manual":
+      return <ManualForm options={options} />;
+    case "review": {
+      const { doc } = mode;
+      if (doc.status !== "extracted" || !doc.extraction) {
+        return (
+          <ManualForm
+            options={options}
+            documentId={doc.id}
+            initialName={doc.project_name}
+            notice={
+              doc.error
+                ? `We saved your document but could not read it: ${doc.error} Please tick what the software should do instead.`
+                : "We saved your document but could not read it. Please tick what the software should do instead."
+            }
+          />
+        );
+      }
+      return (
+        <ReviewForm options={options} doc={doc} extraction={doc.extraction} />
+      );
+    }
+  }
+}
+
 export function NewEstimateWizard() {
   const loader = React.useCallback(() => api.quickOptions(), []);
   const { state } = useLoad(loader);
   if (state.kind === "loading") return <Loading />;
   if (state.kind === "error") return <ErrorNotice message={state.message} />;
-  return <WizardForm options={state.data} />;
+  return <Flow options={state.data} />;
 }

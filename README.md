@@ -18,8 +18,8 @@ make install          # or: python scripts/tasks.py install
 make dev              # migrates, seeds demo users, runs API :8000, web :3000 and the worker
 ```
 
-Sign in at http://localhost:3000 as `demo@aakalan.local` with the password from
-`SEED_USER_PASSWORD` (default `aakalan-dev`). This single user can do everything; role-based
+Sign in at http://localhost:3000 as `admin@gmail.com` with the password from
+`SEED_USER_PASSWORD` (default `admin123`; local development only). This single user can do everything; role-based
 access (admin / estimator / finance / viewer) exists in the backend but is switched off for now.
 API docs: http://localhost:8000/docs.
 
@@ -27,6 +27,10 @@ API docs: http://localhost:8000/docs.
 with confirmed requirements, components and answers: open it, go to **Estimate** and click
 **Calculate estimate**. Click any cost line to see its trace back to the RFP clause. All seed
 rates and parameters are placeholders, so every estimate is labelled *uncalibrated*.
+
+**Reading tender documents.** Upload works without any setup using a basic keyword reader.
+For much better reading, create an API key at https://console.anthropic.com, put it in `.env` as
+`ANTHROPIC_API_KEY=...` and restart. The AI only reads the document; it never calculates prices.
 
 ```sh
 make test             # backend pytest + frontend typecheck
