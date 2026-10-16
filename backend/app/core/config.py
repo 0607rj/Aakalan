@@ -32,10 +32,16 @@ class Settings(BaseSettings):
     cors_origins: list[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
 
     seeds_dir: Path = BACKEND_DIR / "seeds"
-    seed_user_password: str = "aakalan-dev"
+    seed_user_password: str = "admin123"
 
-    llm_provider: str = "anthropic"
-    llm_model: str = "claude-sonnet-5-5"
+    llm_provider: str = "anthropic"  # "anthropic" or "fake" (tests / offline demos)
+    llm_model: str = "claude-opus-5-5"
+    llm_effort: str = "medium"
+    llm_max_output_tokens: int = 16000
+    anthropic_api_key: str = ""
+
+    upload_max_mb: int = 25
+    document_max_chars: int = 2_500_000  # ~600k tokens; larger documents are refused, not cut
 
     @model_validator(mode="after")
     def _no_dev_secret_in_production(self) -> "Settings":

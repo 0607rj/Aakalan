@@ -104,6 +104,27 @@ and returns a `QuickSummary` (headline range, five plain parts, build-only cost,
 biggest uncertainty in words). `GET /estimates/{id}/summary` rebuilds the summary for any
 estimate. The summary only regroups integer paise produced by the engine.
 
+## Document reading (M3, scoped to simple mode)
+
+```
+POST /documents ─► services/documents/parsing.py   PDF (pdfplumber) / DOCX → page texts
+                ─► services/extraction/tender.py   ai_read (LLMClient, prompt llm/prompts/extract_tender_v1.md)
+                │                                   or basic_read (keywords) when no key is set
+                └► verify_findings                  drop anything whose quote is not on its page
+POST /quick-estimates {document_id, features, choices, overrides}
+                ─► requirements cite document + clause + page → engine → trace back to the page
+```
+
+`app/llm/client.py` defines the `LLMClient` protocol (`AnthropicClient`, `FakeClient` for
+tests); the provider and model are configuration. The engine never imports it (tested).
+
+## Reports and outcomes
+
+`services/reports/data.py` reads the stored estimate once and feeds both `pdf.py` (reportlab)
+and `excel.py` (openpyxl), so exports show exactly the API's numbers:
+`GET /estimates/{id}/report.pdf`, `GET /estimates/{id}/boq.xlsx`. `services/outcomes.py` records
+bid results (`POST /projects/{id}/outcome`) and builds the calibration report (`GET /calibration`).
+
 ## Frontend
 
 Next.js 16 App Router under `frontend/src/app`. Hand-written shadcn/ui-style primitives in

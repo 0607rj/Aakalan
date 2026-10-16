@@ -185,3 +185,49 @@ class Assumption(IdTimestampMixin, TenantMixin, Base):
     overridden: Mapped[bool] = mapped_column(Boolean, default=False)
 
     estimate: Mapped[Estimate] = relationship(back_populates="assumptions")
+
+
+class Document(IdTimestampMixin, TenantMixin, Base):
+    """An uploaded tender document, its parsed pages and the verified AI extraction."""
+
+    __tablename__ = "documents"
+
+    project_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("projects.id", ondelete="CASCADE"), index=True
+    )
+    filename: Mapped[str] = mapped_column(String(255))
+    kind: Mapped[str] = mapped_column(String(20), default="rfp")  # rfp/annexure/corrigendum/...
+    file_type: Mapped[str] = mapped_column(String(10))  # pdf / docx
+    pages: Mapped[int] = mapped_column(Integer)
+    approximate_pages: Mapped[bool] = mapped_column(Boolean, default=False)
+    sha256: Mapped[str] = mapped_column(String(64), index=True)
+    storage_path: Mapped[str] = mapped_column(String(500))
+    parse_status: Mapped[str] = mapped_column(String(20))  # parsed / extracted / failed
+    page_texts: Mapped[list[Any]]  # [{page, text}]
+    extraction: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
+    error: Mapped[str | None] = mapped_column(Text)
+    llm_model: Mapped[str | None] = mapped_column(String(60))
+    llm_input_tokens: Mapped[int] = mapped_column(Integer, default=0)
+    llm_output_tokens: Mapped[int] = mapped_column(Integer, default=0)
+    uploaded_by: Mapped[str | None] = mapped_column(String(36), ForeignKey("users.id"))
+
+
+class Outcome(IdTimestampMixin, TenantMixin, Base):
+    """What actually happened to a bid: result, our quoted price, the winning (L1) price and,
+    for won projects, the final actual cost. Feeds the calibration report (brief M5)."""
+
+    __tablename__ = "outcomes"
+
+    project_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("projects.id", ondelete="CASCADE"), index=True
+    )
+    estimate_id: Mapped[str | None] = mapped_column(
+        String(36), ForeignKey("estimates.id", ondelete="SET NULL")
+    )
+    bid_result: Mapped[str] = mapped_column(String(20))  # won / lost / withdrawn / not_bid
+    our_price_paise: Mapped[int | None] = mapped_column(BigInteger)
+    l1_price_paise: Mapped[int | None] = mapped_column(BigInteger)
+    actual_cost_paise: Mapped[int | None] = mapped_column(BigInteger)
+    actual_effort_pd: Mapped[int | None] = mapped_column(Integer)
+    notes: Mapped[str] = mapped_column(Text, default="")
+    recorded_by: Mapped[str | None] = mapped_column(String(36), ForeignKey("users.id"))

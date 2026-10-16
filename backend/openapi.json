@@ -1087,6 +1087,96 @@
         }
       }
     },
+    "/estimates/{estimate_id}/report.pdf": {
+      "get": {
+        "tags": [
+          "estimates"
+        ],
+        "summary": "Report Pdf",
+        "operationId": "report_pdf_estimates__estimate_id__report_pdf_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "estimate_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Estimate Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/estimates/{estimate_id}/boq.xlsx": {
+      "get": {
+        "tags": [
+          "estimates"
+        ],
+        "summary": "Boq Xlsx",
+        "operationId": "boq_xlsx_estimates__estimate_id__boq_xlsx_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "estimate_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Estimate Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/admin/rate-cards": {
       "get": {
         "tags": [
@@ -1460,6 +1550,339 @@
           }
         }
       }
+    },
+    "/quick-estimate/impact": {
+      "post": {
+        "tags": [
+          "quick estimate"
+        ],
+        "summary": "Impact",
+        "description": "Which questions change the price most for this form (nothing is saved).",
+        "operationId": "impact_quick_estimate_impact_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuickRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/QuestionImpact"
+                  },
+                  "type": "array",
+                  "title": "Response Impact Quick Estimate Impact Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/documents": {
+      "post": {
+        "tags": [
+          "documents"
+        ],
+        "summary": "Upload",
+        "description": "Sync on purpose: parsing and the AI call run in the threadpool, not the event loop.",
+        "operationId": "upload_documents_post",
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_documents_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/documents/{document_id}": {
+      "get": {
+        "tags": [
+          "documents"
+        ],
+        "summary": "Get Document",
+        "operationId": "get_document_documents__document_id__get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "document_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Document Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DocumentOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/documents/{document_id}/prebid-queries": {
+      "get": {
+        "tags": [
+          "documents"
+        ],
+        "summary": "Get Prebid Queries",
+        "description": "Draft pre-bid queries: vague clauses plus key facts the tender leaves out.",
+        "operationId": "get_prebid_queries_documents__document_id__prebid_queries_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "document_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Document Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PrebidQuery"
+                  },
+                  "title": "Response Get Prebid Queries Documents  Document Id  Prebid Queries Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/projects/{project_id}/outcome": {
+      "post": {
+        "tags": [
+          "outcomes"
+        ],
+        "summary": "Post Outcome",
+        "operationId": "post_outcome_projects__project_id__outcome_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/OutcomeIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OutcomeOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "tags": [
+          "outcomes"
+        ],
+        "summary": "Read Outcome",
+        "operationId": "read_outcome_projects__project_id__outcome_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "project_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Project Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "$ref": "#/components/schemas/OutcomeOut"
+                    },
+                    {
+                      "type": "null"
+                    }
+                  ],
+                  "title": "Response Read Outcome Projects  Project Id  Outcome Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/calibration": {
+      "get": {
+        "tags": [
+          "outcomes"
+        ],
+        "summary": "Calibration",
+        "operationId": "calibration_calibration_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CalibrationReport"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -1516,6 +1939,20 @@
         ],
         "title": "AssumptionOut"
       },
+      "Body_upload_documents_post": {
+        "properties": {
+          "file": {
+            "type": "string",
+            "contentMediaType": "application/octet-stream",
+            "title": "File"
+          }
+        },
+        "type": "object",
+        "required": [
+          "file"
+        ],
+        "title": "Body_upload_documents_post"
+      },
       "Calibration": {
         "properties": {
           "status": {
@@ -1541,6 +1978,221 @@
           "placeholder_refs"
         ],
         "title": "Calibration"
+      },
+      "CalibrationReport": {
+        "properties": {
+          "outcomes": {
+            "type": "integer",
+            "title": "Outcomes"
+          },
+          "with_l1": {
+            "type": "integer",
+            "title": "With L1"
+          },
+          "with_actual_cost": {
+            "type": "integer",
+            "title": "With Actual Cost"
+          },
+          "median_l1_vs_estimate_percent": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Median L1 Vs Estimate Percent"
+          },
+          "l1_within_range_share_percent": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "L1 Within Range Share Percent"
+          },
+          "median_actual_vs_estimate_percent": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Median Actual Vs Estimate Percent"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/CalibrationRow"
+            },
+            "type": "array",
+            "title": "Rows"
+          }
+        },
+        "type": "object",
+        "required": [
+          "outcomes",
+          "with_l1",
+          "with_actual_cost",
+          "median_l1_vs_estimate_percent",
+          "l1_within_range_share_percent",
+          "median_actual_vs_estimate_percent",
+          "message",
+          "rows"
+        ],
+        "title": "CalibrationReport"
+      },
+      "CalibrationRow": {
+        "properties": {
+          "project_id": {
+            "type": "string",
+            "title": "Project Id"
+          },
+          "project_name": {
+            "type": "string",
+            "title": "Project Name"
+          },
+          "estimate_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Estimate Id"
+          },
+          "bid_result": {
+            "type": "string",
+            "title": "Bid Result"
+          },
+          "p10_paise": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P10 Paise"
+          },
+          "p50_paise": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P50 Paise"
+          },
+          "p90_paise": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "P90 Paise"
+          },
+          "our_price_paise": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Our Price Paise"
+          },
+          "l1_price_paise": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "L1 Price Paise"
+          },
+          "actual_cost_paise": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actual Cost Paise"
+          },
+          "l1_vs_estimate_percent": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "L1 Vs Estimate Percent"
+          },
+          "l1_within_range": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "L1 Within Range"
+          },
+          "actual_vs_estimate_percent": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actual Vs Estimate Percent"
+          }
+        },
+        "type": "object",
+        "required": [
+          "project_id",
+          "project_name",
+          "estimate_id",
+          "bid_result",
+          "p10_paise",
+          "p50_paise",
+          "p90_paise",
+          "our_price_paise",
+          "l1_price_paise",
+          "actual_cost_paise",
+          "l1_vs_estimate_percent",
+          "l1_within_range",
+          "actual_vs_estimate_percent"
+        ],
+        "title": "CalibrationRow"
       },
       "Catalog": {
         "properties": {
@@ -2080,6 +2732,99 @@
         ],
         "title": "CostLineOut"
       },
+      "DocumentOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "project_id": {
+            "type": "string",
+            "title": "Project Id"
+          },
+          "project_name": {
+            "type": "string",
+            "title": "Project Name"
+          },
+          "filename": {
+            "type": "string",
+            "title": "Filename"
+          },
+          "file_type": {
+            "type": "string",
+            "title": "File Type"
+          },
+          "pages": {
+            "type": "integer",
+            "title": "Pages"
+          },
+          "approximate_pages": {
+            "type": "boolean",
+            "title": "Approximate Pages"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "error": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Error"
+          },
+          "extraction": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/TenderExtraction"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "llm_model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Llm Model"
+          },
+          "llm_input_tokens": {
+            "type": "integer",
+            "title": "Llm Input Tokens"
+          },
+          "llm_output_tokens": {
+            "type": "integer",
+            "title": "Llm Output Tokens"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "project_id",
+          "project_name",
+          "filename",
+          "file_type",
+          "pages",
+          "approximate_pages",
+          "status",
+          "error",
+          "extraction",
+          "llm_model",
+          "llm_input_tokens",
+          "llm_output_tokens"
+        ],
+        "title": "DocumentOut"
+      },
       "Driver": {
         "type": "string",
         "enum": [
@@ -2552,6 +3297,57 @@
         ],
         "title": "FeatureOut"
       },
+      "FoundFeature": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/VerifiedEvidence"
+            },
+            "type": "array",
+            "title": "Evidence"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "label",
+          "evidence"
+        ],
+        "title": "FoundFeature"
+      },
+      "FoundValue": {
+        "properties": {
+          "value": {
+            "title": "Value"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/VerifiedEvidence"
+            },
+            "type": "array",
+            "title": "Evidence"
+          }
+        },
+        "type": "object",
+        "required": [
+          "value",
+          "label",
+          "evidence"
+        ],
+        "title": "FoundValue"
+      },
       "GroupTotal": {
         "properties": {
           "key": {
@@ -2813,6 +3609,227 @@
         ],
         "title": "OptionOut"
       },
+      "OptionPrice": {
+        "properties": {
+          "value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              }
+            ],
+            "title": "Value"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "likely_paise": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Likely Paise"
+          }
+        },
+        "type": "object",
+        "required": [
+          "value",
+          "label",
+          "likely_paise"
+        ],
+        "title": "OptionPrice"
+      },
+      "OutcomeIn": {
+        "properties": {
+          "estimate_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Estimate Id"
+          },
+          "bid_result": {
+            "type": "string",
+            "enum": [
+              "won",
+              "lost",
+              "withdrawn",
+              "not_bid"
+            ],
+            "title": "Bid Result"
+          },
+          "our_price_paise": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Our Price Paise"
+          },
+          "l1_price_paise": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "L1 Price Paise"
+          },
+          "actual_cost_paise": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actual Cost Paise"
+          },
+          "actual_effort_pd": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actual Effort Pd"
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 2000,
+            "title": "Notes",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "bid_result"
+        ],
+        "title": "OutcomeIn"
+      },
+      "OutcomeOut": {
+        "properties": {
+          "estimate_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Estimate Id"
+          },
+          "bid_result": {
+            "type": "string",
+            "enum": [
+              "won",
+              "lost",
+              "withdrawn",
+              "not_bid"
+            ],
+            "title": "Bid Result"
+          },
+          "our_price_paise": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Our Price Paise"
+          },
+          "l1_price_paise": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "L1 Price Paise"
+          },
+          "actual_cost_paise": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actual Cost Paise"
+          },
+          "actual_effort_pd": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 0.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Actual Effort Pd"
+          },
+          "notes": {
+            "type": "string",
+            "maxLength": 2000,
+            "title": "Notes",
+            "default": ""
+          },
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "project_id": {
+            "type": "string",
+            "title": "Project Id"
+          },
+          "recorded_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Recorded At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "bid_result",
+          "id",
+          "project_id",
+          "recorded_at"
+        ],
+        "title": "OutcomeOut"
+      },
       "ParameterSetSummary": {
         "properties": {
           "version": {
@@ -2895,6 +3912,60 @@
           "share_percent"
         ],
         "title": "PlainPart"
+      },
+      "PrebidQuery": {
+        "properties": {
+          "number": {
+            "type": "integer",
+            "title": "Number"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "unclear",
+              "missing"
+            ],
+            "title": "Kind"
+          },
+          "topic": {
+            "type": "string",
+            "title": "Topic"
+          },
+          "clause_ref": {
+            "type": "string",
+            "title": "Clause Ref"
+          },
+          "page": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Page"
+          },
+          "quote": {
+            "type": "string",
+            "title": "Quote"
+          },
+          "query": {
+            "type": "string",
+            "title": "Query"
+          }
+        },
+        "type": "object",
+        "required": [
+          "number",
+          "kind",
+          "topic",
+          "clause_ref",
+          "page",
+          "quote",
+          "query"
+        ],
+        "title": "PrebidQuery"
       },
       "ProjectCreate": {
         "properties": {
@@ -3037,6 +4108,37 @@
         },
         "type": "object",
         "title": "ProjectUpdate"
+      },
+      "QuestionImpact": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "impact_paise": {
+            "type": "integer",
+            "title": "Impact Paise"
+          },
+          "options": {
+            "items": {
+              "$ref": "#/components/schemas/OptionPrice"
+            },
+            "type": "array",
+            "title": "Options"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "label",
+          "impact_paise",
+          "options"
+        ],
+        "title": "QuestionImpact"
       },
       "QuestionOut": {
         "properties": {
@@ -3234,6 +4336,32 @@
               }
             ],
             "title": "Deadline Months"
+          },
+          "document_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Id"
+          },
+          "overrides": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            },
+            "type": "object",
+            "title": "Overrides",
+            "default": {}
           }
         },
         "type": "object",
@@ -4173,6 +5301,71 @@
         ],
         "title": "TaskType"
       },
+      "TenderExtraction": {
+        "properties": {
+          "reader": {
+            "type": "string",
+            "title": "Reader"
+          },
+          "prompt_version": {
+            "type": "string",
+            "title": "Prompt Version"
+          },
+          "project_name": {
+            "type": "string",
+            "title": "Project Name"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "features": {
+            "items": {
+              "$ref": "#/components/schemas/FoundFeature"
+            },
+            "type": "array",
+            "title": "Features"
+          },
+          "choices": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/FoundValue"
+            },
+            "type": "object",
+            "title": "Choices"
+          },
+          "numbers": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/FoundValue"
+            },
+            "type": "object",
+            "title": "Numbers"
+          },
+          "unclear_points": {
+            "items": {
+              "$ref": "#/components/schemas/UnclearPoint"
+            },
+            "type": "array",
+            "title": "Unclear Points"
+          },
+          "dropped_findings": {
+            "type": "integer",
+            "title": "Dropped Findings"
+          }
+        },
+        "type": "object",
+        "required": [
+          "reader",
+          "prompt_version",
+          "project_name",
+          "summary",
+          "features",
+          "choices",
+          "numbers",
+          "unclear_points",
+          "dropped_findings"
+        ],
+        "title": "TenderExtraction"
+      },
       "Timeline": {
         "properties": {
           "build_effort_pd": {
@@ -4588,6 +5781,52 @@
         ],
         "title": "TraceStep"
       },
+      "UnclearPoint": {
+        "properties": {
+          "topic": {
+            "type": "string",
+            "title": "Topic"
+          },
+          "why": {
+            "type": "string",
+            "title": "Why"
+          },
+          "page": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Page"
+          },
+          "clause_ref": {
+            "type": "string",
+            "title": "Clause Ref",
+            "default": ""
+          },
+          "quote": {
+            "type": "string",
+            "title": "Quote",
+            "default": ""
+          },
+          "prebid_query": {
+            "type": "string",
+            "title": "Prebid Query",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "topic",
+          "why",
+          "page"
+        ],
+        "title": "UnclearPoint",
+        "description": "Stored form; quote is blank when it could not be found on the cited page."
+      },
       "UserOut": {
         "properties": {
           "id": {
@@ -4664,6 +5903,29 @@
           "type"
         ],
         "title": "ValidationError"
+      },
+      "VerifiedEvidence": {
+        "properties": {
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "clause_ref": {
+            "type": "string",
+            "title": "Clause Ref"
+          },
+          "quote": {
+            "type": "string",
+            "title": "Quote"
+          }
+        },
+        "type": "object",
+        "required": [
+          "page",
+          "clause_ref",
+          "quote"
+        ],
+        "title": "VerifiedEvidence"
       }
     },
     "securitySchemes": {

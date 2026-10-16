@@ -89,18 +89,21 @@ questions:
     default: medium
     options:
       - value: small
+        max_users: 5000
         label: Small
         component_size: S
         hint: Up to about 5,000 users
         answers: {users_total: 5000, peak_concurrent_users: 100, documents_per_month: 500, chatbot_queries_per_day: 300}
         extra_components: []
       - value: medium
+        max_users: 100000
         label: Medium
         component_size: M
         hint: Up to about 1 lakh users
         answers: {users_total: 100000, peak_concurrent_users: 1000, documents_per_month: 5000, chatbot_queries_per_day: 5000}
         extra_components: [performance_load_testing]
       - value: large
+        max_users: null
         label: Large
         component_size: L
         hint: Lakhs to crores of users, state or national level
@@ -135,6 +138,12 @@ questions:
       - {value: office, label: Office hours, hint: "8 hours a day, 5 days a week", answers: {support_sla: 8x5}}
       - {value: always, label: Round the clock, hint: "24 hours, 7 days", answers: {support_sla: 24x7}}
 
+# Ranking the open questions by price impact re-prices the form once per option. Fewer
+# simulation runs keep it fast; a fixed seed keeps the ranking stable between requests.
+impact:
+  monte_carlo_runs: 500
+  seed: 2026
+
 # Plain words for the biggest sources of uncertainty (taxonomy bucket -> phrase).
 plain_drivers:
   run.ai_runtime: how much people use the AI chatbot
@@ -149,3 +158,50 @@ plain_drivers:
   build.module_development: building the main screens and features
   build.data_migration: moving old data
   programme.project_management: project management
+
+# Basic reader (used when no AI key is configured): words and phrases that mark a feature or a
+# choice in a tender. Matched case-insensitively on whole words; every match is reported with
+# its page, nearest clause number and the sentence it appears in.
+keywords:
+  features:
+    online_forms: [online application, online registration, registration form, application form, empanelment, online submission, e-application]
+    approval_workflow: [workflow, approval process, multi-level approval, scrutiny, approving authority, file movement]
+    documents: [document management, document upload, upload documents, upload of documents, dms, document repository]
+    dashboards: [dashboard, dashboards, mis report, mis reports, analytics, reports module]
+    ai_chatbot: [chatbot, chat bot, virtual assistant, conversational ai, generative ai, ai assistant]
+    payments: [payment gateway, online payment, e-payment, fee payment, paygov, sbi epay]
+    aadhaar_digilocker: [aadhaar, ekyc, e-kyc, digilocker]
+    staff_login: [single sign-on, single sign on, sso, ldap, parichay, active directory]
+    connect_existing: [sap, erp, legacy system, legacy systems, existing system, existing systems, third-party integration]
+    languages: [bilingual, multilingual, regional language, regional languages, bhashini, hindi]
+    accessibility: [gigw, wcag, accessibility, divyang]
+    public_website: [public website, content management system, cms, notices and circulars, news and events]
+    grievances: [grievance, grievances, complaint management, helpdesk ticket]
+    old_data: [data migration, legacy data, historical data, migration of existing data, digitisation of records]
+  choices:
+    availability:
+      critical: ["99.95%", "99.99%", disaster recovery, dr site]
+      high: ["99.9%"]
+      normal: ["99.5%"]
+    hosting:
+      indian_cloud: [meity empanelled, meity-empanelled, meghraj, government community cloud, gcc]
+      on_prem: [on-premise, on premise, on-premises, state data centre, state data center, sdc]
+      aws: [amazon web services, aws]
+    support_hours:
+      always: [24x7, 24 x 7, "24*7", 24/7, round the clock]
+      office: [8x5, 8 x 5, office hours, working hours]
+
+# Pre-bid queries. Vague wording and missing key facts make bidders price differently; each
+# becomes a drafted query citing the clause. {clause}, {page} and {quote} are filled in.
+prebid:
+  vague_phrases: [as per requirement, as per the requirement, as required, adequate, suitable, appropriate number, etc., to be decided, tbd, as directed, as and when required, if required, wherever applicable, and so on, minimum but not limited to, not limited to]
+  vague_query: 'Clause {clause} (page {page}) states: "{quote}". The scope or quantity here is not specified. Kindly clarify the exact requirement so that all bidders can price on the same basis.'
+  missing:
+    users_total: The RFP does not state the expected number of registered users. Kindly specify the number of users the system must support at launch and at the end of the contract.
+    peak_concurrent_users: The RFP does not state the expected number of concurrent users at peak load. Kindly specify it, as it determines the hosting and performance-testing scope.
+    om_years: The RFP does not state the period of operations and maintenance after go-live. Kindly confirm the O&M / AMC period.
+    deadline_months: The RFP does not state the implementation timeline. Kindly confirm the time allowed from the date of the work order to go-live.
+    availability: The RFP does not state the required system availability (uptime SLA). Kindly specify the uptime required and whether a disaster-recovery site is in scope.
+    hosting: The RFP does not state where the system will be hosted. Kindly confirm the hosting environment (government cloud, state data centre or bidder's cloud) and who bears the hosting cost.
+    support_hours: The RFP does not state the helpdesk support hours. Kindly confirm whether support is required during office hours or round the clock.
+    chatbot_queries_per_day: The RFP asks for an AI chatbot but does not state the expected usage. Kindly indicate the expected number of chatbot queries per day and the languages to be supported.

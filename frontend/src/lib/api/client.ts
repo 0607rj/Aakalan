@@ -47,6 +47,19 @@ export type QuickQuestion = Schemas["QuestionOut"];
 export type QuickRequest = Schemas["QuickRequest"];
 export type QuickSummary = Schemas["QuickSummary"];
 export type PlainPart = Schemas["PlainPart"];
+export type TenderDocument = Schemas["DocumentOut"];
+export type TenderExtraction = Schemas["TenderExtraction"];
+export type FoundFeature = Schemas["FoundFeature"];
+export type FoundValue = Schemas["FoundValue"];
+export type Evidence = Schemas["VerifiedEvidence"];
+export type UnclearPoint = Schemas["UnclearPoint"];
+export type QuestionImpact = Schemas["QuestionImpact"];
+export type OptionPrice = Schemas["OptionPrice"];
+export type PrebidQuery = Schemas["PrebidQuery"];
+export type OutcomeIn = Schemas["OutcomeIn"];
+export type Outcome = Schemas["OutcomeOut"];
+export type BidResult = OutcomeIn["bid_result"];
+export type CalibrationReport = Schemas["CalibrationReport"];
 
 export class ApiError extends Error {
   constructor(
@@ -110,7 +123,8 @@ async function request<T>(
   const { auth = true, headers, ...rest } = init;
   const finalHeaders = new Headers(headers);
   finalHeaders.set("Accept", "application/json");
-  if (rest.body !== undefined) {
+  // FormData sets its own multipart Content-Type (with boundary); never override it.
+  if (rest.body !== undefined && !(rest.body instanceof FormData)) {
     finalHeaders.set("Content-Type", "application/json");
   }
   if (auth) {
@@ -200,7 +214,65 @@ export const api = {
   listQuickEstimates: () => request<QuickSummary[]>("/quick-estimates"),
   getEstimateSummary: (estimateId: string) =>
     request<QuickSummary>(`/estimates/${estimateId}/summary`),
+
+  uploadDocument: (file: File) => {
+    const form = new FormData();
+    form.append("file", file);
+    return request<TenderDocument>("/documents", {
+      method: "POST",
+      body: form,
+    });
+  },
+  prebidQueries: (documentId: string) =>
+    request<PrebidQuery[]>(`/documents/${documentId}/prebid-queries`),
+
+  questionImpact: (body: QuickRequest, signal?: AbortSignal) =>
+    request<QuestionImpact[]>("/quick-estimate/impact", {
+      method: "POST",
+      body: JSON.stringify(body),
+      signal,
+    }),
+
+  getOutcome: (projectId: string) =>
+    request<Outcome | null>(`/projects/${projectId}/outcome`),
+  recordOutcome: (projectId: string, body: OutcomeIn) =>
+    send<Outcome>("POST", `/projects/${projectId}/outcome`, body),
+  calibration: () => request<CalibrationReport>("/calibration"),
 };
+
+function filenameFrom(disposition: string | null, fallback: string): string {
+  const match = disposition?.match(/filename="?([^";]+)"?/i);
+  return match?.[1] ?? fallback;
+}
+
+/**
+ * Downloads an authenticated file (PDF report / Excel BoQ). Plain links cannot send the bearer
+ * token, so the file is fetched, turned into a Blob and saved via a temporary link.
+ */
+export async function downloadFile(
+  path: string,
+  fallbackName: string,
+): Promise<void> {
+  const headers = new Headers();
+  const token = getToken();
+  if (token) headers.set("Authorization", `Bearer ${token}`);
+  const response = await fetch(`${API_URL}${path}`, { headers });
+  if (!response.ok) {
+    throw new ApiError(response.status, await errorMessage(response));
+  }
+  const blob = await response.blob();
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filenameFrom(
+    response.headers.get("Content-Disposition"),
+    fallbackName,
+  );
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+}
 
 export function errorText(error: unknown): string {
   if (error instanceof Error) return error.message;

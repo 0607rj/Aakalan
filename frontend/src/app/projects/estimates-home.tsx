@@ -5,23 +5,47 @@ import Link from "next/link";
 
 import { ErrorNotice, Loading } from "@/components/status";
 import { api, type QuickSummary } from "@/lib/api/client";
-import { formatDate, formatPaise } from "@/lib/format";
+import { formatDate, formatDecimal, formatPaise } from "@/lib/format";
 import { useLoad } from "@/lib/use-load";
 
 const STEPS = [
   {
-    title: "Tell us what to build",
-    text: "Tick the features you need, in plain words.",
+    title: "Upload the tender",
+    text: "PDF or Word. We read it and find what it asks for, with page numbers. No document? Just tick what you need.",
   },
   {
-    title: "Answer a few questions",
-    text: "How many users, how long to support it, and a deadline if any.",
+    title: "Check and fill the gaps",
+    text: "Untick anything wrong and answer only what the tender doesn't say.",
   },
   {
     title: "See your cost",
     text: "A total with a likely range, and where the money goes.",
   },
 ];
+
+function CalibrationCard() {
+  const loader = React.useCallback(() => api.calibration(), []);
+  const { state } = useLoad(loader);
+  if (state.kind !== "ready" || state.data.outcomes === 0) return null;
+  const report = state.data;
+  const share = report.l1_within_range_share_percent;
+  return (
+    <section className="flex flex-col gap-2 rounded-2xl border border-primary/20 bg-primary/5 px-6 py-5">
+      <h2 className="font-semibold">How close are our estimates?</h2>
+      <p className="text-muted-foreground">{report.message}</p>
+      {share !== null ? (
+        <p className="text-sm text-muted-foreground">
+          Winning prices fell inside our range in {formatDecimal(share, 0)}% of
+          tenders ({report.with_l1} with a winning price recorded).
+        </p>
+      ) : null}
+      <p className="text-xs text-muted-foreground">
+        Based on {report.outcomes} recorded bid result
+        {report.outcomes === 1 ? "" : "s"}.
+      </p>
+    </section>
+  );
+}
 
 function EstimateCard({ summary }: { summary: QuickSummary }) {
   return (
@@ -76,6 +100,8 @@ export function EstimatesHome() {
           Start a new estimate
         </Link>
       </section>
+
+      <CalibrationCard />
 
       <section className="flex flex-col gap-4">
         <h2 className="text-lg font-semibold">Your estimates</h2>

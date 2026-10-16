@@ -56,8 +56,13 @@ backend/
       estimates/          # DB rows -> EstimateInput snapshot -> engine -> persisted Estimate
       seeding/            # seed YAML loading, DB seeding, demo data, golden fixtures
       quick/              # simple mode: plain features/questions -> project -> estimate -> summary
+      documents/          # upload storage + PDF/DOCX parsing to page texts
+      extraction/         # tender reading: AI (LLMClient) or basic keyword reader + citation check,
+                          #   merge of several files (corrigenda override), pre-bid queries
+      reports/            # PDF report (reportlab) + Excel BoQ (openpyxl) from one ReportData
+      outcomes.py         # bid results + calibration report
       documents/ extraction/ retrieval/ mapping/ reports/ templates/   # later milestones
-    llm/                  # LLMClient interface + implementations + prompts/ (M3+)
+    llm/                  # LLMClient protocol, AnthropicClient, FakeClient; prompts/*.md (versioned)
     jobs/                 # Huey instance and tasks
   seeds/                  # taxonomy.yaml, catalog.yaml, rate_cards/v1.yaml, parameters/v1.yaml,
                           #   quick_estimate.yaml (plain features/questions for simple mode)
@@ -97,6 +102,7 @@ Run from the repo root. `make <target>` and `python scripts/tasks.py <target>` a
 - Every tenant query goes through `app/core/tenancy.py` helpers (`scoped`, `get_owned`) so `org_id` is always applied.
 - Money: integer paise in the DB and API (`*_paise` fields). Rate amounts are `Decimal` strings in major units of their currency.
 - LLM output is validated against Pydantic schemas; document text is fenced in prompts and never treated as instructions.
+- Tests never call a real LLM: `tests/conftest.py` blanks `ANTHROPIC_API_KEY`; use `set_llm_client(FakeClient(...))`.
 - TypeScript: strict mode; never hand-write API types — run `make openapi` (writes
   `backend/openapi.json` and `frontend/src/lib/api/schema.d.ts`; commit both).
 - Next.js 16 differs from older versions: read `frontend/AGENTS.md` and the docs in

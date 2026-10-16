@@ -5,15 +5,20 @@ description = "Aakalan — defensible cost estimation for Govt/PSU software tend
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "alembic>=1.20.0",
+    "anthropic>=1.15.0",
     "argon2-cffi>=25.1.0",
     "fastapi>=0.143.1",
     "huey>=3.4.0",
     "numpy>=2.5.4",
+    "openpyxl>=3.1.5",
+    "pdfplumber>=0.11.10",
     "pydantic>=2.9",
     "pydantic-settings>=2.16.0",
     "pyjwt>=2.15.1",
+    "python-docx>=1.2.0",
     "python-multipart>=0.0.32",
     "pyyaml>=6.0.3",
+    "reportlab>=5.0.1",
     "sqlalchemy>=2.0",
     "sqlite-vec>=0.1.9",
     "uvicorn[standard]>=0.54.0",
@@ -41,7 +46,7 @@ plugins = ["pydantic.mypy"]
 exclude = ["migrations/versions/"]
 
 [[tool.mypy.overrides]]
-module = ["huey.*", "sqlite_vec.*"]
+module = ["huey.*", "sqlite_vec.*", "reportlab.*"]
 ignore_missing_imports = true
 
 [tool.pydantic-mypy]
@@ -59,5 +64,6 @@ dev = [
     "mypy>=2.4.0",
     "pytest>=9.1.1",
     "ruff>=0.17.0",
+    "types-openpyxl>=3.1.5.20260827",
     "types-pyyaml>=6.0.12.20260906",
 ]

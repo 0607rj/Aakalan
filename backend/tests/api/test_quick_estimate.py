@@ -84,3 +84,23 @@ def test_every_mapped_component_exists_in_catalog(client: TestClient, admin_head
     mapped = set(cfg.base_components) | {k for f in cfg.features for k in f.components}
     mapped |= {k for o in cfg.questions["scale"].options for k in o.extra_components}
     assert mapped <= keys
+
+
+def test_questions_ranked_by_price_impact(client: TestClient, admin_headers: H) -> None:
+    body = {"name": "Impact", "features": ["online_forms", "ai_chatbot"], "choices": {}}
+    r = client.post("/quick-estimate/impact", json=body, headers=admin_headers)
+    assert r.status_code == 200, r.text
+    ranked = r.json()
+    impacts = [q["impact_paise"] for q in ranked]
+    assert impacts == sorted(impacts, reverse=True) and impacts[0] > 0
+    scale = next(q for q in ranked if q["key"] == "scale")
+    prices = [o["likely_paise"] for o in scale["options"]]
+    assert prices == sorted(prices)  # small < medium < large
+    # nothing was saved
+    assert all(
+        s["name"] != "Impact" for s in client.get("/quick-estimates", headers=admin_headers).json()
+    )
+    with_years = client.post(
+        "/quick-estimate/impact", json={**body, "overrides": {"om_years": 4}}, headers=admin_headers
+    ).json()
+    assert "support_years" not in {q["key"] for q in with_years}

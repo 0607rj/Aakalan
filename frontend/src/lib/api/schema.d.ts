@@ -299,6 +299,40 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/estimates/{estimate_id}/report.pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Report Pdf */
+        get: operations["report_pdf_estimates__estimate_id__report_pdf_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/estimates/{estimate_id}/boq.xlsx": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Boq Xlsx */
+        get: operations["boq_xlsx_estimates__estimate_id__boq_xlsx_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/admin/rate-cards": {
         parameters: {
             query?: never;
@@ -440,6 +474,118 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/quick-estimate/impact": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Impact
+         * @description Which questions change the price most for this form (nothing is saved).
+         */
+        post: operations["impact_quick_estimate_impact_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Upload
+         * @description Sync on purpose: parsing and the AI call run in the threadpool, not the event loop.
+         */
+        post: operations["upload_documents_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/documents/{document_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Document */
+        get: operations["get_document_documents__document_id__get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/documents/{document_id}/prebid-queries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Prebid Queries
+         * @description Draft pre-bid queries: vague clauses plus key facts the tender leaves out.
+         */
+        get: operations["get_prebid_queries_documents__document_id__prebid_queries_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/projects/{project_id}/outcome": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Outcome */
+        get: operations["read_outcome_projects__project_id__outcome_get"];
+        put?: never;
+        /** Post Outcome */
+        post: operations["post_outcome_projects__project_id__outcome_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/calibration": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Calibration */
+        get: operations["calibration_calibration_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -467,6 +613,11 @@ export interface components {
             /** Overridden */
             overridden: boolean;
         };
+        /** Body_upload_documents_post */
+        Body_upload_documents_post: {
+            /** File */
+            file: string;
+        };
         /** Calibration */
         Calibration: {
             /**
@@ -476,6 +627,54 @@ export interface components {
             status: "calibrated" | "uncalibrated";
             /** Placeholder Refs */
             placeholder_refs: string[];
+        };
+        /** CalibrationReport */
+        CalibrationReport: {
+            /** Outcomes */
+            outcomes: number;
+            /** With L1 */
+            with_l1: number;
+            /** With Actual Cost */
+            with_actual_cost: number;
+            /** Median L1 Vs Estimate Percent */
+            median_l1_vs_estimate_percent: string | null;
+            /** L1 Within Range Share Percent */
+            l1_within_range_share_percent: string | null;
+            /** Median Actual Vs Estimate Percent */
+            median_actual_vs_estimate_percent: string | null;
+            /** Message */
+            message: string;
+            /** Rows */
+            rows: components["schemas"]["CalibrationRow"][];
+        };
+        /** CalibrationRow */
+        CalibrationRow: {
+            /** Project Id */
+            project_id: string;
+            /** Project Name */
+            project_name: string;
+            /** Estimate Id */
+            estimate_id: string | null;
+            /** Bid Result */
+            bid_result: string;
+            /** P10 Paise */
+            p10_paise: number | null;
+            /** P50 Paise */
+            p50_paise: number | null;
+            /** P90 Paise */
+            p90_paise: number | null;
+            /** Our Price Paise */
+            our_price_paise: number | null;
+            /** L1 Price Paise */
+            l1_price_paise: number | null;
+            /** Actual Cost Paise */
+            actual_cost_paise: number | null;
+            /** L1 Vs Estimate Percent */
+            l1_vs_estimate_percent: string | null;
+            /** L1 Within Range */
+            l1_within_range: boolean | null;
+            /** Actual Vs Estimate Percent */
+            actual_vs_estimate_percent: string | null;
         };
         /** Catalog */
         Catalog: {
@@ -668,6 +867,34 @@ export interface components {
              */
             redacted: boolean;
         };
+        /** DocumentOut */
+        DocumentOut: {
+            /** Id */
+            id: string;
+            /** Project Id */
+            project_id: string;
+            /** Project Name */
+            project_name: string;
+            /** Filename */
+            filename: string;
+            /** File Type */
+            file_type: string;
+            /** Pages */
+            pages: number;
+            /** Approximate Pages */
+            approximate_pages: boolean;
+            /** Status */
+            status: string;
+            /** Error */
+            error: string | null;
+            extraction: components["schemas"]["TenderExtraction"] | null;
+            /** Llm Model */
+            llm_model: string | null;
+            /** Llm Input Tokens */
+            llm_input_tokens: number;
+            /** Llm Output Tokens */
+            llm_output_tokens: number;
+        };
         /**
          * Driver
          * @description NFR drivers a catalog component can be sensitive to.
@@ -806,6 +1033,24 @@ export interface components {
             /** Hint */
             hint: string;
         };
+        /** FoundFeature */
+        FoundFeature: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Evidence */
+            evidence: components["schemas"]["VerifiedEvidence"][];
+        };
+        /** FoundValue */
+        FoundValue: {
+            /** Value */
+            value: unknown;
+            /** Label */
+            label: string;
+            /** Evidence */
+            evidence: components["schemas"]["VerifiedEvidence"][];
+        };
         /** GroupTotal */
         GroupTotal: {
             /** Key */
@@ -896,6 +1141,70 @@ export interface components {
             /** Hint */
             hint: string;
         };
+        /** OptionPrice */
+        OptionPrice: {
+            /** Value */
+            value: string | number;
+            /** Label */
+            label: string;
+            /** Likely Paise */
+            likely_paise: number | null;
+        };
+        /** OutcomeIn */
+        OutcomeIn: {
+            /** Estimate Id */
+            estimate_id?: string | null;
+            /**
+             * Bid Result
+             * @enum {string}
+             */
+            bid_result: "won" | "lost" | "withdrawn" | "not_bid";
+            /** Our Price Paise */
+            our_price_paise?: number | null;
+            /** L1 Price Paise */
+            l1_price_paise?: number | null;
+            /** Actual Cost Paise */
+            actual_cost_paise?: number | null;
+            /** Actual Effort Pd */
+            actual_effort_pd?: number | null;
+            /**
+             * Notes
+             * @default
+             */
+            notes: string;
+        };
+        /** OutcomeOut */
+        OutcomeOut: {
+            /** Estimate Id */
+            estimate_id?: string | null;
+            /**
+             * Bid Result
+             * @enum {string}
+             */
+            bid_result: "won" | "lost" | "withdrawn" | "not_bid";
+            /** Our Price Paise */
+            our_price_paise?: number | null;
+            /** L1 Price Paise */
+            l1_price_paise?: number | null;
+            /** Actual Cost Paise */
+            actual_cost_paise?: number | null;
+            /** Actual Effort Pd */
+            actual_effort_pd?: number | null;
+            /**
+             * Notes
+             * @default
+             */
+            notes: string;
+            /** Id */
+            id: string;
+            /** Project Id */
+            project_id: string;
+            /**
+             * Recorded At
+             * Format: date-time
+             */
+            recorded_at: string;
+        };
         /** ParameterSetSummary */
         ParameterSetSummary: {
             /** Version */
@@ -926,6 +1235,26 @@ export interface components {
             amount_paise: number;
             /** Share Percent */
             share_percent: number;
+        };
+        /** PrebidQuery */
+        PrebidQuery: {
+            /** Number */
+            number: number;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "unclear" | "missing";
+            /** Topic */
+            topic: string;
+            /** Clause Ref */
+            clause_ref: string;
+            /** Page */
+            page: number | null;
+            /** Quote */
+            quote: string;
+            /** Query */
+            query: string;
         };
         /** ProjectCreate */
         ProjectCreate: {
@@ -980,6 +1309,17 @@ export interface components {
             domain?: string | null;
             /** Description */
             description?: string | null;
+        };
+        /** QuestionImpact */
+        QuestionImpact: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Impact Paise */
+            impact_paise: number;
+            /** Options */
+            options: components["schemas"]["OptionPrice"][];
         };
         /** QuestionOut */
         QuestionOut: {
@@ -1053,6 +1393,15 @@ export interface components {
             };
             /** Deadline Months */
             deadline_months?: number | null;
+            /** Document Id */
+            document_id?: string | null;
+            /**
+             * Overrides
+             * @default {}
+             */
+            overrides: {
+                [key: string]: number;
+            };
         };
         /** QuickSummary */
         QuickSummary: {
@@ -1359,6 +1708,31 @@ export interface components {
          * @enum {string}
          */
         TaskType: "analysis" | "architecture" | "ui_design" | "crud" | "integration" | "ai_engineering" | "data_migration" | "tests" | "security_testing" | "devops" | "documentation" | "review_uat" | "pm" | "training";
+        /** TenderExtraction */
+        TenderExtraction: {
+            /** Reader */
+            reader: string;
+            /** Prompt Version */
+            prompt_version: string;
+            /** Project Name */
+            project_name: string;
+            /** Summary */
+            summary: string;
+            /** Features */
+            features: components["schemas"]["FoundFeature"][];
+            /** Choices */
+            choices: {
+                [key: string]: components["schemas"]["FoundValue"];
+            };
+            /** Numbers */
+            numbers: {
+                [key: string]: components["schemas"]["FoundValue"];
+            };
+            /** Unclear Points */
+            unclear_points: components["schemas"]["UnclearPoint"][];
+            /** Dropped Findings */
+            dropped_findings: number;
+        };
         /** Timeline */
         Timeline: {
             /** Build Effort Pd */
@@ -1510,6 +1884,33 @@ export interface components {
             /** Value */
             value: string;
         };
+        /**
+         * UnclearPoint
+         * @description Stored form; quote is blank when it could not be found on the cited page.
+         */
+        UnclearPoint: {
+            /** Topic */
+            topic: string;
+            /** Why */
+            why: string;
+            /** Page */
+            page: number | null;
+            /**
+             * Clause Ref
+             * @default
+             */
+            clause_ref: string;
+            /**
+             * Quote
+             * @default
+             */
+            quote: string;
+            /**
+             * Prebid Query
+             * @default
+             */
+            prebid_query: string;
+        };
         /** UserOut */
         UserOut: {
             /** Id */
@@ -1536,6 +1937,15 @@ export interface components {
             input?: unknown;
             /** Context */
             ctx?: Record<string, never>;
+        };
+        /** VerifiedEvidence */
+        VerifiedEvidence: {
+            /** Page */
+            page: number;
+            /** Clause Ref */
+            clause_ref: string;
+            /** Quote */
+            quote: string;
         };
     };
     responses: never;
@@ -2250,6 +2660,68 @@ export interface operations {
             };
         };
     };
+    report_pdf_estimates__estimate_id__report_pdf_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                estimate_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    boq_xlsx_estimates__estimate_id__boq_xlsx_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                estimate_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     list_rate_cards_admin_rate_cards_get: {
         parameters: {
             query?: never;
@@ -2507,6 +2979,220 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    impact_quick_estimate_impact_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QuickRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuestionImpact"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    upload_documents_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": components["schemas"]["Body_upload_documents_post"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_document_documents__document_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DocumentOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_prebid_queries_documents__document_id__prebid_queries_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PrebidQuery"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    read_outcome_projects__project_id__outcome_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OutcomeOut"] | null;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    post_outcome_projects__project_id__outcome_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["OutcomeIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OutcomeOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    calibration_calibration_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CalibrationReport"];
                 };
             };
         };

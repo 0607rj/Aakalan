@@ -10,6 +10,8 @@ import pytest
 
 _TMP_DATA = Path(tempfile.mkdtemp(prefix="aakalan-test-"))
 os.environ["ENVIRONMENT"] = "test"
+os.environ["ANTHROPIC_API_KEY"] = ""  # never call a real LLM from tests (overrides .env)
+os.environ["LLM_PROVIDER"] = "anthropic"
 os.environ["DATA_DIR"] = str(_TMP_DATA)
 os.environ["DATABASE_URL"] = f"sqlite:///{(_TMP_DATA / 'test.db').as_posix()}"
 

@@ -31,6 +31,7 @@ class Option(Frozen):
     answers: dict[str, Any]
     extra_components: list[str] = []
     component_size: Size | None = None  # scale question only
+    max_users: int | None = None  # scale question only; None = open-ended
 
 
 class Question(Frozen):
@@ -51,6 +52,24 @@ class Question(Frozen):
         raise ValueError(f"{value!r} is not a valid choice")
 
 
+class Keywords(Frozen):
+    features: dict[str, list[str]]
+    choices: dict[str, dict[str, list[str]]]
+
+
+class Impact(Frozen):
+    """Settings for ranking questions by price impact (fast, fixed-seed re-pricing)."""
+
+    monte_carlo_runs: int = Field(ge=100)
+    seed: int = Field(ge=0)
+
+
+class Prebid(Frozen):
+    vague_phrases: list[str]
+    vague_query: str
+    missing: dict[str, str]
+
+
 class QuickConfig(Frozen):
     version: str
     source: str
@@ -59,6 +78,9 @@ class QuickConfig(Frozen):
     features: list[Feature]
     questions: dict[str, Question]
     plain_drivers: dict[str, str]
+    keywords: Keywords
+    impact: Impact
+    prebid: Prebid
 
     def feature(self, key: str) -> Feature:
         for f in self.features:

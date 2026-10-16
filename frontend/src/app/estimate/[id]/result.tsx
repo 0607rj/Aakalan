@@ -9,6 +9,10 @@ import { api, type QuickSummary } from "@/lib/api/client";
 import { formatDate, formatDecimal, formatPaise } from "@/lib/format";
 import { useLoad } from "@/lib/use-load";
 
+import { BidResultCard } from "./bid-result";
+import { CompareOptions } from "./compare";
+import { Downloads } from "./downloads";
+
 function Fact({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-col">
@@ -130,6 +134,8 @@ function SummaryView({ summary }: { summary: QuickSummary }) {
         </p>
       </div>
 
+      <Downloads estimateId={summary.estimate_id} name={summary.name} />
+
       {summary.indicative ? (
         <p className="rounded-xl border border-warning/30 bg-warning-muted px-4 py-3 text-sm text-warning">
           These figures use public market prices and typical effort, not your
@@ -141,6 +147,7 @@ function SummaryView({ summary }: { summary: QuickSummary }) {
         <>
           <Headline summary={summary} />
           <MoneyBreakdown summary={summary} />
+          <CompareOptions estimateId={summary.estimate_id} />
           {summary.biggest_uncertainty ? (
             <section className="rounded-2xl border border-primary/20 bg-primary/5 px-6 py-5">
               <h2 className="font-semibold">What could change the price</h2>
@@ -164,6 +171,8 @@ function SummaryView({ summary }: { summary: QuickSummary }) {
           </Link>
         </section>
       )}
+
+      <BidResultCard projectId={summary.project_id} />
 
       <section className="rounded-2xl border bg-card px-6 py-6 shadow-sm sm:px-8">
         <h2 className="text-lg font-semibold">What you asked for</h2>

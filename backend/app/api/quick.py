@@ -8,7 +8,14 @@ from app.api.deps import CurrentUser, DbSession, EditorUser
 from app.core.tenancy import get_owned, scoped
 from app.models import Estimate, Project
 from app.services.quick.config import quick_config
-from app.services.quick.service import QuickRequest, QuickSummary, create_quick_estimate, summarise
+from app.services.quick.service import (
+    QuestionImpact,
+    QuickRequest,
+    QuickSummary,
+    create_quick_estimate,
+    question_impact,
+    summarise,
+)
 
 router = APIRouter(tags=["quick estimate"])
 
@@ -79,3 +86,9 @@ def summary(estimate_id: str, db: DbSession, user: CurrentUser) -> QuickSummary:
     estimate = get_owned(db, Estimate, estimate_id, user.org_id)
     project = get_owned(db, Project, estimate.project_id, user.org_id)
     return summarise(estimate, project, quick_config())
+
+
+@router.post("/quick-estimate/impact", response_model=list[QuestionImpact])
+def impact(body: QuickRequest, db: DbSession, user: CurrentUser) -> list[QuestionImpact]:
+    """Which questions change the price most for this form (nothing is saved)."""
+    return question_impact(db, user, quick_config(), body)
