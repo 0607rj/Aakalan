@@ -127,6 +127,7 @@ def create_estimate(
         seed=body.seed,
         rate_card_version=body.rate_card_version,
         parameter_set_version=body.parameter_set_version,
+        catalog_version=body.catalog_version,
         monte_carlo_runs=body.monte_carlo_runs,
     )
     return _estimate_out(service.create_estimate(db, project, user, inp), user)

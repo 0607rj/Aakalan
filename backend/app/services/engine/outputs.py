@@ -205,6 +205,17 @@ class ClientPaidNoteOut(Out):
     rates: list[TraceRate]
 
 
+class MarketCheck(Out):
+    """What real contracts of this project size cost, against this estimate:
+    P50 × the parameter set's market band (middle half and median of the back-test)."""
+
+    project_size: str
+    projects: int
+    low_paise: int
+    mid_paise: int
+    high_paise: int
+
+
 class EstimateResult(Out):
     engine_version: str
     feasible: bool
@@ -223,6 +234,7 @@ class EstimateResult(Out):
     top_drivers_text: str
     confidence: ConfidenceOut
     calibration: Calibration
+    market: MarketCheck | None = None  # should-cost parameter sets (v14+) only
     assumptions: list[AssumptionOut]
     sanity_checks: list[SanityCheck]
     # Not part of the quote: costs the client pays directly (e.g. hosting they provide).

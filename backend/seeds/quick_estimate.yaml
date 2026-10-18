@@ -225,15 +225,17 @@ features:
 # How big the software is follows from what is built: each feature adds points by its level,
 # and the total sets the project size. The project size picks the standard building blocks
 # every project needs (and their size), the default training and launch support, and the
-# back-tested size factor of the parameter set. Thresholds are placeholders, checked against
+# back-tested size factor of the parameter set (sets before v14). Since catalog v5 the S / M / L
+# effort of each block already is its basic / standard / advanced version, so every level is
+# priced at medium complexity (no second multiplier). Thresholds are placeholders, checked against
 # the benchmark projects by `python -m app.cli backtest`.
 sizing:
   source: placeholder
   default_level: standard
   levels:
-    basic: {label: Basic, hint: "The simple version: few screens and rules", component_size: S, complexity: low, points: 1}
+    basic: {label: Basic, hint: "The simple version: few screens and rules", component_size: S, complexity: medium, points: 1}
     standard: {label: Standard, hint: "The usual version most projects need", component_size: M, complexity: medium, points: 2}
-    advanced: {label: Advanced, hint: "A large, detailed version: many screens, rules, roles or records", component_size: L, complexity: high, points: 4}
+    advanced: {label: Advanced, hint: "A large, detailed version: many screens, rules, roles or records", component_size: L, complexity: medium, points: 4}
   custom_size_level: {S: basic, M: standard, L: advanced}
   tiers:
     - max_points: 4

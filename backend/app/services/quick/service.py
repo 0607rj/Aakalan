@@ -192,6 +192,16 @@ class HoursSummary(BaseModel):
     rows: list[HoursRow]
 
 
+class MarketOut(BaseModel):
+    """What real contracts of this size cost, next to the should-cost estimate (engine)."""
+
+    project_size: str  # Small / ... / Large
+    projects: int  # real projects behind the band (0 = between two sizes)
+    low_paise: int  # middle half of real contracts
+    mid_paise: int
+    high_paise: int
+
+
 class FeatureCost(BaseModel):
     """Building one feature: the team's work on its building blocks (most likely), with the
     team's AI tools and without them. Launch, running, management and tax are not included."""
@@ -277,6 +287,8 @@ class QuickSummary(BaseModel):
     traditional_build_months: str | None = None  # time to build without AI tools
     support_team: list[TeamRole] = []  # people per year after launch (year 1)
     hours: HoursSummary | None = None  # the build in hours, with and without AI tools
+    should_cost: bool = False  # priced from effort, not tuned to market prices
+    market: MarketOut | None = None  # real contracts of this size, for comparison
     not_sure: list[str] = []  # questions answered "Not sure" (they widen the range)
     project_size: str | None = None  # Small / ... / Large, from what is built
     size_points: int | None = None
@@ -862,6 +874,8 @@ def summarise(
         traditional_build_months=traditional.get("delivery_months"),
         support_team=team_by_role(cfg, result, 1),
         hours=hours_summary(cfg, estimate),
+        should_cost=bool(_calibration_of(estimate).get("should_cost")),
+        market=_market(cfg, result),
         not_sure=_not_sure(cfg, project),
         project_size=_size_label(cfg, estimate),
         size_points=_size_points(cfg, project),
@@ -1355,8 +1369,41 @@ def _saving(ai_era: int | None, traditional: int | None) -> int | None:
     return round(100 * (traditional - ai_era) / traditional)
 
 
+def _calibration_of(estimate: Estimate) -> dict[str, Any]:
+    cal: dict[str, Any] = (estimate.inputs_snapshot.get("parameters") or {}).get(
+        "calibration"
+    ) or {}
+    return cal
+
+
+def _market(cfg: QuickConfig, result: dict[str, Any]) -> MarketOut | None:
+    m = result.get("market")
+    if not m:
+        return None
+    try:
+        label = cfg.sizing.tier_for(m["project_size"]).label
+    except ValueError:
+        label = m["project_size"]
+    return MarketOut(
+        project_size=label,
+        projects=m["projects"],
+        low_paise=m["low_paise"],
+        mid_paise=m["mid_paise"],
+        high_paise=m["high_paise"],
+    )
+
+
+SHOULD_COST_NOTE = (
+    "Priced from the hours each feature takes (published effort data) and the rates, not "
+    "from what vendors charged. Different teams take about 0.7x to 1.6x these hours for the "
+    "same scope, which is the range shown."
+)
+
+
 def _accuracy_note(estimate: Estimate) -> str | None:
-    cal = (estimate.inputs_snapshot.get("parameters") or {}).get("calibration") or {}
+    cal = _calibration_of(estimate)
+    if cal.get("should_cost"):
+        return SHOULD_COST_NOTE
     n, err = cal.get("backtest_projects", 0), cal.get("median_abs_error_percent")
     if not n or err is None:
         return None

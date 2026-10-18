@@ -64,7 +64,7 @@ backend/
       documents/ extraction/ retrieval/ mapping/ reports/ templates/   # later milestones
     llm/                  # LLMClient protocol, AnthropicClient, FakeClient; prompts/*.md (versioned)
     jobs/                 # Huey instance and tasks
-  seeds/                  # taxonomy/v1..v2, catalog/v1..v4, rate_cards/, parameters/,
+  seeds/                  # taxonomy/v1..v2, catalog/v1..v5, rate_cards/, parameters/,
                           #   quick_estimate.yaml (plain features/questions for simple mode)
                           #   (every value has a `source`; `placeholder` = uncalibrated)
                           #   prices follow what is built (feature levels), never the client type

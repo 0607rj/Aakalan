@@ -50,6 +50,7 @@ def build_input(
     seed: int | None = None,
     rate_card_version: str | None = None,
     parameter_set_version: str | None = None,
+    catalog_version: str | None = None,
     monte_carlo_runs: int | None = None,
 ) -> EstimateInput:
     """Rule 6: refuses unless every requirement is reviewed and every component confirmed."""
@@ -64,7 +65,7 @@ def build_input(
 
     reqs = [r for r in project.requirements if r.status in PRICED_STATUSES]
     priced_ids = {r.id for r in reqs}
-    catalog = get_catalog(db)
+    catalog = get_catalog(db, catalog_version)
     return EstimateInput(
         project=ProjectInfo(
             name=project.name, buyer_type=project.buyer_type, domain=project.domain

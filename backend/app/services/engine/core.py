@@ -22,6 +22,7 @@ from app.services.engine.outputs import (
     EstimateResult,
     GroupTotal,
     ManpowerRow,
+    MarketCheck,
     RangeDriver,
     SanityCheck,
     SpreadFactor,
@@ -165,10 +166,29 @@ def _calculate(inp: EstimateInput) -> EstimateResult:
         top_drivers=top,
         top_drivers_text=_drivers_text(top),
         calibration=_calibration(ctx),
+        market=_market(ctx, totals),
         sanity_checks=_sanity(ctx, lines),
         client_paid=client_paid,
         client_paid_notes=notes,
         **common,  # type: ignore[arg-type]
+    )
+
+
+def _market(ctx: PricingContext, totals: Totals) -> MarketCheck | None:
+    """market low / mid / high = P50 × market_by_size[project_size].{low, mid, high}, each
+    rounded to whole paise."""
+    cal = ctx.p.calibration
+    size = ctx.q.project_size
+    if cal is None or size is None or size not in cal.market_by_size:
+        return None
+    band = cal.market_by_size[size]
+    p50 = Decimal(totals.p50_paise)
+    return MarketCheck(
+        project_size=size,
+        projects=band.projects,
+        low_paise=int(quantize(p50 * band.low, ONE)),
+        mid_paise=int(quantize(p50 * band.mid, ONE)),
+        high_paise=int(quantize(p50 * band.high, ONE)),
     )
 
 

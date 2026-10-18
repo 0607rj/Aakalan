@@ -25,6 +25,7 @@ class EstimateCreate(BaseModel):
     seed: int | None = Field(default=None, ge=0)
     rate_card_version: str | None = None
     parameter_set_version: str | None = None
+    catalog_version: str | None = None  # None = the newest catalog
     as_of_date: date | None = None
     monte_carlo_runs: int | None = Field(default=None, ge=100, le=100_000)
 

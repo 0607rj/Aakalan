@@ -16,6 +16,8 @@ FORMULAS: dict[str, str] = {
     "build.ai_code_review.v1": (
         "review_share_of_saved × Σ_component ai_saved_pd × M_compression × rate(review_role)"
     ),
+    # market check (not a cost line): real contracts of this size against this estimate
+    "market_check.v1": "P50 × market_by_size[project_size].{low, mid, high}",
     # go-live
     "golive.cert_in_audit.v1": "audit_fee[size_band]",
     "golive.cert_in_reaudit.v1": "reaudit_fee[size_band]",
