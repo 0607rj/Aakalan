@@ -1281,6 +1281,8 @@ export interface components {
             rate_card_version?: string | null;
             /** Parameter Set Version */
             parameter_set_version?: string | null;
+            /** Catalog Version */
+            catalog_version?: string | null;
             /** As Of Date */
             as_of_date?: string | null;
             /** Monte Carlo Runs */
@@ -1635,6 +1637,22 @@ export interface components {
             person_months: string;
             /** Average Fte */
             average_fte: string;
+        };
+        /**
+         * MarketOut
+         * @description What real contracts of this size cost, next to the should-cost estimate (engine).
+         */
+        MarketOut: {
+            /** Project Size */
+            project_size: string;
+            /** Projects */
+            projects: number;
+            /** Low Paise */
+            low_paise: number;
+            /** Mid Paise */
+            mid_paise: number;
+            /** High Paise */
+            high_paise: number;
         };
         /** OptionOut */
         OptionOut: {
@@ -2140,6 +2158,12 @@ export interface components {
              */
             support_team: components["schemas"]["TeamRole"][];
             hours?: components["schemas"]["HoursSummary"] | null;
+            /**
+             * Should Cost
+             * @default false
+             */
+            should_cost: boolean;
+            market?: components["schemas"]["MarketOut"] | null;
             /**
              * Not Sure
              * @default []

@@ -41,7 +41,9 @@ function Headline({ summary }: { summary: QuickSummary }) {
         <span className="text-base text-muted-foreground">
           {summary.mode === "client"
             ? "Fair budget range"
-            : "Estimated total price"}
+            : summary.should_cost
+              ? "What it should cost"
+              : "Estimated total price"}
         </span>
         <span className="text-4xl font-semibold tracking-tight text-primary sm:text-5xl">
           {range(summary.low_paise, summary.high_paise)}
@@ -106,6 +108,25 @@ function Headline({ summary }: { summary: QuickSummary }) {
           }
         />
       </div>
+      {summary.market ? (
+        <div className="flex flex-col gap-1 rounded-xl border border-dashed px-5 py-4">
+          <span className="text-sm font-medium">
+            What real {summary.market.project_size.toLowerCase()} projects were
+            bought for
+          </span>
+          <span className="text-xl font-semibold tracking-tight tabular-nums">
+            {range(summary.market.low_paise, summary.market.high_paise)}
+          </span>
+          <span className="text-sm text-muted-foreground">
+            {summary.market.projects > 0
+              ? `The middle half of ${summary.market.projects} real Indian projects of this size, scaled to this one. `
+              : "Between the two nearest sizes of real Indian projects, scaled to this one. "}
+            Our estimate is what the work should cost from its hours. Real
+            contracts also carry the vendor&apos;s pricing and work a feature
+            list does not show (years of operations, staff on site, hardware).
+          </span>
+        </div>
+      ) : null}
       {summary.client_pays.length > 0 ? (
         <p className="rounded-xl bg-muted/60 px-4 py-3 text-sm">
           <strong>Not included:</strong>{" "}

@@ -409,6 +409,16 @@ class SegmentBacktest(Frozen):
     note: str = ""
 
 
+class MarketBand(Frozen):
+    """Real contract prices of one project size as multiples of our estimate (P50): the middle
+    half (P25-P75) and the median, from the back-test."""
+
+    projects: int = Field(ge=0)
+    low: Decimal = Field(gt=0)
+    mid: Decimal = Field(gt=0)
+    high: Decimal = Field(gt=0)
+
+
 class Calibration(Sourced):
     """Global dials tuned by back-testing against real contract values (and adjustable per
     company in Settings): effort_multiplier scales every component's base effort;
@@ -440,6 +450,10 @@ class Calibration(Sourced):
     model_spread: dict[str, ClaritySpread] = {}
     # v12+: the same by project size (used instead of the segment's when the size is known).
     model_spread_by_size: dict[str, ClaritySpread] = {}
+    # v14+ (should-cost): the price is not tuned to market prices; what real contracts of each
+    # project size cost relative to it is shown next to it as a market check.
+    should_cost: bool = False
+    market_by_size: dict[str, MarketBand] = {}
     backtest_projects: int = 0  # real published contracts it was tested on
     median_abs_error_percent: Decimal | None = None  # typical miss on those contracts
 

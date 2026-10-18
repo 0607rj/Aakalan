@@ -4006,6 +4006,17 @@
             ],
             "title": "Parameter Set Version"
           },
+          "catalog_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Catalog Version"
+          },
           "as_of_date": {
             "anyOf": [
               {
@@ -5039,6 +5050,40 @@
           "average_fte"
         ],
         "title": "ManpowerRow"
+      },
+      "MarketOut": {
+        "properties": {
+          "project_size": {
+            "type": "string",
+            "title": "Project Size"
+          },
+          "projects": {
+            "type": "integer",
+            "title": "Projects"
+          },
+          "low_paise": {
+            "type": "integer",
+            "title": "Low Paise"
+          },
+          "mid_paise": {
+            "type": "integer",
+            "title": "Mid Paise"
+          },
+          "high_paise": {
+            "type": "integer",
+            "title": "High Paise"
+          }
+        },
+        "type": "object",
+        "required": [
+          "project_size",
+          "projects",
+          "low_paise",
+          "mid_paise",
+          "high_paise"
+        ],
+        "title": "MarketOut",
+        "description": "What real contracts of this size cost, next to the should-cost estimate (engine)."
       },
       "OptionOut": {
         "properties": {
@@ -6416,6 +6461,21 @@
             "anyOf": [
               {
                 "$ref": "#/components/schemas/HoursSummary"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "should_cost": {
+            "type": "boolean",
+            "title": "Should Cost",
+            "default": false
+          },
+          "market": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MarketOut"
               },
               {
                 "type": "null"

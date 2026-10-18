@@ -315,6 +315,7 @@ def test_demo_project_reproduces_golden_base_case(
         as_of_date="2026-10-15",
         rate_card_version="v1",
         parameter_set_version="v1",
+        catalog_version="v1",  # the golden fixtures are priced on catalog v1
     )
     golden = json.loads(expected_path("medium").read_text(encoding="utf-8"))
     assert est["likely_paise"] == golden["totals"]["likely_paise"]
