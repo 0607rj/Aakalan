@@ -126,20 +126,21 @@ def base_commercial_lines(ctx: PricingContext, timeline: Timeline) -> list[CostL
         )
         lines.append(t.finish(cost))
 
-    t = ctx.builder(
-        line_key="commercial.exit_management/exit",
-        stage="commercial",
-        bucket="commercial.exit_management",
-        year=0,
-        label="Exit management and handover",
-        formula_id="commercial.exit.v1",
-    )
-    idx, _ = size_band(ctx, timeline.build_effort_pd)
-    pd: Decimal = t.param("timeline", "size_bands", idx, "exit_management_pd")
-    role: str = t.param("commercial", "exit_role")
-    t.add_role_pd(role, pd)
-    spreads.clarity(t, ctx.overall_clarity())
-    lines.append(t.finish(pd * t.rate_inr(role)))
+    if ctx.q.governance_overheads:  # exit management is a government contract clause
+        t = ctx.builder(
+            line_key="commercial.exit_management/exit",
+            stage="commercial",
+            bucket="commercial.exit_management",
+            year=0,
+            label="Exit management and handover",
+            formula_id="commercial.exit.v1",
+        )
+        idx, _ = size_band(ctx, timeline.build_effort_pd)
+        pd: Decimal = t.param("timeline", "size_bands", idx, "exit_management_pd")
+        role: str = t.param("commercial", "exit_role")
+        t.add_role_pd(role, pd)
+        spreads.clarity(t, ctx.overall_clarity())
+        lines.append(t.finish(pd * t.rate_local(role)))
     return lines
 
 
@@ -198,7 +199,7 @@ def derived_lines(
         "pbg": "Performance bank guarantee charges",
         "penalty_reserve": "Penalty / LD reserve",
         "margin": "Margin",
-        "gst": "GST",
+        "gst": ctx.p.commercial.tax_label,
     }
     for key in DERIVED_ORDER:
         builders[key] = ctx.builder(
@@ -235,7 +236,7 @@ def derived_lines(
             "delivery months + om_years × months_per_year",
             timeline.delivery_duration_months + ctx.q.om_years * ctx.months_per_year(),
         )
-    commission = t.rate_inr(t.param("commercial", "pbg_rate_key"))
+    commission = t.rate_local(t.param("commercial", "pbg_rate_key"))
     pbg = t.step(
         "PBG factor",
         f"{pbg_pct} × {commission} × {validity} / {ctx.months_per_year()}",

@@ -1,142 +1,434 @@
-# Quick estimate: plain-language features and questions for non-technical users.
-# Each ticked feature becomes a confirmed requirement and adds catalog components; each simple
-# answer sets questionnaire drivers. Sizes follow the chosen scale (small -> S, medium -> M,
-# large -> L) unless a component pins its own size. Every mapping is an uncalibrated placeholder.
-version: v1
+# Quick estimate: plain-language features and questions for anyone pricing a piece of software.
+# The price depends on WHAT is built, never on who orders it: each ticked feature becomes a
+# confirmed requirement and adds catalog components at the level the user picks (Basic /
+# Standard / Advanced); each simple answer sets questionnaire drivers. Things only some clients
+# need (security audit, formal reports and meetings, accessibility, languages) are optional
+# items with their own price. Every mapping is an uncalibrated placeholder.
+version: v3
 source: placeholder
 # A ticked feature says *what* is needed but not how much, so clarity is neutral (1-5 scale).
 requirement_clarity: 3
 
-# Always part of a project, whatever is ticked.
-base_components:
-  - discovery_requirement_study
-  - solution_architecture
-  - ui_ux_design
-  - user_management_rbac
-  - responsive_frontend
-  - audit_trail_logging
-  - security_hardening
-  - notifications
-  - integration_sms_email_gateway
-  - functional_testing_uat_support
-  - vapt_remediation
-  - documentation_manuals
-  - devops_cicd_setup
+# Every quick estimate starts from these answers; sizes, questions and features add to them.
+# No client-type extras by default: audits, reports and meetings, accessibility, languages and
+# bid deposits are only priced when asked for.
+base_answers:
+  governance_overheads: false
+  cert_in_audit: false
+  stqc_certification: false
+  gigw_accessibility: false
+  languages: 1
+  emd_paise: 0
+  pbg_percent: 0
+
+# The first screen: what kind of software it is. The type only decides which features are
+# shown first and which are ticked to start with; the price follows the ticked features alone.
+project_types:
+  - key: portal
+    label: A website or portal for the public
+    hint: "People apply, pay, upload documents or raise complaints online - e.g. a department or company portal"
+    features: [online_forms, approval_workflow, documents, payments, public_website, grievances, aadhaar_digilocker, notifications, search, dashboards]
+    suggested: [online_forms]
+  - key: business
+    label: Software for your staff
+    hint: "Stock, billing, customers, approvals and reports - e.g. an office or ERP system"
+    features: [inventory, billing, crm, approval_workflow, documents, dashboards, staff_login, notifications, search]
+    suggested: [dashboards]
+  - key: store
+    label: An online store or marketplace
+    hint: "Sell products online with a cart, payments and order tracking"
+    features: [online_store, payments, search, notifications, inventory, billing, crm, maps]
+    suggested: [online_store, payments]
+  - key: booking
+    label: A booking or service app
+    hint: "Appointments, home services, rentals, clinics or classes"
+    features: [bookings, payments, maps, notifications, crm, billing, online_forms, grievances]
+    suggested: [bookings, notifications]
+  - key: ai
+    label: An AI chatbot or assistant
+    hint: "Answers questions from your documents, rules or FAQs"
+    features: [ai_chatbot, documents, search, languages, dashboards, notifications]
+    suggested: [ai_chatbot]
+  - key: other
+    label: Something else
+    hint: "Choose from every feature"
+    features: []
 
 features:
   - key: online_forms
     label: Online application or registration forms
     hint: People fill forms online and upload documents instead of visiting an office.
     components: [registration_empanelment, master_data_management]
+    levels:
+      basic: "One or two simple forms"
+      standard: "Several forms with document upload and saved drafts"
+      advanced: "Many forms with rules that change by answer, fees and re-submission"
   - key: approval_workflow
-    label: Files go from officer to officer for approval
+    label: Files go from person to person for approval
     hint: Applications are checked and approved in steps, with time limits.
     components: [workflow_engine]
+    levels:
+      basic: "One approval step"
+      standard: "A few steps with time limits and reminders"
+      advanced: "Many steps and roles, sending back, escalation and delegation"
   - key: documents
     label: Store and manage documents
     hint: Upload, keep versions of and find certificates and files.
     components: [document_management, search_module]
+    levels:
+      basic: "Upload and download files"
+      standard: "Folders, versions and search"
+      advanced: "Large volumes, full-text search, access rules and retention"
   - key: dashboards
-    label: Reports and dashboards for officers
+    label: Reports and dashboards
     hint: Charts and standard reports that can be downloaded.
     components: [dashboard_mis_reports]
+    levels:
+      basic: "A few fixed reports"
+      standard: "A dashboard with charts, filters and downloads"
+      advanced: "Many dashboards, drill-down and self-made reports"
   - key: ai_chatbot
     label: AI chatbot that answers people's questions
-    hint: A chat assistant trained on your rules, circulars and FAQs.
+    hint: A chat assistant trained on your rules, documents and FAQs.
     components: [ai_chatbot_rag, ai_knowledge_ingestion, ai_guardrails_safety, ai_evaluation_set]
+    levels:
+      basic: "Answers FAQs from a few documents"
+      standard: "Answers from many documents, with sources and hand-over to a person"
+      advanced: "Several languages, looks up records and completes tasks for the user"
   - key: payments
     label: Online fee payment
     hint: Pay fees through a payment gateway.
     components: [integration_payment_gateway]
+    levels:
+      basic: "One payment type"
+      standard: "Several fees, receipts and refunds"
+      advanced: "Split payments, reconciliation with accounts, many payment methods"
   - key: aadhaar_digilocker
     label: Login or verification with Aadhaar / DigiLocker
     hint: Verify people and fetch their documents from government systems.
     components: [integration_aadhaar_ekyc, integration_digilocker]
   - key: staff_login
-    label: Staff log in with their existing government account
-    hint: Single sign-on (for example Parichay or the office directory).
+    label: Log in with existing accounts
+    hint: Single sign-on with Google, Microsoft, the office directory or a government login (e.g. Parichay).
     components: [integration_sso_identity]
   - key: connect_existing
+    hidden: true   # asked as its own question, not ticked
     label: Connect to existing systems (SAP, old software)
-    hint: Share data with software the department already uses.
+    hint: Share data with software the client already uses.
     components: [integration_erp_legacy]
+    levels:
+      basic: "One system, one direction"
+      standard: "One or two systems, both directions"
+      advanced: "Several systems, real-time sync and error handling"
   - key: languages
     label: Available in Indian languages
     hint: Hindi and regional languages, with translation.
     components: [multilingual_i18n, integration_bhashini_translation]
     sets: {languages: 3}
   - key: accessibility
-    label: Accessible to people with disabilities (GIGW)
-    hint: Required for most government websites.
+    label: Accessible to people with disabilities (GIGW / WCAG)
+    hint: Screen readers, keyboard use and readable colours; required for government websites.
     components: [accessibility_gigw_compliance]
     sets: {gigw_accessibility: true}
   - key: public_website
     label: Public website with notices and news
     hint: Pages the public can read, updated by staff.
     components: [cms_public_website]
+    levels:
+      basic: "A few pages"
+      standard: "Many pages, news and notices updated by staff"
+      advanced: "Large site with many sections, editors and approvals"
   - key: grievances
     label: Complaints and helpdesk tickets
     hint: People raise complaints and track them.
     components: [grievance_helpdesk]
+    levels:
+      basic: "Raise and close a complaint"
+      standard: "Categories, assignment, time limits and feedback"
+      advanced: "Escalation across offices, reports and links to other systems"
+  - key: inventory
+    label: Stock / inventory management
+    hint: Items, stock in and out, locations, low-stock alerts (e.g. books in a library, products in a shop).
+    components: [inventory_management]
+    levels:
+      basic: "One location, stock in and out"
+      standard: "Several locations, alerts and reports"
+      advanced: "Warehouses, barcodes, batches and purchase orders"
+  - key: billing
+    label: Billing and invoices
+    hint: Quotes, invoices with tax, receipts and statements.
+    components: [billing_invoicing]
+    levels:
+      basic: "Simple invoices"
+      standard: "Quotes, tax invoices, receipts and statements"
+      advanced: "Subscriptions, credit notes and accounting export"
+  - key: bookings
+    label: Bookings / appointments
+    hint: Calendars and slots - book, reschedule, cancel, reminders.
+    components: [booking_appointments]
+    levels:
+      basic: "One calendar, book and cancel"
+      standard: "Several staff or rooms, reminders and rescheduling"
+      advanced: "Many branches, waiting lists, payments and rules"
+  - key: online_store
+    label: Online store
+    hint: Product catalogue, cart, checkout and order tracking.
+    components: [ecommerce_storefront, integration_payment_gateway]
+    levels:
+      basic: "A small catalogue and checkout"
+      standard: "Categories, offers, order tracking and returns"
+      advanced: "Large catalogue, many sellers or warehouses, loyalty"
+  - key: crm
+    label: Customer management (CRM)
+    hint: Leads, contacts, follow-ups and sales pipeline.
+    components: [crm_module]
+    levels:
+      basic: "Contacts and notes"
+      standard: "Leads, follow-ups and a sales pipeline"
+      advanced: "Teams, targets, campaigns and automation"
+  - key: mobile_app
+    hidden: true   # asked as its own question, not ticked
+    label: Mobile app (Android / iOS)
+    hint: A phone app for customers or staff, in addition to the website.
+    components: [custom_mobile_app]
+    levels:
+      basic: "A few screens that show the website's main features"
+      standard: "The main features, with login and notifications"
+      advanced: "Works offline, uses camera or location, many screens"
+  - key: maps
+    label: Maps and location
+    hint: Show places on a map, find addresses, nearby search or track deliveries and staff.
+    components: [maps_location]
+    levels:
+      basic: "Show places on a map"
+      standard: "Address search and nearby search"
+      advanced: "Live tracking, routes and map layers"
+  - key: notifications
+    label: SMS, email and app notifications
+    hint: OTP login, reminders, booking confirmations and alerts by SMS, email or push.
+    components: [notifications, integration_sms_email_gateway]
+    counts_for_size: false
+  - key: search
+    label: Search
+    hint: Find records, products or documents quickly with filters.
+    components: [search_module]
   - key: old_data
+    hidden: true   # asked as its own question, not ticked
     label: Move data from the old system
     hint: Bring existing records into the new software.
     components: [data_migration]
+    levels:
+      basic: "One clean spreadsheet or table"
+      standard: "A few tables that need cleaning"
+      advanced: "Years of records from several old systems"
 
+# How big the software is follows from what is built: each feature adds points by its level,
+# and the total sets the project size. The project size picks the standard building blocks
+# every project needs (and their size), the default training and launch support, and the
+# back-tested size factor of the parameter set. Thresholds are placeholders, checked against
+# the benchmark projects by `python -m app.cli backtest`.
+sizing:
+  source: placeholder
+  default_level: standard
+  levels:
+    basic: {label: Basic, hint: "The simple version: few screens and rules", component_size: S, complexity: low, points: 1}
+    standard: {label: Standard, hint: "The usual version most projects need", component_size: M, complexity: medium, points: 2}
+    advanced: {label: Advanced, hint: "A large, detailed version: many screens, rules, roles or records", component_size: L, complexity: high, points: 4}
+  custom_size_level: {S: basic, M: standard, L: advanced}
+  tiers:
+    - max_points: 4
+      project_size: small
+      label: Small
+      base_size: S
+      base_components: [ui_ux_design, user_management_rbac, responsive_frontend, functional_testing_uat_support, devops_cicd_setup]
+      answers: {training_sessions: 1, training_outstation_sessions: 0, hypercare_weeks: 1, non_prod_environments: 1}
+    - max_points: 10
+      project_size: small_medium
+      label: Small to medium
+      base_size: S
+      base_components: [discovery_requirement_study, ui_ux_design, user_management_rbac, responsive_frontend, security_hardening, notifications, functional_testing_uat_support, documentation_manuals, devops_cicd_setup]
+      answers: {training_sessions: 2, training_outstation_sessions: 0, hypercare_weeks: 2, non_prod_environments: 1}
+    - max_points: 20
+      project_size: medium
+      label: Medium
+      base_size: M
+      base_components: [discovery_requirement_study, solution_architecture, ui_ux_design, user_management_rbac, responsive_frontend, audit_trail_logging, security_hardening, notifications, functional_testing_uat_support, documentation_manuals, devops_cicd_setup]
+      answers: {training_sessions: 2, hypercare_weeks: 2}
+    - max_points: 36
+      project_size: medium_large
+      label: Medium to large
+      base_size: M
+      base_components: [discovery_requirement_study, solution_architecture, ui_ux_design, user_management_rbac, responsive_frontend, audit_trail_logging, security_hardening, notifications, integration_sms_email_gateway, functional_testing_uat_support, documentation_manuals, devops_cicd_setup]
+      answers: {training_sessions: 4, hypercare_weeks: 4}
+    - max_points: null
+      project_size: large
+      label: Large
+      base_size: L
+      base_components: [discovery_requirement_study, solution_architecture, ui_ux_design, user_management_rbac, responsive_frontend, audit_trail_logging, security_hardening, notifications, integration_sms_email_gateway, functional_testing_uat_support, documentation_manuals, devops_cicd_setup]
+      answers: {training_sessions: 4, hypercare_weeks: 4}
+
+# The questions. `group: main` = one per screen, in this order (about ten in all, with the
+# features); `detail` = the optional "a few more details" screen (skipped = the usual answer);
+# `hidden` = not asked (set by Settings or the back-test). Options marked `unsure: true` are
+# "Not sure": they price the usual answer and widen the range (see `not_sure`).
 questions:
+  version:
+    label: Do you want a first simple version, or the full product?
+    default: full
+    options:
+      - {value: mvp, label: A first simple version (MVP), hint: "Only the main features, kept simple, to launch quickly and learn", feature_level: basic, answers: {}}
+      - {value: full, label: The full product, hint: "Everything done properly, ready for many users", feature_level: standard, answers: {}}
+      - {value: not_sure, label: Not sure, hint: "We price the full product and show a wider range", feature_level: standard, unsure: true, answers: {}}
+  platforms:
+    label: Where should people use it?
+    default: web
+    options:
+      - {value: web, label: Website only, hint: "Works in the browser on phones and computers", answers: {}}
+      - {value: web_mobile, label: Website and a mobile app, hint: "Plus an app for Android and iPhone", add_features: {mobile_app: null}, answers: {}}
   scale:
     label: How many people will use it?
-    default: medium
+    default: up_to_10k
     options:
-      - value: small
-        max_users: 5000
-        label: Small
-        component_size: S
-        hint: Up to about 5,000 users
-        answers: {users_total: 5000, peak_concurrent_users: 100, documents_per_month: 500, chatbot_queries_per_day: 300}
-        extra_components: []
-      - value: medium
-        max_users: 100000
-        label: Medium
-        component_size: M
-        hint: Up to about 1 lakh users
-        answers: {users_total: 100000, peak_concurrent_users: 1000, documents_per_month: 5000, chatbot_queries_per_day: 5000}
-        extra_components: [performance_load_testing]
-      - value: large
-        max_users: null
-        label: Large
-        component_size: L
-        hint: Lakhs to crores of users, state or national level
-        answers: {users_total: 5000000, peak_concurrent_users: 10000, documents_per_month: 100000, chatbot_queries_per_day: 50000}
-        extra_components: [performance_load_testing]
-  support_years:
-    label: For how many years should we run and support it after launch?
-    default: 3
+      - {value: up_to_100, max_users: 100, label: Up to 100, hint: "A team or a small office", answers: {users_total: 100, peak_concurrent_users: 10, documents_per_month: 50, chatbot_queries_per_day: 20}}
+      - {value: up_to_1k, max_users: 1000, label: "100 – 1,000", hint: "A company or a few branches", answers: {users_total: 1000, peak_concurrent_users: 50, documents_per_month: 200, chatbot_queries_per_day: 100}}
+      - {value: up_to_10k, max_users: 10000, label: "1,000 – 10,000", hint: "A city-level service or a growing app", answers: {users_total: 10000, peak_concurrent_users: 200, documents_per_month: 1000, chatbot_queries_per_day: 500}}
+      - {value: up_to_1l, max_users: 100000, label: "10,000 – 1 lakh", hint: "A popular app or a state department", answers: {users_total: 100000, peak_concurrent_users: 1000, documents_per_month: 5000, chatbot_queries_per_day: 5000}, extra_components: [performance_load_testing]}
+      - {value: up_to_10l, max_users: 1000000, label: "1 lakh – 10 lakh", hint: "A large app or a state-wide service", answers: {users_total: 1000000, peak_concurrent_users: 5000, documents_per_month: 30000, chatbot_queries_per_day: 20000}, extra_components: [performance_load_testing]}
+      - {value: over_10l, max_users: null, label: "More than 10 lakh", hint: "National level", answers: {users_total: 5000000, peak_concurrent_users: 10000, documents_per_month: 100000, chatbot_queries_per_day: 50000}, extra_components: [performance_load_testing]}
+      - {value: not_sure, label: Not sure, hint: "We assume 1,000 – 10,000 and show a wider range", unsure: true, answers: {users_total: 10000, peak_concurrent_users: 200, documents_per_month: 1000, chatbot_queries_per_day: 500}}
+  integrations:
+    label: Does it need to connect to other software you already use?
+    default: none
     options:
-      - {value: 1, label: 1 year, answers: {om_years: 1}}
-      - {value: 3, label: 3 years, answers: {om_years: 3}}
-      - {value: 5, label: 5 years, answers: {om_years: 5}}
-  availability:
-    label: How important is it that the system never goes down?
-    default: normal
+      - {value: none, label: "No", hint: "It works on its own", answers: {}}
+      - {value: one_two, label: "Yes, one or two", hint: "e.g. accounting software (Tally, SAP) or an existing app", add_features: {connect_existing: standard}, answers: {}}
+      - {value: many, label: "Yes, several", hint: "Many systems, kept in sync", add_features: {connect_existing: advanced}, answers: {}}
+      - {value: not_sure, label: Not sure, hint: "We assume one or two and show a wider range", add_features: {connect_existing: standard}, unsure: true, answers: {}}
+  old_data:
+    label: Do you need to bring in data from an old system?
+    default: "no"
     options:
-      - {value: basic, label: Basic, hint: "Short breaks are acceptable", answers: {uptime_sla: "99.0"}}
-      - {value: normal, label: Normal, hint: "Rarely down (99.5%)", answers: {uptime_sla: "99.5"}}
-      - {value: high, label: High, hint: "Almost never down (99.9%)", answers: {uptime_sla: "99.9"}}
-      - {value: critical, label: Critical, hint: "With a backup site for disasters", answers: {uptime_sla: "99.95"}}
+      - {value: "no", label: "No", hint: "Starting fresh", answers: {}}
+      - {value: little, label: "Yes, a little", hint: "One or two spreadsheets", add_features: {old_data: basic}, answers: {}}
+      - {value: lot, label: "Yes, a lot", hint: "Years of records from old software", add_features: {old_data: advanced}, answers: {}}
+      - {value: not_sure, label: Not sure, hint: "We assume a few tables and show a wider range", add_features: {old_data: standard}, unsure: true, answers: {}}
+  build_type:
+    label: Should it be built from scratch, or set up on a ready-made product?
+    default: custom
+    options:
+      - {value: custom, label: Built from scratch, hint: "Written for you by a development team", answers: {build_type: custom}}
+      - {value: ready_product, label: Set up a ready-made product, hint: "An existing product configured for you: a SaaS service, WordPress or Shopify, an existing chatbot platform", answers: {build_type: ready_product}}
+      - {value: not_sure, label: Not sure, hint: "We price building from scratch and show a wider range", unsure: true, answers: {build_type: custom}}
   hosting:
-    label: Where should it run?
+    label: Where will it run?
     default: aws
     options:
-      - {value: aws, label: Amazon cloud (India region), answers: {hosting_provider: aws}}
-      - {value: indian_cloud, label: Government-approved Indian cloud, answers: {hosting_provider: indian_cloud}}
-      - {value: on_prem, label: Department's own server room, answers: {hosting_provider: on_prem}}
+      - {value: aws, label: "Public cloud (Amazon, Microsoft or Google)", hint: "Rented servers in an Indian data centre; the monthly cloud bill is part of the cost", answers: {hosting_provider: aws, hosting_in_scope: true}}
+      - {value: indian_cloud, label: Government-approved Indian cloud, hint: "A MeitY-empanelled cloud (e.g. for government data); the monthly bill is part of the cost", answers: {hosting_provider: indian_cloud, hosting_in_scope: true}}
+      - {value: on_prem, label: Own server room, hint: "Servers are bought and set up in your own building", answers: {hosting_provider: on_prem, hosting_in_scope: true}}
+      - {value: existing, label: Servers you already have, hint: "e.g. NIC, a State Data Centre or your own cloud account: no new server cost (an estimate is shown separately)", answers: {hosting_provider: aws, hosting_in_scope: false}}
+      - {value: not_sure, label: Not sure, hint: "We price a public cloud and show a wider range", unsure: true, answers: {hosting_provider: aws, hosting_in_scope: true}}
+  support_years:
+    label: For how many years should it be looked after once it is live?
+    default: 3
+    options:
+      - {value: 0, label: "Not needed", hint: "Handed over after launch; you run and maintain it", answers: {om_years: 0}}
+      - {value: 1, label: 1 year, answers: {om_years: 1}}
+      - {value: 2, label: 2 years, answers: {om_years: 2}}
+      - {value: 3, label: 3 years, answers: {om_years: 3}}
+      - {value: 5, label: 5 years, answers: {om_years: 5}}
+  helpdesk_scope:
+    label: Do you need a helpdesk team to answer users?
+    default: "no"
+    hide_when: {support_years: [0]}
+    options:
+      - {value: "no", label: "No", hint: "The maintenance team handles support requests", answers: {helpdesk_in_scope: false}}
+      - {value: "yes", label: "Yes", hint: "A separate helpdesk team answers users", answers: {helpdesk_in_scope: true}}
   support_hours:
     label: When should the helpdesk be available?
     default: office
+    hide_when: {helpdesk_scope: ["no"], support_years: [0]}
     options:
       - {value: office, label: Office hours, hint: "8 hours a day, 5 days a week", answers: {support_sla: 8x5}}
       - {value: always, label: Round the clock, hint: "24 hours, 7 days", answers: {support_sla: 24x7}}
+  # --- optional details --------------------------------------------------------------------
+  availability:
+    label: If it stops working for an hour, how bad is that?
+    group: detail
+    default: normal
+    options:
+      - {value: basic, label: Not a problem, hint: "Short breaks are fine (one server)", answers: {uptime_sla: "99.0"}}
+      - {value: normal, label: Some trouble, hint: "It should rarely stop (99.5% of the time up)", answers: {uptime_sla: "99.5"}}
+      - {value: high, label: Work stops, hint: "Almost never down (99.9%)", answers: {uptime_sla: "99.9"}}
+      - {value: critical, label: It must never stop, hint: "With a backup site for disasters (99.95%)", answers: {uptime_sla: "99.95"}}
+  security_audit:
+    label: Do you need an independent security check before launch?
+    group: detail
+    default: "no"
+    options:
+      - {value: "no", label: "No", hint: "The team's own security testing only", answers: {cert_in_audit: false}}
+      - {value: "yes", label: "Yes", hint: "A certified outside auditor (CERT-In empanelled) tests it before launch and once a year, and the team fixes what it finds; usual for government sites and apps with payments or personal data", answers: {cert_in_audit: true}, extra_components: [vapt_remediation]}
+  reporting:
+    label: Do you want monthly progress reports and review meetings?
+    group: detail
+    default: "no"
+    options:
+      - {value: "no", label: "No", hint: "Normal updates from the project manager", answers: {governance_overheads: false}}
+      - {value: "yes", label: "Yes", hint: "Written monthly reports, review meetings and visits; usual for government and large companies", answers: {governance_overheads: true}}
+  design:
+    label: Do you already have a design for the screens?
+    group: detail
+    default: some
+    options:
+      - {value: ready, label: "Yes, the design is ready", hint: "Screens already designed (e.g. in Figma), or a brand guide to follow closely", component_complexity: {ui_ux_design: low}, answers: {}}
+      - {value: some, label: "A little (logo and colours)", hint: "The team designs the screens", answers: {}}
+      - {value: custom, label: "No, we want a special design", hint: "A unique look with custom illustrations and animations", component_complexity: {ui_ux_design: high}, answers: {}}
+  chatbot_task:
+    label: What should the chatbot handle?
+    group: detail
+    default: simple
+    only_with_features: [ai_chatbot]
+    only_with_custom_types: [ai]
+    options:
+      - {value: simple, label: Common questions, hint: "FAQs and information from your documents (a smaller, cheaper AI model)", answers: {ai_model_tier: simple}}
+      - {value: advanced, label: Complex questions, hint: "Reasoning over many documents and multi-step help (a larger AI model, costs more per question)", answers: {ai_model_tier: advanced}}
+  chatbot_volume:
+    label: About how many questions will the chatbot answer each day?
+    group: detail
+    default: by_users
+    only_with_features: [ai_chatbot]
+    only_with_custom_types: [ai]
+    options:
+      - {value: by_users, label: Guess from the number of users, hint: "We estimate it from how many people use it", answers: {}}
+      - {value: "100", label: About 100, answers: {chatbot_queries_per_day: 100}}
+      - {value: "1000", label: "About 1,000", answers: {chatbot_queries_per_day: 1000}}
+      - {value: "10000", label: "About 10,000", answers: {chatbot_queries_per_day: 10000}}
+  launch_help:
+    label: How much help do your users need at launch?
+    group: detail
+    default: usual
+    options:
+      - {value: none, label: None, hint: "Users learn it themselves; normal support starts at launch", answers: {training_sessions: 0, training_outstation_sessions: 0, hypercare_weeks: 0}}
+      - {value: usual, label: The usual, hint: "Training sessions and a few weeks of extra support, by project size", answers: {}}
+      - {value: extra, label: A lot, hint: "8 training sessions and 8 weeks of extra support, for many offices or user groups", answers: {training_sessions: 8, hypercare_weeks: 8}}
+  # --- not asked ---------------------------------------------------------------------------
+  ai_use:
+    label: How much will the development team use AI tools (like Claude or Copilot)?
+    group: hidden   # the company's own setting (Settings); the back-test sets it by award year
+    default: medium
+    options:
+      - {value: none, label: Not at all, answers: {team_ai_maturity: none}}
+      - {value: low, label: A little, answers: {team_ai_maturity: low}}
+      - {value: medium, label: Regularly, answers: {team_ai_maturity: medium}}
+      - {value: high, label: Heavily, answers: {team_ai_maturity: high}}
+
+# "Not sure" answers price the usual answer but make the requirements less clear (1-5 scale),
+# which widens the range and the risk buffer: clarity = max(min_clarity, requirement_clarity
+# − ceil(not-sure answers / answers_per_step)).
+not_sure:
+  source: placeholder
+  answers_per_step: 2
+  min_clarity: 1
 
 # Ranking the open questions by price impact re-prices the form once per option. Fewer
 # simulation runs keep it fast; a fixed seed keeps the ranking stable between requests.
@@ -144,9 +436,88 @@ impact:
   monte_carlo_runs: 500
   seed: 2026
 
+# Countries the app prices for. Each has its own rate card and parameter set (region key),
+# its currency, and the hosting options that make sense there.
+countries:
+  india: {label: India, currency: INR, hosting_options: [aws, indian_cloud, on_prem]}
+  # The US is switched off for now (user's request, 2026-10-16): set enabled: true to bring it back.
+  us: {label: United States, currency: USD, hosting_options: [aws, on_prem], enabled: false}
+
+# Features the requirement document asks for that are not in the list above. The AI (or the
+# user) gives each one a type and a size; the type picks a generic catalog component (catalog
+# v2) and the size picks its S/M/L effort. Labels are what the user sees.
+custom_feature_types:
+  module: {label: "Screens / module", component: custom_module}
+  integration: {label: "Connection to another system", component: custom_integration}
+  report: {label: "Reports / dashboard", component: custom_report}
+  ai: {label: "AI feature", component: custom_ai_feature}
+  mobile: {label: "Mobile app", component: custom_mobile_app}
+max_custom_features: 50
+
+# Working hours in one person-day, to show the work (and enter rates) in hours. An 8-hour
+# working day (Factories Act / Shops and Establishments norm); the engine itself counts days.
+hours_per_person_day: 8
+
+# Plain names of the people who do the work (rate-card role keys), for "Team needed".
+role_labels:
+  role.project_manager: Project manager
+  role.solution_architect: Solution architect
+  role.business_analyst: Business analyst (requirements)
+  role.ui_ux_designer: UI / UX designer
+  role.senior_developer: Senior developer
+  role.developer: Developer
+  role.qa_engineer: Tester (QA)
+  role.devops_engineer: DevOps engineer (servers and deployment)
+  role.ml_engineer: AI / ML engineer
+  role.security_engineer: Security engineer
+  role.data_engineer: Data engineer
+  role.technical_writer: Technical writer (manuals)
+  role.trainer: Trainer
+  role.helpdesk_executive: Helpdesk executive
+
 # Plain words for the biggest sources of uncertainty (taxonomy bucket -> phrase).
+# "What's inside the price": every cost line of an estimate falls into exactly one item (first
+# match wins; anything unmatched is shown as "Other"). Line prefixes are checked before buckets.
+cost_item_groups:
+  - {key: build, label: Building the software}
+  - {key: launch, label: Launch}
+  - {key: run, label: "Running and supporting it ({years})"}
+  - {key: management, label: Management}
+  - {key: commercial, label: "Margin, risk buffer and tax"}
+cost_items:
+  - {key: ai_coding, group: build, label: "AI coding assistant subscriptions (e.g. Claude, Copilot)", line_prefixes: [build.tools/ai_coding]}
+  - {key: dev_tools, group: build, label: "Developer tool licences (code hosting, task tracking, design)", line_prefixes: [build.tools/dev_suite]}
+  - {key: ai_review, group: build, label: "Team work: extra review and security checks of AI-written code", line_prefixes: [build.testing/ai_code_review], people: true}
+  - {key: team_design, group: build, label: "Team work: requirements, architecture and screen design", buckets: [pre_build.discovery, pre_build.architecture, pre_build.ui_ux], people: true}
+  - {key: team_build, group: build, label: "Team work: building features and connecting other systems", buckets: [build.module_development, build.integrations, build.data_migration], people: true}
+  - {key: team_ai, group: build, label: "Team work: building the AI chatbot and AI features", buckets: [build.ai_ml], people: true}
+  - {key: team_test, group: build, label: "Team work: testing, documents and deployment set-up", buckets: [build.testing, build.documentation, build.devops], people: true}
+  - {key: translation, group: build, label: Translating content into other languages, buckets: [build.content_translation]}
+  - {key: test_servers, group: build, label: Test and staging servers, buckets: [programme.environments]}
+  - {key: security_audit, group: launch, label: Security audit, buckets: [go_live.security_audit]}
+  - {key: certification, group: launch, label: Quality certification, buckets: [go_live.certification]}
+  - {key: training, group: launch, label: Training users, buckets: [go_live.training], people: true}
+  - {key: hypercare, group: launch, label: Extra support right after launch, buckets: [go_live.hypercare], people: true}
+  - {key: hardware, group: launch, label: "Servers and storage (buying hardware)", buckets: [go_live.infrastructure_procurement]}
+  - {key: support_team, group: run, label: "Support team: bug fixes, security updates and small changes", buckets: [run.patching_bugfix, run.change_requests], people: true}
+  - {key: helpdesk, group: run, label: Helpdesk team, buckets: [run.helpdesk], people: true}
+  - {key: onsite, group: run, label: "Staff placed at the client's office", buckets: [run.onsite_resources], people: true}
+  - {key: hosting, group: run, label: "Hosting: servers, database, storage, backups", buckets: [run.hosting, run.backups, run.dr]}
+  - {key: ai_usage, group: run, label: AI usage (chatbot and AI features), buckets: [run.ai_runtime]}
+  - {key: services, group: run, label: Third-party services, buckets: [run.third_party_services], per_line: true}
+  - {key: licences, group: run, label: Software licences, buckets: [run.licences], per_line: true}
+  - {key: annual_audit, group: run, label: Yearly security re-audit, buckets: [run.annual_audit]}
+  - {key: ssl_domain, group: run, label: SSL certificate and domain name, buckets: [run.ssl_domain]}
+  - {key: pm, group: management, label: Project manager, buckets: [programme.project_management], people: true}
+  - {key: governance, group: management, label: "Client meetings, monthly reports and travel", buckets: [programme.steering_meetings, programme.mis_reports, programme.travel], people: true}
+  - {key: margin, group: commercial, label: Profit margin, buckets: [commercial.margin], margin: true}
+  - {key: buffer, group: commercial, label: Risk buffer (for unknowns), buckets: [commercial.contingency, commercial.penalty_reserve]}
+  - {key: finance, group: commercial, label: "Cost of money: waiting for payments, deposits and bank guarantees", buckets: [commercial.working_capital, commercial.emd, commercial.pbg]}
+  - {key: exit, group: commercial, label: Handover at the end of the contract, buckets: [commercial.exit_management]}
+  - {key: tax, group: commercial, label: Tax, buckets: [commercial.gst]}
+
 plain_drivers:
-  run.ai_runtime: how much people use the AI chatbot
+  run.ai_runtime: how much people use the AI features
   run.helpdesk: helpdesk staffing
   run.hosting: cloud hosting
   run.dr: the disaster-recovery site
@@ -158,18 +529,43 @@ plain_drivers:
   build.module_development: building the main screens and features
   build.data_migration: moving old data
   programme.project_management: project management
+  run.third_party_services: usage of SMS, email, maps and other paid services
+  build.tools: developer tool subscriptions
+  build.content_translation: translating content into other languages
 
 # Basic reader (used when no AI key is configured): words and phrases that mark a feature or a
 # choice in a tender. Matched case-insensitively on whole words; every match is reported with
 # its page, nearest clause number and the sentence it appears in.
+# Client mode (a department or company planning its tender budget): bids below this share of
+# the low end, or above this share of the high end, are flagged.
+client_mode:
+  source: placeholder
+  too_low_share_of_low: 0.75
+  too_high_share_of_high: 1.25
+  note: "A bid far below the fair range usually means missed scope or a vendor who cannot deliver; ask for a written justification of the price before accepting it. A bid far above it is probably overpriced."
+
+# "Similar real projects" shown with every estimate (from seeds/benchmarks): score = features
+# shared (Jaccard) x weight + same size (or a neighbouring size) + same build type.
+similar_projects:
+  count: 5
+  min_score: 0.35
+  weight_features: 0.55
+  weight_size: 0.3
+  weight_neighbour_size: 0.12
+  weight_build_type: 0.15
+
 keywords:
+  # Long documents name many features in passing (payment terms, "dashboard of bids"): from
+  # this many pages a feature needs this many mentions to be ticked; fewer are only offered.
+  long_document_pages: 20
+  min_mentions_long_document: 3
   features:
     online_forms: [online application, online registration, registration form, application form, empanelment, online submission, e-application]
     approval_workflow: [workflow, approval process, multi-level approval, scrutiny, approving authority, file movement]
     documents: [document management, document upload, upload documents, upload of documents, dms, document repository]
     dashboards: [dashboard, dashboards, mis report, mis reports, analytics, reports module]
     ai_chatbot: [chatbot, chat bot, virtual assistant, conversational ai, generative ai, ai assistant]
-    payments: [payment gateway, online payment, e-payment, fee payment, paygov, sbi epay]
+    payments: [payment gateway, online payment, online payments, e-payment, fee payment, paygov, sbi epay, pay online, pay the fee online, pay fees online, pay the fees online, upi payment]
     aadhaar_digilocker: [aadhaar, ekyc, e-kyc, digilocker]
     staff_login: [single sign-on, single sign on, sso, ldap, parichay, active directory]
     connect_existing: [sap, erp, legacy system, legacy systems, existing system, existing systems, third-party integration]
@@ -178,18 +574,58 @@ keywords:
     public_website: [public website, content management system, cms, notices and circulars, news and events]
     grievances: [grievance, grievances, complaint management, helpdesk ticket]
     old_data: [data migration, legacy data, historical data, migration of existing data, digitisation of records]
+    inventory: [inventory, stock management, stock register, warehouse, stock in, stock out, barcode]
+    billing: [billing, invoice, invoicing, invoices, receipts, tax invoice]
+    bookings: [booking, bookings, appointment, appointments, scheduling, reservation, reservations]
+    online_store: [online store, e-commerce, ecommerce, shopping cart, cart and checkout, product catalogue]
+    crm: [crm, customer relationship, lead management, leads, sales pipeline]
+    mobile_app: [mobile app, mobile application, android app, ios app, android, iphone app]
+    notifications: [sms, push notification, push notifications, email alerts, sms alerts, otp, reminders by sms]
+    maps: [maps, map view, gis, geo-tagging, geotagging, geolocation, location tracking, gps tracking, google maps, nearby search]
+    search: [search functionality, advanced search, search facility, full-text search]
   choices:
+    # A first version / pilot named in the document (strong phrases only: "phase 1" alone is
+    # usually just the first stage of a full project).
+    version:
+      mvp: [minimum viable product, mvp, pilot project, pilot phase, pilot implementation, proof of concept]
     availability:
       critical: ["99.95%", "99.99%", disaster recovery, dr site]
       high: ["99.9%"]
       normal: ["99.5%"]
     hosting:
       indian_cloud: [meity empanelled, meity-empanelled, meghraj, government community cloud, gcc]
-      on_prem: [on-premise, on premise, on-premises, state data centre, state data center, sdc]
-      aws: [amazon web services, aws]
+      existing: [state data centre, state data center, sdc, nic cloud, nic data centre, nic data center, provided by the department, provided by the client]
+      on_prem: [on-premise, on premise, on-premises]
+      aws: [amazon web services, aws, microsoft azure, azure, google cloud]
     support_hours:
       always: [24x7, 24 x 7, "24*7", 24/7, round the clock]
       office: [8x5, 8 x 5, office hours, working hours]
+
+# Things a requirement document may ask for that this estimate does not price: shown to the
+# user with the page, so nothing is silently left out (basic reader: these words; AI reader:
+# the same topics). Labels are what the user sees.
+not_priced_topics:
+  penalties: {label: "Penalties for delay or downtime (service levels)", words: [liquidated damages, penalty, penalties, service level agreement, service levels, sla]}
+  warranty: {label: Warranty period, words: [warranty, defect liability]}
+  payment_terms: {label: "Payment terms (when the vendor is paid)", words: [payment terms, payment schedule, terms of payment, payment milestones]}
+  data_rules: {label: "Data protection and other rules to follow", words: [dpdp, data protection, personal data protection, gdpr, iso 27001, pci dss, pci-dss, rbi guidelines]}
+  technology: {label: Required technology or software, words: [technology stack, tech stack, oracle, microsoft sql server, sap hana]}
+  team_qualifications: {label: "Required team qualifications or CVs", words: [curriculum vitae, cv of, cvs of, minimum experience, years of experience, key personnel]}
+  source_code: {label: "Source code and ownership handover", words: [source code, intellectual property, ipr]}
+
+# Staff the vendor must keep at the client's office, as stated in a document, are priced at
+# this role's day rate during support (the engine's onsite_resources).
+onsite_role: role.developer
+
+# Payment terms read by the AI reader: when each payment falls, as a point in the build
+# (0 = the order, 1 = go-live) and months after it. "after_go_live" uses the months the
+# document states. Placeholder points.
+payment_points:
+  source: placeholder
+  on_order: {at_build_fraction: 0, offset_months: 0}
+  during_build: {at_build_fraction: 0.5, offset_months: 0}
+  go_live: {at_build_fraction: 1, offset_months: 0}
+  after_go_live: {at_build_fraction: 1, offset_months: 0}
 
 # Pre-bid queries. Vague wording and missing key facts make bidders price differently; each
 # becomes a drafted query citing the clause. {clause}, {page} and {quote} are filled in.
@@ -197,11 +633,11 @@ prebid:
   vague_phrases: [as per requirement, as per the requirement, as required, adequate, suitable, appropriate number, etc., to be decided, tbd, as directed, as and when required, if required, wherever applicable, and so on, minimum but not limited to, not limited to]
   vague_query: 'Clause {clause} (page {page}) states: "{quote}". The scope or quantity here is not specified. Kindly clarify the exact requirement so that all bidders can price on the same basis.'
   missing:
-    users_total: The RFP does not state the expected number of registered users. Kindly specify the number of users the system must support at launch and at the end of the contract.
-    peak_concurrent_users: The RFP does not state the expected number of concurrent users at peak load. Kindly specify it, as it determines the hosting and performance-testing scope.
-    om_years: The RFP does not state the period of operations and maintenance after go-live. Kindly confirm the O&M / AMC period.
-    deadline_months: The RFP does not state the implementation timeline. Kindly confirm the time allowed from the date of the work order to go-live.
-    availability: The RFP does not state the required system availability (uptime SLA). Kindly specify the uptime required and whether a disaster-recovery site is in scope.
-    hosting: The RFP does not state where the system will be hosted. Kindly confirm the hosting environment (government cloud, state data centre or bidder's cloud) and who bears the hosting cost.
-    support_hours: The RFP does not state the helpdesk support hours. Kindly confirm whether support is required during office hours or round the clock.
-    chatbot_queries_per_day: The RFP asks for an AI chatbot but does not state the expected usage. Kindly indicate the expected number of chatbot queries per day and the languages to be supported.
+    users_total: The requirement document does not state the expected number of registered users. Kindly specify the number of users the system must support at launch and at the end of the contract.
+    peak_concurrent_users: The requirement document does not state the expected number of concurrent users at peak load. Kindly specify it, as it determines the hosting and performance-testing scope.
+    om_years: The requirement document does not state the period of operations and maintenance after go-live. Kindly confirm the O&M / AMC period.
+    deadline_months: The requirement document does not state the implementation timeline. Kindly confirm the time allowed from the date of the work order to go-live.
+    availability: The requirement document does not state the required system availability (uptime SLA). Kindly specify the uptime required and whether a disaster-recovery site is in scope.
+    hosting: The requirement document does not state where the system will be hosted. Kindly confirm the hosting environment (government cloud, state data centre or bidder's cloud) and who bears the hosting cost.
+    support_hours: The requirement document does not state the helpdesk support hours. Kindly confirm whether support is required during office hours or round the clock.
+    chatbot_queries_per_day: The requirement document asks for an AI chatbot but does not state the expected usage. Kindly indicate the expected number of chatbot queries per day and the languages to be supported.

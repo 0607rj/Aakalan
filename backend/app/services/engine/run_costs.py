@@ -39,8 +39,7 @@ def ai_runtime_lines(ctx: PricingContext) -> list[CostLineOut]:
             growth: Decimal = t.param("ai_runtime", "volume_growth_per_year")
             per_unit: Decimal = t.param("ai_runtime", "tokens_per_unit")
             change: Decimal = t.param("ai_runtime", "annual_price_change")
-            p_in = t.rate_inr(t.param("ai_runtime", "token_input_rate_key"))
-            p_out = t.rate_inr(t.param("ai_runtime", "token_output_rate_key"))
+            p_in, p_out = t.token_rates()
             queries = t.step(
                 "queries per year",
                 f"{q} × {days} × (1 + {growth})^{year - 1}",
@@ -75,7 +74,7 @@ def ai_runtime_lines(ctx: PricingContext) -> list[CostLineOut]:
                 max(min_gpus, ceil(qps / per_gpu)),
             )
             hours: Decimal = t.param("calendar", "hours_per_year")
-            rate = t.rate_inr(t.param("ai_runtime", "gpu_rate_key"))
+            rate = t.rate_local(t.param("ai_runtime", "gpu_rate_key"))
             cost = gpus * hours * rate * t.escalation("prices", year)
         spreads.fixed(t, "ai_runtime")
         spreads.om_year(t, year)
@@ -92,12 +91,17 @@ def maintenance_lines(
     clarity = ctx.overall_clarity()
     pd_year = ctx.p.calendar.pd_per_year
 
-    def labour(t: LineBuilder, pd: Decimal, role: str, year: int) -> CostLineOut:
+    def labour(
+        t: LineBuilder, pd: Decimal, role: str, year: int, *, scaled: bool = True
+    ) -> CostLineOut:
+        if scaled:  # mandated onsite staff are not scaled by calibration
+            run = t.calibration("run_multiplier")
+            pd = t.step("support effort × run multiplier", f"{pd:.2f} × {run}", pd * run)
         t.add_role_pd(role, pd)
         esc = t.escalation("labour", year)
         spreads.clarity(t, clarity)
         spreads.om_year(t, year)
-        return t.finish(pd * t.rate_inr(role) * esc)
+        return t.finish(pd * t.rate_local(role) * esc)
 
     def price(t: LineBuilder, amount: Decimal, year: int) -> CostLineOut:
         esc = t.escalation("prices", year)
@@ -106,25 +110,30 @@ def maintenance_lines(
         return t.finish(amount * esc)
 
     for year in range(1, ctx.q.om_years + 1):
-        t = _run(ctx, "helpdesk", "run.helpdesk", year, "Helpdesk", "maintenance.helpdesk.v1")
-        users: int = t.driver("users_total")
-        tiers = ctx.p.maintenance.helpdesk_seats_by_users
-        tier = next(i for i, x in enumerate(tiers) if x.max_users is None or users <= x.max_users)
-        seats: Decimal = t.param("maintenance", "helpdesk_seats_by_users", tier, "seats")
-        sla: str = t.driver("support_sla")
-        coverage: Decimal = t.param("maintenance", "helpdesk_coverage_fte", sla)
-        t.param("calendar", "pd_per_year")
-        pd = t.step(
-            "helpdesk person-days", f"{seats} × {coverage} × {pd_year}", seats * coverage * pd_year
-        )
-        lines.append(labour(t, pd, t.param("maintenance", "helpdesk_role"), year))
+        if ctx.q.helpdesk_in_scope:
+            t = _run(ctx, "helpdesk", "run.helpdesk", year, "Helpdesk", "maintenance.helpdesk.v2")
+            users: int = t.driver("users_total")
+            tiers = ctx.p.maintenance.helpdesk_seats_by_users
+            tier = next(
+                i for i, x in enumerate(tiers) if x.max_users is None or users <= x.max_users
+            )
+            seats: Decimal = t.param("maintenance", "helpdesk_seats_by_users", tier, "seats")
+            sla: str = t.driver("support_sla")
+            coverage: Decimal = t.param("maintenance", "helpdesk_coverage_fte", sla)
+            t.param("calendar", "pd_per_year")
+            pd = t.step(
+                "helpdesk person-days",
+                f"{seats} × {coverage} × {pd_year}",
+                seats * coverage * pd_year,
+            )
+            lines.append(labour(t, pd, t.param("maintenance", "helpdesk_role"), year))
 
         for item, label in (
             ("bugfix", "Bug-fix support"),
             ("patching", "Security patching"),
             ("upgrade", "Platform upgrades"),
         ):
-            formula = "maintenance.upgrades.v1" if item == "upgrade" else f"maintenance.{item}.v1"
+            formula = "maintenance.upgrades.v2" if item == "upgrade" else f"maintenance.{item}.v2"
             t = _run(ctx, item, "run.patching_bugfix", year, label, formula)
             share: Decimal = t.param("maintenance", f"{item}_share_of_build_pd")
             t.step("build effort", "Σ component effort (pd)", build_effort_pd)
@@ -139,7 +148,7 @@ def maintenance_lines(
             "run.change_requests",
             year,
             "Change-request pool",
-            "maintenance.change_requests.v1",
+            "maintenance.change_requests.v2",
         )
         cr: Decimal | None = t.driver("change_request_pd_per_year")
         if cr is None:
@@ -162,7 +171,7 @@ def maintenance_lines(
             t.driver("onsite_resources")
             t.param("calendar", "pd_per_year")
             pd = t.step("onsite person-days", f"{res.count} × {pd_year}", res.count * pd_year)
-            lines.append(labour(t, pd, res.role, year))
+            lines.append(labour(t, pd, res.role, year, scaled=False))
 
         t = _run(
             ctx,
@@ -174,7 +183,7 @@ def maintenance_lines(
         )
         if t.driver("cert_in_audit"):
             prefix: str = t.param("maintenance", "annual_audit_rate_prefix")
-            lines.append(price(t, t.rate_inr(f"{prefix}.{audit_band}"), year))
+            lines.append(price(t, t.rate_local(f"{prefix}.{audit_band}"), year))
 
         t = _run(
             ctx,
@@ -184,7 +193,7 @@ def maintenance_lines(
             "SSL certificate and domain",
             "maintenance.ssl_domain.v1",
         )
-        amount = t.rate_inr(t.param("maintenance", "ssl_rate_key")) + t.rate_inr(
+        amount = t.rate_local(t.param("maintenance", "ssl_rate_key")) + t.rate_local(
             t.param("maintenance", "domain_rate_key")
         )
         lines.append(price(t, amount, year))
@@ -208,5 +217,5 @@ def maintenance_lines(
                         t.requirement_ids.extend(
                             r for r in c.requirement_ids if r not in t.requirement_ids
                         )
-                lines.append(price(t, t.rate_inr(key), year))
+                lines.append(price(t, t.rate_local(key), year))
     return lines

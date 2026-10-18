@@ -17,29 +17,38 @@ import { cn } from "@/lib/utils";
 interface Preset {
   id: string;
   label: string;
-  overrides: Record<string, string | number>;
+  overrides: Record<string, string | number | boolean>;
+  /** Only offered for these countries (all when omitted). */
+  countries?: string[];
 }
 
+// Hosting comparisons put hosting in the cost, on each kind of server.
 const PRESETS: Preset[] = [
   {
     id: "indian_cloud",
-    label: "Government-approved Indian cloud",
-    overrides: { hosting_provider: "indian_cloud" },
-  },
-  {
-    id: "on_prem",
-    label: "Department's own server room",
-    overrides: { hosting_provider: "on_prem" },
+    label: "We host it on a government-approved Indian cloud",
+    overrides: { hosting_in_scope: true, hosting_provider: "indian_cloud" },
+    countries: ["india"],
   },
   {
     id: "aws",
-    label: "Amazon cloud",
-    overrides: { hosting_provider: "aws" },
+    label: "We host it on Amazon cloud",
+    overrides: { hosting_in_scope: true, hosting_provider: "aws" },
+  },
+  {
+    id: "on_prem",
+    label: "We supply servers for the client's own server room",
+    overrides: { hosting_in_scope: true, hosting_provider: "on_prem" },
+  },
+  {
+    id: "helpdesk_office",
+    label: "Dedicated helpdesk, office hours",
+    overrides: { helpdesk_in_scope: true, support_sla: "8x5" },
   },
   {
     id: "helpdesk_24x7",
-    label: "Round-the-clock helpdesk",
-    overrides: { support_sla: "24x7" },
+    label: "Dedicated helpdesk, round the clock",
+    overrides: { helpdesk_in_scope: true, support_sla: "24x7" },
   },
   {
     id: "five_years",
@@ -48,23 +57,43 @@ const PRESETS: Preset[] = [
   },
 ];
 
-const DEFAULT_SELECTED = ["indian_cloud", "on_prem"];
+const PREFERRED_DEFAULTS = ["indian_cloud", "aws", "five_years"];
 const DEADLINE = "deadline";
 
-/** Difference from the current estimate, from two integer paise values. */
-function versus(result: ScenarioResult, baseline: ScenarioResult): string {
+/** Difference from the current estimate, from two integer minor-unit values. */
+function versus(
+  result: ScenarioResult,
+  baseline: ScenarioResult,
+  currency: string,
+): string {
   const mine = result.totals?.p50_paise;
   const base = baseline.totals?.p50_paise;
   if (mine === undefined || base === undefined) return "—";
   const diff = mine - base;
   if (diff === 0) return "Same";
   return diff < 0
-    ? `${formatPaise(-diff)} cheaper`
-    : `${formatPaise(diff)} more`;
+    ? `${formatPaise(-diff, currency)} cheaper`
+    : `${formatPaise(diff, currency)} more`;
 }
 
-export function CompareOptions({ estimateId }: { estimateId: string }) {
-  const [selected, setSelected] = React.useState<string[]>(DEFAULT_SELECTED);
+export function CompareOptions({
+  estimateId,
+  currency = "INR",
+  country = "india",
+}: {
+  estimateId: string;
+  currency?: string;
+  country?: string;
+}) {
+  const presets = PRESETS.filter(
+    (p) => !p.countries || p.countries.includes(country),
+  );
+  const [selected, setSelected] = React.useState<string[]>(() =>
+    PREFERRED_DEFAULTS.filter((id) => presets.some((p) => p.id === id)).slice(
+      0,
+      2,
+    ),
+  );
   const [deadline, setDeadline] = React.useState("");
   const [results, setResults] = React.useState<ScenarioResult[] | null>(null);
   const [running, setRunning] = React.useState(false);
@@ -87,9 +116,9 @@ export function CompareOptions({ estimateId }: { estimateId: string }) {
   }
 
   async function compare() {
-    const scenarios: Scenario[] = PRESETS.filter((p) =>
-      selected.includes(p.id),
-    ).map((p) => ({ name: p.label, overrides: p.overrides }));
+    const scenarios: Scenario[] = presets
+      .filter((p) => selected.includes(p.id))
+      .map((p) => ({ name: p.label, overrides: p.overrides }));
     if (deadlineOn) {
       scenarios.push({
         name: `Deadline of ${deadlineMonths} months`,
@@ -121,7 +150,7 @@ export function CompareOptions({ estimateId }: { estimateId: string }) {
       </div>
 
       <div className="flex flex-wrap gap-2">
-        {PRESETS.map((preset) => {
+        {presets.map((preset) => {
           const on = selected.includes(preset.id);
           return (
             <label
@@ -218,14 +247,14 @@ export function CompareOptions({ estimateId }: { estimateId: string }) {
                   {result.feasible && result.totals ? (
                     <>
                       <td className="py-3 pr-4 font-semibold tabular-nums">
-                        {formatPaise(result.totals.p50_paise)}
+                        {formatPaise(result.totals.p50_paise, currency)}
                       </td>
                       <td className="py-3 pr-4 text-muted-foreground tabular-nums">
-                        {formatPaise(result.totals.p10_paise)} –{" "}
-                        {formatPaise(result.totals.p90_paise)}
+                        {formatPaise(result.totals.p10_paise, currency)} –{" "}
+                        {formatPaise(result.totals.p90_paise, currency)}
                       </td>
                       <td className="py-3 tabular-nums">
-                        {i === 0 ? "—" : versus(result, baseline)}
+                        {i === 0 ? "—" : versus(result, baseline, currency)}
                       </td>
                     </>
                   ) : (

@@ -1,8 +1,9 @@
 import { AppHeader } from "@/components/app-header";
 import { AuthGuard } from "@/components/auth-guard";
 import { HealthStatus } from "@/components/health-status";
+import { Footer } from "@/components/site/footer";
 
-/** Signed-in page frame: auth guard, header, centred content, health footer. */
+/** Signed-in page frame: auth guard, the bar, centred content, footer. */
 export function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <AuthGuard>
@@ -11,6 +12,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         {children}
       </main>
       <HealthStatus />
+      <Footer />
     </AuthGuard>
   );
 }

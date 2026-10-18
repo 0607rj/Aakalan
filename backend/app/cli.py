@@ -44,6 +44,72 @@ def cmd_golden(_args: argparse.Namespace) -> None:
     sys.stdout.write("Review the diff (git diff tests/engine/golden) before committing.\n")
 
 
+BUYER_TITLES = {
+    "government": "GOVERNMENT",
+    "private": "PRIVATE COMPANIES",
+    "small_business": "STARTUPS / SMALL BUSINESSES",
+}
+
+
+def cmd_backtest(args: argparse.Namespace) -> None:
+    from app.services.calibration.backtest import (
+        SIZES,
+        BacktestReport,
+        backtest,
+        fit_points_curve,
+        load_benchmarks,
+        reference_for,
+    )
+    from app.services.engine.reference import Calibration
+    from app.services.quick.config import quick_config
+    from app.services.seeding.reference import load_reference
+
+    settings = get_settings()
+    bench = load_benchmarks(settings.seeds_dir / "benchmarks" / f"{args.country}.yaml")
+    reference = reference_for(load_reference(settings.seeds_dir), args.country)
+    cfg = quick_config()
+
+    def show(title: str, r: BacktestReport) -> None:
+        sys.stdout.write(
+            f"\n{title}: effort x{r.effort_multiplier} support x{r.run_multiplier} | "
+            f"used {r.projects_used} | median ratio {r.median_ratio} | "
+            f"median |error| {r.median_abs_error_percent}% | within 25%: {r.within_25_percent}"
+            f" | inside our low-high range: {r.inside_range}\n"
+        )
+        for row in r.rows:
+            mark = "*" if row.use else " "
+            ours = f"{row.estimate_minor / 100:,.0f}" if row.estimate_minor else "-"
+            published = f"{row.published_minor / 100:,.0f}"
+            if row.published_high_minor:
+                published += f"-{row.published_high_minor / 100:,.0f}"
+            sys.stdout.write(
+                f" {mark} {row.id[:38]:38} {row.buyer[:5]:5} published {published:>21}"
+                f"  ours {ours:>14}  error {row.error_percent}%\n"
+            )
+
+    dials = reference["parameters"].calibration or Calibration(source="none")
+    effort, run = dials.effort_multiplier, dials.run_multiplier
+    if args.calibrate:
+        # one smooth size factor by feature points, on all client types (as the app prices)
+        fit = fit_points_curve(cfg, bench, reference)
+        sys.stdout.write(
+            f"\nsize factor = {fit.a} x points^{fit.b} | {fit.projects} projects | "
+            f"in-sample median |error| {fit.median_abs_error_percent}% | left out "
+            f"{fit.loo_median_abs_error_percent}% (within 25%: {fit.loo_within_25_percent})\n"
+            f"curve: {[(n, str(f)) for n, f in fit.curve]}\n"
+        )
+        for size, st in fit.by_size.items():
+            sys.stdout.write(f"{size}: {st.model_dump()}\n")
+        for buyer, r in fit.by_buyer.items():
+            sys.stdout.write(f"{BUYER_TITLES.get(buyer, buyer)}: actual / ours {r}\n")
+    else:
+        show("ALL PROJECTS", backtest(cfg, bench, reference, effort, run))
+        for size in SIZES:
+            show(size.upper(), backtest(cfg, bench, reference, effort, run, size=size))
+        for buyer, title in BUYER_TITLES.items():
+            show(title, backtest(cfg, bench, reference, effort, run, segment=buyer))
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(prog="app.cli")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -54,6 +120,14 @@ def main(argv: list[str] | None = None) -> None:
     p_openapi.add_argument("--out", default=str(BACKEND_DIR / "openapi.json"))
     p_openapi.set_defaults(func=cmd_openapi)
     sub.add_parser("golden", help="regenerate golden expectations").set_defaults(func=cmd_golden)
+    p_bt = sub.add_parser("backtest", help="compare estimates with real published contracts")
+    p_bt.add_argument("--country", default="india", choices=["india", "us"])
+    p_bt.add_argument(
+        "--calibrate",
+        action="store_true",
+        help="fit project-size and ready-made-product factors on all projects",
+    )
+    p_bt.set_defaults(func=cmd_backtest)
     args = parser.parse_args(argv)
     args.func(args)
 

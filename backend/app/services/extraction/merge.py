@@ -5,7 +5,7 @@ replies) into one extraction for the review screen and the estimate.
 - Numbers and choices: the RFP and annexures set a value (first stated wins); a corrigendum or
   pre-bid reply overrides it (latest wins). Every override is recorded in `changes`, so the
   user sees e.g. "Corrigendum changed deadline_months from 9 to 6".
-- Unclear points: all kept.
+- Unclear points: all kept. Not-priced topics: union. Payment terms: like a number.
 """
 
 from typing import Any
@@ -51,6 +51,9 @@ def merge_extractions(
     first = docs[0][1]
     merged = first.model_copy(deep=True)
     merged.features, merged.choices, merged.numbers, merged.unclear_points = [], {}, {}, []
+    merged.other_features, merged.not_priced, merged.payment_terms = [], [], None
+    others: dict[str, Any] = {}
+    not_priced: dict[str, Any] = {}
     merged.dropped_findings = 0
     readers = {ex.reader for _, ex in docs}
     merged.reader = "ai" if readers == {"ai"} else ("basic" if readers == {"basic"} else "mixed")
@@ -79,13 +82,34 @@ def merge_extractions(
                 features[f.key].evidence.extend(f.evidence)
             else:
                 features[f.key] = f.model_copy(deep=True)
+        for o in ex.other_features:
+            if o.name.lower() in others:
+                others[o.name.lower()].evidence.extend(o.evidence)
+            else:
+                others[o.name.lower()] = o.model_copy(deep=True)
         for key, value in ex.choices.items():
             apply(merged.choices, key, value, doc)
         for key, value in ex.numbers.items():
             apply(merged.numbers, key, value, doc)
+        for n in ex.not_priced:
+            if n.topic in not_priced:
+                not_priced[n.topic].evidence.extend(n.evidence)
+            else:
+                not_priced[n.topic] = n.model_copy(deep=True)
+        if ex.payment_terms is not None and (
+            merged.payment_terms is None or doc.kind in OVERRIDING_KINDS
+        ):
+            merged.payment_terms = ex.payment_terms
         merged.unclear_points.extend(ex.unclear_points)
         merged.dropped_findings += ex.dropped_findings
     merged.features = list(features.values())
+    merged.other_features = list(others.values())
+    # payment terms that were read are priced, so they are no longer "not priced"
+    merged.not_priced = [
+        n
+        for n in not_priced.values()
+        if not (n.topic == "payment_terms" and merged.payment_terms is not None)
+    ]
     return merged, changes
 
 

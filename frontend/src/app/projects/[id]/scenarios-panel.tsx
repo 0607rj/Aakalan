@@ -40,7 +40,13 @@ const PRESETS: Preset[] = [
 
 const MAX_SCENARIOS = 8;
 
-export function ScenariosPanel({ estimateId }: { estimateId: string }) {
+export function ScenariosPanel({
+  estimateId,
+  currency = "INR",
+}: {
+  estimateId: string;
+  currency?: string;
+}) {
   const [selected, setSelected] = React.useState<string[]>([
     "indian_cloud",
     "gpu",
@@ -174,13 +180,13 @@ export function ScenariosPanel({ estimateId }: { estimateId: string }) {
                   {r.feasible && r.totals ? (
                     <>
                       <TableCell className="text-right">
-                        {formatPaise(r.totals.p10_paise)}
+                        {formatPaise(r.totals.p10_paise, currency)}
                       </TableCell>
                       <TableCell className="text-right font-semibold">
-                        {formatPaise(r.totals.p50_paise)}
+                        {formatPaise(r.totals.p50_paise, currency)}
                       </TableCell>
                       <TableCell className="text-right">
-                        {formatPaise(r.totals.p90_paise)}
+                        {formatPaise(r.totals.p90_paise, currency)}
                       </TableCell>
                     </>
                   ) : (

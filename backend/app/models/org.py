@@ -1,6 +1,7 @@
 """Organisations and users."""
 
 import enum
+from typing import Any
 
 from sqlalchemy import Boolean, Enum, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -37,3 +38,14 @@ class User(IdTimestampMixin, Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
 
     organisation: Mapped[Organisation] = relationship(back_populates="users")
+
+
+class OrgSettings(IdTimestampMixin, Base):
+    """Company pricing settings (margin, buffer, effort adjustments) — one row per org."""
+
+    __tablename__ = "org_settings"
+
+    org_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("organisations.id", ondelete="CASCADE"), unique=True
+    )
+    data: Mapped[dict[str, Any]]

@@ -4,6 +4,9 @@
   quantile stream from `numpy.random.default_rng([seed, sha256(group)])`, so all lines in a
   group move together and adding scope never re-shuffles other groups' draws.
 - Each base line maps the shared quantile through its triangular(low, likely, high) inverse CDF.
+- An optional shared model-error factor (back-test residuals) multiplies every base line in a
+  run by one draw of triangular(1 − down, 1, 1 + up): estimation error is systematic, so it
+  does not average out across groups the way independent group noise does.
 - Derived commercial lines are recomputed per run with `commercial.derived_amounts`.
 - Floats live only inside this module; results are rounded to paise at the boundary.
 """
@@ -24,6 +27,7 @@ from app.services.engine.reference import Taxonomy
 
 PERCENTILES = (10.0, 50.0, 90.0)  # definition of the reported P10 / P50 / P90
 SHARE_QUANTUM = Decimal("0.001")
+MODEL_GROUP = "__model_error__"
 
 FloatArray = NDArray[np.float64]
 
@@ -60,10 +64,15 @@ def simulate(
     seed: int,
     runs: int,
     taxonomy: Taxonomy,
+    model_spread: tuple[Decimal, Decimal] | None = None,
 ) -> SimulationResult:
     base = [line for line in lines if not line.derived]
     quantiles: dict[str, FloatArray] = {}
     zeros = np.zeros(runs, dtype=np.float64)
+    model = np.ones(runs, dtype=np.float64)
+    if model_spread is not None:
+        down, up = (float(v) for v in model_spread)
+        model = triangular_inverse(group_quantiles(seed, MODEL_GROUP, runs), 1 - down, 1.0, 1 + up)
     total, build, run = zeros.copy(), zeros.copy(), zeros.copy()
     by_rate: dict[Decimal, FloatArray] = defaultdict(lambda: zeros.copy())
     by_bucket: dict[str, FloatArray] = defaultdict(lambda: zeros.copy())
@@ -77,13 +86,14 @@ def simulate(
             float(line.likely_paise),
             float(line.high_paise),
         )
+        by_bucket[line.bucket] += x  # range drivers: the lines' own spread
+        x = x * model
         total += x
         if line.year == 0 and line.stage != "commercial":
             build += x
         elif line.year > 0:
             run += x
         by_rate[line.gst_percent] += x
-        by_bucket[line.bucket] += x
 
     float_factors = factors.map(float)
     derived = derived_amounts(

@@ -13,11 +13,11 @@ import {
   type Outcome,
   type OutcomeIn,
 } from "@/lib/api/client";
-import { formatPaise } from "@/lib/format";
+import { currencySymbol, formatPaise } from "@/lib/format";
 import { useLoad } from "@/lib/use-load";
 import { cn } from "@/lib/utils";
 
-const PAISE_PER_RUPEE = 100;
+const MINOR_PER_MAJOR = 100; // paise per rupee, cents per dollar
 
 const RESULTS: { value: BidResult; label: string }[] = [
   { value: "won", label: "Won" },
@@ -28,25 +28,25 @@ const RESULTS: { value: BidResult; label: string }[] = [
 
 type PriceKey = "our_price_paise" | "l1_price_paise" | "actual_cost_paise";
 
-const PRICES: { key: PriceKey; label: string }[] = [
-  { key: "our_price_paise", label: "Our quoted price (₹)" },
-  { key: "l1_price_paise", label: "Winning (L1) price (₹)" },
+const PRICES: { key: PriceKey; label: (symbol: string) => string }[] = [
+  { key: "our_price_paise", label: (c) => `Our quoted price (${c})` },
+  { key: "l1_price_paise", label: (c) => `Winning (L1) price (${c})` },
   {
     key: "actual_cost_paise",
-    label: "Actual final cost (₹, if won and finished)",
+    label: (c) => `Actual final cost (${c}, if won and finished)`,
   },
 ];
 
-function rupeesText(paise: number | null | undefined): string {
-  return paise === null || paise === undefined
+function amountText(minor: number | null | undefined): string {
+  return minor === null || minor === undefined
     ? ""
-    : String(paise / PAISE_PER_RUPEE);
+    : String(minor / MINOR_PER_MAJOR);
 }
 
 function priceError(text: string): string | null {
   if (text.trim() === "") return null;
   const n = Number(text);
-  if (!Number.isFinite(n) || n < 0) return "Enter an amount in rupees.";
+  if (!Number.isFinite(n) || n < 0) return "Enter an amount.";
   return null;
 }
 
@@ -56,21 +56,23 @@ function resultLabel(value: BidResult): string {
 
 function SavedOutcome({
   outcome,
+  currency,
   onEdit,
 }: {
   outcome: Outcome;
+  currency: string;
   onEdit: () => void;
 }) {
   const parts = [
     resultLabel(outcome.bid_result),
     outcome.l1_price_paise != null
-      ? `Winning price ${formatPaise(outcome.l1_price_paise)}`
+      ? `Winning price ${formatPaise(outcome.l1_price_paise, currency)}`
       : null,
     outcome.our_price_paise != null
-      ? `Our price ${formatPaise(outcome.our_price_paise)}`
+      ? `Our price ${formatPaise(outcome.our_price_paise, currency)}`
       : null,
     outcome.actual_cost_paise != null
-      ? `Actual cost ${formatPaise(outcome.actual_cost_paise)}`
+      ? `Actual cost ${formatPaise(outcome.actual_cost_paise, currency)}`
       : null,
   ].filter(Boolean);
   return (
@@ -92,11 +94,13 @@ function SavedOutcome({
 
 function OutcomeForm({
   projectId,
+  currency,
   initial,
   onSaved,
   onCancel,
 }: {
   projectId: string;
+  currency: string;
   initial: Outcome | null;
   onSaved: (outcome: Outcome) => void;
   onCancel: () => void;
@@ -105,9 +109,9 @@ function OutcomeForm({
     initial?.bid_result ?? "lost",
   );
   const [prices, setPrices] = React.useState<Record<PriceKey, string>>({
-    our_price_paise: rupeesText(initial?.our_price_paise),
-    l1_price_paise: rupeesText(initial?.l1_price_paise),
-    actual_cost_paise: rupeesText(initial?.actual_cost_paise),
+    our_price_paise: amountText(initial?.our_price_paise),
+    l1_price_paise: amountText(initial?.l1_price_paise),
+    actual_cost_paise: amountText(initial?.actual_cost_paise),
   });
   const [notes, setNotes] = React.useState(initial?.notes ?? "");
   const [saving, setSaving] = React.useState(false);
@@ -123,7 +127,7 @@ function OutcomeForm({
     const body: OutcomeIn = { bid_result: result, notes: notes.trim() };
     for (const p of PRICES) {
       const text = prices[p.key].trim();
-      if (text !== "") body[p.key] = Math.round(Number(text) * PAISE_PER_RUPEE);
+      if (text !== "") body[p.key] = Math.round(Number(text) * MINOR_PER_MAJOR);
     }
     try {
       onSaved(await api.recordOutcome(projectId, body));
@@ -164,7 +168,9 @@ function OutcomeForm({
       <div className="grid gap-4 sm:grid-cols-3">
         {PRICES.map((p) => (
           <div key={p.key} className="flex flex-col gap-2">
-            <Label htmlFor={`outcome-${p.key}`}>{p.label}</Label>
+            <Label htmlFor={`outcome-${p.key}`}>
+              {p.label(currencySymbol(currency))}
+            </Label>
             <Input
               id={`outcome-${p.key}`}
               type="number"
@@ -207,7 +213,13 @@ function OutcomeForm({
   );
 }
 
-export function BidResultCard({ projectId }: { projectId: string }) {
+export function BidResultCard({
+  projectId,
+  currency = "INR",
+}: {
+  projectId: string;
+  currency?: string;
+}) {
   const loader = React.useCallback(
     () => api.getOutcome(projectId),
     [projectId],
@@ -229,6 +241,7 @@ export function BidResultCard({ projectId }: { projectId: string }) {
         editing ? (
           <OutcomeForm
             projectId={projectId}
+            currency={currency}
             initial={state.data}
             onSaved={(outcome) => {
               setData(outcome);
@@ -237,7 +250,11 @@ export function BidResultCard({ projectId }: { projectId: string }) {
             onCancel={() => setEditing(false)}
           />
         ) : state.data ? (
-          <SavedOutcome outcome={state.data} onEdit={() => setEditing(true)} />
+          <SavedOutcome
+            outcome={state.data}
+            currency={currency}
+            onEdit={() => setEditing(true)}
+          />
         ) : (
           <Button
             variant="outline"

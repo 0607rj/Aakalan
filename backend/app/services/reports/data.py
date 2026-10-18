@@ -1,8 +1,9 @@
 """Report data: one structure, read from the stored estimate, feeds both the PDF report and
 the Excel BoQ, so exported numbers are exactly the numbers the API returns (brief M2)."""
 
+import re
 from dataclasses import dataclass, field
-from decimal import Decimal
+from decimal import ROUND_HALF_UP, Decimal
 from typing import Any
 
 from sqlalchemy import select
@@ -54,6 +55,72 @@ def crore(paise: int | None) -> str:
     return inr(paise, decimals=False)
 
 
+SYMBOLS = {"USD": "$"}
+MILLION = Decimal(1_000_000)
+THOUSAND = Decimal(1_000)
+
+
+def fmt_money(minor: int | None, currency: str, *, decimals: bool = True) -> str:
+    """Display an amount in minor units: Indian style for INR, Western grouping otherwise."""
+    if currency == "INR":
+        return inr(minor, decimals=decimals)
+    if minor is None:
+        return "-"
+    symbol = SYMBOLS.get(currency, f"{currency} ")
+    value = rupees(minor)  # minor units / 100 for both paise and cents
+    return f"{symbol}{value:,.2f}" if decimals else f"{symbol}{value:,.0f}"
+
+
+def fmt_headline(minor: int | None, currency: str) -> str:
+    """Headline figure: 'Rs 4.59 Cr' / 'Rs 85.3 L' for INR, '$1.23 M' / '$450 K' otherwise."""
+    if currency == "INR":
+        return crore(minor)
+    if minor is None:
+        return "-"
+    value = rupees(minor)
+    symbol = SYMBOLS.get(currency, f"{currency} ")
+    if value >= MILLION:
+        return f"{symbol}{value / MILLION:.2f} M"
+    if value >= THOUSAND:
+        return f"{symbol}{value / THOUSAND:.0f} K"
+    return fmt_money(minor, currency, decimals=False)
+
+
+SIGNIFICANT_FIGURES = 2
+
+
+def round_estimate(minor: int) -> int:
+    """Two significant figures: an estimate, not a bill (6,788,300 -> 6,800,000)."""
+    if minor == 0:
+        return 0
+    digits = len(str(abs(minor)))
+    step: int = 10 ** max(0, digits - SIGNIFICANT_FIGURES)
+    return int((Decimal(minor) / step).quantize(Decimal(1), rounding=ROUND_HALF_UP)) * step
+
+
+TRAILING_ZEROS = re.compile(r"\.0+ (L|Cr|M|K)$|(\.\d*?[1-9])0+ (L|Cr|M|K)$")
+
+
+def _estimate(minor: int, currency: str) -> str:
+    """A rounded headline figure without trailing zeros ('Rs 33 L', 'Rs 2.9 Cr')."""
+    text = fmt_headline(round_estimate(minor), currency)
+    return TRAILING_ZEROS.sub(
+        lambda m: f" {m.group(1)}" if m.group(1) else f"{m.group(2)} {m.group(3)}", text
+    )
+
+
+def fmt_range(low: int | None, high: int | None, currency: str) -> str:
+    """'Rs 58,000 - Rs 92,000', rounded; 'about Rs 68,000' when both ends round alike."""
+    if low is None or high is None:
+        return "-"
+    a, b = _estimate(low, currency), _estimate(high, currency)
+    return f"about {a}" if a == b else f"{a} - {b}"
+
+
+def fmt_approx(minor: int | None, currency: str) -> str:
+    return "-" if minor is None else f"about {_estimate(minor, currency)}"
+
+
 @dataclass
 class ReportLine:
     number: int
@@ -81,6 +148,7 @@ class ReportData:
     result: dict[str, Any]
     lines: list[ReportLine]
     margin_visible: bool
+    currency: str = "INR"
     document_name: str | None = None
     prebid: list[PrebidQuery] = field(default_factory=list)
 
@@ -126,10 +194,11 @@ def build_report(
     return ReportData(
         project_name=project.name,
         estimate=estimate,
-        summary=summarise(estimate, project, cfg),
+        summary=summarise(estimate, project, cfg, margin_visible=margin_visible),
         result=result,
         lines=lines,
         margin_visible=margin_visible,
+        currency=estimate.inputs_snapshot["rate_card"].get("currency", "INR"),
         document_name=doc.filename if doc else None,
         prebid=prebid,
     )

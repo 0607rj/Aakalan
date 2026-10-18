@@ -1,0 +1,371 @@
+# Component catalog v2 = v1 + generic components for features outside the ready-made list
+# (priced by type and size; the AI only suggests type and size, the user confirms).
+# Component catalog for the v1 project type: web portal + workflow + AI chatbot (Govt/PSU).
+# base_effort_pd: person-days for one instance of size S / M / L at medium complexity, before
+# NFR multipliers and AI productivity savings. task_mix: share of effort by task type (sums to 1).
+# Every number is an uncalibrated placeholder until outcomes are recorded (M5).
+version: v2
+components:
+  # ---------------------------------------------------------------- pre-build
+  - key: discovery_requirement_study
+    name: Discovery and requirement study
+    category: pre_build
+    bucket: pre_build.discovery
+    description: As-is study, stakeholder workshops, SRS and requirement traceability matrix.
+    task_mix: {analysis: 0.7, architecture: 0.1, documentation: 0.2}
+    base_effort_pd: {S: 45, M: 90, L: 180}
+    source: placeholder
+  - key: solution_architecture
+    name: Solution architecture
+    category: pre_build
+    bucket: pre_build.architecture
+    description: Application, data, security and deployment architecture; HLD and LLD.
+    task_mix: {architecture: 0.8, documentation: 0.2}
+    base_effort_pd: {S: 30, M: 75, L: 150}
+    applicable_drivers: [uptime_sla, security_level, concurrency]
+    source: placeholder
+  - key: ui_ux_design
+    name: UI/UX design
+    category: pre_build
+    bucket: pre_build.ui_ux
+    description: Wireframes, visual design and design system aligned to GIGW.
+    task_mix: {ui_design: 0.85, review_uat: 0.15}
+    base_effort_pd: {S: 45, M: 90, L: 180}
+    applicable_drivers: [languages, accessibility]
+    source: placeholder
+  # ---------------------------------------------------------------- build: modules
+  - key: user_management_rbac
+    name: User management and role-based access
+    category: module
+    bucket: build.module_development
+    description: Registration, login, roles, permissions, password policy, session management.
+    task_mix: {crud: 0.55, tests: 0.2, architecture: 0.05, security_testing: 0.05, documentation: 0.05, review_uat: 0.1}
+    base_effort_pd: {S: 45, M: 90, L: 150}
+    applicable_drivers: [security_level, languages]
+    source: placeholder
+  - key: registration_empanelment
+    name: Online registration / empanelment application
+    category: module
+    bucket: build.module_development
+    description: Multi-step application forms, document upload, validation, status tracking.
+    task_mix: {crud: 0.6, tests: 0.2, ui_design: 0.05, documentation: 0.05, review_uat: 0.1}
+    base_effort_pd: {S: 60, M: 120, L: 240}
+    applicable_drivers: [languages, accessibility, concurrency]
+    source: placeholder
+  - key: workflow_engine
+    name: Approval workflow engine
+    category: module
+    bucket: build.module_development
+    description: Configurable multi-level scrutiny and approval workflows with SLAs and escalation.
+    task_mix: {crud: 0.45, architecture: 0.1, tests: 0.2, documentation: 0.05, review_uat: 0.2}
+    base_effort_pd: {S: 75, M: 150, L: 300}
+    applicable_drivers: [concurrency]
+    licence: {rate_key: licence.bpm_suite.year, effort_factor: 0.6}
+    source: placeholder
+  - key: document_management
+    name: Document management
+    category: module
+    bucket: build.module_development
+    description: Upload, versioning, metadata, secure storage and retrieval of documents.
+    task_mix: {crud: 0.55, tests: 0.2, integration: 0.05, documentation: 0.05, review_uat: 0.15}
+    base_effort_pd: {S: 45, M: 90, L: 180}
+    applicable_drivers: [security_level, concurrency]
+    source: placeholder
+  - key: dashboard_mis_reports
+    name: Dashboards and MIS reports
+    category: module
+    bucket: build.module_development
+    description: Role-wise dashboards, standard MIS reports, exports.
+    task_mix: {crud: 0.6, analysis: 0.1, tests: 0.15, review_uat: 0.15}
+    base_effort_pd: {S: 45, M: 105, L: 210}
+    applicable_drivers: [languages, accessibility]
+    source: placeholder
+  - key: notifications
+    name: Notifications (email / SMS / in-app)
+    category: module
+    bucket: build.module_development
+    description: Templated notifications, triggers and delivery logs.
+    task_mix: {crud: 0.5, integration: 0.2, tests: 0.2, review_uat: 0.1}
+    base_effort_pd: {S: 24, M: 45, L: 75}
+    source: placeholder
+  - key: cms_public_website
+    name: CMS and public website
+    category: module
+    bucket: build.module_development
+    description: Public pages, notices, circulars, FAQs managed through a CMS.
+    task_mix: {crud: 0.5, ui_design: 0.2, tests: 0.15, review_uat: 0.15}
+    base_effort_pd: {S: 45, M: 90, L: 180}
+    applicable_drivers: [languages, accessibility]
+    licence: {rate_key: licence.cms.year, effort_factor: 0.5}
+    source: placeholder
+  - key: search_module
+    name: Search
+    category: module
+    bucket: build.module_development
+    description: Faceted search across applications, documents and public content.
+    task_mix: {crud: 0.5, architecture: 0.1, tests: 0.25, review_uat: 0.15}
+    base_effort_pd: {S: 30, M: 60, L: 120}
+    applicable_drivers: [languages, concurrency]
+    source: placeholder
+  - key: audit_trail_logging
+    name: Audit trail and logging
+    category: module
+    bucket: build.module_development
+    description: Tamper-evident audit trail of user and admin actions.
+    task_mix: {crud: 0.6, tests: 0.25, security_testing: 0.05, review_uat: 0.1}
+    base_effort_pd: {S: 24, M: 45, L: 90}
+    applicable_drivers: [security_level]
+    source: placeholder
+  - key: grievance_helpdesk
+    name: Grievance and helpdesk ticketing
+    category: module
+    bucket: build.module_development
+    description: Citizen/vendor grievance submission, routing, tracking and closure.
+    task_mix: {crud: 0.6, tests: 0.2, documentation: 0.05, review_uat: 0.15}
+    base_effort_pd: {S: 36, M: 75, L: 135}
+    applicable_drivers: [languages]
+    source: placeholder
+  - key: master_data_management
+    name: Master data management
+    category: module
+    bucket: build.module_development
+    description: Admin screens for masters (departments, categories, locations, fees).
+    task_mix: {crud: 0.65, tests: 0.2, review_uat: 0.15}
+    base_effort_pd: {S: 30, M: 60, L: 105}
+    source: placeholder
+  - key: responsive_frontend
+    name: Responsive web front end
+    category: module
+    bucket: build.module_development
+    description: Responsive / PWA front-end shell, navigation and shared components.
+    task_mix: {ui_design: 0.3, crud: 0.45, tests: 0.15, review_uat: 0.1}
+    base_effort_pd: {S: 45, M: 90, L: 180}
+    applicable_drivers: [languages, accessibility]
+    source: placeholder
+  - key: multilingual_i18n
+    name: Multilingual framework (i18n)
+    category: module
+    bucket: build.module_development
+    description: Internationalisation framework, content translation workflow, language switch.
+    task_mix: {crud: 0.5, tests: 0.2, documentation: 0.1, review_uat: 0.2}
+    base_effort_pd: {S: 30, M: 60, L: 120}
+    source: placeholder
+  - key: accessibility_gigw_compliance
+    name: Accessibility and GIGW compliance
+    category: module
+    bucket: build.module_development
+    description: WCAG 2.1 AA / GIGW 3.0 conformance work and accessibility testing.
+    task_mix: {ui_design: 0.3, crud: 0.3, tests: 0.25, review_uat: 0.15}
+    base_effort_pd: {S: 30, M: 60, L: 120}
+    source: placeholder
+  - key: security_hardening
+    name: Application security hardening
+    category: module
+    bucket: build.module_development
+    description: OWASP controls, encryption, CAPTCHA, rate limiting, secure headers.
+    task_mix: {architecture: 0.2, crud: 0.4, security_testing: 0.3, review_uat: 0.1}
+    base_effort_pd: {S: 30, M: 60, L: 120}
+    applicable_drivers: [security_level]
+    source: placeholder
+  # ---------------------------------------------------------------- build: integrations
+  - key: integration_sso_identity
+    name: SSO / identity integration (Parichay, LDAP)
+    category: integration
+    bucket: build.integrations
+    task_mix: {integration: 0.65, tests: 0.2, documentation: 0.05, review_uat: 0.1}
+    base_effort_pd: {S: 30, M: 60, L: 120}
+    applicable_drivers: [security_level]
+    tags: [integration]
+    source: placeholder
+  - key: integration_aadhaar_ekyc
+    name: Aadhaar eKYC / authentication integration
+    category: integration
+    bucket: build.integrations
+    task_mix: {integration: 0.6, tests: 0.2, security_testing: 0.05, documentation: 0.05, review_uat: 0.1}
+    base_effort_pd: {S: 45, M: 90, L: 150}
+    applicable_drivers: [security_level]
+    tags: [integration]
+    source: placeholder
+  - key: integration_digilocker
+    name: DigiLocker integration
+    category: integration
+    bucket: build.integrations
+    task_mix: {integration: 0.65, tests: 0.2, documentation: 0.05, review_uat: 0.1}
+    base_effort_pd: {S: 30, M: 60, L: 105}
+    tags: [integration]
+    source: placeholder
+  - key: integration_payment_gateway
+    name: Payment gateway integration (PayGov / bank)
+    category: integration
+    bucket: build.integrations
+    task_mix: {integration: 0.6, tests: 0.25, review_uat: 0.15}
+    base_effort_pd: {S: 36, M: 75, L: 135}
+    applicable_drivers: [security_level]
+    tags: [integration]
+    source: placeholder
+  - key: integration_sms_email_gateway
+    name: SMS / email gateway integration
+    category: integration
+    bucket: build.integrations
+    task_mix: {integration: 0.6, tests: 0.25, review_uat: 0.15}
+    base_effort_pd: {S: 15, M: 30, L: 60}
+    tags: [integration]
+    source: placeholder
+  - key: integration_erp_legacy
+    name: ERP / legacy system integration
+    category: integration
+    bucket: build.integrations
+    description: API or ETL integration with SAP or departmental legacy systems.
+    task_mix: {integration: 0.55, analysis: 0.1, tests: 0.2, documentation: 0.05, review_uat: 0.1}
+    base_effort_pd: {S: 60, M: 135, L: 270}
+    applicable_drivers: [security_level]
+    tags: [integration]
+    source: placeholder
+  - key: integration_bhashini_translation
+    name: Bhashini translation / speech integration
+    category: integration
+    bucket: build.integrations
+    task_mix: {integration: 0.6, tests: 0.25, review_uat: 0.15}
+    base_effort_pd: {S: 24, M: 45, L: 90}
+    applicable_drivers: [languages]
+    tags: [integration]
+    source: placeholder
+  # ---------------------------------------------------------------- build: AI
+  - key: ai_chatbot_rag
+    name: AI chatbot (RAG)
+    category: ai
+    bucket: build.ai_ml
+    description: Retrieval-augmented chatbot - retrieval pipeline, prompts, chat UI, handoff.
+    task_mix: {ai_engineering: 0.5, crud: 0.2, tests: 0.15, documentation: 0.05, review_uat: 0.1}
+    base_effort_pd: {S: 75, M: 150, L: 300}
+    applicable_drivers: [languages, concurrency, security_level]
+    tags: [ai]
+    licence: {rate_key: licence.chatbot_platform.year, effort_factor: 0.6}
+    source: placeholder
+  - key: ai_knowledge_ingestion
+    name: Chatbot knowledge-base ingestion
+    category: ai
+    bucket: build.ai_ml
+    description: Document ingestion, chunking, embeddings and knowledge-base admin.
+    task_mix: {ai_engineering: 0.45, crud: 0.25, data_migration: 0.1, tests: 0.1, review_uat: 0.1}
+    base_effort_pd: {S: 36, M: 75, L: 150}
+    applicable_drivers: [languages]
+    tags: [ai]
+    source: placeholder
+  - key: ai_guardrails_safety
+    name: AI guardrails and safety
+    category: ai
+    bucket: build.ai_ml
+    description: Prompt-injection defences, PII redaction, moderation, refusal policies.
+    task_mix: {ai_engineering: 0.55, security_testing: 0.2, tests: 0.15, review_uat: 0.1}
+    base_effort_pd: {S: 30, M: 60, L: 120}
+    applicable_drivers: [security_level]
+    tags: [ai]
+    source: placeholder
+  - key: ai_evaluation_set
+    name: AI evaluation set and harness
+    category: ai
+    bucket: build.ai_ml
+    description: Golden question sets, automated evaluation, red-teaming.
+    task_mix: {ai_engineering: 0.4, analysis: 0.2, tests: 0.3, review_uat: 0.1}
+    base_effort_pd: {S: 30, M: 60, L: 105}
+    applicable_drivers: [languages]
+    tags: [ai]
+    source: placeholder
+  # ---------------------------------------------------------------- build: data, testing, docs, devops
+  - key: data_migration
+    name: Legacy data migration
+    category: data
+    bucket: build.data_migration
+    task_mix: {data_migration: 0.6, analysis: 0.1, tests: 0.2, review_uat: 0.1}
+    base_effort_pd: {S: 45, M: 120, L: 270}
+    tags: [data_migration]
+    source: placeholder
+  - key: functional_testing_uat_support
+    name: Functional testing and UAT support
+    category: testing
+    bucket: build.testing
+    task_mix: {tests: 0.6, review_uat: 0.3, documentation: 0.1}
+    base_effort_pd: {S: 45, M: 105, L: 210}
+    source: placeholder
+  - key: performance_load_testing
+    name: Performance and load testing
+    category: testing
+    bucket: build.testing
+    task_mix: {tests: 0.7, devops: 0.2, review_uat: 0.1}
+    base_effort_pd: {S: 24, M: 45, L: 90}
+    applicable_drivers: [concurrency]
+    source: placeholder
+  - key: vapt_remediation
+    name: Internal VAPT and audit remediation
+    category: testing
+    bucket: build.testing
+    task_mix: {security_testing: 0.6, review_uat: 0.4}
+    base_effort_pd: {S: 30, M: 60, L: 120}
+    applicable_drivers: [security_level]
+    source: placeholder
+  - key: documentation_manuals
+    name: Documentation and manuals
+    category: documentation
+    bucket: build.documentation
+    description: Design documents, user/admin manuals, SOPs, training material.
+    task_mix: {documentation: 0.8, analysis: 0.1, review_uat: 0.1}
+    base_effort_pd: {S: 30, M: 60, L: 120}
+    applicable_drivers: [languages]
+    source: placeholder
+  - key: devops_cicd_setup
+    name: Environments, CI/CD and deployment
+    category: devops
+    bucket: build.devops
+    task_mix: {devops: 0.8, documentation: 0.1, review_uat: 0.1}
+    base_effort_pd: {S: 30, M: 60, L: 105}
+    applicable_drivers: [uptime_sla, security_level]
+    source: placeholder
+  # ---------------------------------------------------------------- generic (v2)
+  - key: custom_module
+    name: Custom screens / module
+    category: custom
+    bucket: build.module_development
+    description: A feature from the requirement document that is not in the ready-made list (forms, screens, business rules).
+    task_mix: {crud: 0.55, tests: 0.2, ui_design: 0.05, documentation: 0.05, review_uat: 0.15}
+    base_effort_pd: {S: 30, M: 60, L: 120}
+    applicable_drivers: [languages, accessibility, concurrency]
+    source: placeholder
+  - key: custom_integration
+    name: Custom integration
+    category: custom
+    bucket: build.integrations
+    description: Connection to another system named in the requirement document.
+    task_mix: {integration: 0.6, analysis: 0.05, tests: 0.2, documentation: 0.05, review_uat: 0.1}
+    base_effort_pd: {S: 15, M: 36, L: 75}
+    applicable_drivers: [security_level]
+    tags: [integration]
+    source: placeholder
+  - key: custom_report
+    name: Custom reports / dashboard
+    category: custom
+    bucket: build.module_development
+    description: Reports, dashboards or analytics asked for in the requirement document.
+    task_mix: {crud: 0.6, analysis: 0.1, tests: 0.15, review_uat: 0.15}
+    base_effort_pd: {S: 15, M: 36, L: 75}
+    applicable_drivers: [languages]
+    source: placeholder
+  - key: custom_ai_feature
+    name: Custom AI feature
+    category: custom
+    bucket: build.ai_ml
+    description: An AI capability beyond the chatbot (e.g. document classification, prediction, OCR).
+    task_mix: {ai_engineering: 0.5, crud: 0.2, tests: 0.15, review_uat: 0.15}
+    base_effort_pd: {S: 30, M: 60, L: 120}
+    applicable_drivers: [security_level]
+    tags: [ai]
+    source: placeholder
+  - key: custom_mobile_app
+    name: Mobile app
+    category: custom
+    bucket: build.module_development
+    description: An Android / iOS app asked for in the requirement document.
+    task_mix: {ui_design: 0.15, crud: 0.5, tests: 0.2, devops: 0.05, review_uat: 0.1}
+    base_effort_pd: {S: 60, M: 120, L: 240}
+    applicable_drivers: [languages, accessibility]
+    source: placeholder

@@ -47,7 +47,34 @@ const CONFIDENCE_VARIANT: Record<string, BadgeProps["variant"]> = {
   low: "destructive",
 };
 
-function Headline({ estimate }: { estimate: Estimate }) {
+/**
+ * Currency of an estimate. The detailed estimate does not carry it, so it is read from
+ * the plain-language summary (falls back to rupees while loading or on error).
+ */
+function useEstimateCurrency(estimateId: string): string {
+  const [currency, setCurrency] = React.useState("INR");
+  React.useEffect(() => {
+    let live = true;
+    api
+      .getEstimateSummary(estimateId)
+      .then((s) => {
+        if (live) setCurrency(s.currency);
+      })
+      .catch(() => undefined);
+    return () => {
+      live = false;
+    };
+  }, [estimateId]);
+  return currency;
+}
+
+function Headline({
+  estimate,
+  currency,
+}: {
+  estimate: Estimate;
+  currency: string;
+}) {
   const t = estimate.totals;
   const figures = [
     { label: "Low", sub: "P10", value: t?.p10_paise, strong: false },
@@ -103,7 +130,7 @@ function Headline({ estimate }: { estimate: Estimate }) {
                         : "text-2xl font-semibold"
                     }
                   >
-                    {formatPaise(f.value)}
+                    {formatPaise(f.value, currency)}
                   </p>
                 </div>
               ))}
@@ -111,10 +138,12 @@ function Headline({ estimate }: { estimate: Estimate }) {
             <p className="text-sm text-muted-foreground">
               Base case (most-likely values):{" "}
               <span className="font-medium text-foreground">
-                {formatPaise(t.likely_paise)}
+                {formatPaise(t.likely_paise, currency)}
               </span>{" "}
-              · sum of line lows / highs {formatPaise(t.low_sum_paise)} /{" "}
-              {formatPaise(t.high_sum_paise)}. Totals include GST
+              · sum of line lows / highs{" "}
+              {formatPaise(t.low_sum_paise, currency)} /{" "}
+              {formatPaise(t.high_sum_paise, currency)}. Totals include{" "}
+              {currency === "INR" ? "GST" : "tax"}
               {estimate.margin_visible ? " and margin" : ""}.
             </p>
             {estimate.top_drivers_text ? (
@@ -204,7 +233,15 @@ function TimelineCard({ estimate }: { estimate: Estimate }) {
   );
 }
 
-function GroupTable({ title, rows }: { title: string; rows: GroupTotal[] }) {
+function GroupTable({
+  title,
+  rows,
+  currency,
+}: {
+  title: string;
+  rows: GroupTotal[];
+  currency: string;
+}) {
   return (
     <Card>
       <CardHeader>
@@ -224,13 +261,13 @@ function GroupTable({ title, rows }: { title: string; rows: GroupTotal[] }) {
             <TableRow key={g.key}>
               <TableCell>{g.name}</TableCell>
               <TableCell className="text-right">
-                {formatPaise(g.low_paise)}
+                {formatPaise(g.low_paise, currency)}
               </TableCell>
               <TableCell className="text-right font-medium">
-                {formatPaise(g.likely_paise)}
+                {formatPaise(g.likely_paise, currency)}
               </TableCell>
               <TableCell className="text-right">
-                {formatPaise(g.high_paise)}
+                {formatPaise(g.high_paise, currency)}
               </TableCell>
             </TableRow>
           ))}
@@ -242,9 +279,11 @@ function GroupTable({ title, rows }: { title: string; rows: GroupTotal[] }) {
 
 function LinesByBucket({
   estimate,
+  currency,
   onSelect,
 }: {
   estimate: Estimate;
+  currency: string;
   onSelect: (line: CostLine) => void;
 }) {
   const names = new Map(estimate.by_bucket.map((b) => [b.key, b.name]));
@@ -261,7 +300,7 @@ function LinesByBucket({
           Cost lines ({estimate.lines.length})
         </CardTitle>
         <p className="text-sm text-muted-foreground">
-          Click any line to see its full trace back to the RFP clause.
+          Click any line to see its full trace back to the requirement document.
         </p>
       </CardHeader>
       <Table>
@@ -311,13 +350,13 @@ function LinesByBucket({
                   ) : (
                     <>
                       <TableCell className="text-right">
-                        {formatPaise(line.low_paise)}
+                        {formatPaise(line.low_paise, currency)}
                       </TableCell>
                       <TableCell className="text-right font-medium">
-                        {formatPaise(line.likely_paise)}
+                        {formatPaise(line.likely_paise, currency)}
                       </TableCell>
                       <TableCell className="text-right">
-                        {formatPaise(line.high_paise)}
+                        {formatPaise(line.high_paise, currency)}
                       </TableCell>
                     </>
                   )}
@@ -374,9 +413,10 @@ function Manpower({ estimate }: { estimate: Estimate }) {
 function EstimateView({ estimate }: { estimate: Estimate }) {
   const [traceLine, setTraceLine] = React.useState<CostLine | null>(null);
   const drivers = estimate.top_drivers;
+  const currency = useEstimateCurrency(estimate.id);
   return (
     <div className="flex flex-col gap-4">
-      <Headline estimate={estimate} />
+      <Headline estimate={estimate} currency={currency} />
       {!estimate.feasible ? <Infeasible estimate={estimate} /> : null}
       {estimate.sanity_checks.map((c) =>
         c.status === "flag" ? (
@@ -417,12 +457,28 @@ function EstimateView({ estimate }: { estimate: Estimate }) {
             </Card>
           ) : null}
           <div className="grid gap-4 lg:grid-cols-2">
-            <GroupTable title="By stage" rows={estimate.by_stage} />
-            <GroupTable title="By year" rows={estimate.by_year} />
+            <GroupTable
+              title="By stage"
+              rows={estimate.by_stage}
+              currency={currency}
+            />
+            <GroupTable
+              title="By year"
+              rows={estimate.by_year}
+              currency={currency}
+            />
           </div>
-          <LinesByBucket estimate={estimate} onSelect={setTraceLine} />
+          <LinesByBucket
+            estimate={estimate}
+            currency={currency}
+            onSelect={setTraceLine}
+          />
           <Manpower estimate={estimate} />
-          <ScenariosPanel key={estimate.id} estimateId={estimate.id} />
+          <ScenariosPanel
+            key={estimate.id}
+            estimateId={estimate.id}
+            currency={currency}
+          />
         </>
       ) : null}
       <details className="rounded-lg border bg-card p-4">
@@ -441,6 +497,7 @@ function EstimateView({ estimate }: { estimate: Estimate }) {
       </details>
       <TracePanel
         estimateId={estimate.id}
+        currency={currency}
         line={traceLine}
         onClose={() => setTraceLine(null)}
       />

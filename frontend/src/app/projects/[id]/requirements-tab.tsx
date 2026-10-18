@@ -126,7 +126,7 @@ function AddRequirementForm({
             </Select>
           </div>
           <div className="flex flex-col gap-2">
-            <Label htmlFor="req-clause">RFP clause</Label>
+            <Label htmlFor="req-clause">Document clause</Label>
             <Input
               id="req-clause"
               required
@@ -215,8 +215,8 @@ export function RequirementsTab({
         Requirements ({requirements.length})
       </SectionTitle>
       <p className="text-sm text-muted-foreground">
-        Every requirement must cite its RFP clause. Requirements awaiting review
-        block pricing; rejected ones are excluded.
+        Every requirement must cite its clause in the requirement document.
+        Requirements awaiting review block pricing; rejected ones are excluded.
       </p>
       <ErrorNotice message={error} />
 

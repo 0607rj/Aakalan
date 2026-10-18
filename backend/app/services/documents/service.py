@@ -64,7 +64,8 @@ def upload_document(
     if parsed.char_count > settings.document_max_chars:
         raise HTTPException(
             status.HTTP_400_BAD_REQUEST,
-            "This document is too long to read in one go. Upload the main RFP volume only.",
+            "This document is too long to read in one go. "
+            "Upload the main requirement document only.",
         )
 
     if kind not in DOCUMENT_KINDS:

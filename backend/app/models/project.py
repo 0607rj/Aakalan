@@ -29,9 +29,13 @@ class Project(IdTimestampMixin, TenantMixin, Base):
     buyer_type: Mapped[str] = mapped_column(String(20))  # govt / psu / private
     domain: Mapped[str] = mapped_column(String(100))
     mode: Mapped[str] = mapped_column(String(20), default="vendor")  # vendor / buyer
+    country: Mapped[str] = mapped_column(String(20), default="india", server_default="india")
     status: Mapped[str] = mapped_column(String(30), default="draft")
     description: Mapped[str] = mapped_column(Text, default="")
     created_by: Mapped[str | None] = mapped_column(String(36), ForeignKey("users.id"))
+    # The plain form answers behind a quick estimate (features, choices, overrides), so it can
+    # be saved as a template; None for projects built in the expert workspace.
+    quick_request: Mapped[dict[str, Any] | None] = mapped_column(JSON, nullable=True)
 
     requirements: Mapped[list["Requirement"]] = relationship(
         back_populates="project", cascade="all, delete-orphan", order_by="Requirement.code"
@@ -231,3 +235,16 @@ class Outcome(IdTimestampMixin, TenantMixin, Base):
     actual_effort_pd: Mapped[int | None] = mapped_column(Integer)
     notes: Mapped[str] = mapped_column(Text, default="")
     recorded_by: Mapped[str | None] = mapped_column(String(36), ForeignKey("users.id"))
+
+
+class Template(IdTimestampMixin, TenantMixin, Base):
+    """A saved starting point for new estimates: the quick-form answers of an earlier one."""
+
+    __tablename__ = "templates"
+
+    name: Mapped[str] = mapped_column(String(300))
+    request: Mapped[dict[str, Any]] = mapped_column(JSON)
+    source_project_id: Mapped[str | None] = mapped_column(
+        String(36), ForeignKey("projects.id", ondelete="SET NULL")
+    )
+    created_by: Mapped[str | None] = mapped_column(String(36), ForeignKey("users.id"))

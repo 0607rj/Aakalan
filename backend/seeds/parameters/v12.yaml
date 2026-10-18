@@ -1,0 +1,419 @@
+# v12 (2026-10-18): v11 priced by what is built, not who orders it: no client-type factors (one size factor per project size fitted on all client types), lean delivery by project size only, and extra review of AI-written code.
+# v11 (2026-10-16): v10 plus in-between project sizes (small to medium, medium to large) at the geometric middle of their neighbours.
+# v10 (2026-10-16): v9 plus project size (small / medium / large) factors; small projects are delivered lean whatever the client.
+# v9 (2026-10-16): v8 with AI productivity savings set from published evidence (lower than the v8 guesses).
+# v8 (2026-10-16): v7 with separate calibration for private companies and for startups / small businesses.
+# v7 (2026-10-16): v6 plus a simple AI model tier for chatbots and AI features.
+# v6 (2026-10-16): v5 plus lean delivery and calibration for private and small-business projects.
+# v5 (2026-10-16): v4 plus third-party services, build-phase tools, translation and client-paid items.
+# v4: adds the 'none' AI level; calibrated with AI use matched to each contract's year.
+# Parameter set v3 (2026-10-16): v2 plus calibration dials from back-testing
+# on real published contracts (seeds/benchmarks/). India: one-line published scopes limit accuracy; errors range -84% to +102%.
+version: v12
+effective_date: 2026-10-18
+status: active
+
+calendar:
+  source: placeholder
+  pd_per_month: 22
+  pd_per_year: 264
+  hours_per_month: 730
+  hours_per_year: 8760
+  days_per_year: 365
+  seconds_per_day: 86400
+
+# Brief 7.1 seed defaults
+complexity_multipliers: {low: 0.7, medium: 1.0, high: 1.5, very_high: 2.2}
+complexity_source: placeholder
+
+nfr:
+  source: placeholder
+  uptime_sla: {"99.0": 1.0, "99.5": 1.05, "99.9": 1.12, "99.95": 1.2}
+  security_level: {standard: 1.0, high: 1.1, very_high: 1.25}
+  per_additional_language: 0.04   # multiplier = 1 + 0.04 x (languages - 1), capped
+  languages_cap: 1.4
+  accessibility: {"false": 1.0, "true": 1.08}
+  concurrency_bands:
+    - {name: low, max_peak_users: 200, multiplier: 1.0, db_tier: small}
+    - {name: medium, max_peak_users: 1000, multiplier: 1.05, db_tier: medium}
+    - {name: high, max_peak_users: 5000, multiplier: 1.12, db_tier: large}
+    - {name: very_high, max_peak_users: null, multiplier: 1.25, db_tier: large}
+
+# Brief 7.1: share of effort AI tools save, by task type, scaled by team AI maturity.
+ai_productivity:
+  # Effort saved per task type at "medium" AI adoption (research 2026-10-16). Sources: McKinsey 2023
+  # (docs 45-50%, code generation 35-45%, refactoring 20-30%, complex tasks <10%); Peng et al. 2023
+  # (55.8% faster, greenfield task); Cui et al. 2025 (+26% tasks, 4,867 developers); Google RCT 2024
+  # (~21% faster); METR 2025 (experienced devs 19% slower on large codebases) and 2026 update (-4%
+  # to -18%, weak); DORA 2024; Faros 2025 (+91% review time); Veracode 2025 (AI code vulnerable in 45%
+  # of tasks). Project-level check: Bain 2025 10-15%, TCS 20-30% gains (10-15% passed to clients).
+  # Rows marked low-confidence are reasoned defaults, not measurements.
+  source: "Published AI productivity studies 2023-2026 (see comment); low-confidence rows are reasoned defaults"
+  task_savings:
+    documentation: 0.45      # medium confidence
+    crud: 0.35               # medium
+    tests: 0.3               # low
+    architecture: 0.05       # medium
+    integration: 0.05        # medium
+    review_uat: 0.0          # medium
+    pm: 0.0                  # medium
+    analysis: 0.15           # low
+    ui_design: 0.15          # low
+    ai_engineering: 0.1      # low
+    data_migration: 0.25     # low
+    security_testing: 0.0    # low
+    devops: 0.15             # low
+    training: 0.2            # low
+  maturity_scale: {none: 0.0, low: 0.5, medium: 1.0, high: 1.25}  # none = no AI tools
+  max_saving: 0.5            # no study shows more than about 56% on any task
+  # AI-written code must still be read, tested and fixed (Faros 2025: review time +91%; Veracode
+  # 2025: security flaws in 45% of AI-written tasks). With review at about a tenth of build
+  # effort, +91% review is about +9% of the work, i.e. about a quarter of a typical 35% saving.
+  # Low confidence: a reasoned figure, not a measurement.
+  review_share_of_saved: 0.25
+  review_role: role.senior_developer
+
+task_roles:
+  source: placeholder
+  roles:
+    analysis: role.business_analyst
+    architecture: role.solution_architect
+    ui_design: role.ui_ux_designer
+    crud: role.developer
+    integration: role.senior_developer
+    ai_engineering: role.ml_engineer
+    data_migration: role.data_engineer
+    tests: role.qa_engineer
+    security_testing: role.security_engineer
+    devops: role.devops_engineer
+    documentation: role.technical_writer
+    review_uat: role.senior_developer
+    pm: role.project_manager
+    training: role.trainer
+
+# Brief 7.3. max_team_curve is piecewise linear in build effort (person-months) with a positive
+# intercept on every segment, so natural duration = effort / team never falls as scope grows.
+timeline:
+  source: placeholder
+  min_duration_months: 2
+  duration_quantum_months: 0.1
+  max_team_curve:
+    - {x: 0, y: 3}
+    - {x: 30, y: 6}
+    - {x: 120, y: 12}
+    - {x: 600, y: 25}
+  size_bands:
+    - {name: small, max_build_pd: 1000, pm_fte: 0.5, om_pm_fte: 0.1, exit_management_pd: 10, audit_band: small}
+    - {name: medium, max_build_pd: 4000, pm_fte: 1.0, om_pm_fte: 0.25, exit_management_pd: 20, audit_band: medium}
+    - {name: large, max_build_pd: null, pm_fte: 2.0, om_pm_fte: 0.5, exit_management_pd: 40, audit_band: large}
+  compression_curve:          # x = deadline / natural duration, y = cost multiplier
+    - {x: 0.6, y: 1.4}
+    - {x: 1.0, y: 1.0}
+  infeasible_below_ratio: 0.5
+
+programme:
+  source: placeholder
+  pm_role: role.project_manager
+  steering_interval_months: 3
+  steering_rate_key: other.steering_meeting
+  mis_pd_per_month: 1
+  mis_role: role.business_analyst
+  travel_trips_per_month: 1
+  travel_rate_key: travel.outstation_trip
+  non_prod_environments: 2
+  environment_rate_key: other.non_prod_environment.month
+
+# Brief 7.4 hosting sizing (services/hosting)
+hosting:
+  source: placeholder
+  pattern_by_sla: {"99.0": single, "99.5": ha, "99.9": ha, "99.95": ha_dr}
+  concurrent_users_per_vcpu: 100   # v2: was 25; 25 put 10 servers behind 1,000 concurrent users
+  vcpu_per_app_server: 4
+  min_app_servers: {single: 1, ha: 2, ha_dr: 2}
+  small_app_server_max_vcpus: 2    # v12: up to ~200 users online at once runs on small (2 vCPU) servers
+  db_instances: {single: 1, ha: 2, ha_dr: 2}
+  base_storage_gb: 50
+  db_storage_gb: 20
+  backup_factor: 2.0
+  monthly_active_share: 0.1     # share of registered users active in a month
+  transfer_mb_per_active_user_month: 50
+  dr_cost_factor: 0.5
+  reserved_discount: {aws: 0.3, indian_cloud: 0.2, on_prem: 0}
+  forex_rate_key: forex.USD_INR
+  forex_buffer: 0.03
+  mb_per_gb: 1024
+  gb_per_tb: 1024
+  on_prem:
+    source: placeholder
+    server_rate_key: onprem.server.unit
+    storage_tb_rate_key: onprem.storage.tb
+    colocation_rate_key: onprem.colocation.rack_month
+    servers_per_rack: 10
+    hw_amc_percent: 0.1
+
+ai_runtime:
+  source: placeholder
+  token_input_rate_key: llm_token.default.input
+  token_output_rate_key: llm_token.default.output
+  tokens_per_unit: 1000000
+  volume_growth_per_year: 0.15
+  annual_price_change: 0.0
+  gpu_rate_key: gpu_hour.l4
+  simple_token_input_rate_key: llm_token.simple.input
+  simple_token_output_rate_key: llm_token.simple.output
+  peak_factor: 3
+  queries_per_second_per_gpu: 2
+  min_gpus: {single: 1, ha: 2, ha_dr: 2}
+
+maintenance:
+  source: placeholder
+  helpdesk_seats_by_users:     # seats grow sub-linearly with registered users
+    - {max_users: 10000, seats: 1}
+    - {max_users: 100000, seats: 2}
+    - {max_users: 1000000, seats: 4}
+    - {max_users: null, seats: 8}
+  helpdesk_coverage_fte: {"8x5": 1.0, "24x7": 4.2}
+  helpdesk_role: role.helpdesk_executive
+  bugfix_share_of_build_pd: 0.06
+  bugfix_role: role.developer
+  patching_share_of_build_pd: 0.02
+  patching_role: role.devops_engineer
+  upgrade_share_of_build_pd: 0.03
+  upgrade_role: role.senior_developer
+  change_request_share_of_build_pd: 0.05
+  change_request_role: role.developer
+  annual_audit_rate_prefix: audit_fee.cert_in_annual
+  ssl_rate_key: licence.ssl_certificate.year
+  domain_rate_key: licence.domain.year
+  rule_of_thumb_low: 0.15     # industry: annual maintenance = 15-25% of build
+  rule_of_thumb_high: 0.25
+
+go_live:
+  source: placeholder
+  cert_in_audit_rate_prefix: audit_fee.cert_in
+  cert_in_reaudit_rate_prefix: audit_fee.cert_in_reaudit
+  stqc_rate_key: audit_fee.stqc
+  trainer_role: role.trainer
+  training_pd_per_session: 1.5
+  travel_rate_key: travel.outstation_trip
+  trips_per_outstation_session: 2
+  hypercare_team_fte: {role.developer: 2, role.devops_engineer: 0.5, role.project_manager: 0.25}
+  pd_per_week: 5
+
+escalation:
+  source: placeholder
+  labour: 0.08
+  prices: 0.08
+
+commercial:
+  source: placeholder
+  cost_of_capital: 0.12
+  pbg_rate_key: bank_charge.pbg_commission
+  payment_delay_months: 2
+  ld_reserve_build_percent: 0.01
+  penalty_reserve_run_percent: {"8x5": 0.01, "24x7": 0.02}
+  contingency_at_clarity:     # x = average requirement clarity (1-5), y = contingency
+    - {x: 1, y: 0.15}
+    - {x: 5, y: 0.05}
+  exit_role: role.project_manager
+  gst_percent: 0.18
+
+uncertainty:
+  source: placeholder
+  default_clarity: 3
+  clarity_spread:             # optimistic (down) / pessimistic (up) fraction around likely
+    1: {down: 0.25, up: 0.75}
+    2: {down: 0.2, up: 0.5}
+    3: {down: 0.15, up: 0.35}
+    4: {down: 0.12, up: 0.25}
+    5: {down: 0.1, up: 0.15}
+  template_match_extra_up: {none: 0.1, weak: 0.05, strong: 0.0}
+  tag_extra_up: {integration: 0.25, ai: 0.2, data_migration: 0.2}
+  compression_extra_up_per_unit: 1.0
+  om_extra_up_per_year: 0.03
+  hosting: {down: 0.1, up: 0.25}
+  ai_runtime: {down: 0.4, up: 1.0}
+  fixed_fee: {down: 0.05, up: 0.15}
+  monte_carlo_runs: 10000
+  distribution: triangular
+
+confidence:
+  source: placeholder
+  weight_clarity: 0.5
+  weight_template: 0.3
+  weight_freshness: 0.2
+  template_score: {none: 0.0, weak: 0.5, strong: 1.0}
+  fresh_days: 180
+  stale_days: 730
+  high_threshold: 0.75
+  medium_threshold: 0.5
+
+# Questionnaire defaults. Any default used is listed as an assumption on the estimate.
+defaults:
+  source: placeholder
+  values:
+    usage_fees_in_scope: false   # clients usually pay SMS, email, maps and app-store fees directly
+    om_years: 3
+    team_ai_maturity: medium
+    deadline_months: null
+    uptime_sla: "99.5"
+    security_level: standard
+    languages: 2
+    gigw_accessibility: true
+    users_total: 10000
+    peak_concurrent_users: 200
+    documents_per_month: 1000
+    avg_document_mb: 1
+    chatbot_queries_per_day: 1000
+    tokens_in_per_query: 2000
+    tokens_out_per_query: 400
+    hosting_provider: aws
+    hosting_pricing: on_demand
+    ai_runtime_mode: api
+    licensing: open_source
+    support_sla: 8x5
+    onsite_resources: []
+    change_request_pd_per_year: null
+    cert_in_audit: true
+    stqc_certification: false
+    training_sessions: 4
+    training_outstation_sessions: 0
+    hypercare_weeks: 4
+    emd_paise: 0
+    emd_lock_months: 6
+    pbg_percent: 0.03
+    pbg_validity_months: null
+    payment_schedule:
+      - {at_build_fraction: 0.5, offset_months: 0, percent: 0.2}
+      - {at_build_fraction: 1.0, offset_months: 0, percent: 0.4}
+      - {at_build_fraction: 1.0, offset_months: 3, percent: 0.4}
+    margin_percent: 0.15
+    contingency_percent: null
+    gst_percent: null
+    escalation_labour: null
+    escalation_prices: null
+
+# Calibration (back-test 2026-10-16): dials chosen to minimise the typical error against the
+# benchmark contracts marked `use: true`; re-run with `python -m app.cli backtest --country X`.
+calibration:
+  source: "backtest 2026-10-18 on 56 Indian projects with published prices (35 government: 30 full GeM documents read by the keyword reader + 5 published contracts; 21 private / startup: Clutch verified reviews), prices in today's money, AI use matched to award year, size class set before fitting. Priced by what is built: one factor per project size fitted on all client types together; leave-one-out errors are the honest figure."
+  effort_multiplier: 1.0
+  run_multiplier: 1.0
+  backtest_projects: 56
+  median_abs_error_percent: 32.5
+  # the honest figure: each project priced with factors fitted without it (leave-one-out)
+  holdout_projects: 56
+  holdout_median_abs_error_percent: 43.3
+  # small, medium and large are fitted (custom builds); the in-between steps are the geometric middle of their neighbours
+  size_effort_multiplier: {small: 0.25, small_medium: 0.43, medium: 0.75, medium_large: 0.75, large: 0.75}
+  size_backtest:
+    small: {projects: 27, within_25_percent: 14}
+    medium: {projects: 17, within_25_percent: 6, note: "Medium projects vary widely (about half to twice this estimate)."}
+    large: {projects: 9, within_25_percent: 3, note: "Large projects vary widely (about half to three times this estimate)."}
+  # a ready-made product set up for the client (SaaS, WordPress, Shopify, chatbot platform); only 3 projects, which disagree widely
+  answer_effort_multiplier: {build_type: {ready_product: 0.12}}
+  # model error from the leave-one-out residuals (actual / ours: small P25-P75 0.63-1.21, medium 0.52-1.81, large 0.51-2.75), rounded
+  model_spread_by_size:
+    small: {down: 0.4, up: 0.4}
+    small_medium: {down: 0.45, up: 0.6}
+    medium: {down: 0.5, up: 0.8}
+    medium_large: {down: 0.5, up: 1.0}
+    large: {down: 0.5, up: 1.2}
+  model_spread:
+    government: {down: 0.5, up: 0.8}
+    private: {down: 0.5, up: 0.8}
+    small_business: {down: 0.5, up: 0.8}
+  notes: "India: what is built drives the price; the same size factor applies to every client (in the test, government projects came out at 1.1x and startups at 0.95x their real prices without any client factor); ready-made products cost about an eighth of a custom build."
+
+# Third-party running costs, build-phase tools and client-paid items (new in this version).
+# Prices come from the rate card (each with its source); the volumes below are assumptions.
+third_party:
+  source: placeholder
+  services:
+    - key: sms
+      label: SMS messages
+      rate_key: service.sms.message
+      basis: monthly
+      components: [notifications, integration_sms_email_gateway]
+      units_per_active_user_month: 2   # OTPs and status alerts
+    - key: email
+      label: Email sending
+      rate_key: service.email.thousand
+      per_units: 1000
+      basis: monthly
+      components: [notifications, integration_sms_email_gateway]
+      units_per_active_user_month: 10
+    - key: aadhaar_ekyc
+      label: Aadhaar eKYC checks
+      rate_key: service.aadhaar_ekyc.check
+      basis: per_user
+      components: [integration_aadhaar_ekyc]
+      # v12: listed for every client (paid to the provider); government departments may be exempt (open question)
+      regions: [india]
+      first_year_units_per_user: 1      # every user verified once when they join
+      later_year_units_per_user: 0.2    # new users in later years
+    - key: maps
+      label: Map loads
+      rate_key: service.maps.thousand_loads
+      per_units: 1000
+      basis: monthly
+      components: [maps_location]
+      units_per_active_user_month: 20
+      free_units_per_month: 70000   # Google Maps free usage per month
+    - key: apple_developer
+      label: Apple developer account
+      rate_key: service.app_store.apple_year
+      basis: fixed
+      components: [custom_mobile_app]
+      rate_period: year
+    - key: google_play
+      label: Google Play registration (one-off)
+      rate_key: service.app_store.google_once
+      basis: fixed
+      components: [custom_mobile_app]
+      rate_period: one_off
+    - key: waf_base
+      label: Web firewall and DDoS protection
+      rate_key: security.waf.base_month
+      basis: fixed
+      rate_period: month
+      needs_cloud_hosting: true
+      min_users: 10000            # medium and large systems
+    - key: waf_requests
+      label: Web firewall requests
+      rate_key: security.waf.million_requests
+      per_units: 1000000
+      basis: monthly
+      needs_cloud_hosting: true
+      min_users: 10000
+      units_per_active_user_month: 300   # page and API requests
+  ai_features:
+    components: [custom_ai_feature]
+    calls_per_active_user_month: 20
+    tokens_in_per_call: 2000
+    tokens_out_per_call: 500
+  dev_tools:
+    ai_coding_rate_key: tools.ai_coding.seat_month
+    dev_suite_rate_key: tools.dev_suite.seat_month
+  translation:
+    rate_key: service.translation.word
+    words_per_component: 800     # labels, messages, help text and static pages per building block
+    annual_update_share: 0.1
+  client_paid_notes:
+    - key: payment_gateway
+      label: Online payment fees
+      components: [integration_payment_gateway, ecommerce_storefront]
+      rate_keys: [client.payment_gateway.fee]
+      text: "The payment company charges about {0} of each online payment (standard plan, plus GST). The client pays this directly; it is not in this price."
+
+# Lean delivery for private and small-business projects (new in this version): management and
+# hypercare scale with the work, not the calendar (rule of thumb: project management is 10-15%
+# of project effort); a test environment is one small cloud server.
+lean:
+  source: placeholder
+  segments: []                 # v12: by project size only, whoever the client is
+  sizes: [small, small_medium]
+  pm_share_of_build_pd: 0.12
+  hypercare_share_of_build_pd: 0.05
+  om_pm_share_of_build_pd: 0.02
+  environment_rate_key: cloud.aws.app_server.month

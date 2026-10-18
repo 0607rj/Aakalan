@@ -1,4 +1,7 @@
+import { Suspense } from "react";
 import type { Metadata } from "next";
+
+import { Loading } from "@/components/status";
 
 import { NewEstimateWizard } from "./wizard";
 
@@ -11,5 +14,10 @@ export const metadata: Metadata = {
 };
 
 export default function NewEstimatePage() {
-  return <NewEstimateWizard />;
+  // The wizard reads its step from the URL (useSearchParams), which needs a Suspense boundary.
+  return (
+    <Suspense fallback={<Loading />}>
+      <NewEstimateWizard />
+    </Suspense>
+  );
 }

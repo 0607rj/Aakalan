@@ -1,7 +1,8 @@
 # ruff: noqa: E501  (regex tables read better on one line)
 """Basic tender reader — no AI, no API key. Finds features and choices by keywords from
 `seeds/quick_estimate.yaml` and common tender phrasings for numbers (users, O&M years,
-deadline, languages, EMD, PBG). It produces the same `ExtractionOutput` as the AI reader, and
+deadline, languages, EMD, PBG, onsite staff) and things it does not price (penalties, warranty,
+payment terms...). It produces the same `ExtractionOutput` as the AI reader, and
 every finding quotes the exact sentence it matched, so the same citation check applies.
 It is deliberately conservative: it misses unusual wording rather than guessing.
 """
@@ -15,6 +16,7 @@ from app.services.extraction.tender import (
     Evidence,
     ExtractionOutput,
     FeatureFinding,
+    NotPricedFinding,
     NumberFinding,
     UnclearFinding,
 )
@@ -62,6 +64,9 @@ NUMBER_PATTERNS: dict[str, list[re.Pattern[str]]] = {
     ],
     "pbg_percent": [
         re.compile(r"(?:performance\s+(?:bank\s+)?(?:guarantee|security)|pbg)[^.\n]{0,80}?(\d+(?:\.\d+)?)\s*%", re.I),
+    ],
+    "onsite_staff": [
+        re.compile(NUM + r"\s*(?:\(\w+\)\s*)?(?:nos\.?\s+|numbers?\s+of\s+)?(?:qualified\s+)?(?:resident|onsite|on-site|on\s+site)\s+(?:support\s+)?(?:engineers?|staff|personnel|manpower|developers?|resources?)", re.I),
     ],
 }  # fmt: skip
 
@@ -117,18 +122,46 @@ def _phrase(words: list[str]) -> re.Pattern[str]:
     return re.compile(rf"(?<![\w.])(?:{alternatives})(?![\w])", re.I)
 
 
+# A deadline found next to these words is about paperwork (bank guarantee, signing, deposits),
+# not about delivering the software: "submit the PBG within 15 days of award".
+NOT_DELIVERY = re.compile(
+    r"\b(pbg|performance\s+(?:bank\s+)?(?:guarantee|security)|bank\s+guarantee|security\s+deposit"
+    r"|emd|earnest|agreement|sign(?:ed|ing)?|submit\w*|invoice|payment|bill|claim|refund"
+    r"|clarification|query|queries|representation|objection)\b",
+    re.I,
+)
+
+
 def basic_read(cfg: QuickConfig, doc: ParsedDocument) -> ExtractionOutput:
+    long_doc = len(doc.pages) >= cfg.keywords.long_document_pages
     features = []
     for key, words in cfg.keywords.features.items():
-        hits = [ev for ev, _ in _evidence(doc, _phrase(words))][:MAX_EVIDENCE]
-        if hits:
-            features.append(FeatureFinding(key=key, evidence=hits))
+        all_hits = [ev for ev, _ in _evidence(doc, _phrase(words))]
+        if all_hits:
+            mentions = len({(ev.page, ev.quote) for ev in all_hits})
+            # In a long document a feature named once or twice is often boilerplate
+            # ("payment terms", "dashboard of bids"): offer it, but do not tick it.
+            suggested = not long_doc or mentions >= cfg.keywords.min_mentions_long_document
+            features.append(
+                FeatureFinding(
+                    key=key,
+                    evidence=all_hits[:MAX_EVIDENCE],
+                    mentions=mentions,
+                    suggested=suggested,
+                )
+            )
 
     numbers: list[NumberFinding] = []
     for field, patterns in NUMBER_PATTERNS.items():
         for pattern in patterns:
             match = next(
-                ((ev, m) for ev, m in _evidence(doc, pattern) if not _is_clause_number(m)), None
+                (
+                    (ev, m)
+                    for ev, m in _evidence(doc, pattern)
+                    if not _is_clause_number(m)
+                    and not (field == "deadline_months" and NOT_DELIVERY.search(ev.quote))
+                ),
+                None,
             )
             if match is None:
                 continue
@@ -184,15 +217,23 @@ def basic_read(cfg: QuickConfig, doc: ParsedDocument) -> ExtractionOutput:
             )
         )
 
+    not_priced = []
+    for topic, rule in cfg.not_priced_topics.items():
+        hits = [ev for ev, _ in _evidence(doc, _phrase(rule.words))]
+        if hits:
+            not_priced.append(NotPricedFinding(topic=topic, evidence=hits[:MAX_EVIDENCE]))
+
     first_lines = [ln.strip() for ln in doc.pages[0].text.splitlines() if len(ln.strip()) > 10]
     return ExtractionOutput(
-        project_name=first_lines[0][:150] if first_lines else "Tender estimate",
+        project_name=first_lines[0][:150] if first_lines else "New estimate",
         summary=(
             f"Read without AI: found {len(features)} features and {len(numbers)} numbers by "
-            "keyword. Please check every item — unusual wording may have been missed."
+            "keyword. Please check every item and add any features that were missed."
         ),
         features=features,
+        other_features=[],
         choices=choices,
         numbers=numbers,
         unclear_points=unclear,
+        not_priced=not_priced,
     )

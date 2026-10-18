@@ -8,6 +8,7 @@ stated quantities, which the user then confirms.
 """
 
 import re
+from decimal import Decimal
 from typing import Any
 
 from pydantic import BaseModel
@@ -16,8 +17,9 @@ from app.llm.client import LLMClient, LLMResult, load_prompt
 from app.services.documents.parsing import ParsedDocument, normalise
 from app.services.quick.config import QuickConfig
 
-PROMPT_FILE = "extract_tender_v2.md"
-PROMPT_VERSION = "extract_tender_v2"
+PROMPT_FILE = "extract_tender_v4.md"
+PROMPT_VERSION = "extract_tender_v4"
+SIZES = frozenset({"S", "M", "L"})
 BASIC_READER_VERSION = "basic_reader_v1"
 PAGE_TOLERANCE = 1  # a quote may straddle into the neighbouring page
 MIN_QUOTE_CHARS = 12
@@ -32,7 +34,10 @@ NUMBER_FIELDS: dict[str, str] = {
     "documents_per_month": "documents_per_month",
     "emd_rupees": "emd_paise",
     "pbg_percent": "pbg_percent",
+    "onsite_staff": "onsite_staff",
 }
+PAYMENT_WHEN = ("on_order", "during_build", "go_live", "after_go_live")
+PERCENT = 100
 
 
 # --- schema the LLM must return ----------------------------------------------------------------
@@ -46,6 +51,18 @@ class Evidence(BaseModel):
 
 class FeatureFinding(BaseModel):
     key: str
+    evidence: list[Evidence]
+    mentions: int = 1  # how many places mention it
+    suggested: bool = True  # tick it on the review screen (False: only offered)
+
+
+class OtherFeatureFinding(BaseModel):
+    """A capability the document requires that matches none of the listed feature keys."""
+
+    name: str
+    description: str
+    category: str
+    size: str
     evidence: list[Evidence]
 
 
@@ -83,13 +100,35 @@ class UnclearPoint(BaseModel):
     prebid_query: str = ""
 
 
+class NotPricedFinding(BaseModel):
+    """Something the document asks for that the estimate does not price (a topic key)."""
+
+    topic: str
+    note: str = ""
+    evidence: list[Evidence]
+
+
+class PaymentFinding(BaseModel):
+    percent: float  # of the contract value, e.g. 30 for 30%
+    when: str  # on_order | during_build | go_live | after_go_live
+    months_after: float = 0  # after go-live, when stated
+
+
+class PaymentTermsFinding(BaseModel):
+    payments: list[PaymentFinding]
+    evidence: list[Evidence]
+
+
 class ExtractionOutput(BaseModel):
     project_name: str
     summary: str
     features: list[FeatureFinding]
+    other_features: list[OtherFeatureFinding]
     choices: list[ChoiceFinding]
     numbers: list[NumberFinding]
     unclear_points: list[UnclearFinding]
+    not_priced: list[NotPricedFinding] = []
+    payment_terms: PaymentTermsFinding | None = None
 
 
 # --- verified result stored on the Document -------------------------------------------------
@@ -107,11 +146,42 @@ class FoundFeature(BaseModel):
     key: str
     label: str
     evidence: list[VerifiedEvidence]
+    mentions: int = 1
+    suggested: bool = True  # False: mentioned only in passing in a long document
+
+
+class FoundOtherFeature(BaseModel):
+    name: str
+    description: str
+    category: str  # key of custom_feature_types
+    size: str  # S / M / L
+    evidence: list[VerifiedEvidence]
 
 
 class FoundValue(BaseModel):
     value: Any
     label: str
+    evidence: list[VerifiedEvidence]
+
+
+class FoundNotPriced(BaseModel):
+    topic: str
+    label: str
+    note: str = ""
+    evidence: list[VerifiedEvidence]
+
+
+class FoundPayment(BaseModel):
+    """One payment, as an engine payment-schedule point (fractions, not percentages)."""
+
+    percent: Decimal  # share of the contract value, 0-1
+    at_build_fraction: Decimal
+    offset_months: Decimal
+    label: str  # e.g. "30% at go-live"
+
+
+class FoundPaymentTerms(BaseModel):
+    payments: list[FoundPayment]
     evidence: list[VerifiedEvidence]
 
 
@@ -121,10 +191,13 @@ class TenderExtraction(BaseModel):
     project_name: str
     summary: str
     features: list[FoundFeature]
+    other_features: list[FoundOtherFeature] = []
     choices: dict[str, FoundValue]
     numbers: dict[str, FoundValue]  # keyed by questionnaire field (emd in paise)
     unclear_points: list[UnclearPoint]
     dropped_findings: int
+    not_priced: list[FoundNotPriced] = []  # asked for in the document, not in the price
+    payment_terms: FoundPaymentTerms | None = None
 
 
 def _fence(doc: ParsedDocument) -> str:
@@ -139,13 +212,26 @@ def _fence(doc: ParsedDocument) -> str:
 
 def build_prompt(cfg: QuickConfig) -> str:
     features = "\n".join(f"- {f.key}: {f.label} — {f.hint}" for f in cfg.features)
+    custom = "\n".join(f"- {k}: {t.label}" for k, t in cfg.custom_feature_types.items())
     choices = "\n".join(
         f"- {key}: {q.label} Options: "
-        + "; ".join(f"{o.value} = {o.label}{f' ({o.hint})' if o.hint else ''}" for o in q.options)
+        + "; ".join(
+            f"{o.value} = {o.label}{f' ({o.hint})' if o.hint else ''}"
+            for o in q.options
+            if not o.unsure  # a document never says "not sure"
+        )
         for key, q in cfg.questions.items()
         if key != "support_years"  # covered precisely by the om_years number
+        and q.group != "hidden"  # the company's own settings, not in the document
     )
-    return load_prompt(PROMPT_FILE).replace("{features}", features).replace("{choices}", choices)
+    not_priced = "\n".join(f"- {k}: {t.label}" for k, t in cfg.not_priced_topics.items())
+    return (
+        load_prompt(PROMPT_FILE)
+        .replace("{features}", features)
+        .replace("{custom_types}", custom)
+        .replace("{choices}", choices)
+        .replace("{not_priced}", not_priced)
+    )
 
 
 def _verify(
@@ -251,8 +337,36 @@ def verify_findings(
             continue
         if f.key in features:
             features[f.key].evidence.extend(ev)
+            features[f.key].mentions += f.mentions
+            features[f.key].suggested = features[f.key].suggested or f.suggested
         else:
-            features[f.key] = FoundFeature(key=f.key, label=labels[f.key], evidence=ev)
+            features[f.key] = FoundFeature(
+                key=f.key,
+                label=labels[f.key],
+                evidence=ev,
+                mentions=f.mentions,
+                suggested=f.suggested,
+            )
+
+    others: dict[str, FoundOtherFeature] = {}
+    for o in raw.other_features:
+        ev = _verify(doc, o.evidence, document)
+        name = o.name.strip()[:200]
+        size = o.size.strip().upper()[:1]
+        if not name or o.category not in cfg.custom_feature_types or size not in SIZES or not ev:
+            dropped += 1
+            continue
+        key = name.lower()
+        if key in others:
+            others[key].evidence.extend(ev)
+        elif len(others) < cfg.max_custom_features:
+            others[key] = FoundOtherFeature(
+                name=name,
+                description=o.description.strip()[:500],
+                category=o.category,
+                size=size,
+                evidence=ev,
+            )
 
     choices: dict[str, FoundValue] = {}
     for c in raw.choices:
@@ -277,14 +391,66 @@ def verify_findings(
             continue
         numbers[field] = FoundValue(value=_number(field, n.value), label=n.field, evidence=ev)
 
+    payment_terms = _payment_terms(cfg, doc, raw.payment_terms, document)
+    if raw.payment_terms is not None and payment_terms is None:
+        dropped += 1
+    not_priced: dict[str, FoundNotPriced] = {}
+    for item in raw.not_priced:
+        topic = cfg.not_priced_topics.get(item.topic)
+        ev = _verify(doc, item.evidence, document)
+        priced = (item.topic == "payment_terms" and payment_terms is not None) or (
+            item.topic == "onsite" and "onsite_staff" in numbers
+        )
+        if topic is None or not ev or priced:
+            dropped += 0 if priced else 1
+            continue
+        if item.topic in not_priced:
+            not_priced[item.topic].evidence.extend(ev)
+        else:
+            not_priced[item.topic] = FoundNotPriced(
+                topic=item.topic, label=topic.label, note=item.note.strip()[:300], evidence=ev
+            )
+
     return TenderExtraction(
         reader=reader,
         prompt_version=version,
-        project_name=raw.project_name.strip()[:300] or "Tender estimate",
+        project_name=raw.project_name.strip()[:300] or "New estimate",
         summary=raw.summary.strip(),
         features=list(features.values()),
+        other_features=list(others.values()),
         choices=choices,
         numbers=numbers,
         unclear_points=[_unclear(doc, u) for u in raw.unclear_points],
         dropped_findings=dropped,
+        not_priced=list(not_priced.values()),
+        payment_terms=payment_terms,
     )
+
+
+def _payment_terms(
+    cfg: QuickConfig, doc: ParsedDocument, raw: PaymentTermsFinding | None, document: str
+) -> FoundPaymentTerms | None:
+    """Payments as engine schedule points; kept only when quoted on the page, every payment
+    has a known time and the shares add up to 100%."""
+    points = cfg.payment_points
+    if raw is None or points is None or not raw.payments:
+        return None
+    ev = _verify(doc, raw.evidence, document)
+    total = sum(Decimal(str(p.percent)) for p in raw.payments)
+    if not ev or total != PERCENT or any(p.when not in PAYMENT_WHEN for p in raw.payments):
+        return None
+    out = []
+    for p in raw.payments:
+        point = getattr(points, p.when)
+        after = Decimal(str(max(p.months_after, 0))) if p.when == "after_go_live" else Decimal(0)
+        share = Decimal(str(p.percent)) / PERCENT
+        when = p.when.replace("_", " ") + (f" + {after.normalize():f} months" if after else "")
+        out.append(
+            FoundPayment(
+                percent=share,
+                at_build_fraction=point.at_build_fraction,
+                offset_months=point.offset_months + after,
+                label=f"{Decimal(str(p.percent)).normalize():f}% {when}",
+            )
+        )
+    return FoundPaymentTerms(payments=out, evidence=ev)

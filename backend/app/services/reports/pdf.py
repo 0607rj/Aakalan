@@ -26,7 +26,7 @@ from reportlab.platypus import (
     TableStyle,
 )
 
-from app.services.reports.data import ReportData, crore, inr
+from app.services.reports.data import ReportData, fmt_approx, fmt_headline, fmt_money, fmt_range
 
 NAVY = colors.HexColor("#1F2A44")
 LIGHT = colors.HexColor("#F1F3F7")
@@ -100,6 +100,19 @@ def _footer(canvas: Any, doc: Any) -> None:
 def build_pdf(data: ReportData) -> bytes:
     e, s, r = data.estimate, data.summary, data.result
     width = A4[0] - 2 * MARGIN
+
+    def money(minor: int | None) -> str:
+        return fmt_money(minor, data.currency)
+
+    def headline(minor: int | None) -> str:
+        return fmt_headline(minor, data.currency)
+
+    def span(low: int | None, high: int | None) -> str:
+        return fmt_range(low, high, data.currency)
+
+    def about(minor: int | None) -> str:
+        return fmt_approx(minor, data.currency)
+
     story: list[Any] = [
         Paragraph(f"Cost estimate: {_p(data.project_name, BODY).text}", H1),
         _p(
@@ -123,11 +136,18 @@ def build_pdf(data: ReportData) -> bytes:
     else:
         story += [
             Spacer(1, 2 * mm),
-            _p(f"Most likely total: {crore(s.likely_paise)}", BIG),
+            _p(f"Estimated total: {span(s.low_paise, s.high_paise)}", BIG),
             _p(
-                f"Could range from {crore(s.low_paise)} to {crore(s.high_paise)}. "
+                f"Most likely {about(s.likely_paise)}. This is an estimate before the work "
+                "starts, not a final bill. "
                 f"Time to build: about {s.build_months} months. Support included: "
-                f"{s.support_years} years. Cost to build the software only: {crore(s.build_only_paise)}. "
+                + (
+                    f"{s.support_years} years. "
+                    if s.support_years
+                    else "none (handed over after launch). "
+                )
+                + "Cost to build the software only: "
+                + f"{span(s.build_only_low_paise, s.build_only_high_paise)}. "
                 f"Confidence: {e.confidence}.",
                 BODY,
             ),
@@ -138,12 +158,76 @@ def build_pdf(data: ReportData) -> bytes:
             _p("Where the money goes", H2),
             _table(
                 ["Part", "Amount", "Share"],
-                [[pt.label, inr(pt.amount_paise), f"{pt.share_percent}%"] for pt in s.parts]
-                + [["Planned cost (sum of most-likely values)", inr(s.planned_paise), ""]],
+                [
+                    [pt.label, span(pt.low_paise, pt.high_paise), f"{pt.share_percent}%"]
+                    for pt in s.parts
+                ]
+                + [["Planned cost (most likely)", about(s.planned_paise), ""]],
                 [width * 0.6, width * 0.25, width * 0.15],
                 {1, 2},
             ),
         ]
+    if s.bid_check:
+        c = s.bid_check
+        story += [
+            _p("Bid check (for planning the tender budget)", H2),
+            _p(
+                f"Fair range {span(c.fair_low_paise, c.fair_high_paise)}. Bids below "
+                f"{about(c.too_low_below_paise)} are probably too low; above "
+                f"{about(c.too_high_above_paise)} probably too high. {c.note}",
+                BODY,
+            ),
+        ]
+    if s.similar_projects:
+        story += [
+            _p("Similar real projects (published prices, today's money)", H2),
+            _table(
+                ["Project", "Client", "Year", "Price"],
+                [[p.title, p.client_type.replace("_", " "), p.year,
+                  span(p.low_paise, p.high_paise) if p.low_paise else f"up to {about(p.high_paise)}"]
+                 for p in s.similar_projects],
+                [width * 0.5, width * 0.18, width * 0.08, width * 0.24],
+                {3},
+            ),
+        ]  # fmt: skip
+    if s.cost_items:
+        rows: list[list[Any]] = []
+        group = None
+        for item in s.cost_items:
+            if item.group_label != group:
+                group = item.group_label
+                rows.append([group.upper(), "", ""])
+            work = (
+                f"{item.person_days_low:,}-{item.person_days_high:,} person-days"
+                if item.person_days
+                and item.person_days_low is not None
+                and item.person_days_high is not None
+                else ""
+            )
+            rows.append([f"- {item.label}", work, span(item.low_paise, item.high_paise)])
+        story += [
+            _p("What's inside the price", H2),
+            _table(
+                ["Item", "Work", "Amount"], rows, [width * 0.6, width * 0.18, width * 0.22], {2}
+            ),
+        ]
+    if s.client_pays:
+        story += [
+            _p("Paid directly by the client (not in this price)", H2),
+            _table(
+                ["Item", "First year", f"Over {s.support_years} years" if s.support_years else "Per year"],
+                [
+                    [c.label + (f" — {c.note}" if c.note else ""),
+                     span(c.first_year_low_paise, c.first_year_high_paise)
+                     if c.first_year_paise is not None else "-",
+                     span(c.total_low_paise, c.total_high_paise)
+                     if c.total_paise is not None else "-"]
+                    for c in s.client_pays
+                ],
+                [width * 0.56, width * 0.22, width * 0.22],
+                {1, 2},
+            ),
+        ]  # fmt: skip
     if r.get("top_drivers_text") or r.get("sanity_checks"):
         story.append(_p("Range drivers and checks", H2))
         if r.get("top_drivers_text"):
@@ -169,9 +253,9 @@ def build_pdf(data: ReportData) -> bytes:
                     [
                         [
                             g["name"],
-                            inr(g["low_paise"]),
-                            inr(g["likely_paise"]),
-                            inr(g["high_paise"]),
+                            money(g["low_paise"]),
+                            money(g["likely_paise"]),
+                            money(g["high_paise"]),
                         ]
                         for g in r[key]
                     ],
@@ -187,7 +271,7 @@ def build_pdf(data: ReportData) -> bytes:
                 ["#", "Item", "Year", "Low", "Likely", "High"],
                 [
                     [ln.number, f"{ln.bucket_name}: {ln.label}" + (" (restricted)" if ln.redacted else ""),
-                     ln.year, inr(ln.low_paise), inr(ln.likely_paise), inr(ln.high_paise)]
+                     ln.year, money(ln.low_paise), money(ln.likely_paise), money(ln.high_paise)]
                     for ln in data.lines
                 ],
                 [width * 0.06, width * 0.43, width * 0.06, width * 0.15, width * 0.15, width * 0.15],
@@ -213,7 +297,7 @@ def build_pdf(data: ReportData) -> bytes:
         story += [_p("Assumptions (defaults used where no answer was given)", H2)]
         story += [_p(f"• {a.text}", SMALL) for a in assumptions]
     if data.prebid:
-        story += [_p("Draft pre-bid queries", H2)]
+        story += [_p("Questions to ask the client", H2)]
         for q in data.prebid:
             where = f" (clause {q.clause_ref or '-'}, page {q.page})" if q.page else ""
             story.append(_p(f"{q.number}. {q.query}{where}", BODY))
@@ -224,7 +308,7 @@ def build_pdf(data: ReportData) -> bytes:
                 continue
             block: list[Any] = [
                 _p(
-                    f"{ln.number}. {ln.bucket_name}: {ln.label} (year {ln.year}) — likely {inr(ln.likely_paise)}",
+                    f"{ln.number}. {ln.bucket_name}: {ln.label} (year {ln.year}) — likely {money(ln.likely_paise)}",
                     BODY,
                 ),
                 _p(f"Formula {ln.formula_id}: {ln.formula}", SMALL),

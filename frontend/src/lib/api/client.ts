@@ -45,12 +45,18 @@ export type GroupTotal = Schemas["GroupTotal"];
 export type QuickOptions = Schemas["QuickOptions"];
 export type QuickQuestion = Schemas["QuestionOut"];
 export type QuickRequest = Schemas["QuickRequest"];
+export type Suggestion = Schemas["Suggestion"];
+export type ContactIn = Schemas["ContactIn"];
 export type QuickSummary = Schemas["QuickSummary"];
 export type PlainPart = Schemas["PlainPart"];
 export type TenderDocument = Schemas["DocumentOut"];
 export type TenderExtraction = Schemas["TenderExtraction"];
 export type FoundFeature = Schemas["FoundFeature"];
 export type FoundValue = Schemas["FoundValue"];
+export type FoundOtherFeature = Schemas["FoundOtherFeature"];
+export type CustomFeature = Schemas["CustomFeature"];
+export type CustomFeatureType = Schemas["CustomTypeOut"];
+export type Size = Schemas["Size"];
 export type Evidence = Schemas["VerifiedEvidence"];
 export type UnclearPoint = Schemas["UnclearPoint"];
 export type QuestionImpact = Schemas["QuestionImpact"];
@@ -60,6 +66,11 @@ export type OutcomeIn = Schemas["OutcomeIn"];
 export type Outcome = Schemas["OutcomeOut"];
 export type BidResult = OutcomeIn["bid_result"];
 export type CalibrationReport = Schemas["CalibrationReport"];
+export type Country = Schemas["CountryOut"];
+export type CompanySettings = Schemas["CompanySettings-Output"];
+export type CompanySettingsIn = Schemas["CompanySettings-Input"];
+export type RoleRate = Schemas["RoleRate"];
+export type Template = Schemas["TemplateOut"];
 
 export class ApiError extends Error {
   constructor(
@@ -174,6 +185,8 @@ export const api = {
     send<Requirement>("PATCH", `/requirements/${id}`, body),
   deleteRequirement: (id: string) =>
     send<void>("DELETE", `/requirements/${id}`),
+  deleteProject: (id: string) => send<void>("DELETE", `/projects/${id}`),
+  deleteEstimate: (id: string) => send<void>("DELETE", `/estimates/${id}`),
   confirmRequirements: (projectId: string, requirementIds?: string[]) =>
     send<Requirement[]>("POST", `/projects/${projectId}/requirements/confirm`, {
       requirement_ids: requirementIds ?? null,
@@ -208,7 +221,10 @@ export const api = {
   repriceEstimate: (estimateId: string) =>
     send<Estimate>("POST", `/estimates/${estimateId}/reprice`),
 
-  quickOptions: () => request<QuickOptions>("/quick-estimate/options"),
+  quickOptions: (country = "india") =>
+    request<QuickOptions>(
+      `/quick-estimate/options?country=${encodeURIComponent(country)}`,
+    ),
   createQuickEstimate: (body: QuickRequest) =>
     send<QuickSummary>("POST", "/quick-estimates", body),
   listQuickEstimates: () => request<QuickSummary[]>("/quick-estimates"),
@@ -223,9 +239,15 @@ export const api = {
       body: form,
     });
   },
+  getDocument: (documentId: string) =>
+    request<TenderDocument>(`/documents/${encodeURIComponent(documentId)}`),
   prebidQueries: (documentId: string) =>
     request<PrebidQuery[]>(`/documents/${documentId}/prebid-queries`),
 
+  sendContact: (body: ContactIn) =>
+    send<{ id: string }>("POST", "/contact", body),
+  suggestFeatures: (text: string) =>
+    send<Suggestion>("POST", "/quick-estimate/suggest", { text }),
   questionImpact: (body: QuickRequest, signal?: AbortSignal) =>
     request<QuestionImpact[]>("/quick-estimate/impact", {
       method: "POST",
@@ -238,6 +260,16 @@ export const api = {
   recordOutcome: (projectId: string, body: OutcomeIn) =>
     send<Outcome>("POST", `/projects/${projectId}/outcome`, body),
   calibration: () => request<CalibrationReport>("/calibration"),
+
+  getSettings: () => request<CompanySettings>("/settings"),
+  getRoleRates: () => request<RoleRate[]>("/settings/roles"),
+  listTemplates: () => request<Template[]>("/templates"),
+  getTemplate: (id: string) => request<Template>(`/templates/${id}`),
+  createTemplate: (projectId: string, name: string) =>
+    send<Template>("POST", "/templates", { project_id: projectId, name }),
+  deleteTemplate: (id: string) => send<void>("DELETE", `/templates/${id}`),
+  putSettings: (body: CompanySettingsIn) =>
+    send<CompanySettings>("PUT", "/settings", body),
 };
 
 function filenameFrom(disposition: string | null, fallback: string): string {

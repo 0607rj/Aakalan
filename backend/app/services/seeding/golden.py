@@ -25,8 +25,8 @@ def golden_input(name: str, reference: ReferenceData | None = None) -> EstimateI
     ref = reference or load_reference(get_settings().seeds_dir)
     raw: dict[str, Any] = yaml.safe_load((GOLDEN_DIR / f"{name}.yaml").read_text(encoding="utf-8"))
     raw.update(
-        taxonomy=ref.taxonomy,
-        catalog=ref.catalog,
+        taxonomy=ref.taxonomy_version(REFERENCE_VERSION),
+        catalog=ref.catalog_version(REFERENCE_VERSION),
         rate_card=ref.rate_card(REFERENCE_VERSION),
         parameters=ref.parameter_set(REFERENCE_VERSION),
     )
