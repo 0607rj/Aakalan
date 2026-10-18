@@ -84,7 +84,13 @@ export interface paths {
         get: operations["get_project_projects__project_id__get"];
         put?: never;
         post?: never;
-        delete?: never;
+        /**
+         * Delete Project
+         * @description Delete a project with all its estimates, documents and uploaded files. Reference data
+         *     (rate cards, parameter sets, benchmarks) is untouched, so nothing the estimator has learned
+         *     is lost.
+         */
+        delete: operations["delete_project_projects__project_id__delete"];
         options?: never;
         head?: never;
         /** Update Project */
@@ -236,7 +242,11 @@ export interface paths {
         get: operations["get_estimate_estimates__estimate_id__get"];
         put?: never;
         post?: never;
-        delete?: never;
+        /**
+         * Delete Estimate
+         * @description Delete one estimate version (its cost lines go with it); the project stays.
+         */
+        delete: operations["delete_estimate_estimates__estimate_id__delete"];
         options?: never;
         head?: never;
         patch?: never;
@@ -426,7 +436,11 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Options */
+        /**
+         * Options
+         * @description Form options; hosting choices are limited to those available in `country`, and the
+         *     AI-use question defaults to the company's saved AI level.
+         */
         get: operations["options_quick_estimate_options_get"];
         put?: never;
         post?: never;
@@ -494,6 +508,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/quick-estimate/suggest": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Suggest
+         * @description Features (and answers) suggested from the user's own description; nothing is saved
+         *     or priced, the user ticks and confirms them on the form.
+         */
+        post: operations["suggest_quick_estimate_suggest_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/documents": {
         parameters: {
             query?: never;
@@ -505,7 +540,9 @@ export interface paths {
         put?: never;
         /**
          * Upload
-         * @description Sync on purpose: parsing and the AI call run in the threadpool, not the event loop.
+         * @description Upload the RFP (starts a draft project) or add an annexure / corrigendum / pre-bid reply
+         *     to an existing one via `project_id` + `kind`. Sync on purpose: parsing and the AI call run
+         *     in the threadpool, not the event loop.
          */
         post: operations["upload_documents_post"];
         delete?: never;
@@ -551,6 +588,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/projects/{project_id}/extraction": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Project Extraction
+         * @description Findings of all the project's documents merged; corrigenda override the RFP.
+         */
+        get: operations["get_project_extraction_projects__project_id__extraction_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/projects/{project_id}/outcome": {
         parameters: {
             query?: never;
@@ -586,6 +643,100 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Read Settings */
+        get: operations["read_settings_settings_get"];
+        /**
+         * Update Settings
+         * @description Margin and effort settings apply to every new estimate; finance or admin only.
+         */
+        put: operations["update_settings_settings_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/settings/roles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Roles
+         * @description Roles the estimator prices, with today's public market day rate for comparison.
+         */
+        get: operations["roles_settings_roles_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Templates */
+        get: operations["list_templates_templates_get"];
+        put?: never;
+        /** Create Template */
+        post: operations["create_template_templates_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/templates/{template_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Template */
+        get: operations["get_template_templates__template_id__get"];
+        put?: never;
+        post?: never;
+        /** Delete Template */
+        delete: operations["delete_template_templates__template_id__delete"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/contact": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Send Message */
+        post: operations["send_message_contact_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -613,10 +764,33 @@ export interface components {
             /** Overridden */
             overridden: boolean;
         };
+        /**
+         * BidCheck
+         * @description For a client planning a tender: the fair budget and where bids stop looking realistic.
+         */
+        BidCheck: {
+            /** Fair Low Paise */
+            fair_low_paise: number;
+            /** Fair High Paise */
+            fair_high_paise: number;
+            /** Too Low Below Paise */
+            too_low_below_paise: number;
+            /** Too High Above Paise */
+            too_high_above_paise: number;
+            /** Note */
+            note: string;
+        };
         /** Body_upload_documents_post */
         Body_upload_documents_post: {
             /** File */
             file: string;
+            /** Project Id */
+            project_id?: string | null;
+            /**
+             * Kind
+             * @default rfp
+             */
+            kind: string;
         };
         /** Calibration */
         Calibration: {
@@ -627,6 +801,7 @@ export interface components {
             status: "calibrated" | "uncalibrated";
             /** Placeholder Refs */
             placeholder_refs: string[];
+            model_spread?: components["schemas"]["SpreadFactor"] | null;
         };
         /** CalibrationReport */
         CalibrationReport: {
@@ -752,6 +927,95 @@ export interface components {
             /** Components */
             components: components["schemas"]["CatalogComponentOut"][];
         };
+        /** Change */
+        Change: {
+            /** Field */
+            field: string;
+            /** Old Value */
+            old_value: unknown;
+            /** New Value */
+            new_value: unknown;
+            /** Document */
+            document: string;
+            /** Kind */
+            kind: string;
+        };
+        /**
+         * ClientPays
+         * @description A cost the client pays providers directly; not part of the price.
+         */
+        ClientPays: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** First Year Paise */
+            first_year_paise: number | null;
+            /** Total Paise */
+            total_paise: number | null;
+            /** First Year Low Paise */
+            first_year_low_paise?: number | null;
+            /** First Year High Paise */
+            first_year_high_paise?: number | null;
+            /** Total Low Paise */
+            total_low_paise?: number | null;
+            /** Total High Paise */
+            total_high_paise?: number | null;
+            /** Note */
+            note: string | null;
+        };
+        /** CompanySettings */
+        "CompanySettings-Input": {
+            /** Margin Percent */
+            margin_percent?: number | string | null;
+            /** Contingency Percent */
+            contingency_percent?: number | string | null;
+            /**
+             * Build Effort Multiplier
+             * @default 1
+             */
+            build_effort_multiplier: number | string;
+            /**
+             * Support Effort Multiplier
+             * @default 1
+             */
+            support_effort_multiplier: number | string;
+            /**
+             * Role Day Rates
+             * @default {}
+             */
+            role_day_rates: {
+                [key: string]: number | string;
+            };
+            /** Team Ai Maturity */
+            team_ai_maturity?: ("none" | "low" | "medium" | "high") | null;
+        };
+        /** CompanySettings */
+        "CompanySettings-Output": {
+            /** Margin Percent */
+            margin_percent?: string | null;
+            /** Contingency Percent */
+            contingency_percent?: string | null;
+            /**
+             * Build Effort Multiplier
+             * @default 1
+             */
+            build_effort_multiplier: string;
+            /**
+             * Support Effort Multiplier
+             * @default 1
+             */
+            support_effort_multiplier: string;
+            /**
+             * Role Day Rates
+             * @default {}
+             */
+            role_day_rates: {
+                [key: string]: string;
+            };
+            /** Team Ai Maturity */
+            team_ai_maturity?: ("none" | "low" | "medium" | "high") | null;
+        };
         /**
          * Complexity
          * @enum {string}
@@ -833,6 +1097,65 @@ export interface components {
             /** Requirement Ids */
             requirement_ids?: string[] | null;
         };
+        /** ContactIn */
+        ContactIn: {
+            /** Name */
+            name: string;
+            /** Email */
+            email: string;
+            /**
+             * Organisation
+             * @default
+             */
+            organisation: string;
+            /**
+             * Topic
+             * @default question
+             * @enum {string}
+             */
+            topic: "demo" | "question" | "partnership" | "other";
+            /** Message */
+            message: string;
+        };
+        /** ContactOut */
+        ContactOut: {
+            /** Id */
+            id: string;
+        };
+        /**
+         * CostItem
+         * @description One plain line of "What's inside the price".
+         */
+        CostItem: {
+            /** Group */
+            group: string;
+            /** Group Label */
+            group_label: string;
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Amount Paise */
+            amount_paise: number;
+            /**
+             * Low Paise
+             * @default 0
+             */
+            low_paise: number;
+            /**
+             * High Paise
+             * @default 0
+             */
+            high_paise: number;
+            /** Person Days */
+            person_days?: number | null;
+            /** Person Days Low */
+            person_days_low?: number | null;
+            /** Person Days High */
+            person_days_high?: number | null;
+            /** Traditional Paise */
+            traditional_paise?: number | null;
+        };
         /** CostLineOut */
         CostLineOut: {
             /** Id */
@@ -866,6 +1189,55 @@ export interface components {
              * @default false
              */
             redacted: boolean;
+        };
+        /** CountryOut */
+        CountryOut: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Currency */
+            currency: string;
+        };
+        /**
+         * CustomFeature
+         * @description A feature outside the ready-made list: found in the document or added by the user.
+         */
+        CustomFeature: {
+            /** Name */
+            name: string;
+            /** Category */
+            category: string;
+            size: components["schemas"]["Size"];
+            /** Found Index */
+            found_index?: number | null;
+        };
+        /** CustomTypeOut */
+        CustomTypeOut: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+        };
+        /** DescribeIn */
+        DescribeIn: {
+            /** Text */
+            text: string;
+        };
+        /** DocumentInfo */
+        DocumentInfo: {
+            /** Id */
+            id: string;
+            /** Filename */
+            filename: string;
+            /** Kind */
+            kind: string;
+            /** Pages */
+            pages: number;
+            /** Status */
+            status: string;
+            /** Reader */
+            reader: string | null;
         };
         /** DocumentOut */
         DocumentOut: {
@@ -918,6 +1290,8 @@ export interface components {
         EstimateOut: {
             /** Id */
             id: string;
+            /** Currency */
+            currency: string;
             /** Project Id */
             project_id: string;
             /** Version */
@@ -992,6 +1366,8 @@ export interface components {
         EstimateSummary: {
             /** Id */
             id: string;
+            /** Currency */
+            currency: string;
             /** Project Id */
             project_id: string;
             /** Version */
@@ -1024,6 +1400,21 @@ export interface components {
             /** Parent Estimate Id */
             parent_estimate_id: string | null;
         };
+        /**
+         * FeatureCost
+         * @description Building one feature: the team's work on its building blocks (most likely), with the
+         *     team's AI tools and without them. Launch, running, management and tax are not included.
+         */
+        FeatureCost: {
+            /** Label */
+            label: string;
+            /** Level */
+            level: string | null;
+            /** Amount Paise */
+            amount_paise: number;
+            /** Traditional Paise */
+            traditional_paise: number | null;
+        };
         /** FeatureOut */
         FeatureOut: {
             /** Key */
@@ -1032,6 +1423,16 @@ export interface components {
             label: string;
             /** Hint */
             hint: string;
+            /**
+             * Levels
+             * @default []
+             */
+            levels: components["schemas"]["LevelOut"][];
+            /**
+             * Hidden
+             * @default false
+             */
+            hidden: boolean;
         };
         /** FoundFeature */
         FoundFeature: {
@@ -1039,6 +1440,64 @@ export interface components {
             key: string;
             /** Label */
             label: string;
+            /** Evidence */
+            evidence: components["schemas"]["VerifiedEvidence"][];
+            /**
+             * Mentions
+             * @default 1
+             */
+            mentions: number;
+            /**
+             * Suggested
+             * @default true
+             */
+            suggested: boolean;
+        };
+        /** FoundNotPriced */
+        FoundNotPriced: {
+            /** Topic */
+            topic: string;
+            /** Label */
+            label: string;
+            /**
+             * Note
+             * @default
+             */
+            note: string;
+            /** Evidence */
+            evidence: components["schemas"]["VerifiedEvidence"][];
+        };
+        /** FoundOtherFeature */
+        FoundOtherFeature: {
+            /** Name */
+            name: string;
+            /** Description */
+            description: string;
+            /** Category */
+            category: string;
+            /** Size */
+            size: string;
+            /** Evidence */
+            evidence: components["schemas"]["VerifiedEvidence"][];
+        };
+        /**
+         * FoundPayment
+         * @description One payment, as an engine payment-schedule point (fractions, not percentages).
+         */
+        FoundPayment: {
+            /** Percent */
+            percent: string;
+            /** At Build Fraction */
+            at_build_fraction: string;
+            /** Offset Months */
+            offset_months: string;
+            /** Label */
+            label: string;
+        };
+        /** FoundPaymentTerms */
+        FoundPaymentTerms: {
+            /** Payments */
+            payments: components["schemas"]["FoundPayment"][];
             /** Evidence */
             evidence: components["schemas"]["VerifiedEvidence"][];
         };
@@ -1078,6 +1537,42 @@ export interface components {
             /** Database */
             database: string;
         };
+        /**
+         * HoursRow
+         * @description One role's hours over the build (the engine's person-days × hours per day).
+         */
+        HoursRow: {
+            /** Role */
+            role: string;
+            /** Label */
+            label: string;
+            /** Hours With Ai */
+            hours_with_ai: number;
+            /** Hours Without Ai */
+            hours_without_ai: number | null;
+            /** Rupees Per Hour */
+            rupees_per_hour: string;
+        };
+        /**
+         * HoursSummary
+         * @description The build in hours: with the team's AI tools, without them, and the team's cost.
+         */
+        HoursSummary: {
+            /** Hours Per Day */
+            hours_per_day: number;
+            /** With Ai */
+            with_ai: number;
+            /** Without Ai */
+            without_ai: number | null;
+            /** Saved */
+            saved: number | null;
+            /** Team Cost Paise */
+            team_cost_paise: number;
+            /** Team Cost Without Ai Paise */
+            team_cost_without_ai_paise: number | null;
+            /** Rows */
+            rows: components["schemas"]["HoursRow"][];
+        };
         /** Infeasibility */
         Infeasibility: {
             /** Message */
@@ -1086,6 +1581,15 @@ export interface components {
             minimum_feasible_months: string;
             /** Phases */
             phases: components["schemas"]["PhaseSuggestion"][];
+        };
+        /** LevelOut */
+        LevelOut: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Hint */
+            hint: string;
         };
         /**
          * LineTrace
@@ -1140,6 +1644,20 @@ export interface components {
             label: string;
             /** Hint */
             hint: string;
+            /**
+             * Unsure
+             * @default false
+             */
+            unsure: boolean;
+            /**
+             * Add Features
+             * @default {}
+             */
+            add_features: {
+                [key: string]: string | null;
+            };
+            /** Feature Level */
+            feature_level?: string | null;
         };
         /** OptionPrice */
         OptionPrice: {
@@ -1214,6 +1732,18 @@ export interface components {
             /** Status */
             status: string;
         };
+        /** PaymentMilestone */
+        PaymentMilestone: {
+            /** At Build Fraction */
+            at_build_fraction: number | string;
+            /**
+             * Offset Months
+             * @default 0
+             */
+            offset_months: number | string;
+            /** Percent */
+            percent: number | string;
+        };
         /** PhaseSuggestion */
         PhaseSuggestion: {
             /** Phase */
@@ -1235,6 +1765,16 @@ export interface components {
             amount_paise: number;
             /** Share Percent */
             share_percent: number;
+            /**
+             * Low Paise
+             * @default 0
+             */
+            low_paise: number;
+            /**
+             * High Paise
+             * @default 0
+             */
+            high_paise: number;
         };
         /** PrebidQuery */
         PrebidQuery: {
@@ -1277,6 +1817,16 @@ export interface components {
              */
             description: string;
         };
+        /** ProjectExtraction */
+        ProjectExtraction: {
+            /** Project Id */
+            project_id: string;
+            /** Documents */
+            documents: components["schemas"]["DocumentInfo"][];
+            extraction: components["schemas"]["TenderExtraction"] | null;
+            /** Changes */
+            changes: components["schemas"]["Change"][];
+        };
         /** ProjectOut */
         ProjectOut: {
             /** Id */
@@ -1298,6 +1848,19 @@ export interface components {
              * Format: date-time
              */
             created_at: string;
+        };
+        /** ProjectTypeOut */
+        ProjectTypeOut: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Hint */
+            hint: string;
+            /** Features */
+            features: string[];
+            /** Suggested */
+            suggested: string[];
         };
         /** ProjectUpdate */
         ProjectUpdate: {
@@ -1331,6 +1894,37 @@ export interface components {
             default: string | number;
             /** Options */
             options: components["schemas"]["OptionOut"][];
+            /**
+             * Group
+             * @default main
+             */
+            group: string;
+            /**
+             * Only With Features
+             * @default []
+             */
+            only_with_features: string[];
+            /**
+             * Only With Custom Types
+             * @default []
+             */
+            only_with_custom_types: string[];
+            /**
+             * Hide When
+             * @default {}
+             */
+            hide_when: {
+                [key: string]: (string | number)[];
+            };
+            /**
+             * Default By
+             * @default {}
+             */
+            default_by: {
+                [key: string]: {
+                    [key: string]: string | number;
+                };
+            };
         };
         /** QuestionnaireField */
         QuestionnaireField: {
@@ -1373,17 +1967,49 @@ export interface components {
         };
         /** QuickOptions */
         QuickOptions: {
+            /** Country */
+            country: string;
+            /** Countries */
+            countries: components["schemas"]["CountryOut"][];
+            /** Project Types */
+            project_types: components["schemas"]["ProjectTypeOut"][];
             /** Features */
             features: components["schemas"]["FeatureOut"][];
+            /** Default Level */
+            default_level: string;
             /** Questions */
             questions: components["schemas"]["QuestionOut"][];
+            /** Custom Feature Types */
+            custom_feature_types: components["schemas"]["CustomTypeOut"][];
         };
         /** QuickRequest */
         QuickRequest: {
             /** Name */
             name: string;
-            /** Features */
+            /** Project Type */
+            project_type?: string | null;
+            /**
+             * Country
+             * @default india
+             */
+            country: string;
+            /**
+             * Features
+             * @default []
+             */
             features: string[];
+            /**
+             * Feature Levels
+             * @default {}
+             */
+            feature_levels: {
+                [key: string]: "basic" | "standard" | "advanced";
+            };
+            /**
+             * Custom Features
+             * @default []
+             */
+            custom_features: components["schemas"]["CustomFeature"][];
             /**
              * Choices
              * @default {}
@@ -1402,6 +2028,14 @@ export interface components {
             overrides: {
                 [key: string]: number;
             };
+            /** Payment Schedule */
+            payment_schedule?: components["schemas"]["PaymentMilestone"][] | null;
+            /**
+             * Mode
+             * @default vendor
+             * @enum {string}
+             */
+            mode: "vendor" | "client";
         };
         /** QuickSummary */
         QuickSummary: {
@@ -1426,12 +2060,26 @@ export interface components {
             likely_paise: number | null;
             /** High Paise */
             high_paise: number | null;
+            /** Country */
+            country: string;
+            /** Currency */
+            currency: string;
             /** Planned Paise */
             planned_paise: number;
             /** Risk Allowance Paise */
             risk_allowance_paise: number | null;
             /** Build Only Paise */
             build_only_paise: number;
+            /**
+             * Build Only Low Paise
+             * @default 0
+             */
+            build_only_low_paise: number;
+            /**
+             * Build Only High Paise
+             * @default 0
+             */
+            build_only_high_paise: number;
             /** Build Months */
             build_months: string;
             /** Support Years */
@@ -1444,6 +2092,69 @@ export interface components {
             features: string[];
             /** Indicative */
             indicative: boolean;
+            /** Accuracy Note */
+            accuracy_note: string | null;
+            /** Traditional Paise */
+            traditional_paise: number | null;
+            /** Traditional Build Only Paise */
+            traditional_build_only_paise: number | null;
+            /** Ai Saving Percent */
+            ai_saving_percent: number | null;
+            /**
+             * Client Pays
+             * @default []
+             */
+            client_pays: components["schemas"]["ClientPays"][];
+            /**
+             * Client Pays First Year Paise
+             * @default 0
+             */
+            client_pays_first_year_paise: number;
+            /**
+             * Cost Items
+             * @default []
+             */
+            cost_items: components["schemas"]["CostItem"][];
+            /**
+             * Similar Projects
+             * @default []
+             */
+            similar_projects: components["schemas"]["SimilarProject"][];
+            /**
+             * Feature Costs
+             * @default []
+             */
+            feature_costs: components["schemas"]["FeatureCost"][];
+            /**
+             * Team
+             * @default []
+             */
+            team: components["schemas"]["TeamRole"][];
+            /** Team People */
+            team_people?: string | null;
+            /** Traditional Build Months */
+            traditional_build_months?: string | null;
+            /**
+             * Support Team
+             * @default []
+             */
+            support_team: components["schemas"]["TeamRole"][];
+            hours?: components["schemas"]["HoursSummary"] | null;
+            /**
+             * Not Sure
+             * @default []
+             */
+            not_sure: string[];
+            /** Project Size */
+            project_size?: string | null;
+            /** Size Points */
+            size_points?: number | null;
+            /**
+             * Mode
+             * @default vendor
+             */
+            mode: string;
+            bid_check?: components["schemas"]["BidCheck"] | null;
         };
         /** RangeDriver */
         RangeDriver: {
@@ -1466,6 +2177,16 @@ export interface components {
              */
             effective_date: string;
             /**
+             * Region
+             * @default india
+             */
+            region: string;
+            /**
+             * Currency
+             * @default INR
+             */
+            currency: string;
+            /**
              * Status
              * @default active
              * @enum {string}
@@ -1485,6 +2206,16 @@ export interface components {
              * Format: date
              */
             effective_date: string;
+            /**
+             * Region
+             * @default india
+             */
+            region: string;
+            /**
+             * Currency
+             * @default INR
+             */
+            currency: string;
             /**
              * Status
              * @default active
@@ -1615,6 +2346,17 @@ export interface components {
          * @enum {string}
          */
         Role: "admin" | "estimator" | "finance" | "viewer";
+        /** RoleRate */
+        RoleRate: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Market Rupees Per Day */
+            market_rupees_per_day: string;
+            /** Hours Per Day */
+            hours_per_day: number;
+        };
         /** SanityCheck */
         SanityCheck: {
             /** Key */
@@ -1667,6 +2409,30 @@ export interface components {
             scenarios: components["schemas"]["Scenario"][];
         };
         /**
+         * SimilarProject
+         * @description A real project with a published price, close to this one.
+         */
+        SimilarProject: {
+            /** Title */
+            title: string;
+            /** Client */
+            client: string;
+            /** Client Type */
+            client_type: string;
+            /** Size */
+            size: string | null;
+            /** Year */
+            year: number;
+            /** Low Paise */
+            low_paise: number;
+            /** High Paise */
+            high_paise: number;
+            /** Source Url */
+            source_url: string;
+            /** Match Percent */
+            match_percent: number;
+        };
+        /**
          * Size
          * @enum {string}
          */
@@ -1703,11 +2469,81 @@ export interface components {
             /** Up */
             up: string;
         };
+        /** SuggestedFeature */
+        SuggestedFeature: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Quote */
+            quote: string;
+        };
+        /** Suggestion */
+        Suggestion: {
+            /** Reader */
+            reader: string;
+            /** Features */
+            features: components["schemas"]["SuggestedFeature"][];
+            /** Other Features */
+            other_features: components["schemas"]["FoundOtherFeature"][];
+            /** Choices */
+            choices: {
+                [key: string]: string | number;
+            };
+            /** Note */
+            note: string | null;
+        };
         /**
          * TaskType
          * @enum {string}
          */
         TaskType: "analysis" | "architecture" | "ui_design" | "crud" | "integration" | "ai_engineering" | "data_migration" | "tests" | "security_testing" | "devops" | "documentation" | "review_uat" | "pm" | "training";
+        /**
+         * TeamRole
+         * @description People of one role: full-time people on average over the period (the build, or one
+         *     support year) and the work in person-months, from the engine's manpower rows.
+         */
+        TeamRole: {
+            /** Role */
+            role: string;
+            /** Label */
+            label: string;
+            /** People */
+            people: string;
+            /** Person Months */
+            person_months: string;
+            /** Traditional People */
+            traditional_people?: string | null;
+            /** Traditional Person Months */
+            traditional_person_months?: string | null;
+        };
+        /** TemplateIn */
+        TemplateIn: {
+            /** Project Id */
+            project_id: string;
+            /** Name */
+            name: string;
+        };
+        /** TemplateOut */
+        TemplateOut: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+            /** Features */
+            features: string[];
+            /** Extra Features */
+            extra_features: number;
+            /** Request */
+            request: {
+                [key: string]: unknown;
+            };
+        };
         /** TenderExtraction */
         TenderExtraction: {
             /** Reader */
@@ -1720,6 +2556,11 @@ export interface components {
             summary: string;
             /** Features */
             features: components["schemas"]["FoundFeature"][];
+            /**
+             * Other Features
+             * @default []
+             */
+            other_features: components["schemas"]["FoundOtherFeature"][];
             /** Choices */
             choices: {
                 [key: string]: components["schemas"]["FoundValue"];
@@ -1732,6 +2573,12 @@ export interface components {
             unclear_points: components["schemas"]["UnclearPoint"][];
             /** Dropped Findings */
             dropped_findings: number;
+            /**
+             * Not Priced
+             * @default []
+             */
+            not_priced: components["schemas"]["FoundNotPriced"][];
+            payment_terms?: components["schemas"]["FoundPaymentTerms"] | null;
         };
         /** Timeline */
         Timeline: {
@@ -1946,6 +2793,16 @@ export interface components {
             clause_ref: string;
             /** Quote */
             quote: string;
+            /**
+             * Document
+             * @default
+             */
+            document: string;
+            /**
+             * Checked
+             * @default true
+             */
+            checked: boolean;
         };
     };
     responses: never;
@@ -2101,6 +2958,35 @@ export interface operations {
                 content: {
                     "application/json": components["schemas"]["ProjectOut"];
                 };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_project_projects__project_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
             };
             /** @description Validation Error */
             422: {
@@ -2562,6 +3448,35 @@ export interface operations {
             };
         };
     };
+    delete_estimate_estimates__estimate_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                estimate_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     get_trace_estimates__estimate_id__lines__line_id__trace_get: {
         parameters: {
             query?: never;
@@ -2881,7 +3796,9 @@ export interface operations {
     };
     options_quick_estimate_options_get: {
         parameters: {
-            query?: never;
+            query?: {
+                country?: string;
+            };
             header?: never;
             path?: never;
             cookie?: never;
@@ -2895,6 +3812,15 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["QuickOptions"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };
@@ -3016,6 +3942,39 @@ export interface operations {
             };
         };
     };
+    suggest_quick_estimate_suggest_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DescribeIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Suggestion"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     upload_documents_post: {
         parameters: {
             query?: never;
@@ -3111,6 +4070,37 @@ export interface operations {
             };
         };
     };
+    get_project_extraction_projects__project_id__extraction_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                project_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ProjectExtraction"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     read_outcome_projects__project_id__outcome_get: {
         parameters: {
             query?: never;
@@ -3193,6 +4183,225 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["CalibrationReport"];
+                };
+            };
+        };
+    };
+    read_settings_settings_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanySettings-Output"];
+                };
+            };
+        };
+    };
+    update_settings_settings_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CompanySettings-Input"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CompanySettings-Output"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    roles_settings_roles_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["RoleRate"][];
+                };
+            };
+        };
+    };
+    list_templates_templates_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemplateOut"][];
+                };
+            };
+        };
+    };
+    create_template_templates_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TemplateIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemplateOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_template_templates__template_id__get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                template_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TemplateOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_template_templates__template_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                template_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    send_message_contact_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ContactIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ContactOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
                 };
             };
         };

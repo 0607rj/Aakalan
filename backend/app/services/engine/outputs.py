@@ -166,6 +166,8 @@ class ConfidenceOut(Out):
 class Calibration(Out):
     status: Literal["calibrated", "uncalibrated"]
     placeholder_refs: list[str]
+    # Shared model-error spread applied in the simulation (from back-testing), if any.
+    model_spread: SpreadFactor | None = None
 
 
 class AssumptionOut(Out):
@@ -194,6 +196,15 @@ class Infeasibility(Out):
     phases: list[PhaseSuggestion]
 
 
+class ClientPaidNoteOut(Out):
+    """A cost the client pays a third party directly, described by its published rate."""
+
+    key: str
+    label: str
+    text: str
+    rates: list[TraceRate]
+
+
 class EstimateResult(Out):
     engine_version: str
     feasible: bool
@@ -214,3 +225,6 @@ class EstimateResult(Out):
     calibration: Calibration
     assumptions: list[AssumptionOut]
     sanity_checks: list[SanityCheck]
+    # Not part of the quote: costs the client pays directly (e.g. hosting they provide).
+    client_paid: list[CostLineOut] = []
+    client_paid_notes: list[ClientPaidNoteOut] = []

@@ -130,7 +130,7 @@ def test_basic_reader_without_a_key(
     assert n["emd_paise"]["value"] == 50_000_000 and n["pbg_percent"]["value"] == 0.03
     c = ex["choices"]
     assert c["availability"]["value"] == "high" and c["hosting"]["value"] == "indian_cloud"
-    assert c["scale"]["value"] == "medium"
+    assert c["scale"]["value"] == "up_to_1l"  # 50,000 users
     assert doc["project_name"].startswith("Request for Proposal")
 
 
@@ -156,6 +156,11 @@ def test_ai_reader_citations_are_verified(client: TestClient, admin_headers: H) 
                 {"key": "aadhaar_digilocker", "evidence": [{"page": 2, "clause_ref": "4.9", "quote": "Citizens shall log in with Aadhaar"}]},
                 {"key": "teleport", "evidence": [{"page": 1, "clause_ref": "", "quote": "Request for Proposal for Online"}]},
             ],
+            "other_features": [
+                {"name": "Vehicle tracking", "description": "Track inspection vehicles on a map.", "category": "module", "size": "M", "evidence": [{"page": 2, "clause_ref": "4.2", "quote": "multi-level approval workflow with SLA tracking"}]},
+                {"name": "Made up thing", "description": "x", "category": "module", "size": "M", "evidence": [{"page": 2, "clause_ref": "", "quote": "this sentence is not in the document"}]},
+                {"name": "Bad type", "description": "x", "category": "spaceship", "size": "M", "evidence": [{"page": 2, "clause_ref": "4.1", "quote": "Vendors shall submit an online application"}]},
+            ],
             "choices": [{"question": "support_hours", "value": "always", "evidence": [{"page": 2, "clause_ref": "5.2", "quote": "99.9% availability"}]}],
             "numbers": [{"field": "om_years", "value": 3, "evidence": [{"page": 2, "clause_ref": "8.1", "quote": "3 years of operations and maintenance"}]}],
             "unclear_points": [{"topic": "Helpdesk hours", "why": "Not stated", "page": None, "clause_ref": "", "quote": "", "prebid_query": "Kindly confirm the helpdesk support hours."}],
@@ -171,7 +176,9 @@ def test_ai_reader_citations_are_verified(client: TestClient, admin_headers: H) 
     assert [f["key"] for f in ex["features"]] == ["payments"]  # invented quote + bad key dropped
     assert ex["choices"]["support_hours"]["value"] == "always"  # quote is real, user will review
     assert ex["numbers"]["om_years"]["value"] == 3
-    assert ex["dropped_findings"] == 2
+    assert ex["dropped_findings"] == 4  # + invented and wrongly typed other features
+    assert [o["name"] for o in ex["other_features"]] == ["Vehicle tracking"]
+    assert ex["other_features"][0]["evidence"][0]["clause_ref"] == "4.2"
     assert ex["unclear_points"][0]["topic"] == "Helpdesk hours"
 
 
@@ -274,7 +281,7 @@ def test_corrigendum_overrides_rfp(client: TestClient, admin_headers: H, no_over
     corr_pages = [
         [
             "Corrigendum No. 1",
-            "2.9 Go-live shall be achieved within 4 months of the issue of work order.",
+            "2.9 Go-live shall be achieved within 7 months of the issue of work order.",
         ]
     ]
     r = client.post(
@@ -288,12 +295,12 @@ def test_corrigendum_overrides_rfp(client: TestClient, admin_headers: H, no_over
     assert r.json()["project_name"] == rfp["project_name"]  # first document names the project
     merged = client.get(f"/projects/{rfp['project_id']}/extraction", headers=admin_headers).json()
     assert [d["kind"] for d in merged["documents"]] == ["rfp", "corrigendum"]
-    assert merged["extraction"]["numbers"]["deadline_months"]["value"] == 4
+    assert merged["extraction"]["numbers"]["deadline_months"]["value"] == 7
     assert merged["changes"] == [
         {
             "field": "deadline_months",
             "old_value": 6,
-            "new_value": 4,
+            "new_value": 7,
             "document": "corrigendum-1.pdf",
             "kind": "corrigendum",
         }
@@ -303,17 +310,17 @@ def test_corrigendum_overrides_rfp(client: TestClient, admin_headers: H, no_over
         "name": "Portal",
         "document_id": rfp["id"],
         "features": [f["key"] for f in ex["features"]],
-        "overrides": {"deadline_months": 4},
+        "overrides": {"deadline_months": 7},
     }
     s = client.post("/quick-estimates", json=body, headers=admin_headers).json()
     detail = client.get(f"/estimates/{s['estimate_id']}", headers=admin_headers).json()
-    assert detail["timeline"]["deadline_months"] == "4"
+    assert detail["timeline"]["deadline_months"] == "7"
     pm = next(ln for ln in detail["lines"] if ln["line_key"] == "programme.project_management/pm")
     trace = client.get(
         f"/estimates/{s['estimate_id']}/lines/{pm['id']}/trace", headers=admin_headers
     ).json()["trace"]
     deadline = next(d for d in trace["drivers"] if d["key"] == "deadline_months")
-    assert deadline["value"] == "4" and deadline["requirement_ids"]
+    assert deadline["value"] == "7" and deadline["requirement_ids"]
     cited = [r for r in trace["requirements"] if r["id"] in deadline["requirement_ids"]]
     assert cited and cited[0]["clause_ref"] == "2.9"
 
@@ -337,6 +344,7 @@ def test_scanned_pdf_read_by_ai_with_unchecked_quotes(client: TestClient, admin_
             "project_name": "Scanned tender",
             "summary": "A scanned RFP.",
             "features": [{"key": "payments", "evidence": [{"page": 1, "clause_ref": "3.2", "quote": "Payment through gateway of the department"}]}],
+            "other_features": [],
             "choices": [],
             "numbers": [{"field": "om_years", "value": 2, "evidence": [{"page": 9, "clause_ref": "", "quote": "two years of O&M after go-live"}]}],
             "unclear_points": [],
@@ -352,3 +360,134 @@ def test_scanned_pdf_read_by_ai_with_unchecked_quotes(client: TestClient, admin_
     ex = r.json()["extraction"]
     assert ex["features"][0]["evidence"][0]["checked"] is False
     assert ex["numbers"] == {}  # page 9 does not exist in a 2-page document -> dropped
+
+
+def test_basic_reader_ignores_paperwork_deadlines() -> None:
+    from app.services.documents.parsing import Page, ParsedDocument
+    from app.services.extraction.basic_reader import basic_read
+    from app.services.quick.config import quick_config
+
+    def deadline(text: str) -> float | None:
+        doc = ParsedDocument(kind="pdf", pages=[Page(number=1, text=text)], approximate_pages=False)
+        found = [n.value for n in basic_read(quick_config(), doc).numbers]
+        fields = [n.field for n in basic_read(quick_config(), doc).numbers]
+        return found[fields.index("deadline_months")] if "deadline_months" in fields else None
+
+    assert deadline("The bidder shall submit the PBG within 15 days of award of contract.") is None
+    assert deadline("Development shall be completed within 45 days of award of work.") == 2
+
+
+def test_long_documents_offer_but_do_not_tick_passing_mentions() -> None:
+    from app.services.documents.parsing import Page, ParsedDocument
+    from app.services.extraction.basic_reader import basic_read
+    from app.services.quick.config import quick_config
+
+    cfg = quick_config()
+    filler = [Page(number=n, text="General terms and conditions.") for n in range(2, 30)]
+    once = [Page(number=1, text="Bids are shown on a dashboard.")]
+    often = [Page(number=n, text=f"{n}.1 The dashboard shows analytics.") for n in (1, 2, 3)]
+
+    def feature(pages: list[Page]) -> tuple[bool, int]:
+        doc = ParsedDocument(kind="pdf", pages=pages, approximate_pages=False)
+        f = next(x for x in basic_read(cfg, doc).features if x.key == "dashboards")
+        return f.suggested, f.mentions
+
+    assert feature(once + filler) == (False, 1)  # long document, named once: offered only
+    assert feature(often + filler[2:])[0] is True  # named in three places: ticked
+    assert feature(once)[0] is True  # short document: every mention counts
+
+
+EXTRA_PAGES = [
+    ["1. Scope", "1.1 This is a pilot project for the department's grievance portal."],
+    [
+        "2. Terms",
+        "2.1 The vendor shall deploy 2 resident engineers at the department during O&M.",
+        "2.2 Liquidated damages of 0.5% per week of delay shall apply.",
+        "2.3 A warranty of one year applies after go-live.",
+        "2.4 Payment terms: 30% on signing of the agreement, 50% on go-live and 20% after "
+        "three months of stable operation.",
+    ],
+]
+
+
+def test_basic_reader_lists_what_it_does_not_price(
+    client: TestClient, admin_headers: H, no_override: None
+) -> None:
+    """Penalties, warranty and payment terms are shown with their page; onsite staff and an
+    MVP hint are read and priced."""
+    doc = upload(client, admin_headers, "terms.pdf", make_pdf(EXTRA_PAGES)).json()
+    ex = doc["extraction"]
+    topics = {n["topic"]: n for n in ex["not_priced"]}
+    assert {"penalties", "warranty", "payment_terms"} <= set(topics)
+    assert topics["warranty"]["evidence"][0]["page"] == 2
+    assert topics["penalties"]["label"].startswith("Penalties")
+    assert ex["numbers"]["onsite_staff"]["value"] == 2
+    assert ex["choices"]["version"]["value"] == "mvp"  # "pilot project"
+    body = {"name": "Grievances", "document_id": doc["id"], "features": ["grievances"]}
+    without = client.post("/quick-estimates", json=body, headers=admin_headers).json()
+    staffed = client.post(
+        "/quick-estimates", json={**body, "overrides": {"onsite_staff": 2}}, headers=admin_headers
+    ).json()
+    items = {i["key"]: i for i in staffed["cost_items"]}
+    assert items["onsite"]["amount_paise"] > 0
+    assert staffed["likely_paise"] > without["likely_paise"]
+
+
+def test_ai_reader_payment_terms_are_priced(client: TestClient, admin_headers: H) -> None:
+    quote = "30% on signing of the agreement, 50% on go-live and 20% after"
+
+    def responder(system: str, user: str) -> object:
+        assert "penalties:" in system and "payment_terms" in system
+        return {
+            "project_name": "Grievance portal",
+            "summary": "A grievance portal.",
+            "features": [{"key": "grievances", "evidence": [{"page": 1, "clause_ref": "1.1", "quote": "pilot project for the department's grievance portal"}]}],
+            "other_features": [],
+            "choices": [],
+            "numbers": [],
+            "unclear_points": [],
+            "not_priced": [
+                {"topic": "warranty", "note": "One year of warranty.", "evidence": [{"page": 2, "clause_ref": "2.3", "quote": "A warranty of one year applies after go-live"}]},
+                {"topic": "payment_terms", "note": "Paid in three parts.", "evidence": [{"page": 2, "clause_ref": "2.4", "quote": quote}]},
+                {"topic": "spaceship", "note": "", "evidence": [{"page": 2, "clause_ref": "", "quote": quote}]},
+            ],
+            "payment_terms": {
+                "payments": [
+                    {"percent": 30, "when": "on_order"},
+                    {"percent": 50, "when": "go_live"},
+                    {"percent": 20, "when": "after_go_live", "months_after": 3},
+                ],
+                "evidence": [{"page": 2, "clause_ref": "2.4", "quote": quote}],
+            },
+        }  # fmt: skip
+
+    set_llm_client(FakeClient(responder))
+    try:
+        doc = upload(client, admin_headers, "terms.pdf", make_pdf(EXTRA_PAGES)).json()
+    finally:
+        set_llm_client(None)
+    ex = doc["extraction"]
+    terms = ex["payment_terms"]
+    assert [p["label"] for p in terms["payments"]] == [
+        "30% on order",
+        "50% go live",
+        "20% after go live + 3 months",
+    ]
+    assert {n["topic"] for n in ex["not_priced"]} == {"warranty"}  # payment terms are priced
+    schedule = [
+        {k: p[k] for k in ("at_build_fraction", "offset_months", "percent")}
+        for p in terms["payments"]
+    ]
+    body = {
+        "name": "Grievances",
+        "document_id": doc["id"],
+        "features": ["grievances"],
+        "payment_schedule": schedule,
+    }
+    r = client.post("/quick-estimates", json=body, headers=admin_headers)
+    assert r.status_code == 201, r.text
+    bad = [{**schedule[0], "percent": "0.9"}, *schedule[1:]]
+    r = client.post(
+        "/quick-estimates", json={**body, "payment_schedule": bad}, headers=admin_headers
+    )
+    assert r.status_code == 422  # shares must add up to 100%

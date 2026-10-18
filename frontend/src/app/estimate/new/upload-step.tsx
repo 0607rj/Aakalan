@@ -19,7 +19,7 @@ const ACCEPT =
 
 function friendlyError(error: unknown): string {
   if (error instanceof ApiError && error.status === 413) {
-    return "This file is too large. Please upload a file smaller than 25 MB — the main RFP volume is usually enough.";
+    return "This file is too large. Please upload a file smaller than 25 MB — the main requirement document is usually enough.";
   }
   if (error instanceof TypeError) {
     return "We could not reach the server. Please check that Aakalan is running and try again.";
@@ -62,8 +62,8 @@ export function UploadStep({
         <div className="mt-8 size-10 animate-spin rounded-full border-4 border-muted border-t-primary" />
         <p className="text-lg font-medium">Reading your document…</p>
         <p className="max-w-md text-sm text-muted-foreground">
-          This can take a minute or two for long tenders. Please keep this page
-          open.
+          This can take a minute or two for long documents. Please keep this
+          page open.
         </p>
         <p className="text-sm text-muted-foreground">{uploading}</p>
       </div>
@@ -76,11 +76,11 @@ export function UploadStep({
       <section className="flex flex-col gap-6">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-            Upload the tender document
+            Upload the requirement document
           </h1>
           <p className="mt-1 text-muted-foreground">
-            A PDF or Word file (up to 25 MB). Scanned documents are not
-            supported yet.
+            A PDF or Word file (up to 25 MB). Scanned documents can be read once
+            the AI key is set up.
           </p>
         </div>
 

@@ -23,11 +23,14 @@ class HostingPlan:
     db_tier: str
     db_instances: Decimal
     transfer_gb_month: Decimal
+    server_rate: str = "app_server"  # or "app_server_small" (rate card item suffix)
 
 
 def size(t: LineBuilder) -> HostingPlan:
     """pattern = pattern_by_sla[sla]
     app_servers = max(min_servers[pattern], ceil(ceil(peak / users_per_vcpu) / vcpu_per_server))
+    server rate = small server when ceil(peak / users_per_vcpu) ≤ small_app_server_max_vcpus
+                  and the rate card prices one (parameter sets v12+), else the standard server
     db_tier from the concurrency band; db_instances[pattern]
     transfer_gb_month = users × monthly_active_share × mb_per_active_user_month / mb_per_gb
     """
@@ -55,8 +58,17 @@ def size(t: LineBuilder) -> HostingPlan:
         f"{users} × {active} × {mb_user} / {mb_gb}",
         users * active * mb_user / mb_gb,
     )
-    t.add_input(pattern=pattern, app_servers=str(servers), db_tier=db_tier)
-    return HostingPlan(pattern, servers, db_tier, db_instances, transfer)
+    server_rate = "app_server"
+    small_max = t.ctx.p.hosting.small_app_server_max_vcpus
+    provider = t.ctx.q.hosting_provider
+    small_key = f"cloud.{provider}.app_server_small.month"
+    if small_max is not None and small_key in t.ctx.rates:
+        limit: Decimal = t.param("hosting", "small_app_server_max_vcpus")
+        if vcpus <= limit:
+            server_rate = "app_server_small"
+            t.step("small servers", f"ceil({peak} / {per_vcpu}) = {vcpus} ≤ {limit} vCPUs", vcpus)
+    t.add_input(pattern=pattern, app_servers=str(servers), db_tier=db_tier, server=server_rate)
+    return HostingPlan(pattern, servers, db_tier, db_instances, transfer, server_rate)
 
 
 def storage_gb(t: LineBuilder, year: int) -> Decimal:
@@ -91,6 +103,8 @@ def _base(
 
 
 def hosting_lines(ctx: PricingContext) -> list[CostLineOut]:
+    if not ctx.q.hosting_in_scope:  # the client provides hosting: nothing to price
+        return []
     if ctx.q.hosting_provider == "on_prem":
         return _on_prem_lines(ctx)
     return _cloud_lines(ctx)
@@ -122,7 +136,12 @@ def _cloud_lines(ctx: PricingContext) -> list[CostLineOut]:
 
         t = line("compute", "run.hosting", "Application servers", "hosting.compute.v1")
         plan = size(t)
-        compute = plan.app_servers * t.rate_inr(f"{prefix}.app_server.month") * discount(t) * months
+        compute = (
+            plan.app_servers
+            * t.rate_local(f"{prefix}.{plan.server_rate}.month")
+            * discount(t)
+            * months
+        )
         t.step("compute per year", "servers × rate × discount × months", compute)
         lines.append(finish(t, compute))
 
@@ -130,7 +149,7 @@ def _cloud_lines(ctx: PricingContext) -> list[CostLineOut]:
         plan = size(t)
         database = (
             plan.db_instances
-            * t.rate_inr(f"{prefix}.db.{plan.db_tier}.month")
+            * t.rate_local(f"{prefix}.db.{plan.db_tier}.month")
             * discount(t)
             * months
         )
@@ -139,25 +158,25 @@ def _cloud_lines(ctx: PricingContext) -> list[CostLineOut]:
 
         t = line("storage", "run.hosting", "Object and block storage", "hosting.storage.v1")
         gb = storage_gb(t, year)
-        lines.append(finish(t, gb * t.rate_inr(f"{prefix}.storage.gb_month") * months))
+        lines.append(finish(t, gb * t.rate_local(f"{prefix}.storage.gb_month") * months))
 
         t = line("backup", "run.backups", "Backups", "hosting.backup.v1")
         gb = storage_gb(t, year) * t.param("hosting", "backup_factor")
-        lines.append(finish(t, gb * t.rate_inr(f"{prefix}.backup.gb_month") * months))
+        lines.append(finish(t, gb * t.rate_local(f"{prefix}.backup.gb_month") * months))
 
         t = line("transfer", "run.hosting", "Data transfer out", "hosting.transfer.v1")
         plan = size(t)
         lines.append(
-            finish(t, plan.transfer_gb_month * t.rate_inr(f"{prefix}.transfer_out.gb") * months)
+            finish(t, plan.transfer_gb_month * t.rate_local(f"{prefix}.transfer_out.gb") * months)
         )
 
         t = line("monitoring", "run.hosting", "Monitoring and logging", "hosting.monitoring.v1")
-        lines.append(finish(t, t.rate_inr(f"{prefix}.monitoring.month") * months))
+        lines.append(finish(t, t.rate_local(f"{prefix}.monitoring.month") * months))
 
         if plan.pattern != "single":
             t = line("load_balancer", "run.hosting", "Load balancer", "hosting.load_balancer.v1")
             size(t)
-            lines.append(finish(t, t.rate_inr(f"{prefix}.load_balancer.month") * months))
+            lines.append(finish(t, t.rate_local(f"{prefix}.load_balancer.month") * months))
 
         if plan.pattern == "ha_dr":
             t = line("dr", "run.dr", "Disaster recovery (warm standby)", "hosting.dr.v1")
@@ -193,9 +212,9 @@ def _on_prem_lines(ctx: PricingContext) -> list[CostLineOut]:
     tb = t.step(
         "storage TB", f"ceil({gb:.2f} / gb_per_tb)", ceil(gb / t.param("hosting", "gb_per_tb"))
     )
-    capex = servers * t.rate_inr(
+    capex = servers * t.rate_local(
         t.param("hosting", "on_prem", "server_rate_key")
-    ) + tb * t.rate_inr(t.param("hosting", "on_prem", "storage_tb_rate_key"))
+    ) + tb * t.rate_local(t.param("hosting", "on_prem", "storage_tb_rate_key"))
     spreads.fixed(t, "hosting")
     lines.append(t.finish(capex))
 
@@ -212,7 +231,7 @@ def _on_prem_lines(ctx: PricingContext) -> list[CostLineOut]:
         c.driver("om_years")
         per_rack: Decimal = c.param("hosting", "on_prem", "servers_per_rack")
         racks = c.step("racks", f"ceil({servers} / {per_rack})", ceil(servers / per_rack))
-        coloc = racks * c.rate_inr(c.param("hosting", "on_prem", "colocation_rate_key")) * months
+        coloc = racks * c.rate_local(c.param("hosting", "on_prem", "colocation_rate_key")) * months
         esc = c.escalation("prices", year)
         spreads.fixed(c, "hosting")
         spreads.om_year(c, year)

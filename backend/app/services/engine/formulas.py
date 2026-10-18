@@ -3,10 +3,18 @@ shows the expression. Change a formula -> bump its version suffix so old traces 
 
 FORMULAS: dict[str, str] = {
     # components (brief 7.1)
+    "component_labour.v2": (
+        "Σ_task base_effort_pd[size] × effort_multiplier × quantity × task_share × M_complexity"
+        " × M_nfr × licence_effort_factor × (1 − min(max_saving, ai_saving_task × maturity_scale))"
+        " × M_compression × rate_role(task)"
+    ),
     "component_labour.v1": (
         "Σ_task base_effort_pd[size] × quantity × task_share × M_complexity × M_nfr"
         " × licence_effort_factor × (1 − min(max_saving, ai_saving_task × maturity_scale))"
         " × M_compression × rate_role(task)"
+    ),
+    "build.ai_code_review.v1": (
+        "review_share_of_saved × Σ_component ai_saved_pd × M_compression × rate(review_role)"
     ),
     # go-live
     "golive.cert_in_audit.v1": "audit_fee[size_band]",
@@ -15,13 +23,25 @@ FORMULAS: dict[str, str] = {
     "golive.training_labour.v1": "sessions × pd_per_session × rate(trainer)",
     "golive.training_travel.v1": "outstation_sessions × trips_per_session × trip_rate",
     "golive.hypercare.v1": "weeks × pd_per_week × Σ_role (fte_role × rate_role)",
+    "golive.hypercare.v2": (
+        "weeks × pd_per_week × Σ_role (fte_role × rate_role)"
+        " × min(1, hypercare_share × build_pd / (weeks × pd_per_week × Σ fte))  (lean delivery)"
+    ),
     "golive.onprem_capex.v1": "servers × server_capex + storage_tb × tb_capex",
     # programme
     "programme.pm.v1": "pm_fte[size_band] × programme_months × pd_per_month × rate(pm)",
+    "programme.pm.v2": (
+        "min(pm_fte[size_band] × programme_months × pd_per_month, pm_share × build_pd)"
+        " × rate(pm)  (lean delivery)"
+    ),
     "programme.steering.v1": "ceil(programme_months / interval_months) × meeting_rate",
     "programme.mis.v1": "programme_months × mis_pd_per_month × rate(mis_role)",
     "programme.travel.v1": "programme_months × trips_per_month × trip_rate",
     "programme.environments.v1": "programme_months × environments × environment_month_rate",
+    "programme.om_pm.v2": (
+        "min(om_pm_fte[size_band] × pd_per_year, om_pm_share × build_pd) × rate(pm)"
+        " × (1 + escalation_labour)^year  (lean delivery)"
+    ),
     "programme.om_pm.v1": (
         "om_pm_fte[size_band] × pd_per_year × rate(pm) × (1 + escalation_labour)^year"
     ),
@@ -56,7 +76,47 @@ FORMULAS: dict[str, str] = {
         " × (1 + annual_price_change)^year"
     ),
     "ai_runtime.gpu.v1": "gpus × hours_per_year × gpu_hour_rate × (1 + escalation_prices)^year",
-    # maintenance
+    "ai_runtime.features.v1": (
+        "ai_feature_instances × users × active_share × calls_per_active_user_month"
+        " × months_per_year × (tokens_in × price_in + tokens_out × price_out) / tokens_per_unit"
+        " × (1 + annual_price_change)^year"
+    ),
+    # third-party services, build tools and translation (parameter sets v5+)
+    "third_party.monthly.v1": (
+        "max(0, users × active_share × units_per_active_user_month − free_units_per_month)"
+        " × months_per_year × rate / per_units × (1 + escalation_prices)^year"
+    ),
+    "third_party.per_user.v1": (
+        "users × (first_year_units_per_user if year = 1 else later_year_units_per_user)"
+        " × rate / per_units × (1 + escalation_prices)^year"
+    ),
+    "third_party.fixed.v1": (
+        "count × (months_per_year if monthly rate else 1) × rate / per_units"
+        " × (1 + escalation_prices)^year  (one-off fees: year 1 only)"
+    ),
+    "build.dev_tools.v1": "Σ build person-days / pd_per_month × seat_month_rate",
+    "build.translation.v1": ("words_per_component × components × (languages − 1) × rate_per_word"),
+    "run.translation_updates.v1": (
+        "words_per_component × components × (languages − 1) × rate_per_word"
+        " × annual_update_share × (1 + escalation_prices)^year"
+    ),
+    # maintenance (v2: × run_multiplier from the calibration dials)
+    "maintenance.helpdesk.v2": (
+        "seats[users tier] × coverage_fte[support_sla] × pd_per_year × run_multiplier"
+        " × rate(helpdesk) × (1 + escalation_labour)^year"
+    ),
+    "maintenance.bugfix.v2": (
+        "build_pd × bugfix_share × run_multiplier × rate × (1 + escalation_labour)^year"
+    ),
+    "maintenance.patching.v2": (
+        "build_pd × patching_share × run_multiplier × rate × (1 + escalation_labour)^year"
+    ),
+    "maintenance.upgrades.v2": (
+        "build_pd × upgrade_share × run_multiplier × rate × (1 + escalation_labour)^year"
+    ),
+    "maintenance.change_requests.v2": (
+        "cr_pd_per_year × run_multiplier × rate × (1 + escalation_labour)^year"
+    ),
     "maintenance.helpdesk.v1": (
         "seats[users tier] × coverage_fte[support_sla] × pd_per_year"
         " × rate(helpdesk) × (1 + escalation_labour)^year"

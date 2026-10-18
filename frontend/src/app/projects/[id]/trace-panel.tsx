@@ -60,9 +60,11 @@ function Step({
 function TraceBody({
   estimateId,
   lineId,
+  currency,
 }: {
   estimateId: string;
   lineId: string;
+  currency: string;
 }) {
   const load = React.useCallback(
     () => api.getTrace(estimateId, lineId),
@@ -85,7 +87,7 @@ function TraceBody({
     <div className="flex flex-col">
       <Step
         n={1}
-        title="RFP clauses → requirements"
+        title="Document clauses → requirements"
         empty={!trace.requirements.length}
       >
         <ul className="flex flex-col gap-2">
@@ -207,9 +209,9 @@ function TraceBody({
           ).map(([label, v]) => (
             <div key={label} className="rounded-md border p-2">
               <p className="text-xs text-muted-foreground">{label}</p>
-              <p className="font-semibold">{formatPaise(v)}</p>
+              <p className="font-semibold">{formatPaise(v, currency)}</p>
               <p className="text-xs text-muted-foreground">
-                {formatPaiseExact(v)}
+                {formatPaiseExact(v, currency)}
               </p>
             </div>
           ))}
@@ -237,10 +239,12 @@ function TraceBody({
 
 export function TracePanel({
   estimateId,
+  currency = "INR",
   line,
   onClose,
 }: {
   estimateId: string;
+  currency?: string;
   line: CostLine | null;
   onClose: () => void;
 }) {
@@ -258,7 +262,12 @@ export function TracePanel({
       }
     >
       {line ? (
-        <TraceBody key={line.id} estimateId={estimateId} lineId={line.id} />
+        <TraceBody
+          key={line.id}
+          estimateId={estimateId}
+          lineId={line.id}
+          currency={currency}
+        />
       ) : null}
     </Sheet>
   );

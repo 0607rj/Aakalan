@@ -3,6 +3,7 @@ persist the immutable result, re-price at current rates and run scenarios."""
 
 import secrets
 from datetime import date
+from typing import Any
 
 from fastapi import HTTPException, status
 from sqlalchemy import func, select
@@ -19,12 +20,18 @@ from app.services.engine.inputs import (
     SourceRef,
 )
 from app.services.engine.outputs import EstimateResult
-from app.services.engine.scenarios import Scenario, ScenarioResult, run_scenarios
+from app.services.engine.scenarios import Scenario, ScenarioResult, run_scenarios, with_overrides
 from app.services.estimates.reference_store import (
     get_catalog,
     get_parameter_set,
     get_rate_card,
     get_taxonomy,
+)
+from app.services.settings import (
+    CompanySettings,
+    apply_company_rates,
+    apply_company_settings,
+    company_settings,
 )
 
 PRICED_STATUSES = {"confirmed", "edited"}
@@ -97,10 +104,23 @@ def build_input(
         ],
         taxonomy=get_taxonomy(db),
         catalog=catalog,
-        rate_card=get_rate_card(db, rate_card_version, as_of),
-        parameters=get_parameter_set(db, parameter_set_version, as_of),
+        rate_card=apply_company_rates(
+            get_rate_card(db, rate_card_version, as_of, project.country),
+            _settings_for(db, project),
+        ),
+        parameters=apply_company_settings(
+            get_parameter_set(db, parameter_set_version, as_of, project.country),
+            _settings_for(db, project),
+        ),
         monte_carlo_runs=monte_carlo_runs,
     )
+
+
+def _settings_for(db: Session, project: Project) -> CompanySettings:
+    """A vendor prices with its own settings; a client planning a budget uses market rates."""
+    if project.mode == "buyer":
+        return CompanySettings()
+    return company_settings(db, project.org_id)
 
 
 def persist(
@@ -115,6 +135,7 @@ def persist(
         db.scalar(select(func.max(Estimate.version)).where(Estimate.project_id == project.id)) or 0
     ) + 1
     summary = result.model_dump(mode="json", exclude={"lines"})
+    summary["traditional"] = traditional_price(inp, result)
     totals = result.totals
     estimate = Estimate(
         org_id=project.org_id,
@@ -189,6 +210,33 @@ def priced(inp: EstimateInput) -> EstimateResult:
         raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, str(exc.args[0])) from exc
 
 
+BUILD_STAGES = ("pre_build", "build", "go_live")
+NO_AI = "none"
+
+
+def traditional_price(inp: EstimateInput, result: EstimateResult) -> dict[str, Any] | None:
+    """The same scope priced as if the team used no AI tools (how work was priced before AI):
+    the comparison at the heart of the product. Same seed, same reference data. `lines` holds
+    each line's most-likely value without AI, by line key, for the item-by-item comparison."""
+    answers = {a.key: a.value for a in inp.answers}
+    if answers.get("team_ai_maturity") == NO_AI or result.totals is None:
+        return None
+    if NO_AI not in inp.parameters.ai_productivity.maturity_scale:  # older parameter set
+        return None
+    manual = calculate(with_overrides(inp, {"team_ai_maturity": NO_AI}))
+    if manual.totals is None:
+        return {"p50_paise": None, "build_only_paise": None}
+    stages = {g.key: g.likely_paise for g in manual.by_stage}
+    return {
+        "p50_paise": manual.totals.p50_paise,
+        "build_only_paise": sum(stages.get(s, 0) for s in BUILD_STAGES),
+        "lines": {ln.line_key: ln.likely_paise for ln in manual.lines},
+        # the team without AI tools: build year and the first support year
+        "manpower": [r.model_dump(mode="json") for r in manual.manpower if r.year <= 1],
+        "delivery_months": str(manual.timeline.delivery_duration_months),
+    }
+
+
 def create_estimate(db: Session, project: Project, user: User, inp: EstimateInput) -> Estimate:
     return persist(db, project, inp, priced(inp), user)
 
@@ -214,8 +262,14 @@ def reprice(db: Session, project: Project, estimate: Estimate, user: User, as_of
             "as_of_date": as_of,
             "taxonomy": get_taxonomy(db),
             "catalog": catalog,
-            "rate_card": get_rate_card(db, None, as_of),
-            "parameters": get_parameter_set(db, None, as_of),
+            "rate_card": apply_company_rates(
+                get_rate_card(db, None, as_of, old.rate_card.region),
+                _settings_for(db, project),
+            ),
+            "parameters": apply_company_settings(
+                get_parameter_set(db, None, as_of, old.parameters.region),
+                _settings_for(db, project),
+            ),
         }
     )
     inp = EstimateInput.model_validate(inp.model_dump())

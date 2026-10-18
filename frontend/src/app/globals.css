@@ -1,25 +1,34 @@
 @import "tailwindcss";
 
+/*
+ * Aakalan's look: a measuring tape on clean paper. Navy ink for words and actions, tape
+ * yellow only where something is measured (cost ranges, the logo), green only for what AI
+ * tools save. Light theme only.
+ */
 :root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
+  --background: #f7f8f5; /* paper */
+  --foreground: #17203a; /* navy ink */
   --card: #ffffff;
-  --card-foreground: #0f172a;
-  --muted: #f1f5f9;
-  --muted-foreground: #64748b;
-  --border: #e2e8f0;
-  --input: #cbd5e1;
-  --ring: #1e3a8a;
-  --primary: #1e3a8a;
+  --card-foreground: #17203a;
+  --muted: #eef0ec;
+  --muted-foreground: #5b6478;
+  --border: #dfe3e6;
+  --input: #c9cfd6;
+  --ring: #17203a;
+  --primary: #17203a;
   --primary-foreground: #ffffff;
-  --secondary: #e2e8f0;
-  --secondary-foreground: #0f172a;
-  --destructive: #b91c1c;
+  --secondary: #e6e9ee;
+  --secondary-foreground: #17203a;
+  --destructive: #b42318;
   --destructive-foreground: #ffffff;
-  --success: #15803d;
-  --warning: #b45309;
-  --warning-muted: #fef3c7;
-  --radius: 0.5rem;
+  --success: #1f8f6a;
+  --warning: #9a5b00;
+  --warning-muted: #fff4d6;
+  --tape: #f5c518; /* measuring-tape yellow */
+  --tape-soft: #fdf1c4;
+  --ai: #1f8f6a; /* what AI tools save */
+  --ai-soft: #dff2ea;
+  --radius: 0.75rem;
 }
 
 @theme inline {
@@ -41,12 +50,19 @@
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-warning-muted: var(--warning-muted);
-  --radius-sm: calc(var(--radius) - 2px);
+  --color-tape: var(--tape);
+  --color-tape-soft: var(--tape-soft);
+  --color-ai: var(--ai);
+  --color-ai-soft: var(--ai-soft);
+  --radius-sm: calc(var(--radius) - 4px);
   --radius-md: var(--radius);
-  --radius-lg: calc(var(--radius) + 2px);
+  --radius-lg: calc(var(--radius) + 4px);
   --font-sans:
-    ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans",
-    "Helvetica Neue", Arial, sans-serif;
+    var(--font-public-sans), ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, "Noto Sans", Arial, sans-serif;
+  --font-display:
+    var(--font-archivo), var(--font-public-sans), ui-sans-serif, system-ui,
+    sans-serif;
   --font-mono:
     ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
 }
@@ -59,6 +75,57 @@
   body {
     background: var(--background);
     color: var(--foreground);
-    font-family: var(--font-sans);
+    font-family: var(--font-public-sans), ui-sans-serif, system-ui, sans-serif;
+    font-feature-settings: "tnum" 0;
+  }
+
+  h1,
+  h2,
+  h3 {
+    font-family: var(--font-archivo), var(--font-public-sans), sans-serif;
+    font-stretch: 100%;
+    text-wrap: balance;
+    letter-spacing: -0.01em;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--foreground);
+    outline-offset: 2px;
+  }
+}
+
+@layer utilities {
+  /* Display type for big headlines (Archivo at normal width). */
+  .font-wide {
+    font-family: var(--font-archivo), var(--font-public-sans), sans-serif;
+    font-stretch: 100%;
+    letter-spacing: -0.02em;
+  }
+
+  /* Money and measurements line up. */
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Tick marks of a measuring tape (small every 4px, tall every 20px). */
+  .tape-ticks {
+    background-image:
+      linear-gradient(90deg, rgb(23 32 58 / 0.55) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(23 32 58 / 0.3) 1px, transparent 1px);
+    background-size:
+      20px 100%,
+      4px 45%;
+    background-repeat: repeat-x;
+    background-position: 0 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }

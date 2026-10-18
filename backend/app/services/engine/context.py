@@ -20,7 +20,7 @@ from app.services.engine.inputs import (
     Questionnaire,
     RequirementIn,
 )
-from app.services.engine.money import ONE, ZERO, dsum, quantize, to_paise
+from app.services.engine.money import ONE, ZERO, dsum, interpolate, quantize, to_paise
 from app.services.engine.outputs import (
     AssumptionOut,
     CostLineOut,
@@ -59,6 +59,8 @@ def resolve_questionnaire(
             merged[key] = given[key].value
         elif key in defaults:
             merged[key] = defaults[key]
+        elif not Questionnaire.model_fields[key].is_required():
+            continue  # newer optional key absent from an older parameter set: model default
         else:
             raise ValueError(f"no answer and no default for questionnaire key {key!r}")
     questionnaire = Questionnaire.model_validate(merged)
@@ -256,19 +258,104 @@ class LineBuilder:
         )
         return item
 
-    def rate_inr(self, key: str) -> Decimal:
-        """Rate amount in rupees. Foreign currency: amount × forex × (1 + forex_buffer)."""
+    def rate_local(self, key: str) -> Decimal:
+        """Rate amount in the estimate currency (the rate card's currency). An item priced in
+        another currency is converted: amount × forex[item→card] × (1 + forex_buffer)."""
         item = self.rate(key)
-        if item.currency == "INR":
+        currency = self.ctx.inp.rate_card.currency
+        if item.currency == currency:
             return item.amount
-        forex_key = self.param("hosting", "forex_rate_key")
-        fx = self.rate(f"{forex_key.rsplit('.', 1)[0]}.{item.currency}_INR").amount
+        forex_key: str = self.param("hosting", "forex_rate_key")
+        fx = self.rate(f"{forex_key.split('.', 1)[0]}.{item.currency}_{currency}").amount
         buffer: Decimal = self.param("hosting", "forex_buffer")
         return self.step(
-            f"{key} in INR",
+            f"{key} in {currency}",
             f"{item.amount} {item.currency} × {fx} × (1 + {buffer})",
             item.amount * fx * (ONE + buffer),
         )
+
+    def calibration(self, dial: str) -> Decimal:
+        """A calibration dial (effort_multiplier / run_multiplier); 1 when the set has none."""
+        if self.ctx.p.calibration is None:
+            return ONE
+        value: Decimal = self.param("calibration", dial)
+        segment_dials = {
+            "effort_multiplier": self.ctx.p.calibration.segment_effort_multiplier,
+            "run_multiplier": self.ctx.p.calibration.segment_run_multiplier,
+        }[dial]
+        segment = self.driver("buyer_segment")
+        cal = self.ctx.p.calibration
+        by_size = (
+            cal.segment_size_effort_multiplier.get(segment, {})
+            if dial == "effort_multiplier"
+            else {}
+        )
+        size_key = self.driver("project_size") if by_size else None
+        if size_key in by_size:
+            factor: Decimal = self.param(
+                "calibration", "segment_size_effort_multiplier", segment, str(size_key)
+            )
+            value = self.step(
+                f"{dial} × {segment} factor ({size_key} projects)",
+                f"{value} × {factor}",
+                value * factor,
+            )
+        elif segment in segment_dials:
+            factor = self.param("calibration", f"segment_{dial}", segment)
+            value = self.step(f"{dial} × {segment} factor", f"{value} × {factor}", value * factor)
+        sizes = self.ctx.p.calibration.size_effort_multiplier
+        curve = self.ctx.p.calibration.size_points_curve
+        points = self.driver("size_points") if dial == "effort_multiplier" and curve else None
+        if points is not None:
+            self.param("calibration", "size_points_curve")
+            f_pts = interpolate(curve, Decimal(points))
+            value = self.step(
+                f"{dial} × size factor at {points} feature points",
+                f"{value} × {f_pts:.4f}",
+                value * f_pts,
+            )
+        elif dial == "effort_multiplier" and sizes:
+            size = self.driver("project_size")
+            if size in sizes:
+                f: Decimal = self.param("calibration", "size_effort_multiplier", size)
+                value = self.step(f"{dial} × {size} project", f"{value} × {f}", value * f)
+        if dial == "effort_multiplier":
+            for key, by_value in self.ctx.p.calibration.answer_effort_multiplier.items():
+                answer = str(self.driver(key))
+                if answer in by_value:
+                    g: Decimal = self.param("calibration", "answer_effort_multiplier", key, answer)
+                    value = self.step(f"{dial} × {key} {answer}", f"{value} × {g}", value * g)
+        return value
+
+    def token_rates(self) -> tuple[Decimal, Decimal]:
+        """(input, output) price per token unit for the chosen AI model tier, in the estimate
+        currency. The simple tier applies only when the parameter set prices one."""
+        keys = ("token_input_rate_key", "token_output_rate_key")
+        rt = self.ctx.p.ai_runtime
+        has_simple = bool(rt.simple_token_input_rate_key and rt.simple_token_output_rate_key)
+        if has_simple and self.driver("ai_model_tier") == "simple":
+            keys = ("simple_token_input_rate_key", "simple_token_output_rate_key")
+        p_in = self.rate_local(self.param("ai_runtime", keys[0]))
+        p_out = self.rate_local(self.param("ai_runtime", keys[1]))
+        return p_in, p_out
+
+    def lean(self) -> bool:
+        """True when the parameter set has lean delivery for this buyer segment or project
+        size (recorded)."""
+        lean = self.ctx.p.lean
+        if lean is None:
+            return False
+        segment: str = self.driver("buyer_segment")
+        if segment in lean.segments:
+            self.param("lean", "segments")
+            return True
+        if lean.sizes and self.driver("project_size") in lean.sizes:
+            self.param("lean", "sizes")
+            return True
+        if lean.unless_governance and not self.driver("governance_overheads"):
+            self.param("lean", "unless_governance")
+            return True
+        return False
 
     def step(self, label: str, expression: str, value: Decimal) -> Decimal:
         self.steps.append(TraceStep(label=label, expression=expression, value=value))

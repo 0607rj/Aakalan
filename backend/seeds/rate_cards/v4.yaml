@@ -1,0 +1,109 @@
+# Rate card v4 (2026-10-16) = v3 + a smaller, cheaper AI model for simple chatbots.
+# Rate card v3 (2026-10-16) = v2 + build-phase tools and third-party service prices.
+# Rate card v2 — published public benchmarks (researched 2026-10-15), replacing v1 guesses.
+# amount is in major units of `currency`. Items still marked `placeholder` had no credible
+# published source; everything else carries its source and URL.
+#
+# Manpower method: PayScale India 2026 average CTC × 1.75 ÷ 264 working days. 1.75 is TCS FY25
+# revenue ÷ employee benefit expense (₹2,55,324 Cr / ₹1,45,788 Cr), i.e. a vendor's billing rate
+# per unit of loaded salary cost including bench and overhead. These are all-experience
+# averages; no official government per-role rate card is published (NICSI/GeM/MeitY rates are
+# per empanelment and not public).
+version: v4
+effective_date: 2026-10-16
+status: active
+source: "Public benchmarks researched 2026-10-15 and 2026-10-16 (see each item)"
+items:
+  # ---- roles: INR per person-day ------------------------------------------------------------
+  - {key: role.project_manager, kind: role, unit: per_person_day, amount: 11986, source: "PayScale IN avg CTC ₹18,08,231 × 1.75 ÷ 264", source_url: "https://www.payscale.com/research/IN/Job=Project_Manager%2C_Information_Technology_(IT)/Salary"}
+  - {key: role.solution_architect, kind: role, unit: per_person_day, amount: 18907, source: "PayScale IN avg CTC ₹28,52,277 (n=664, Jul 2026) × 1.75 ÷ 264", source_url: "https://www.payscale.com/research/IN/Job=Solutions_Architect/Salary"}
+  - {key: role.business_analyst, kind: role, unit: per_person_day, amount: 4922, source: "PayScale IN avg CTC ₹7,42,591 (n=970, Jul 2026) × 1.75 ÷ 264", source_url: "https://www.payscale.com/research/IN/Job=Business_Analyst%2C_IT/Salary"}
+  - {key: role.ui_ux_designer, kind: role, unit: per_person_day, amount: 4018, source: "PayScale IN avg CTC ₹6,06,130 (n=181, Oct 2025) × 1.75 ÷ 264", source_url: "https://www.payscale.com/research/IN/Job=User_Experience_Designer/Salary"}
+  - {key: role.senior_developer, kind: role, unit: per_person_day, amount: 11081, source: "PayScale IN avg CTC ₹16,71,574 (n=4,319, Jul 2026) × 1.75 ÷ 264", source_url: "https://www.payscale.com/research/IN/Job=Senior_Software_Engineer/Salary"}
+  - {key: role.developer, kind: role, unit: per_person_day, amount: 4749, source: "PayScale IN avg CTC ₹7,16,462 (n=2,101, Jul 2026) × 1.75 ÷ 264", source_url: "https://www.payscale.com/research/IN/Job=Software_Developer/Salary"}
+  - {key: role.qa_engineer, kind: role, unit: per_person_day, amount: 3712, source: "PayScale IN avg CTC ~₹5.6 L (n=604) × 1.75 ÷ 264", source_url: "https://www.payscale.com/research/IN/Job=Quality_Assurance_(QA)_Engineer/Salary"}
+  - {key: role.devops_engineer, kind: role, unit: per_person_day, amount: 6618, source: "PayScale IN avg CTC ₹9,98,346 (n=896) × 1.75 ÷ 264", source_url: "https://www.payscale.com/research/IN/Job=Development_Operations_(DevOps)_Engineer/Salary"}
+  - {key: role.ml_engineer, kind: role, unit: per_person_day, amount: 6694, source: "PayScale IN avg CTC ₹10,09,824 × 1.75 ÷ 264", source_url: "https://www.payscale.com/research/IN/Job=Machine_Learning_Engineer/Salary"}
+  - {key: role.security_engineer, kind: role, unit: per_person_day, amount: 5844, source: "PayScale IN avg CTC ₹8,81,602 × 1.75 ÷ 264", source_url: "https://www.payscale.com/research/IN/Job=Cyber_Security_Engineer/Salary"}
+  - {key: role.data_engineer, kind: role, unit: per_person_day, amount: 6462, source: "PayScale IN avg CTC ₹9,74,783 (n=1,284) × 1.75 ÷ 264; Glassdoor ₹9.45 L cross-check", source_url: "https://www.payscale.com/research/IN/Job=Data_Engineer/Salary"}
+  - {key: role.technical_writer, kind: role, unit: per_person_day, amount: 4314, source: "PayScale IN avg CTC ₹6,50,870 (n=315, Jan 2026) × 1.75 ÷ 264", source_url: "https://www.payscale.com/research/IN/Job=Technical_Writer/Salary"}
+  - {key: role.trainer, kind: role, unit: per_person_day, amount: 5199, source: "PayScale IN avg CTC ₹7,84,281 (n=29, Mar 2026, small sample) × 1.75 ÷ 264", source_url: "https://www.payscale.com/research/IN/Job=Technical_Trainer/Salary"}
+  - {key: role.helpdesk_executive, kind: role, unit: per_person_day, amount: 2493, source: "PayScale IN avg CTC ₹3,76,067 (n=22, Jan 2026, small sample) × 1.75 ÷ 264", source_url: "https://www.payscale.com/research/IN/Job=Help_Desk_Technician/Salary"}
+
+  # ---- AWS ap-south-1, on-demand, USD (AWS Price List API; hourly × 730 h) --------------------
+  - {key: cloud.aws.app_server.month, kind: cloud_sku, unit: per_instance_month, amount: 147.46, currency: USD, region: ap-south-1, source: "m6i.xlarge Linux $0.202/h × 730 (EC2 price list 2026-10-12)", source_url: "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-south-1/index.json"}
+  - {key: cloud.aws.db.small.month, kind: cloud_sku, unit: per_instance_month, amount: 61.32, currency: USD, region: ap-south-1, source: "RDS PostgreSQL db.t4g.medium Single-AZ $0.084/h × 730 (RDS price list 2026-10-06)", source_url: "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonRDS/current/ap-south-1/index.json"}
+  - {key: cloud.aws.db.medium.month, kind: cloud_sku, unit: per_instance_month, amount: 164.98, currency: USD, region: ap-south-1, source: "RDS PostgreSQL db.m6g.large Single-AZ $0.226/h × 730", source_url: "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonRDS/current/ap-south-1/index.json"}
+  - {key: cloud.aws.db.large.month, kind: cloud_sku, unit: per_instance_month, amount: 659.92, currency: USD, region: ap-south-1, source: "RDS PostgreSQL db.m6g.2xlarge Single-AZ $0.904/h × 730", source_url: "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonRDS/current/ap-south-1/index.json"}
+  - {key: cloud.aws.storage.gb_month, kind: cloud_sku, unit: per_gb_month, amount: 0.025, currency: USD, region: ap-south-1, source: "S3 Standard first 50 TB (S3 price list 2026-10-14)", source_url: "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonS3/current/ap-south-1/index.json"}
+  - {key: cloud.aws.backup.gb_month, kind: cloud_sku, unit: per_gb_month, amount: 0.05, currency: USD, region: ap-south-1, source: "EBS snapshot $0.05/GB-month (EC2 price list 2026-10-12)", source_url: "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-south-1/index.json"}
+  - {key: cloud.aws.transfer_out.gb, kind: cloud_sku, unit: per_gb, amount: 0.1093, currency: USD, region: ap-south-1, source: "Data transfer out to internet, up to 10 TB/month (first 100 GB free not applied)", source_url: "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSDataTransfer/current/ap-south-1/index.json"}
+  - {key: cloud.aws.load_balancer.month, kind: cloud_sku, unit: per_month, amount: 17.45, currency: USD, region: ap-south-1, source: "Application Load Balancer $0.0239/h × 730 (LCU charges excluded)", source_url: "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSELB/current/ap-south-1/index.json"}
+  - {key: cloud.aws.monitoring.month, kind: cloud_sku, unit: per_month, amount: 50.00, currency: USD, region: ap-south-1, source: placeholder}
+
+  # ---- MeitY-empanelled Indian cloud, INR excl. GST --------------------------------------------
+  - {key: cloud.indian_cloud.app_server.month, kind: cloud_sku, unit: per_instance_month, amount: 4600, region: india, source: "Yotta Yntraa g4amd.1X-Large 4 vCPU/16 GB, effective 2026-04-01", source_url: "https://yntraacloud.ai/public-cloud/compute-service/virtual-machine/"}
+  - {key: cloud.indian_cloud.db.small.month, kind: cloud_sku, unit: per_instance_month, amount: 5000, region: india, source: placeholder}
+  - {key: cloud.indian_cloud.db.medium.month, kind: cloud_sku, unit: per_instance_month, amount: 15000, region: india, source: placeholder}
+  - {key: cloud.indian_cloud.db.large.month, kind: cloud_sku, unit: per_instance_month, amount: 55000, region: india, source: placeholder}
+  - {key: cloud.indian_cloud.storage.gb_month, kind: cloud_sku, unit: per_gb_month, amount: 7.00, region: india, source: "Yotta Yntraa disk ₹7/GB-month, effective 2026-04-01", source_url: "https://yntraacloud.ai/public-cloud/compute-service/virtual-machine/"}
+  - {key: cloud.indian_cloud.backup.gb_month, kind: cloud_sku, unit: per_gb_month, amount: 1.12, region: india, source: "CtrlS backup ₹1,150/TB-month ÷ 1024", source_url: "https://www.ctrls.com/cloud-infrastructure-rate-card/"}
+  - {key: cloud.indian_cloud.transfer_out.gb, kind: cloud_sku, unit: per_gb, amount: 6.00, region: india, source: placeholder}
+  - {key: cloud.indian_cloud.load_balancer.month, kind: cloud_sku, unit: per_month, amount: 2500, region: india, source: placeholder}
+  - {key: cloud.indian_cloud.monitoring.month, kind: cloud_sku, unit: per_month, amount: 3000, region: india, source: placeholder}
+
+  # ---- on-prem (INR) — no credible published source -------------------------------------------
+  - {key: onprem.server.unit, kind: other, unit: per_server_capex, amount: 600000, source: placeholder}
+  - {key: onprem.storage.tb, kind: other, unit: per_tb_capex, amount: 40000, source: placeholder}
+  - {key: onprem.colocation.rack_month, kind: other, unit: per_rack_month, amount: 45000, source: placeholder}
+
+  # ---- AI runtime --------------------------------------------------------------------------------
+  - {key: llm_token.default.input, kind: llm_token, unit: per_million_tokens, amount: 2.00, currency: USD, source: "Anthropic API list price, claude-sonnet-5-5 input (as of 2026-10-06)"}
+  - {key: llm_token.default.output, kind: llm_token, unit: per_million_tokens, amount: 10.00, currency: USD, source: "Anthropic API list price, claude-sonnet-5-5 output (as of 2026-10-06)"}
+  - {key: gpu_hour.l4, kind: gpu_hour, unit: per_gpu_hour, amount: 0.9664, currency: USD, region: ap-south-1, source: "g6.xlarge (1× NVIDIA L4) Linux on-demand (EC2 price list 2026-10-12)", source_url: "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-south-1/index.json"}
+
+  # ---- licences ----------------------------------------------------------------------------------
+  - {key: licence.bpm_suite.year, kind: licence, unit: per_year, amount: 1500000, source: placeholder}
+  - {key: licence.cms.year, kind: licence, unit: per_year, amount: 400000, source: placeholder}
+  - {key: licence.chatbot_platform.year, kind: licence, unit: per_year, amount: 800000, source: placeholder}
+  - {key: licence.ssl_certificate.year, kind: licence, unit: per_year, amount: 218, currency: USD, source: "DigiCert Basic OV single-domain list price (resellers sell OV for $30-200)", source_url: "https://www.digicert.com/tls-ssl/compare-certificates"}
+  - {key: licence.domain.year, kind: licence, unit: per_year, amount: 0, source: ".gov.in domains are free; NIC is the sole registrar", source_url: "https://kolkatadc.nic.in/gov.in-domain.php"}
+
+  # ---- audits and certification (INR) ---------------------------------------------------------
+  - {key: audit_fee.cert_in.small, kind: audit_fee, unit: per_audit, amount: 65000, source: "Midpoint of ₹40k-90k quoted for small web apps by CERT-In empanelled vendors (vendor blogs, weak)", source_url: "https://cybersigmacs.com/blog/vapt-cost-india/"}
+  - {key: audit_fee.cert_in.medium, kind: audit_fee, unit: per_audit, amount: 140000, source: "Midpoint of ₹0.8-2 L quoted for medium web apps (vendor blogs, weak)", source_url: "https://cybersigmacs.com/blog/vapt-cost-india/"}
+  - {key: audit_fee.cert_in.large, kind: audit_fee, unit: per_audit, amount: 450000, source: "Midpoint of ₹4-5 L+ quoted for large web apps (vendor blogs, weak)", source_url: "https://bharatcyber.solutions/blog/cert-in_pricing_cost"}
+  - {key: audit_fee.cert_in_reaudit.small, kind: audit_fee, unit: per_audit, amount: 0, source: "One retest after remediation is usually included in the audit fee (vendor blogs)", source_url: "https://cybersigmacs.com/blog/vapt-cost-india/"}
+  - {key: audit_fee.cert_in_reaudit.medium, kind: audit_fee, unit: per_audit, amount: 0, source: "One retest after remediation is usually included in the audit fee (vendor blogs)", source_url: "https://cybersigmacs.com/blog/vapt-cost-india/"}
+  - {key: audit_fee.cert_in_reaudit.large, kind: audit_fee, unit: per_audit, amount: 0, source: "One retest after remediation is usually included in the audit fee (vendor blogs)", source_url: "https://cybersigmacs.com/blog/vapt-cost-india/"}
+  - {key: audit_fee.cert_in_annual.small, kind: audit_fee, unit: per_year, amount: 65000, source: "Annual re-audit priced as a full audit (small), vendor blogs", source_url: "https://cybersigmacs.com/blog/vapt-cost-india/"}
+  - {key: audit_fee.cert_in_annual.medium, kind: audit_fee, unit: per_year, amount: 140000, source: "Annual re-audit priced as a full audit (medium), vendor blogs", source_url: "https://cybersigmacs.com/blog/vapt-cost-india/"}
+  - {key: audit_fee.cert_in_annual.large, kind: audit_fee, unit: per_year, amount: 450000, source: "Annual re-audit priced as a full audit (large), vendor blogs", source_url: "https://bharatcyber.solutions/blog/cert-in_pricing_cost"}
+  - {key: audit_fee.stqc, kind: audit_fee, unit: per_certification, amount: 150000, source: "STQC software security testing ₹1,50,000 per module (charges, July 2021)", source_url: "https://www.stqc.gov.in/sites/default/files/tender-award/charges_July_2021.pdf"}
+
+  # ---- bank charges, forex, other ---------------------------------------------------------
+  - {key: bank_charge.pbg_commission, kind: bank_charge, unit: ratio_per_year, amount: 0.018, source: "SBI performance BG commission, rating band SB5-10, w.e.f. 2025-06-01", source_url: "https://sbi.bank.in/documents/16012/22770835/02052025_Advances+Related+Service+Charges+w.e.f.+01.06.2025.pdf/8af187b9-c59e-656a-68f4-061ce0af89fd?t=1746184789453"}
+  - {key: forex.USD_INR, kind: other, unit: inr_per_usd, amount: 96.7733, source: "FBIL USD/INR reference rate, 2026-10-08", source_url: "https://www.fbil.org.in/"}
+  - {key: travel.outstation_trip, kind: other, unit: per_trip, amount: 25000, source: placeholder}
+  - {key: other.steering_meeting, kind: other, unit: per_meeting, amount: 15000, source: placeholder}
+  - {key: other.non_prod_environment.month, kind: other, unit: per_environment_month, amount: 40000, source: placeholder}
+
+  # ---- build-phase tools (v3 / us-v2, researched 2026-10-16): USD per seat-month -------------
+  - {key: tools.ai_coding.seat_month, kind: licence, unit: per_seat_month, amount: 20, currency: USD, source: "Claude Team standard seat, billed annually (includes Claude Code); GitHub Copilot Business is $19", source_url: "https://claude.com/pricing"}
+  - {key: tools.dev_suite.seat_month, kind: licence, unit: per_seat_month, amount: 14.91, currency: USD, source: "GitHub Team $4 + Jira Standard $7.91 (resolution.de, 2026-07; Atlassian page not readable) + Figma Collab seat $3", source_url: "https://github.com/pricing"}
+
+  # ---- third-party services ---------------------------------------------------------------------
+  - {key: service.email.thousand, kind: other, unit: per_1000_emails, amount: 0.10, currency: USD, source: "Amazon SES outbound email, $0.10 per 1,000 (retrieved 2026-10-16)", source_url: "https://aws.amazon.com/ses/pricing/"}
+  - {key: service.app_store.apple_year, kind: licence, unit: per_year, amount: 99, currency: USD, source: "Apple Developer Program annual fee", source_url: "https://developer.apple.com/programs/"}
+  - {key: service.app_store.google_once, kind: licence, unit: one_off, amount: 25, currency: USD, source: "Google Play developer registration, one-time fee", source_url: "https://support.google.com/googleplay/android-developer/answer/6112435"}
+  - {key: security.waf.base_month, kind: cloud_sku, unit: per_month, amount: 15, currency: USD, source: "AWS WAF $5 per web ACL + 10 rules x $1 per month", source_url: "https://aws.amazon.com/waf/pricing/"}
+  - {key: security.waf.million_requests, kind: cloud_sku, unit: per_million_requests, amount: 0.60, currency: USD, source: "AWS WAF $0.60 per million requests", source_url: "https://aws.amazon.com/waf/pricing/"}
+  - {key: service.sms.message, kind: other, unit: per_sms, amount: 0.20, currency: INR, source: "MSG91 India SMS, Rs 0.20 per SMS on the 16.5k pack (0.25 at 5k, 0.17 at 60k), excl. GST", source_url: "https://msg91.com/in/pricing/sms"}
+  - {key: service.aadhaar_ekyc.check, kind: other, unit: per_transaction, amount: 3.60, currency: INR, source: "UIDAI Circular 15 of 2025: e-KYC Rs 3.60 per successful transaction incl. taxes, w.e.f. 2025-11-01 (from search extraction of the PDF)", source_url: "https://uidai.gov.in/images/Circular_15_of_2025_08122025revised_Pricing_wef_Nov_2025.pdf"}
+  - {key: service.maps.thousand_loads, kind: other, unit: per_1000_map_loads, amount: 2.10, currency: USD, source: "Google Maps Platform India pricing, Dynamic Maps $2.10 per 1,000 loads (70k/month free), w.e.f. 2024-08-01", source_url: "https://developers.google.com/maps/billing-and-pricing/pricing-india"}
+  - {key: service.translation.word, kind: other, unit: per_word, amount: 2.50, currency: INR, source: "ProZ freelancer self-listed rates Rs 1.5-10 per word; Rs 2.50 English to Hindi/Marathi (weak evidence, no agency rate card found)", source_url: "https://www.proz.com/profile/2060177"}
+  - {key: client.payment_gateway.fee, kind: bank_charge, unit: ratio_per_payment, amount: 0.02, currency: INR, source: "Razorpay Standard 2% on domestic cards, UPI, netbanking and wallets (+18% GST on the fee); PayU India also 2%", source_url: "https://razorpay.com/pricing/"}
+
+  # ---- simple AI model tier (v4 / us-v3, retrieved 2026-10-16) ------------------------------
+  - {key: llm_token.simple.input, kind: llm_token, unit: per_million_tokens, amount: 0.10, currency: USD, source: "Anthropic API list price, Claude Haiku 5.5 input, prompts up to 100K tokens (claude.com/pricing, retrieved 2026-10-16)", source_url: "https://claude.com/pricing"}
+  - {key: llm_token.simple.output, kind: llm_token, unit: per_million_tokens, amount: 0.50, currency: USD, source: "Anthropic API list price, Claude Haiku 5.5 output, prompts up to 100K tokens (claude.com/pricing, retrieved 2026-10-16)", source_url: "https://claude.com/pricing"}

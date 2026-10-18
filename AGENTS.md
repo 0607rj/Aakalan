@@ -64,9 +64,10 @@ backend/
       documents/ extraction/ retrieval/ mapping/ reports/ templates/   # later milestones
     llm/                  # LLMClient protocol, AnthropicClient, FakeClient; prompts/*.md (versioned)
     jobs/                 # Huey instance and tasks
-  seeds/                  # taxonomy.yaml, catalog.yaml, rate_cards/v1.yaml, parameters/v1.yaml,
+  seeds/                  # taxonomy/v1..v2, catalog/v1..v4, rate_cards/, parameters/,
                           #   quick_estimate.yaml (plain features/questions for simple mode)
                           #   (every value has a `source`; `placeholder` = uncalibrated)
+                          #   prices follow what is built (feature levels), never the client type
   migrations/             # Alembic
   tests/                  # api/, core/, engine/ (unit, property, golden/*.yaml + *.expected.json)
 frontend/                 # Next.js app (src/app, src/components, src/lib); see frontend/AGENTS.md
@@ -91,6 +92,8 @@ Run from the repo root. `make <target>` and `python scripts/tasks.py <target>` a
 | Regenerate OpenAPI JSON + TS types | `make openapi` |
 | Regenerate golden expectations (intentional engine change only) | `make golden` |
 | New migration after model change | `make migration m="describe change"` |
+| Back-test against real projects, priced as the app prices (all, by size, by client type) / fit the smooth size curve (factor by feature points) on all client types | `cd backend && uv run python -m app.cli backtest --country india [--calibrate]` |
+| Switch a country on/off in the app | `enabled:` under `countries:` in `backend/seeds/quick_estimate.yaml` (the US is off for now) |
 
 ## Coding conventions
 
@@ -116,4 +119,4 @@ A task or milestone is done only when:
 2. New engine behaviour has unit tests; golden expectations changed only intentionally (`make golden`) and the diff is explained in the commit.
 3. New models have an Alembic migration; new endpoints have API tests using the temp SQLite DB.
 4. Docs (`AGENTS.md`, `docs/OPEN_QUESTIONS.md`, `docs/ARCHITECTURE.md`) reflect the change.
-5. At the end of a milestone: its acceptance criteria from brief Section 12 are met and the work is committed.
+5. At the end of a milestone: its acceptance criteria from brief Section 12 are met. **Commit only after the user has checked the work in the running app and explicitly says to commit.**

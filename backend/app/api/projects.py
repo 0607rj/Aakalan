@@ -1,15 +1,16 @@
 """Projects and their reviewed inputs: requirements, questionnaire answers, components."""
 
 from datetime import UTC, datetime
+from pathlib import Path
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Response, status
 from pydantic import ValidationError
-from sqlalchemy import select
+from sqlalchemy import delete, select
 
 from app.api.deps import CurrentUser, DbSession, EditorUser, can_see_margin
 from app.core.tenancy import get_owned, scoped
-from app.models import ComponentInstance, Project, QuestionnaireAnswer, Requirement
+from app.models import ComponentInstance, Document, Project, QuestionnaireAnswer, Requirement
 from app.schemas.project import (
     AnswerIn,
     CatalogComponentOut,
@@ -74,6 +75,24 @@ def update_project(
 
 
 # --- requirements ----------------------------------------------------------------------------
+
+
+@router.delete("/projects/{project_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_project(project_id: str, db: DbSession, user: EditorUser) -> Response:
+    """Delete a project with all its estimates, documents and uploaded files. Reference data
+    (rate cards, parameter sets, benchmarks) is untouched, so nothing the estimator has learned
+    is lost."""
+    project = get_owned(db, Project, project_id, user.org_id)
+    files = [
+        d.storage_path
+        for d in db.scalars(scoped(Document, user.org_id).where(Document.project_id == project.id))
+        if d.storage_path
+    ]
+    db.execute(delete(Project).where(Project.id == project.id, Project.org_id == user.org_id))
+    db.commit()
+    for name in files:
+        Path(name).unlink(missing_ok=True)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.get("/projects/{project_id}/requirements", response_model=list[RequirementOut])

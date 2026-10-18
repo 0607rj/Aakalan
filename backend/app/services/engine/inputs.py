@@ -66,7 +66,7 @@ class Questionnaire(Strict):
     `ParameterSet.defaults` and records each default as an assumption."""
 
     om_years: int = Field(ge=0, le=10)
-    team_ai_maturity: Literal["low", "medium", "high"]
+    team_ai_maturity: Literal["none", "low", "medium", "high"]  # none = no AI tools
     deadline_months: Decimal | None = Field(gt=0)
     uptime_sla: Literal["99.0", "99.5", "99.9", "99.95"]
     security_level: Literal["standard", "high", "very_high"]
@@ -101,6 +101,31 @@ class Questionnaire(Strict):
     gst_percent: Decimal | None = Field(ge=0, le=1)
     escalation_labour: Decimal | None = Field(ge=0, le=1)
     escalation_prices: Decimal | None = Field(ge=0, le=1)
+    # Added after back-testing: in many government contracts the client provides hosting and
+    # support is handled by the maintenance team. Defaults keep earlier parameter sets valid.
+    hosting_in_scope: bool = True
+    helpdesk_in_scope: bool = True
+    # Government-style programme overheads (steering meetings, monthly MIS reports, travel);
+    # private and small projects usually have none of these.
+    governance_overheads: bool = True
+    buyer_segment: Literal["government", "private", "small_business"] = "government"
+    non_prod_environments: int | None = Field(default=None, ge=0, le=5)  # None = parameter
+    # Third-party usage fees (SMS, email, maps, eKYC, AI features): in the quote, or paid by the
+    # client directly to the providers.
+    usage_fees_in_scope: bool = True
+    # Which AI model the chatbot and AI features run on: a simple FAQ bot needs only a small,
+    # cheap model (used when the parameter set prices one).
+    ai_model_tier: Literal["advanced", "simple"] = "advanced"
+    # Custom software, or a ready-made product (SaaS, WordPress, Shopify, a chatbot platform)
+    # set up for the client: far less build work for the same features.
+    build_type: Literal["custom", "ready_product"] = "custom"
+    # How big and deep the work is, independent of the feature list: the same features cost
+    # far less as a simple website than as a state-wide system. None = no size factor.
+    project_size: Literal["small", "small_medium", "medium", "medium_large", "large"] | None = None
+    # How much is built, in feature points (basic 1, standard 2, advanced 4 per feature): with
+    # a parameter set that has a size curve (v13+), the size factor follows the points smoothly
+    # instead of jumping between project sizes. None = use project_size.
+    size_points: int | None = Field(default=None, ge=0)
 
     @model_validator(mode="after")
     def _schedule(self) -> "Questionnaire":

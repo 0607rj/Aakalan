@@ -104,6 +104,36 @@ and returns a `QuickSummary` (headline range, five plain parts, build-only cost,
 biggest uncertainty in words). `GET /estimates/{id}/summary` rebuilds the summary for any
 estimate. The summary only regroups integer paise produced by the engine.
 
+**The price follows what is built, not who orders it** (quick config v2, parameter set v12).
+There is no client-type question. Each ticked feature has a level (`feature_levels`: basic /
+standard / advanced, `sizing.levels`) that sets its components' size and complexity and adds
+points; the total points pick a `sizing.tiers` entry: the project size (`project_size`
+driver, for the size factor, lean delivery and model error), the standard building blocks and
+their size, and default training / hypercare. Client-specific work is an explicit, priced
+answer: security audit (`cert_in_audit` + VAPT fixes), formal reports and meetings
+(`governance_overheads`), accessibility and languages (features). "Where will it run?" picks
+the hosting provider and whether the server bill is in the cost (`existing` = client's own
+servers, listed separately). "How much will the team use AI tools?" sets `team_ai_maturity`
+(default: the company's saved AI level).
+
+The summary carries, besides the plain parts and cost items, `feature_costs` (each feature's
+component lines, shared components split evenly, the rest as "standard building blocks") and,
+on every cost item and feature, `traditional_paise`: the same line priced without AI tools
+(`result.traditional.lines`, stored with the estimate). Parameter set v12 adds the line
+`build.testing/ai_code_review` (`build.ai_code_review.v1`): `review_share_of_saved` × the
+person-days AI tools save × the review role's rate, so the AI saving is net of checking the
+AI's work.
+
+The manual and document flows ask one thing per screen (`estimate/new/steps.tsx`, `?step=<key>`
+in the web address): features → first version or full product (optional "change levels") →
+(document: key numbers) → each `group: main` question → deadline → the optional `detail`
+questions on one screen → check your answers → calculate. Options can add features
+(`add_features`: mobile app, other software, old data — `hidden` features, not tick boxes), set
+the default level (`feature_level`), change a standard block's complexity
+(`component_complexity`, e.g. a ready design) or be "Not sure" (`unsure`: the usual answer, with
+requirement clarity lowered per `not_sure`, so the range widens). The summary also lists the team
+by role (`team`, `support_team`) from the engine's manpower rows.
+
 ## Document reading (M3, scoped to simple mode)
 
 ```
@@ -124,6 +154,52 @@ tests); the provider and model are configuration. The engine never imports it (t
 and `excel.py` (openpyxl), so exports show exactly the API's numbers:
 `GET /estimates/{id}/report.pdf`, `GET /estimates/{id}/boq.xlsx`. `services/outcomes.py` records
 bid results (`POST /projects/{id}/outcome`) and builds the calibration report (`GET /calibration`).
+
+## Countries, company settings and calibration
+
+Reference data is per country (`region` on rate cards and parameter sets; currency on the rate
+card). `services/settings.py` applies the company's margin / buffer / effort multipliers to a
+copy of the parameter set before pricing. `services/calibration/backtest.py` prices the
+benchmark contracts in `seeds/benchmarks/<country>.yaml` with the same quick-estimate mapping
+(features at the level matching each project's size class, the size pinned to that class,
+government projects above small with the audit and formal reporting asked for). From
+parameter set v12, `--calibrate` (`fit_pooled`) fits one build-effort factor per project size
+(`size_effort_multiplier`) on custom builds of **every client type together**, then the
+ready-made-product factor (`answer_effort_multiplier`), and reports leave-one-out errors (each
+project priced with a factor fitted without it) as the honest accuracy; client types are only
+reported, never priced. The model error is by project size (`model_spread_by_size`). Older
+sets (v6–v11) also had buyer-segment factors (`segment_effort_multiplier`,
+`segment_size_effort_multiplier`), still honoured by the engine for old estimates. Published prices are brought to today's money with the
+parameter set's labour escalation; a published price band counts as exact when our price is
+inside it. Accepted results become a new parameter-set version.
+
+For private and small-business buyers (v12: for small projects, whoever the client is),
+parameter sets v6 / us-v5 onwards also apply **lean delivery**
+(`lean` group: build PM, hypercare and O&M PM capped as a share of build effort; a test
+environment priced as one small cloud server) and a **shared model error**
+(`calibration.model_spread`): `simulation.py` multiplies every base line in a run by one
+triangular draw, because estimation error is systematic and does not average out across
+building blocks. Government estimates are unchanged by both.
+
+## Third-party costs and client-paid items
+
+`services/engine/third_party.py` (parameter sets with a `third_party` group: v5, us-v4):
+
+- `dev_tools_lines` — build-phase seats (AI coding assistant, dev tools suite) per person-month of
+  build effort, bucket `build.tools`.
+- `third_party_lines` — usage-billed services from `third_party.services` (bases `monthly`,
+  `per_user`, `fixed`; conditions on components, buyer segment, country, users and cloud hosting),
+  plus `ai_feature_lines` for AI features other than the chatbot. Cloud-side services follow
+  `hosting_in_scope`; the rest follow `usage_fees_in_scope`.
+- `translation_lines` — one-off translation per extra language and yearly updates.
+- `client_paid_lines` / `client_paid_notes` — what the client pays providers directly: hosting
+  they provide (priced on a copy of the context with hosting in scope), usage fees they take on,
+  and per-transaction rates such as payment gateway fees. These go to
+  `EstimateResult.client_paid` / `client_paid_notes`, fully traced but **excluded from totals**;
+  the quick summary groups them as `client_pays`.
+
+Taxonomy is versioned like the catalog (`seeds/taxonomy/v1.yaml`, `v2.yaml`); estimates use the
+newest, golden tests stay on v1.
 
 ## Frontend
 

@@ -16,6 +16,7 @@ class ComponentEffort:
     instance: ComponentInstanceIn
     catalog: CatalogComponent
     effort_pd: Decimal  # before schedule compression
+    ai_saved_pd: Decimal = ZERO  # effort the team's AI tools save (before compression)
 
 
 def concurrency_band_index(ctx: PricingContext, peak_users: int) -> int:
@@ -67,16 +68,17 @@ def base_effort(ctx: PricingContext, ci: ComponentInstanceIn) -> ComponentEffort
         bucket=catalog.bucket,
         year=0,
         label="",
-        formula_id="component_labour.v1",
+        formula_id="component_labour.v2",
     )
-    per_task = _task_efforts(scratch, ci, catalog)
-    return ComponentEffort(ci, catalog, dsum(per_task.values()))
+    per_task, saved = _task_efforts(scratch, ci, catalog)
+    return ComponentEffort(ci, catalog, dsum(per_task.values()), dsum(saved.values()))
 
 
 def _task_efforts(
     t: LineBuilder, ci: ComponentInstanceIn, catalog: CatalogComponent
-) -> dict[TaskType, Decimal]:
-    base: Decimal = catalog.base_effort_pd[Size(ci.size)]
+) -> tuple[dict[TaskType, Decimal], dict[TaskType, Decimal]]:
+    """(effort, effort saved by AI tools) per task type, in person-days."""
+    base: Decimal = catalog.base_effort_pd[Size(ci.size)] * t.calibration("effort_multiplier")
     m_cx: Decimal = t.param("complexity_multipliers", ci.complexity.value)
     m_nfr = nfr_multiplier(t, catalog)
     lic = ONE
@@ -87,11 +89,14 @@ def _task_efforts(
     scale: Decimal = t.param("ai_productivity", "maturity_scale", maturity)
     cap: Decimal = t.param("ai_productivity", "max_saving")
     efforts: dict[TaskType, Decimal] = {}
+    saved: dict[TaskType, Decimal] = {}
     for task, share in catalog.task_mix.items():
         saving: Decimal = t.param("ai_productivity", "task_savings", task.value)
         effective_saving = min(cap, saving * scale)
-        efforts[task] = base * ci.quantity * share * m_cx * m_nfr * lic * (ONE - effective_saving)
-    return efforts
+        without_ai = base * ci.quantity * share * m_cx * m_nfr * lic
+        efforts[task] = without_ai * (ONE - effective_saving)
+        saved[task] = without_ai * effective_saving
+    return efforts, saved
 
 
 def component_line(
@@ -106,7 +111,7 @@ def component_line(
         bucket=catalog.bucket,
         year=0,
         label=ci.label or catalog.name,
-        formula_id="component_labour.v1",
+        formula_id="component_labour.v2",
         uncertainty_group=f"{catalog.bucket}|{ci.id}",
     )
     t.link_component(ci, catalog)
@@ -117,11 +122,11 @@ def component_line(
         base_effort_pd=str(catalog.base_effort_pd[Size(ci.size)]),
         compression_multiplier=str(compression),
     )
-    efforts = _task_efforts(t, ci, catalog)
+    efforts, _ = _task_efforts(t, ci, catalog)
     total = ZERO
     for task, pd in efforts.items():
         role_key: str = t.param("task_roles", "roles", task.value)
-        rate = t.rate_inr(role_key)
+        rate = t.rate_local(role_key)
         pd_c = pd * compression
         cost = t.step(
             f"{task.value} → {role_key}",
@@ -136,3 +141,42 @@ def component_line(
     spreads.tags(t, list(catalog.tags))
     spreads.compression(t, compression)
     return t.finish(total)
+
+
+AI_REVIEW_KEY = "build.testing/ai_code_review"
+
+
+def ai_review_line(
+    ctx: PricingContext, efforts: list[ComponentEffort], compression: Decimal
+) -> list[CostLineOut]:
+    """Extra review and security checks of AI-written code (parameter sets v12+): AI tools save
+    effort, but their output must be read, tested and fixed by people.
+
+      review_pd = review_share_of_saved × Σ_component ai_saved_pd × M_compression
+      cost      = review_pd × rate(review_role)
+    """
+    ai = ctx.p.ai_productivity
+    saved = dsum(e.ai_saved_pd for e in efforts)
+    if ai.review_share_of_saved is None or ai.review_role is None or saved == ZERO:
+        return []
+    t = ctx.builder(
+        line_key=AI_REVIEW_KEY,
+        stage="build",
+        bucket="build.testing",
+        year=0,
+        label="Extra review and security checks of AI-written code",
+        formula_id="build.ai_code_review.v1",
+    )
+    t.driver("team_ai_maturity")
+    share: Decimal = t.param("ai_productivity", "review_share_of_saved")
+    role: str = t.param("ai_productivity", "review_role")
+    rate = t.rate_local(role)
+    pd = t.step(
+        "review person-days",
+        f"{share} × {saved:.4f} AI-saved person-days × compression {compression:.4f}",
+        share * saved * compression,
+    )
+    t.add_role_pd(role, pd)
+    t.add_input(ai_saved_pd=str(saved))
+    spreads.clarity(t, ctx.overall_clarity())
+    return [t.finish(t.step("cost", f"{pd:.4f} pd × ₹{rate}/pd", pd * rate))]

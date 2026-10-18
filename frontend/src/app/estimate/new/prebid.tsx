@@ -89,11 +89,11 @@ export function PrebidQueries({
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h2 className="text-lg font-semibold">
-            Draft pre-bid queries (to send to the department)
+            Draft questions to ask the client
           </h2>
           <p className="text-sm text-muted-foreground">
-            The tender is vague or silent on these points. Asking now means
-            every bidder prices the same thing.
+            The document is vague or silent on these points. Asking the client
+            now means the price is based on the same understanding.
           </p>
         </div>
         {queries.length > 0 ? (
@@ -107,7 +107,7 @@ export function PrebidQueries({
               </span>
             ) : null}
             <Button variant="outline" size="sm" onClick={copyAll}>
-              Copy all queries
+              Copy all questions
             </Button>
           </div>
         ) : null}

@@ -11,7 +11,8 @@ from openpyxl.worksheet.worksheet import Worksheet
 
 from app.services.reports.data import ReportData, rupees
 
-MONEY = "#,##,##0.00"
+MONEY_INR = "#,##,##0.00"  # Indian digit grouping
+MONEY_OTHER = "#,##0.00"
 HEADER = Font(bold=True, color="FFFFFF")
 HEADER_FILL = PatternFill("solid", fgColor="1F2A44")
 TITLE = Font(bold=True, size=14)
@@ -24,7 +25,11 @@ def _money(paise: int | None) -> Any:
 
 
 def _table(
-    ws: Worksheet, headers: Sequence[str], rows: Iterable[Sequence[Any]], money_cols: set[int]
+    money_fmt: str,
+    ws: Worksheet,
+    headers: Sequence[str],
+    rows: Iterable[Sequence[Any]],
+    money_cols: set[int],
 ) -> None:
     ws.append(list(headers))
     for cell in ws[ws.max_row]:
@@ -32,7 +37,7 @@ def _table(
     for row in rows:
         ws.append(list(row))
         for col in money_cols:
-            ws.cell(row=ws.max_row, column=col).number_format = MONEY
+            ws.cell(row=ws.max_row, column=col).number_format = money_fmt
     for i, h in enumerate(headers, start=1):
         ws.column_dimensions[get_column_letter(i)].width = (
             WIDE if h in {"Item", "Query", "Assumption", "Clauses"} else NORMAL
@@ -42,11 +47,12 @@ def _table(
 
 def build_boq(data: ReportData) -> bytes:
     e, s, r = data.estimate, data.summary, data.result
+    money_fmt = MONEY_INR if data.currency == "INR" else MONEY_OTHER
     wb = Workbook()
     ws = wb.active
     assert ws is not None
     ws.title = "Summary"
-    ws.append([f"Cost estimate: {data.project_name}"])
+    ws.append([f"Cost estimate: {data.project_name} (amounts in {data.currency})"])
     ws["A1"].font = TITLE
     facts: list[tuple[str, Any]] = [
         ("Estimate version", e.version),
@@ -67,19 +73,24 @@ def build_boq(data: ReportData) -> bytes:
     for label, value in facts:
         ws.append([label, value])
         if isinstance(value, float):
-            ws.cell(row=ws.max_row, column=2).number_format = MONEY
+            ws.cell(row=ws.max_row, column=2).number_format = money_fmt
     ws.append([])
-    ws.append(["Where the money goes", "Amount", "Share %"])
+    ws.append(["Where the money goes", "Low", "Most likely", "High", "Share %"])
     for cell in ws[ws.max_row]:
         cell.font = Font(bold=True)
     for part in s.parts:
-        ws.append([part.label, _money(part.amount_paise), part.share_percent])
-        ws.cell(row=ws.max_row, column=2).number_format = MONEY
+        ws.append([
+            part.label, _money(part.low_paise), _money(part.amount_paise),
+            _money(part.high_paise), part.share_percent,
+        ])  # fmt: skip
+        for col in (2, 3, 4):
+            ws.cell(row=ws.max_row, column=col).number_format = money_fmt
     ws.column_dimensions["A"].width = WIDE
     ws.column_dimensions["B"].width = 22
 
     lines = wb.create_sheet("Cost lines")
     _table(
+        money_fmt,
         lines,
         ["#", "Stage", "Bucket", "Year", "Item", "Low", "Likely", "High", "Formula", "Clauses"],
         (
@@ -107,6 +118,7 @@ def build_boq(data: ReportData) -> bytes:
         sheet = wb.create_sheet(title)
         groups = r[key]
         _table(
+            money_fmt,
             sheet,
             ["Item", "Low", "Likely", "High"],
             (
@@ -121,8 +133,47 @@ def build_boq(data: ReportData) -> bytes:
             {2, 3, 4},
         )
 
+    if s.cost_items:
+        inside = wb.create_sheet("Inside the price")
+        _table(
+            money_fmt,
+            inside,
+            ["Group", "Item", "Person-days", "Low", "Most likely", "High"],
+            (
+                [
+                    i.group_label,
+                    i.label,
+                    i.person_days or "",
+                    _money(i.low_paise),
+                    _money(i.amount_paise),
+                    _money(i.high_paise),
+                ]
+                for i in s.cost_items
+            ),
+            {4, 5, 6},
+        )
+
+    if s.client_pays:
+        client = wb.create_sheet("Paid by client")
+        _table(
+            money_fmt,
+            client,
+            [
+                "Item",
+                "First year",
+                f"Over {s.support_years} years" if s.support_years else "Per year",
+                "Note",
+            ],
+            (
+                [c.label, _money(c.first_year_paise), _money(c.total_paise), c.note or ""]
+                for c in s.client_pays
+            ),
+            {2, 3},
+        )
+
     manpower = wb.create_sheet("Manpower")
     _table(
+        money_fmt,
         manpower,
         ["Role", "Stage", "Year", "Person-days", "Person-months", "Average FTE"],
         (
@@ -135,6 +186,7 @@ def build_boq(data: ReportData) -> bytes:
 
     assumptions = wb.create_sheet("Assumptions")
     _table(
+        money_fmt,
         assumptions,
         ["Key", "Assumption"],
         (
@@ -146,8 +198,9 @@ def build_boq(data: ReportData) -> bytes:
     )
 
     if data.prebid:
-        prebid = wb.create_sheet("Pre-bid queries")
+        prebid = wb.create_sheet("Questions for client")
         _table(
+            money_fmt,
             prebid,
             ["#", "Clause", "Page", "Query"],
             ([q.number, q.clause_ref, q.page or "", q.query] for q in data.prebid),

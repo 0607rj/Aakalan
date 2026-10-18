@@ -1,0 +1,1840 @@
+# Indian benchmark contracts (researched 2026-10-16) for back-testing the estimator.
+# `value_minor` is the published value in paise. `use` marks contracts comparable enough to tune
+# on; others are kept for reference with the reason. `model` maps the published scope onto our
+# quick-estimate form (a judgement from the scope text; scopes in order announcements are short).
+# Most order announcements quote values including GST; when unstated we assume included.
+country: india
+currency: INR
+tax_included_when_unknown: true
+# AI coding tools: rare before 2023, spreading 2023-24, common from 2025 (assumption).
+ai_adoption_by_year: {2020: none, 2023: low, 2025: medium}
+projects:
+  - id: irfc-egov-erp-railtel
+    title: Paperless e-governance and ERP workflow system with 10-year support (IRFC)
+    buyer: Indian Railway Finance Corporation
+    award_year: 2022
+    value_minor: 20810000000
+    value_includes_tax: false
+    value_note: "Rs 20.81 Cr plus GST; 9-month build, 10 years support incl. hosting and DR"
+    source_url: https://psuwatch.com/latestnews/railtel-secures-an-it-job-order-worth-over-rs-20-81-crore-from-irfc
+    confidence: high
+    use: true
+    model:
+      size: large
+      size_reason: "e-office ERP with 83 modules"
+      scale: small
+      om_years: 10
+      deadline_months: 9
+      hosting_included: true   # 10 years hosting + DR on RailTel cloud
+      features: [approval_workflow, documents, staff_login, payments, connect_existing]
+      custom_features:
+        - {name: ERP finance modules (borrowing, leasing, lending, risk), category: module, size: L}
+        - {name: Mobile app, category: mobile, size: M}
+        - {name: Digital signature integration, category: integration, size: S}
+  - id: arunachal-family-registry-protean
+    title: State family registry platform (Arunachal Pradesh)
+    buyer: Government of Arunachal Pradesh
+    award_year: 2026
+    value_minor: 5990000000
+    value_includes_tax: true
+    value_note: "Rs 5.99 Cr incl. tax; 12-month build + 36-month O&M"
+    source_url: https://filingreader.com/news-wire/mumbai/2026-08-17/protean-egov-wins-arunachal-pradesh-family-registry-contract
+    confidence: high
+    use: true
+    model:
+      size: large
+      size_reason: "state-wide family registry with mobile registration"
+      scale: large
+      om_years: 3
+      deadline_months: 12
+      features: [online_forms, connect_existing, staff_login]
+      custom_features:
+        - {name: Family and resident data repository with validation, category: module, size: M}
+        - {name: Mobile-based registration app, category: mobile, size: M}
+  - id: mhada-digital-transformation-ceinsys
+    title: Housing authority digital transformation (land, projects, GIS app, SSO, website, CMS)
+    buyer: Maharashtra Housing and Area Development Authority
+    award_year: 2024
+    value_minor: 27772000000
+    value_includes_tax: null
+    value_note: "Rs 27.77 Cr; design, development and 3 years O&M"
+    source_url: https://insights.dsij.in/dsijarticledetail/rs-1000-crore-order-book-it-software-company-receives-order-worth-rs-277720000-from-maharashtra-housing-and-area-development-authority-id001-42886
+    confidence: medium
+    use: true
+    model:
+      size: large
+      size_reason: "authority-wide digital transformation (land, projects, GIS app, SSO, website)"
+      scale: medium
+      om_years: 3
+      deadline_months: null
+      features: [public_website, staff_login, approval_workflow, documents, dashboards]
+      custom_features:
+        - {name: Land management system, category: module, size: L}
+        - {name: Project system with vendor management, category: module, size: L}
+        - {name: GIS-based mobile app, category: mobile, size: M}
+  - id: rajeevika-shg-app-devit
+    title: Self-help group management application with government scheme integrations
+    buyer: Rajasthan Grameen Ajeevika Vikas Parishad
+    award_year: 2022
+    value_minor: 2540000000
+    value_includes_tax: null
+    value_note: "Rs 2.54 Cr; 49 months incl. maintenance"
+    source_url: https://www.indiainfoline.com/article/news-top-story/dev-it-secures-new-order-worth-rs-2-54-crore-from-rajcom-info-services-122121500052_1.html
+    confidence: medium
+    use: true
+    model:
+      size: medium
+      size_reason: "self-help group app with scheme integrations"
+      scale: large
+      om_years: 3
+      deadline_months: null
+      features: [connect_existing, staff_login]
+      custom_features:
+        - {name: SHG lifecycle management, category: module, size: L}
+        - {name: MGNREGS integration, category: integration, size: S}
+        - {name: PMAY integration, category: integration, size: S}
+  - id: haryana-legal-knowledge-system-devit
+    title: State legal knowledge system (Chief Secretary office)
+    buyer: Government of Haryana (via HARTRON)
+    award_year: 2026
+    value_minor: 730000000
+    value_includes_tax: null
+    value_note: "Rs 48.22 L build + Rs 24.78 L AMC (3 years); build 4-5 months"
+    source_url: https://scanx.trade/stock-market-news/companies/dev-information-technology-secures-inr-73-lakhs-order-from-hartron/44867921
+    confidence: medium
+    use: true
+    model:
+      size: medium
+      size_reason: "legal knowledge system for one department"
+      scale: small
+      om_years: 3
+      deadline_months: 5
+      features: [documents, staff_login]
+      custom_features: []
+  - id: rajasthan-ifms3-devit
+    title: Treasury IFMS 3.0 web and mobile applications (one tranche)
+    buyer: Directorate of Treasuries and Accounts, Rajasthan (via NICSI)
+    award_year: 2026
+    value_minor: 5150000000
+    value_includes_tax: null
+    value_note: "Rs 5.15 Cr; about 6 months; one of several IFMS 3.0 tranches"
+    source_url: https://insights.dsij.in/dsijarticledetail/penny-stock-below-rs-30-this-small-cap-it-stock-jumps-upto-6-after-securing-515-crore-government-project-59104
+    confidence: medium
+    use: true
+    model:
+      size: large
+      size_reason: "state integrated financial management system"
+      scale: large
+      om_years: 0
+      deadline_months: 6
+      features: [staff_login, approval_workflow]
+      custom_features:
+        - {name: Pension management, category: module, size: M}
+        - {name: Employee management, category: module, size: M}
+        - {name: Works and accounts management, category: module, size: M}
+        - {name: Salary management, category: module, size: M}
+        - {name: Grant-in-aid, category: module, size: M}
+        - {name: Mobile app, category: mobile, size: M}
+  - id: odisha-oswas3-tcs
+    title: AI-enabled secretariat workflow / e-file platform (OSWAS 3.0)
+    buyer: Government of Odisha
+    award_year: 2026
+    value_minor: 122600000000
+    value_includes_tax: null
+    value_note: "Rs 122.6 Cr; about 6-year partnership, 4,600+ offices"
+    source_url: https://www.orissapost.com/odisha-govt-to-build-ai-enabled-governance-platform-this-company-wins-bid/
+    confidence: medium
+    use: false
+    reason: statewide 6-year programme far beyond a single portal build
+    model: {scale: medium, om_years: 5, deadline_months: null, features: [approval_workflow, documents, dashboards, staff_login, connect_existing, languages, accessibility], custom_features: [{name: AI document processing and routing, category: ai, size: L}]}
+  - id: hitpa-claims-portal-railtel
+    title: Integrated claims management portal and mobile application
+    buyer: Health Insurance TPA of India
+    award_year: 2024
+    value_minor: 48700000000
+    value_includes_tax: false
+    value_note: "Rs 48.7 Cr excl. GST; multi-year run, end date reported inconsistently"
+    source_url: https://insights.dsij.in/dsijarticledetail/rs-4682-crore-order-book-navratna-railway-telecom-company-bags-new-order-worth-rs-487000000-from-health-insurance-tpa-of-india-ltd-id001-42088
+    confidence: medium
+    use: false
+    reason: one-line scope, multi-year operations of unknown length
+    model: {scale: large, om_years: 5, deadline_months: null, features: [online_forms, approval_workflow, documents], custom_features: [{name: Mobile app, category: mobile, size: M}]}
+  - id: rbu-admission-saas-euphoria
+    title: SaaS online admission and student lifecycle management (7 years, resident engineer)
+    buyer: Rabindra Bharati University
+    award_year: 2024
+    value_minor: 2453200000
+    value_includes_tax: null
+    value_note: "Rs 2.45 Cr for a 7-year SaaS term incl. resident engineer"
+    source_url: https://tradebrains.in/features/penny-stock-jumps-4-after-receiving-an-order-worth-2-45-cr-from-govt-of-west-bengal/
+    confidence: medium
+    use: false
+    reason: SaaS subscription, not a custom build
+    model: {scale: medium, om_years: 7, deadline_months: null, features: [online_forms, approval_workflow, staff_login], custom_features: []}
+  - id: odisha-higher-edu-cdgp-railtel
+    title: 83 digital application modules with resource deployment (Odisha higher education)
+    buyer: Higher Education Department, Odisha
+    award_year: 2026
+    value_minor: 48978025500
+    value_includes_tax: true
+    value_note: "Rs 48.98 Cr incl. tax; includes a manpower (resource deployment) component"
+    source_url: https://www.psuconnect.in/psu-news/railtel-wins-48-98-crore-order-from-odisha-higher-education-department
+    confidence: low
+    use: false
+    reason: bundles manpower deployment; 83 modules not individually described
+    model: {scale: large, om_years: 0, deadline_months: 7, features: [connect_existing, approval_workflow, staff_login], custom_features: []}
+  # ---- private and small-business projects (Clutch verified reviews, researched 2026-10-16) ----
+  # Build cost only (no support). USD amounts are converted at the RBI reference rate average of
+  # the award year (2018 68.39, 2020 74.10, 2022 78.60, 2023 82.60, 2024 83.68 INR per USD).
+  # value_high_minor marks a Clutch budget band. Search the vendor profile for the review title.
+  - id: clutch-floating-canvas-art-store
+    title: E-commerce site for a wall-art subscription, with artist dashboard and customer portal
+    buyer: Floating Canvas Co. (via Webandcrafts)
+    award_year: 2018
+    value_minor: 68390000
+    value_includes_tax: false
+    value_note: "USD 10,000 stated by the client x 68.39; 5 months"
+    source_url: https://clutch.co/profile/webandcrafts
+    confidence: high
+    use: true
+    model:
+      size: small
+      size_reason: "small store on a platform, 5 months"
+      buyer: small_business
+      scale: small
+      om_years: 0
+      deadline_months: 5
+      features: [online_store, inventory, billing, dashboards]
+      custom_features:
+        - {name: Artist dashboard and subscription swaps, category: module, size: S}
+  - id: clutch-skillbee-jobs-app
+    title: Redesign and rebuild of a blue-collar hiring app from the client's wireframes
+    buyer: Skillbee (via Antino Labs)
+    award_year: 2020
+    value_minor: 100
+    value_high_minor: 74092600
+    value_includes_tax: false
+    value_note: "Clutch band: under USD 10,000 (x 74.10); 3 months, 1 PM + 1 developer"
+    source_url: https://clutch.co/profile/antino-labs
+    confidence: medium
+    use: true
+    model: {size: small, size_reason: "1 PM + 1 developer, 3 months", buyer: small_business, scale: medium, om_years: 0, deadline_months: 3, features: [mobile_app, search], custom_features: []}
+  - id: clutch-baltaaz-restaurant-ordering
+    title: Android food-ordering app, staff (captain) app and web admin panel for a restaurant
+    buyer: Dream Dhaba Pvt Ltd (via Techugo)
+    award_year: 2022
+    value_minor: 78600000
+    value_high_minor: 392992140
+    value_includes_tax: false
+    value_note: "Clutch band USD 10,000-49,999 (x 78.60); 8 months"
+    source_url: https://clutch.co/profile/techugo
+    confidence: medium
+    use: true
+    model:
+      size: small
+      size_reason: "restaurant ordering apps, small vendor"
+      buyer: small_business
+      scale: small
+      om_years: 0
+      deadline_months: 8
+      features: [online_store, mobile_app]
+      custom_features:
+        - {name: Staff (captain) ordering app, category: mobile, size: S}
+  - id: clutch-physicswallah-lms
+    title: Custom learning management system with content player and third-party integrations
+    buyer: Physicswallah (via Antino Labs)
+    award_year: 2023
+    value_minor: 82600000
+    value_high_minor: 412991740
+    value_includes_tax: false
+    value_note: "Clutch band USD 10,000-49,999 (x 82.60); 7 months; client country inferred"
+    source_url: https://clutch.co/profile/antino-labs
+    confidence: medium
+    use: true
+    model:
+      size: small
+      size_reason: "LMS build in the USD 10-50k band"
+      buyer: private
+      scale: large
+      om_years: 0
+      deadline_months: 7
+      features: [documents, connect_existing]
+      custom_features:
+        - {name: Courses, video and content player, category: module, size: M}
+  - id: clutch-techugo-fan-celebrity-app
+    title: Fan-to-celebrity connection app (Android + iOS) with backend
+    buyer: Consumer tech startup (via Techugo)
+    award_year: 2020
+    value_minor: 592800000
+    value_includes_tax: false
+    value_note: "about USD 80,000 stated by the client x 74.10; 10 months, 1 PM + 5 developers"
+    source_url: https://clutch.co/profile/techugo
+    confidence: medium
+    use: false
+    reason: scope too thin for its size (6-person team for 10 months, only two features described)
+    model:
+      size: medium
+      size_reason: "1 PM + 5 developers, 10 months"
+      buyer: small_business
+      scale: medium
+      om_years: 0
+      deadline_months: 10
+      features: [mobile_app, payments]
+      custom_features:
+        - {name: Fan requests, celebrity profiles and video messages, category: module, size: M}
+  - id: clutch-lead-institute-site
+    title: Website for an exam-coaching institute where staff post announcements and timetables
+    buyer: LEAD Institute (via Webandcrafts)
+    award_year: 2014
+    value_minor: 5000000
+    value_includes_tax: false
+    value_note: "INR 50,000 stated; WordPress; 3 months"
+    source_url: https://clutch.co/profile/webandcrafts
+    confidence: high
+    use: false
+    reason: 2014 price of a WordPress theme site - too old and too far from custom software
+    model: {buyer: small_business, scale: small, om_years: 0, deadline_months: 3, features: [public_website, documents], custom_features: []}
+  - id: clutch-omoiyari-sleep-care-apps
+    title: Two mobile apps (retail and business) for a sleep-care platform
+    buyer: Omoiyari Greentech (via Antino Labs)
+    award_year: 2024
+    value_minor: 100
+    value_high_minor: 83671600
+    value_includes_tax: false
+    value_note: "Clutch band: under USD 10,000 (x 83.68); reviewed after the first milestone"
+    source_url: https://clutch.co/profile/antino-labs
+    confidence: medium
+    use: false
+    reason: only the first milestone was done when reviewed
+    model: {buyer: small_business, scale: small, om_years: 0, deadline_months: 3, features: [mobile_app, bookings, documents, connect_existing], custom_features: []}
+  - id: clutch-cedarwood-afterschool-platform
+    title: Website plus admin, parent and teacher apps for an after-school class aggregator
+    buyer: Cedarwood Eduventures (via Squareboat)
+    award_year: 2023
+    value_minor: 413000000
+    value_high_minor: 1651991740
+    value_includes_tax: false
+    value_note: "Clutch band USD 50,000-199,999 (x 82.60); 2016-2023 incl. growth marketing"
+    source_url: https://clutch.co/profile/squareboat
+    confidence: low
+    use: false
+    reason: seven-year engagement including marketing
+    model: {buyer: small_business, scale: medium, om_years: 0, deadline_months: null, features: [online_forms, payments, billing, mobile_app, dashboards], custom_features: []}
+  - id: clutch-act-fibernet-app-chatbot
+    title: Customer Android app and conversational chatbot for a large ISP
+    buyer: ACT Fibernet (via Daffodil Software)
+    award_year: 2022
+    value_minor: 393000000
+    value_high_minor: 471600000
+    value_includes_tax: false
+    value_note: "about USD 50,000-60,000 invested so far (x 78.60); ongoing team augmentation"
+    source_url: https://clutch.co/profile/daffodil-software
+    confidence: medium
+    use: false
+    reason: ongoing team augmentation, not a defined build
+    model: {buyer: private, scale: large, om_years: 0, deadline_months: null, features: [mobile_app, ai_chatbot], custom_features: []}
+  - id: clutch-matrixone-workforce-webapp
+    title: Cloud web app for a staffing business, concept to post-launch support
+    buyer: MatrixOne (via Ahex Technologies)
+    award_year: 2024
+    value_minor: 418400000
+    value_high_minor: 1673591630
+    value_includes_tax: false
+    value_note: "Clutch band USD 50,000-199,999 (x 83.68); ongoing"
+    source_url: https://clutch.co/profile/ahex-technologies
+    confidence: low
+    use: false
+    reason: ongoing, scope not described
+    model: {buyer: small_business, scale: small, om_years: 0, deadline_months: null, features: [], custom_features: [{name: Workforce management web app, category: module, size: M}]}
+  # ---- mid-size private projects (Clutch verified reviews, researched 2026-10-16) ------------
+  # USD converted at the award year's RBI reference-rate average (2015 64.15, 2016 67.20,
+  # 2017 65.12, 2021 73.92, 2022 78.60, 2023 82.60). Used only with a clear scope and a client
+  # that is clearly private.
+  - id: clutch-ems-infracon-field-app
+    title: Web and mobile apps for a water-treatment contractor with remote site assessment by video
+    buyer: EMS Infracon Pvt Ltd (via Techugo)
+    award_year: 2022
+    value_minor: 2358000000
+    value_includes_tax: false
+    value_note: "about USD 300,000 spent so far (x 78.60); Feb-Dec 2022, about 15-person vendor team"
+    source_url: https://clutch.co/profile/techugo
+    confidence: high
+    use: true
+    model:
+      size: large
+      size_reason: "about 15-person vendor team, 10 months"
+      buyer: private
+      scale: small
+      om_years: 0
+      deadline_months: 10
+      features: [staff_login, online_forms, documents, dashboards, mobile_app]
+      custom_features:
+        - {name: Video calls and screen sharing for remote site assessment, category: integration, size: M}
+        - {name: Field engineer survey app, category: mobile, size: M}
+  - id: clutch-rbl-bank-corporate-site
+    title: Responsive corporate website design and build for a private-sector bank
+    buyer: RBL Bank Ltd (via Robosoft Technologies)
+    award_year: 2016
+    value_minor: 336000000
+    value_high_minor: 1343993280
+    value_includes_tax: false
+    value_note: "Clutch band USD 50,000-199,999 (x 67.20); 11 months"
+    source_url: https://clutch.co/profile/robosoft-technologies
+    confidence: medium
+    use: true
+    model: {size: medium, size_reason: "bank corporate website, 11 months", buyer: private, scale: large, om_years: 0, deadline_months: 11, features: [public_website, search], custom_features: []}
+  - id: clutch-neemans-ecommerce
+    title: Custom e-commerce storefront and checkout for a D2C footwear brand
+    buyer: Neeman's (via Successive Technologies)
+    award_year: 2023
+    value_minor: 413000000
+    value_high_minor: 1651991740
+    value_includes_tax: false
+    value_note: "Clutch band USD 50,000-199,999 (x 82.60); 6 months"
+    source_url: https://clutch.co/profile/successive-technologies
+    confidence: medium
+    use: true
+    model: {size: medium, size_reason: "custom D2C storefront, 6 months", buyer: private, scale: medium, om_years: 0, deadline_months: 6, features: [online_store, payments, public_website], custom_features: []}
+  - id: clutch-telecom-wifi-app
+    title: iOS app for a Wi-Fi hotspot provider - VPN login, server status, alarms, usage analytics
+    buyer: Indian telecom / Wi-Fi provider, 10,001+ staff (via Techugo)
+    award_year: 2017
+    value_minor: 600000000
+    value_high_minor: 700000000
+    value_includes_tax: false
+    value_note: "INR 60-70 lakh stated, including SLA support"
+    source_url: https://clutch.co/profile/techugo
+    confidence: medium
+    use: false
+    reason: client may be public sector; support bundled with the build
+    model: {buyer: private, scale: medium, om_years: 1, deadline_months: null, features: [staff_login, dashboards, connect_existing, mobile_app], custom_features: []}
+  - id: clutch-national-bank-mobile-app
+    title: Native mobile banking app for a national bank
+    buyer: Leading national bank in India (via Techugo)
+    award_year: 2015
+    value_minor: 1924500000
+    value_high_minor: 2566000000
+    value_includes_tax: false
+    value_note: "USD 300,000-400,000 stated (x 64.15); 28 months"
+    source_url: https://clutch.co/profile/techugo
+    confidence: low
+    use: false
+    reason: the review does not say whether the bank is private or public sector; 2015 price
+    model: {buyer: private, scale: large, om_years: 0, deadline_months: 28, features: [staff_login, payments, connect_existing, mobile_app], custom_features: []}
+  - id: clutch-titan-wot-app
+    title: Development, maintenance and support of a consumer mobile app
+    buyer: Titan Company Ltd (via Robosoft Technologies)
+    award_year: 2022
+    value_minor: 1572000000
+    value_high_minor: 7859992140
+    value_includes_tax: false
+    value_note: "Clutch band USD 200,000-999,999 (x 78.60); ongoing, maintenance included"
+    source_url: https://clutch.co/profile/robosoft-technologies
+    confidence: low
+    use: false
+    reason: band only, ongoing, build and maintenance mixed
+    model: {buyer: private, scale: large, om_years: 1, deadline_months: null, features: [mobile_app, connect_existing], custom_features: []}
+  - id: clutch-ev-maker-vehicle-system
+    title: Vehicle information system with charging-station locator for an EV maker
+    buyer: Indian EV manufacturer (via Successive Technologies)
+    award_year: 2023
+    value_minor: 413000000
+    value_high_minor: 454300000
+    value_includes_tax: false
+    value_note: "USD 50,000-55,000 spent so far (x 82.60); pilot, ongoing"
+    source_url: https://clutch.co/profile/successive-technologies
+    confidence: medium
+    use: false
+    reason: pilot still in progress; spend to date only
+    model: {buyer: private, scale: small, om_years: 0, deadline_months: null, features: [maps, dashboards, connect_existing], custom_features: [{name: Vehicle information system, category: module, size: M}]}
+  - id: clutch-branchx-fintech-ops
+    title: Admin and vendor operations platform with role-based access for a fintech
+    buyer: branchX India Pvt Ltd (via Antino Labs)
+    award_year: 2023
+    value_minor: 413000000
+    value_high_minor: 1651991740
+    value_includes_tax: false
+    value_note: "Clutch band USD 50,000-199,999 (x 82.60); 23 months"
+    source_url: https://clutch.co/profile/antino-labs
+    confidence: low
+    use: false
+    reason: band only and thin scope
+    model: {buyer: private, scale: small, om_years: 0, deadline_months: 23, features: [approval_workflow, staff_login, connect_existing], custom_features: []}
+  - id: clutch-essell-web-mobile
+    title: Web and mobile application development for a holding company
+    buyer: Essell Holdings Pvt Ltd (via Codewave Technologies)
+    award_year: 2023
+    value_minor: 413000000
+    value_high_minor: 1651991740
+    value_includes_tax: false
+    value_note: "Clutch band USD 50,000-199,999 (x 82.60); 10 months"
+    source_url: https://clutch.co/profile/codewave-technologies
+    confidence: low
+    use: false
+    reason: vague scope
+    model: {buyer: private, scale: small, om_years: 0, deadline_months: 10, features: [mobile_app, connect_existing], custom_features: []}
+  - id: clutch-worxogo-php-upgrade
+    title: Upgrade of a core SaaS product to PHP 7
+    buyer: Worxogo Solutions (via Unico Connect)
+    award_year: 2021
+    value_minor: 1478400000
+    value_high_minor: 7391926080
+    value_includes_tax: false
+    value_note: "Clutch band USD 200,000-999,999 (x 73.92); 12 months"
+    source_url: https://clutch.co/profile/unico-connect
+    confidence: low
+    use: false
+    reason: a modernisation of an existing product, not a new build
+    model: {buyer: private, scale: medium, om_years: 0, deadline_months: 12, features: [dashboards, staff_login], custom_features: []}
+  # ---- government documents with GeM award values (researched 2026-10-16) -------------
+  # Each scope is what the keyword reader finds in the full document (ticked features only).
+  # size: from the EMD where the document states one (bid security is 2-5% of the client's
+  # estimate, GFR 2017 Rule 170), else judged from the scope, before fitting.
+  - id: gem-mohua-sbm-integrated-portal
+    title: Design, Development, Operations and Maintenance of SBM (Swachh Bharat Mission-Urban) Integrated Portal
+    buyer: Ministry of Housing & Urban Affairs (SBM-U), Main Secretariat
+    award_year: 2023
+    value_minor: 15404310000
+    value_includes_tax: null
+    value_note: GeM award (CMS Computers Limited); scope read from the full document by the keyword reader
+    source_url: https://bidplus.gem.gov.in/bidding/bid/getBidResultView/5212046
+    confidence: medium
+    use: false
+    model:
+      buyer: government
+      size: large
+      size_reason: national mission portal, 1.8 crore users
+      scale: large
+      om_years: 3
+      deadline_months: null
+      features:
+      - approval_workflow
+      - dashboards
+      - languages
+      - grievances
+      - billing
+      - mobile_app
+      - maps
+      custom_features: []
+    reason: a manpower (time-and-materials) contract paid monthly, not a fixed-price build
+  - id: gem-meghalaya-citizen-services-bms
+    title: Selection of Implementation Agency for Digital Citizen Services and Beneficiary Management System (Citizen Service Portal + Mobile App for VCFs)
+    buyer: Planning Department, Government of Meghalaya (Planning Research, Shillong)
+    award_year: 2023
+    value_minor: 11205280000
+    value_includes_tax: true
+    value_note: GeM award (Humanitics Dimensions Software Private Limited); scope read from the full document by the keyword reader
+    source_url: https://bidplus.gem.gov.in/bidding/bid/getBidResultView/5074626
+    confidence: high
+    use: true
+    model:
+      buyer: government
+      size: large
+      size_reason: state-wide citizen services platform, mobile app, helpdesk and cloud; its EMD (Rs 5 lakh) is capped
+      scale: medium
+      om_years: 2
+      deadline_months: null
+      features:
+      - approval_workflow
+      - dashboards
+      - ai_chatbot
+      - aadhaar_digilocker
+      - accessibility
+      - grievances
+      - old_data
+      - bookings
+      - mobile_app
+      - notifications
+      custom_features: []
+  - id: gem-cpcb-epr-ewaste-portal
+    title: Development of Extended Producers Responsibility (EPR) Portal under E-Waste (Management) Rules 2022
+    buyer: Central Pollution Control Board (MoEFCC)
+    award_year: 2023
+    value_minor: 6426972700
+    value_includes_tax: null
+    value_note: GeM award (Zibal Technologies Private Limited); scope read from the full document by the keyword reader
+    source_url: https://bidplus.gem.gov.in/bidding/bid/getBidResultView/4682091
+    confidence: high
+    use: true
+    model:
+      buyer: government
+      size: medium
+      size_reason: EMD Rs 1,500,000 -> client budget about Rs 500 lakh (GFR 2-5%)
+      scale: small
+      om_years: 6
+      deadline_months: null
+      features:
+      - online_forms
+      - dashboards
+      - ai_chatbot
+      - payments
+      - billing
+      - mobile_app
+      custom_features: []
+  - id: gem-cpcb-epr-battery-portal
+    title: Development of Centralised Online Portal for Extended Producers Responsibility for Battery Waste Management
+    buyer: Central Pollution Control Board (MoEFCC)
+    award_year: 2023
+    value_minor: 1581801800
+    value_includes_tax: true
+    value_note: GeM award (Successive Technologies Private Limited); scope read from the full document by the keyword reader
+    source_url: https://bidplus.gem.gov.in/bidding/bid/getBidResultView/5149687
+    confidence: high
+    use: true
+    model:
+      buyer: government
+      size: medium
+      size_reason: national EPR registration portal (one waste stream)
+      scale: medium
+      om_years: 5
+      deadline_months: null
+      features:
+      - approval_workflow
+      - dashboards
+      - inventory
+      - billing
+      - mobile_app
+      - notifications
+      custom_features: []
+  - id: gem-cpcb-epr-waste-tyre-portal
+    title: Development of Portal for Management of Waste Tyre through the Extended Producers Responsibility (EPR) Regime
+    buyer: Central Pollution Control Board (MoEFCC)
+    award_year: 2023
+    value_minor: 1896277900
+    value_includes_tax: null
+    value_note: GeM award (Successive Technologies Private Limited); scope read from the full document by the keyword reader
+    source_url: https://bidplus.gem.gov.in/bidding/bid/getBidResultView/5156056
+    confidence: high
+    use: true
+    model:
+      buyer: government
+      size: medium
+      size_reason: national EPR registration portal (one waste stream)
+      scale: medium
+      om_years: 6
+      deadline_months: null
+      features:
+      - online_forms
+      - dashboards
+      - ai_chatbot
+      - payments
+      - languages
+      - billing
+      - mobile_app
+      custom_features: []
+  - id: gem-gailgas-sahaj-portal-apps
+    title: Development of new SAHAJ platform (website and mobile apps) for GAIL Gas, cloud infrastructure, and maintenance & technical support
+    buyer: GAIL Gas Limited
+    award_year: 2025
+    value_minor: 7249920000
+    value_includes_tax: null
+    value_note: GeM award (Keypoint Technologies (India) Private Limited); scope read from the full document by the keyword reader
+    source_url: https://bidplus.gem.gov.in/bidding/bid/getBidResultView/7922493
+    confidence: medium
+    use: true
+    model:
+      buyer: government
+      size: medium
+      size_reason: customer portal and apps for a city-gas utility
+      scale: medium
+      om_years: 3
+      deadline_months: null
+      features:
+      - dashboards
+      - payments
+      - staff_login
+      - connect_existing
+      - grievances
+      - billing
+      - bookings
+      - crm
+      - mobile_app
+      - notifications
+      - maps
+      custom_features: []
+      hosting_included: true
+  - id: gem-mmrcl-line3-website-app
+    title: Design, Development & Hosting of official website and Mobile Application for Mumbai Metro Line-3 including maintenance and support for 5 years
+    buyer: Mumbai Metro Rail Corporation Limited (MMRCL)
+    award_year: 2024
+    value_minor: 7449753000
+    value_includes_tax: null
+    value_note: GeM award (Arohatech IT Services Private Limited); scope read from the full document by the keyword reader
+    source_url: https://bidplus.gem.gov.in/bidding/bid/getBidResultView/6227460
+    confidence: high
+    use: true
+    model:
+      buyer: government
+      size: medium
+      size_reason: corporate website and passenger app for a metro line
+      scale: medium
+      om_years: 5
+      deadline_months: null
+      features:
+      - online_forms
+      - approval_workflow
+      - dashboards
+      - ai_chatbot
+      - payments
+      - languages
+      - accessibility
+      - public_website
+      - grievances
+      - bookings
+      - online_store
+      - mobile_app
+      - notifications
+      custom_features: []
+  - id: gem-iob-trade-finance-portal
+    title: Supply, Implementation and Maintenance of Trade Finance Customer Portal for the Bank
+    buyer: Indian Overseas Bank, IT Department, Chennai
+    award_year: 2025
+    value_minor: 2935202800
+    value_includes_tax: true
+    value_note: GeM award (Kyzer Software India Private Limited); scope read from the full document by the keyword reader
+    source_url: https://bidplus.gem.gov.in/bidding/bid/getBidResultView/7421658
+    confidence: high
+    use: true
+    model:
+      buyer: government
+      size: medium
+      size_reason: trade finance portal for one bank's corporate customers
+      scale: small
+      om_years: 5
+      deadline_months: null
+      features:
+      - approval_workflow
+      - documents
+      - dashboards
+      - staff_login
+      - connect_existing
+      - inventory
+      - billing
+      - notifications
+      custom_features: []
+  - id: gem-iob-chatbot-whatsapp-banking
+    title: Supply, Implementation and Maintenance of Chatbot & WhatsApp Banking
+    buyer: Indian Overseas Bank, Chennai
+    award_year: 2024
+    value_minor: 5244206000
+    value_includes_tax: true
+    value_note: GeM award (Gupshup Technology India Private Limited); scope read from the full document by the keyword reader
+    source_url: https://bidplus.gem.gov.in/bidding/bid/getBidResultView/6492488
+    confidence: high
+    use: true
+    model:
+      buyer: government
+      size: large
+      size_reason: bank-wide customer chatbot and WhatsApp banking
+      scale: small
+      om_years: 5
+      deadline_months: null
+      features:
+      - approval_workflow
+      - dashboards
+      - ai_chatbot
+      - aadhaar_digilocker
+      - staff_login
+      - languages
+      - inventory
+      - billing
+      - bookings
+      - crm
+      - mobile_app
+      - notifications
+      custom_features: []
+  - id: gem-canara-bank-chatbot
+    title: Supply, Installation, Implementation and Maintenance of Chatbot Solution in Canara Bank for 5 years
+    buyer: Canara Bank, Department of Information Technology
+    award_year: 2023
+    value_minor: 4577279000
+    value_includes_tax: null
+    value_note: GeM award (Gupshup Technology India Private Limited); scope read from the full document by the keyword reader
+    source_url: https://bidplus.gem.gov.in/bidding/bid/getBidResultView/4286010
+    confidence: high
+    use: true
+    model:
+      buyer: government
+      size: large
+      size_reason: bank-wide customer chatbot
+      scale: medium
+      om_years: 5
+      deadline_months: null
+      features:
+      - dashboards
+      - ai_chatbot
+      - payments
+      - staff_login
+      - languages
+      - billing
+      - bookings
+      - mobile_app
+      - notifications
+      custom_features: []
+  - id: gem-sagarmala-online-portal
+    title: Selection of Vendor for Development of Online Portal & its Maintenance
+    buyer: Sagarmala Finance Corporation Limited (Ministry of Ports, Shipping and Waterways)
+    award_year: 2026
+    value_minor: 340000000
+    value_includes_tax: true
+    value_note: GeM award (ADG Online Solutions Private Limited); scope read from the full document by the keyword reader
+    source_url: https://bidplus.gem.gov.in/bidding/bid/getBidResultView/9306916
+    confidence: medium
+    use: true
+    model:
+      buyer: government
+      size: small
+      size_reason: online portal for one finance company, about 100 users
+      scale: small
+      om_years: 6
+      deadline_months: null
+      features:
+      - approval_workflow
+      - documents
+      - dashboards
+      - connect_existing
+      - accessibility
+      - grievances
+      - old_data
+      - billing
+      - bookings
+      - mobile_app
+      - notifications
+      custom_features: []
+  - id: gem-ap-police-women-child-safety-apps
+    title: Design, Development, Deployment and Maintenance of Women and Child Safety Mobile & Web Applications and AI based Chatbot
+    buyer: Andhra Pradesh Police (IGP Technical Services, Mangalagiri)
+    award_year: 2026
+    value_minor: 478225200
+    value_includes_tax: true
+    value_note: GeM award (RailTel Corporation of India Limited); scope read from the full document by the keyword reader
+    source_url: https://bidplus.gem.gov.in/bidding/bid/getBidResultView/8977879
+    confidence: high
+    use: true
+    model:
+      buyer: government
+      size: small
+      size_reason: EMD Rs 100,000 -> client budget about Rs 33 lakh (GFR 2-5%)
+      scale: medium
+      om_years: 4
+      deadline_months: null
+      features:
+      - dashboards
+      - ai_chatbot
+      - grievances
+      - mobile_app
+      - maps
+      custom_features: []
+  - id: gem-avfccl-vendor-empanelment-portal
+    title: Development & Implementation of Vendor Empanelment Portal for AVFCCL (with support for 3 years)
+    buyer: Assam Valley Fertilizer and Chemical Company Limited
+    award_year: 2026
+    value_minor: 188800000
+    value_includes_tax: true
+    value_note: GeM award (E-Procurement Technologies Limited); scope read from the full document by the keyword reader
+    source_url: https://bidplus.gem.gov.in/bidding/bid/getBidResultView/9596345
+    confidence: high
+    use: true
+    model:
+      buyer: government
+      size: small
+      size_reason: EMD Rs 80,000 -> client budget about Rs 27 lakh (GFR 2-5%)
+      scale: medium
+      om_years: 3
+      deadline_months: null
+      features:
+      - online_forms
+      - approval_workflow
+      - dashboards
+      - grievances
+      custom_features: []
+  - id: gem-iim-mumbai-website-portals
+    title: Design, Development and Maintenance of IIM Mumbai New Bilingual Website and Associated Web Portals
+    buyer: Indian Institute of Management Mumbai
+    award_year: 2026
+    value_minor: 266939600
+    value_includes_tax: null
+    value_note: GeM award (Keypoint Technologies (India) Private Limited); scope read from the full document by the keyword reader
+    source_url: https://bidplus.gem.gov.in/bidding/bid/getBidResultView/8867405
+    confidence: high
+    use: true
+    model:
+      buyer: government
+      size: small
+      size_reason: EMD Rs 48,000 -> client budget about Rs 16 lakh (GFR 2-5%)
+      scale: medium
+      om_years: 4
+      deadline_months: null
+      features:
+      - dashboards
+      - payments
+      - staff_login
+      - languages
+      - accessibility
+      - public_website
+      - old_data
+      - notifications
+      custom_features: []
+  - id: gem-indian-bank-websites
+    title: Development, Implementation and Maintenance of Indian Bank websites for a period of five years
+    buyer: Indian Bank, IT Department, Head Office Chennai
+    award_year: 2024
+    value_minor: 2721000000
+    value_includes_tax: true
+    value_note: GeM award (Planet E-Com Solutions Private Limited); scope read from the full document by the keyword reader
+    source_url: https://bidplus.gem.gov.in/bidding/bid/getBidResultView/7160337
+    confidence: high
+    use: true
+    model:
+      buyer: government
+      size: medium
+      size_reason: EMD Rs 1,500,000 -> client budget about Rs 500 lakh (GFR 2-5%)
+      scale: medium
+      om_years: 5
+      deadline_months: null
+      features:
+      - approval_workflow
+      - dashboards
+      - ai_chatbot
+      - connect_existing
+      - languages
+      - accessibility
+      - public_website
+      - old_data
+      - billing
+      - bookings
+      - mobile_app
+      - notifications
+      - maps
+      - search
+      custom_features: []
+  - id: gem-cbdt-tds-chatbot
+    title: Design, Development, Hosting and Maintenance of AI based Multilingual Chatbot System with Mobile Application and Browser based Web Application for TDS
+    buyer: Central Board of Direct Taxes (CIT TDS Chennai)
+    award_year: 2023
+    value_minor: 74594000
+    value_includes_tax: true
+    value_note: GeM award (Pinaca Technologies Private Limited); scope read from the full document by the keyword reader
+    source_url: https://bidplus.gem.gov.in/bidding/bid/getBidResultView/4405876
+    confidence: medium
+    use: true
+    model:
+      buyer: government
+      size: small
+      size_reason: EMD Rs 20,000 -> client budget about Rs 7 lakh (GFR 2-5%)
+      scale: medium
+      om_years: 1
+      deadline_months: null
+      features:
+      - languages
+      - mobile_app
+      custom_features: []
+  - id: gem-kmrl-grievance-app
+    title: Grievance Management Application for KMRL (study, design, development and implementation)
+    buyer: Kochi Metro Rail Limited
+    award_year: 2024
+    value_minor: 38900000
+    value_includes_tax: null
+    value_note: GeM award (Infoneo Technologies Private Limited); scope read from the full document by the keyword reader
+    source_url: https://bidplus.gem.gov.in/bidding/bid/getBidResultView/6885625
+    confidence: high
+    use: true
+    model:
+      buyer: government
+      size: small
+      size_reason: one grievance app
+      scale: medium
+      om_years: 0
+      deadline_months: null
+      features:
+      - approval_workflow
+      - dashboards
+      - payments
+      - grievances
+      - notifications
+      custom_features: []
+  - id: gem-erpc-website
+    title: Revamping, Development, Implementation, Hosting & Maintenance of the website for Eastern Regional Power Committee
+    buyer: Eastern Regional Power Committee (Ministry of Power), Kolkata
+    award_year: 2026
+    value_minor: 247500000
+    value_includes_tax: null
+    value_note: GeM award (Webstep Technologies Private Limited); scope read from the full document by the keyword reader
+    source_url: https://bidplus.gem.gov.in/bidding/bid/getBidResultView/9033908
+    confidence: medium
+    use: true
+    model:
+      buyer: government
+      size: small
+      size_reason: one office website
+      scale: medium
+      om_years: 3
+      deadline_months: null
+      features:
+      - online_forms
+      - languages
+      - accessibility
+      - public_website
+      custom_features: []
+  - id: gem-indian-bank-scheme-portal
+    title: Design, Development, Maintenance and Customization of Portal (portal for implementation and monitoring of Govt. schemes)
+    buyer: Indian Bank, Digital Business & Fintech Partnership Dept., Chennai
+    award_year: 2024
+    value_minor: 2872324600
+    value_includes_tax: true
+    value_note: GeM award (Trust Fintech Limited); scope read from the full document by the keyword reader
+    source_url: https://bidplus.gem.gov.in/bidding/bid/getBidResultView/6644457
+    confidence: medium
+    use: true
+    model:
+      buyer: government
+      size: medium
+      size_reason: EMD Rs 1,200,000 -> client budget about Rs 400 lakh (GFR 2-5%)
+      scale: medium
+      om_years: 3
+      deadline_months: null
+      features:
+      - online_forms
+      - dashboards
+      - ai_chatbot
+      - payments
+      - connect_existing
+      - languages
+      - grievances
+      - old_data
+      - billing
+      - bookings
+      - mobile_app
+      custom_features: []
+  - id: gem-navy-wesee-llm-chatbot
+    title: Collaborative Development of Interactive Chatbot Backend by Offline LLM Model on Custom Dataset
+    buyer: Indian Navy - Weapons & Electronics Systems Engineering Establishment (WESEE), New Delhi
+    award_year: 2024
+    value_minor: 90000000
+    value_includes_tax: true
+    value_note: GeM award (Deepmindz Innovations Private Limited); scope read from the full document by the keyword reader
+    source_url: https://bidplus.gem.gov.in/bidding/bid/getBidResultView/6980006
+    confidence: medium
+    use: true
+    model:
+      buyer: government
+      size: small
+      size_reason: pilot LLM chatbot for one establishment
+      scale: medium
+      om_years: 1
+      deadline_months: null
+      features:
+      - approval_workflow
+      - ai_chatbot
+      - accessibility
+      - billing
+      custom_features: []
+  # ---- second batch of Indian private projects (Clutch verified reviews, researched 2026-10-16) ----
+  - id: clutch-techugo-ar-garment-tryon
+    title: AR virtual try-on mobile app for a garment-fabric maker
+    buyer: Manufacturing startup (via Techugo)
+    award_year: 2021
+    value_minor: 2217600000
+    value_includes_tax: false
+    value_note: USD 300,000 stated (x 73.92); 15 months, team 10-12
+    source_url: https://clutch.co/profile/techugo
+    confidence: medium
+    use: true
+    model:
+      buyer: small_business
+      size: medium
+      size_reason: 'review: AR Mobile App Design, Dev & Testing for Manufacturing Co'
+      scale: small
+      om_years: 0
+      deadline_months: null
+      features:
+      - mobile_app
+      custom_features:
+      - name: AR camera try-on and 25 screens
+        category: module
+        size: L
+  - id: clutch-techugo-yellowdoodle-ecom
+    title: Custom e-commerce site and order backend for a children's essentials brand
+    buyer: Yellow Doodle Industries (via Techugo)
+    award_year: 2020
+    value_minor: 407550000
+    value_includes_tax: false
+    value_note: USD 55,000 stated (x 74.1); 10 months, team 10-15
+    source_url: https://clutch.co/profile/techugo
+    confidence: medium
+    use: true
+    model:
+      buyer: small_business
+      size: medium
+      size_reason: 'review: Web Design & Dev for Children''s Retail'
+      scale: small
+      om_years: 0
+      deadline_months: null
+      features:
+      - online_store
+      - search
+      - payments
+      - inventory
+      custom_features:
+      - name: Gift-basket builder and order aggregation
+        category: module
+        size: S
+  - id: clutch-techugo-foresee-charter-app
+    title: Private jet and helicopter charter booking app with live availability
+    buyer: Foresee Aviation (via Techugo)
+    award_year: 2020
+    value_minor: 370500000
+    value_includes_tax: false
+    value_note: USD 50,000-199,999 (x 74.1); 10 months
+    source_url: https://clutch.co/profile/techugo
+    confidence: medium
+    use: true
+    value_high_minor: 1481992590
+    model:
+      buyer: private
+      size: medium
+      size_reason: 'review: Mobile App Dev for Aircraft Booking'
+      scale: small
+      om_years: 0
+      deadline_months: null
+      features:
+      - mobile_app
+      - bookings
+      - staff_login
+      custom_features: []
+  - id: clutch-mobcoder-sme-business-app
+    title: All-in-one business app for Indian small businesses (design and full build)
+    buyer: Business application startup (via Mobcoder)
+    award_year: 2024
+    value_minor: 376560000
+    value_includes_tax: false
+    value_note: USD 45,000 stated (x 83.68); 7 months, team 5-6
+    source_url: https://clutch.co/profile/mobcoder
+    confidence: medium
+    use: true
+    model:
+      buyer: small_business
+      size: small
+      size_reason: 'review: Mobile App Dev & High Fidelity Design for Business App Co'
+      scale: small
+      om_years: 0
+      deadline_months: null
+      features:
+      - mobile_app
+      - dashboards
+      custom_features:
+      - name: Business management modules
+        category: module
+        size: M
+  - id: clutch-appventurez-seedpark-d2c
+    title: D2C farm-inputs ordering app with super-admin panel
+    buyer: Seed Park India Pvt Ltd (via Appventurez)
+    award_year: 2023
+    value_minor: 82600000
+    value_includes_tax: false
+    value_note: USD 10,000-49,999 (x 82.6); 8 months, team 6-10
+    source_url: https://clutch.co/profile/appventurez
+    confidence: medium
+    use: true
+    value_high_minor: 412991740
+    model:
+      buyer: small_business
+      size: small
+      size_reason: 'review: Mobile App Development for D2C E-Commerce Farming Company'
+      scale: small
+      om_years: 0
+      deadline_months: null
+      features:
+      - mobile_app
+      - payments
+      - billing
+      - online_store
+      - dashboards
+      - maps
+      - crm
+      custom_features: []
+  - id: clutch-antino-rapido-rental-app
+    title: Android app to book and lock / unlock nearby rental vehicles (MVP)
+    buyer: Rapido (via Antino Labs)
+    award_year: 2019
+    value_minor: 70420000
+    value_includes_tax: false
+    value_note: USD 10,000-49,999 (x 70.42); 6 months, team 1-4
+    source_url: https://clutch.co/profile/antino-labs
+    confidence: medium
+    use: true
+    value_high_minor: 352092958
+    model:
+      buyer: small_business
+      size: small
+      size_reason: 'review: Android App Dev for Transportation Company'
+      scale: small
+      om_years: 0
+      deadline_months: null
+      features:
+      - mobile_app
+      - maps
+      - bookings
+      custom_features: []
+  - id: clutch-codewave-fintech-invest-app
+    title: Custom investment mobile app
+    buyer: FinTech firm (via Codewave)
+    award_year: 2020
+    value_minor: 74100000
+    value_includes_tax: false
+    value_note: USD 10,000-49,999 (x 74.1); 8 months, team 5
+    source_url: https://clutch.co/profile/codewave-technologies
+    confidence: medium
+    use: true
+    value_high_minor: 370492590
+    model:
+      buyer: small_business
+      size: small
+      size_reason: 'review: Mobile App Dev for Fintech Firm'
+      scale: small
+      om_years: 0
+      deadline_months: null
+      features:
+      - mobile_app
+      - payments
+      custom_features: []
+  - id: clutch-codewave-settl-coliving
+    title: Co-living resident mobile app plus backend overhaul
+    buyer: Settl. (via Codewave)
+    award_year: 2021
+    value_minor: 73920000
+    value_includes_tax: false
+    value_note: USD 10,000-49,999 (x 73.92); 6 months, team 5
+    source_url: https://clutch.co/profile/codewave-technologies
+    confidence: medium
+    use: true
+    value_high_minor: 369592608
+    model:
+      buyer: small_business
+      size: small
+      size_reason: 'review: Mobile App Dev for Managed Accommodation'
+      scale: small
+      om_years: 0
+      deadline_months: null
+      features:
+      - mobile_app
+      - connect_existing
+      custom_features: []
+  - id: clutch-unico-heirloom-family-app
+    title: Cross-platform family app from client wireframes
+    buyer: Heirloom Tales LLP (via Unico Connect)
+    award_year: 2021
+    value_minor: 100
+    value_includes_tax: false
+    value_note: USD 0-9,999 (x 73.92); 5 months, team 4
+    source_url: https://clutch.co/profile/unico-connect
+    confidence: medium
+    use: true
+    value_high_minor: 73912608
+    model:
+      buyer: small_business
+      size: small
+      size_reason: 'review: Mobile App Dev for Family App'
+      scale: small
+      om_years: 0
+      deadline_months: null
+      features:
+      - mobile_app
+      custom_features: []
+  - id: clutch-appventurez-gcap-edtech-android
+    title: Android version of a school edtech app
+    buyer: Gcap World Softech Pvt Ltd (via Appventurez)
+    award_year: 2022
+    value_minor: 47160000
+    value_includes_tax: false
+    value_note: USD 6,000 stated (x 78.6); 2 months, team 2
+    source_url: https://clutch.co/profile/appventurez
+    confidence: medium
+    use: true
+    model:
+      buyer: small_business
+      size: small
+      size_reason: 'review: Android Dev for EdTech Company'
+      scale: small
+      om_years: 0
+      deadline_months: null
+      features:
+      - mobile_app
+      custom_features: []
+  - id: clutch-unico-globalispaat-erp
+    title: Web ERP for purchase and production data at a steel plant
+    buyer: Global Ispaat Pvt Ltd, Goa (via Unico Connect)
+    award_year: 2020
+    value_minor: 74100000
+    value_includes_tax: false
+    value_note: USD 10,000-49,999 (x 74.1); 9 months, team 4
+    source_url: https://clutch.co/profile/unico-connect
+    confidence: medium
+    use: true
+    value_high_minor: 370492590
+    model:
+      buyer: small_business
+      size: small
+      size_reason: 'review: Custom ERP for Construction Steel Manufacturer'
+      scale: small
+      om_years: 0
+      deadline_months: null
+      features:
+      - inventory
+      - dashboards
+      - online_forms
+      - staff_login
+      - old_data
+      custom_features: []
+  - id: clutch-unico-mumbai-finance-migration
+    title: Migrating client account data and statements onto a website
+    buyer: Finance corporation, Mumbai (via Unico Connect)
+    award_year: 2020
+    value_minor: 22230000
+    value_includes_tax: false
+    value_note: USD 3,000 stated (x 74.1); 1 months, team 2-3
+    source_url: https://clutch.co/profile/unico-connect
+    confidence: medium
+    use: true
+    model:
+      buyer: small_business
+      size: small
+      size_reason: 'review: Data Migration for Investment Company'
+      scale: small
+      om_years: 0
+      deadline_months: null
+      features:
+      - old_data
+      - documents
+      custom_features: []
+  - id: clutch-wac-bosorganics-site
+    title: Custom website with online store and larger product catalogue
+    buyer: Bosorganics Pvt Ltd (via Webandcrafts)
+    award_year: 2020
+    value_minor: 103740000
+    value_includes_tax: false
+    value_note: USD 14,000 stated (x 74.1); 9 months
+    source_url: https://clutch.co/profile/webandcrafts
+    confidence: medium
+    use: true
+    model:
+      buyer: small_business
+      size: small
+      size_reason: 'review: Web Development for Organic Food Products Company'
+      scale: small
+      om_years: 0
+      deadline_months: null
+      features:
+      - public_website
+      - online_store
+      - search
+      custom_features: []
+  - id: clutch-gwl-himalayan-basket
+    title: Cross-platform app to onboard milk suppliers and manage perishable logistics
+    buyer: Himalayan Basket Pvt Ltd (via GoodWorkLabs)
+    award_year: 2019
+    value_minor: 70420000
+    value_includes_tax: false
+    value_note: USD 10,000-49,999 (x 70.42); 9 months, team 7
+    source_url: https://clutch.co/profile/goodworklabs
+    confidence: medium
+    use: true
+    value_high_minor: 352092958
+    model:
+      buyer: small_business
+      size: small
+      size_reason: 'review: Cross Platform Mobile App for Consumer Goods Company'
+      scale: small
+      om_years: 0
+      deadline_months: null
+      features:
+      - mobile_app
+      - inventory
+      - online_forms
+      custom_features: []
+  - id: clutch-daffodil-chalo-backend
+    title: Outsourced backend team for a bus tracking and ticketing app
+    buyer: Chalo (via Daffodil Software)
+    award_year: 2018
+    value_minor: 170975000
+    value_includes_tax: false
+    value_note: USD 25,000 stated (x 68.39), team 15
+    source_url: https://clutch.co/profile/daffodil-software
+    confidence: medium
+    use: false
+    reason: only a monthly rate (USD 25,000 a month), no total or duration
+    model:
+      buyer: small_business
+      size: large
+      size_reason: 'review: Public Transportation Application Development'
+      scale: small
+      om_years: 0
+      deadline_months: null
+      features:
+      - mobile_app
+      - dashboards
+      - maps
+      - payments
+      custom_features: []
+  - id: clutch-successive-moglix-multivendor
+    title: Multi-vendor e-commerce rework and move to AWS
+    buyer: Moglix (via Successive Digital)
+    award_year: 2024
+    value_minor: 418400000
+    value_includes_tax: false
+    value_note: USD 50,000-199,999 (x 83.68); 4 months, team 2-5
+    source_url: https://clutch.co/profile/successive-technologies
+    confidence: medium
+    use: false
+    value_high_minor: 1673591632
+    reason: a rework and cloud migration, not a new build
+    model:
+      buyer: private
+      size: small
+      size_reason: 'review: E-Commerce Development for E-Commerce Solutions Co'
+      scale: small
+      om_years: 0
+      deadline_months: null
+      features:
+      - online_store
+      - connect_existing
+      - inventory
+      custom_features: []
+  - id: clutch-konstant-doctor-consult-app
+    title: Doctor-to-doctor e-consultation mobile app
+    buyer: Healthcare startup (via Konstant Infosolutions)
+    award_year: 2021
+    value_minor: 369600000
+    value_includes_tax: false
+    value_note: USD 50,000-199,999 (x 73.92); 19 months
+    source_url: https://clutch.co/profile/konstant-infosolutions
+    confidence: medium
+    use: false
+    value_high_minor: 1478392608
+    reason: location not stated and band only
+    model:
+      buyer: small_business
+      size: medium
+      size_reason: 'review: Mobile App Development for Healthcare Technology Firm'
+      scale: small
+      om_years: 0
+      deadline_months: null
+      features:
+      - mobile_app
+      - staff_login
+      - notifications
+      custom_features: []
+  - id: clutch-antino-chefkart-partner-app
+    title: Flutter partner app for home chefs
+    buyer: Chefkart Hospitality Pvt Ltd (via Antino Labs)
+    award_year: 2021
+    value_minor: 73920000
+    value_includes_tax: false
+    value_note: USD 10,000-49,999 (x 73.92); 13 months, team 1
+    source_url: https://clutch.co/profile/antino-labs
+    confidence: medium
+    use: false
+    value_high_minor: 369592608
+    reason: one developer hired by the month (staff augmentation)
+    model:
+      buyer: small_business
+      size: small
+      size_reason: 'review: Mobile App Dev for Chef-on-Demand Platform'
+      scale: small
+      om_years: 0
+      deadline_months: null
+      features:
+      - mobile_app
+      - staff_login
+      - online_forms
+      - documents
+      custom_features: []
+  - id: clutch-antino-vahan-uxui
+    title: UX/UI design for a recruitment platform
+    buyer: Vahan (via Antino Labs)
+    award_year: 2022
+    value_minor: 196500000
+    value_includes_tax: false
+    value_note: USD 25,000 stated (x 78.6); 2 months, team 1
+    source_url: https://clutch.co/profile/antino-labs
+    confidence: medium
+    use: false
+    reason: design only, not a build
+    model:
+      buyer: small_business
+      size: small
+      size_reason: 'review: UX/UI Design for Recruitment Platform'
+      scale: small
+      om_years: 0
+      deadline_months: null
+      features:
+      - online_forms
+      custom_features: []
+  - id: clutch-techugo-noida-patient-app
+    title: Rebuild of a chronic-care patient Android app
+    buyer: Health tech startup, Noida (via Techugo)
+    award_year: 2019
+    value_minor: 33801600
+    value_includes_tax: false
+    value_note: USD 4,800-5,600 (x 70.42); 9 months, team 1
+    source_url: https://clutch.co/profile/techugo
+    confidence: medium
+    use: false
+    value_high_minor: 39435200
+    reason: a failed project (never released)
+    model:
+      buyer: small_business
+      size: small
+      size_reason: 'review: patient care app rebuild review'
+      scale: small
+      om_years: 0
+      deadline_months: null
+      features:
+      - mobile_app
+      - bookings
+      - notifications
+      - documents
+      custom_features: []
+  - id: clutch-techugo-womens-health-site
+    title: Website connecting women with doctors and nutritionists
+    buyer: Women's health startup (via Techugo)
+    award_year: 2021
+    value_minor: 36960000
+    value_includes_tax: false
+    value_note: USD 5,000 stated (x 73.92); 6 months
+    source_url: https://clutch.co/profile/techugo
+    confidence: medium
+    use: false
+    reason: spend so far on unfinished work
+    model:
+      buyer: small_business
+      size: small
+      size_reason: 'review: Web Development for Women''s Health Co'
+      scale: small
+      om_years: 0
+      deadline_months: null
+      features:
+      - public_website
+      - bookings
+      custom_features: []
+  - id: clutch-techugo-jkfenner-tracking
+    title: Internal inventory, production and shipping tracking platform (phase 1)
+    buyer: JK Fenner (via Techugo)
+    award_year: 2020
+    value_minor: 100
+    value_includes_tax: false
+    value_note: USD 0-10,000 (x 74.1); 15 months, team 10-12
+    source_url: https://clutch.co/profile/techugo
+    confidence: medium
+    use: false
+    value_high_minor: 74100000
+    reason: the band (under USD 10k) contradicts a 10-12 person team for 15 months
+    model:
+      buyer: private
+      size: small
+      size_reason: 'review: Custom Software Dev for Automotive Tracking Platform'
+      scale: small
+      om_years: 0
+      deadline_months: null
+      features:
+      - inventory
+      - dashboards
+      - staff_login
+      custom_features: []
+  - id: clutch-successive-approval-tool
+    title: User-access request tool with multi-step approvals
+    buyer: Audit and risk software company (via Successive Digital)
+    award_year: 2022
+    value_minor: 117900000
+    value_includes_tax: false
+    value_note: USD 15,000-20,000 (x 78.6); 7 months, team 2
+    source_url: https://clutch.co/profile/successive-technologies
+    confidence: medium
+    use: false
+    value_high_minor: 157200000
+    reason: only one sprint done when reviewed
+    model:
+      buyer: private
+      size: small
+      size_reason: 'review: Custom Software Development for Development Company'
+      scale: small
+      om_years: 0
+      deadline_months: null
+      features:
+      - approval_workflow
+      - online_forms
+      - staff_login
+      custom_features: []
+  - id: clutch-squareboat-siso-pm-tool
+    title: UI/UX redesign and React frontend for a project-management tool
+    buyer: SISO Software's India Pvt Ltd (via Squareboat)
+    award_year: 2021
+    value_minor: 73920000
+    value_includes_tax: false
+    value_note: USD 10,000-49,999 (x 73.92); 10 months, team 3
+    source_url: https://clutch.co/profile/squareboat
+    confidence: medium
+    use: false
+    value_high_minor: 369592608
+    reason: frontend only
+    model:
+      buyer: private
+      size: small
+      size_reason: 'review: Custom Software Dev for Project Management Solutions Company'
+      scale: small
+      om_years: 0
+      deadline_months: null
+      features:
+      - dashboards
+      - staff_login
+      custom_features: []
+  # ---- 10 more GeM documents: first used as an out-of-sample test (2026-10-16) ----
+  - id: gem-iob-corporate-website
+    title: 'IOB corporate website: design, development, hosting and maintenance'
+    buyer: Indian Overseas Bank
+    award_year: 2025
+    value_minor: 4200000000
+    value_includes_tax: null
+    value_note: GeM award; scope read from the full document by the keyword reader (out-of-sample test set 2026-10-16)
+    source_url: https://bidplus.gem.gov.in/bidding/bid/getBidResultView/7747956
+    confidence: high
+    use: true
+    model:
+      buyer: government
+      size: medium
+      size_reason: judged from the scope before pricing (no EMD in the document)
+      scale: small
+      om_years: 5
+      deadline_months: null
+      features:
+      - dashboards
+      - ai_chatbot
+      - languages
+      - accessibility
+      - public_website
+      - billing
+      - mobile_app
+      - maps
+      custom_features: []
+  - id: gem-soi-geo-portal
+    title: Survey of India Geo Portal service provider
+    buyer: Survey of India
+    award_year: 2023
+    value_minor: 200010000
+    value_includes_tax: null
+    value_note: GeM award; scope read from the full document by the keyword reader (out-of-sample test set 2026-10-16)
+    source_url: https://bidplus.gem.gov.in/bidding/bid/getBidResultView/5198337
+    confidence: medium
+    use: true
+    model:
+      buyer: government
+      size: medium
+      size_reason: judged from the scope before pricing (no EMD in the document)
+      scale: medium
+      om_years: 2
+      deadline_months: null
+      features:
+      - online_forms
+      - billing
+      - maps
+      custom_features: []
+  - id: gem-sail-rsp-website-apps
+    title: SAIL Rourkela website and Android / iOS app support and development
+    buyer: SAIL Rourkela Steel Plant
+    award_year: 2026
+    value_minor: 139062800
+    value_includes_tax: false
+    value_note: GeM award; scope read from the full document by the keyword reader (out-of-sample test set 2026-10-16)
+    source_url: https://bidplus.gem.gov.in/bidding/bid/getBidResultView/9080898
+    confidence: medium
+    use: true
+    model:
+      buyer: government
+      size: small
+      size_reason: judged from the scope before pricing (no EMD in the document)
+      scale: medium
+      om_years: 2
+      deadline_months: null
+      features:
+      - payments
+      - billing
+      - mobile_app
+      custom_features: []
+  - id: gem-bom-single-unified-portal
+    title: Bank of Maharashtra single unified portal
+    buyer: Bank of Maharashtra
+    award_year: 2025
+    value_minor: 20119000000
+    value_includes_tax: null
+    value_note: GeM award; scope read from the full document by the keyword reader (out-of-sample test set 2026-10-16)
+    source_url: https://bidplus.gem.gov.in/bidding/bid/getBidResultView/8354537
+    confidence: high
+    use: true
+    model:
+      buyer: government
+      size: large
+      size_reason: judged from the scope before pricing (no EMD in the document)
+      scale: medium
+      om_years: 3
+      deadline_months: null
+      features:
+      - approval_workflow
+      - dashboards
+      - aadhaar_digilocker
+      - grievances
+      - billing
+      - maps
+      custom_features: []
+  - id: gem-aiims-exam-portal
+    title: AIIMS exams web portal with SMS, WhatsApp and email support
+    buyer: AIIMS New Delhi
+    award_year: 2021
+    value_minor: 70008300
+    value_includes_tax: null
+    value_note: GeM award; scope read from the full document by the keyword reader (out-of-sample test set 2026-10-16)
+    source_url: https://bidplus.gem.gov.in/bidding/bid/getBidResultView/2406824
+    confidence: medium
+    use: true
+    model:
+      buyer: government
+      size: small
+      size_reason: judged from the scope before pricing (no EMD in the document)
+      scale: medium
+      om_years: 3
+      deadline_months: null
+      features:
+      - online_forms
+      - dashboards
+      - ai_chatbot
+      - payments
+      - languages
+      - grievances
+      - mobile_app
+      - notifications
+      custom_features: []
+  - id: gem-ihb-hrmis
+    title: Web-based HRMIS with payroll for a pipeline company
+    buyer: IHB Limited
+    award_year: 2026
+    value_minor: 51245700
+    value_includes_tax: null
+    value_note: GeM award; scope read from the full document by the keyword reader (out-of-sample test set 2026-10-16)
+    source_url: https://bidplus.gem.gov.in/bidding/bid/getBidResultView/9723069
+    confidence: high
+    use: true
+    model:
+      build_type: ready_product
+      buyer: government
+      size: small
+      size_reason: judged from the scope before pricing (no EMD in the document)
+      scale: medium
+      om_years: 2
+      deadline_months: null
+      features:
+      - approval_workflow
+      - dashboards
+      - languages
+      - grievances
+      - old_data
+      - billing
+      - bookings
+      custom_features: []
+  - id: gem-samba-conversational-ai-grievance
+    title: Conversational-AI grievance system for a district
+    buyer: DDC Samba
+    award_year: 2024
+    value_minor: 25000000
+    value_includes_tax: null
+    value_note: GeM award; scope read from the full document by the keyword reader (out-of-sample test set 2026-10-16)
+    source_url: https://bidplus.gem.gov.in/bidding/bid/getBidResultView/5972041
+    confidence: high
+    use: true
+    model:
+      build_type: ready_product
+      buyer: government
+      size: small
+      size_reason: judged from the scope before pricing (no EMD in the document)
+      scale: medium
+      om_years: 3
+      deadline_months: null
+      features:
+      - online_forms
+      - dashboards
+      - ai_chatbot
+      - languages
+      - grievances
+      - billing
+      - mobile_app
+      custom_features: []
+  - id: gem-ntpc-amber-chatbot
+    title: AI chatbot for NTPC employees, 12 months
+    buyer: NTPC Ltd
+    award_year: 2026
+    value_minor: 197542600
+    value_includes_tax: true
+    value_note: GeM award; scope read from the full document by the keyword reader (out-of-sample test set 2026-10-16)
+    source_url: https://bidplus.gem.gov.in/bidding/bid/getBidResultView/9587720
+    confidence: high
+    use: true
+    model:
+      build_type: ready_product
+      buyer: government
+      size: small
+      size_reason: judged from the scope before pricing (no EMD in the document)
+      scale: medium
+      om_years: 1
+      deadline_months: null
+      features:
+      - dashboards
+      - ai_chatbot
+      - grievances
+      custom_features: []
+  - id: gem-hpcl-website
+    title: HPCL website development, hosting and maintenance plus 200 development person-days
+    buyer: HPCL
+    award_year: 2026
+    value_minor: 198500000
+    value_includes_tax: true
+    value_note: GeM award; scope read from the full document by the keyword reader (out-of-sample test set 2026-10-16)
+    source_url: https://bidplus.gem.gov.in/bidding/bid/getBidResultView/9069311
+    confidence: high
+    use: true
+    model:
+      buyer: government
+      size: small
+      size_reason: judged from the scope before pricing (no EMD in the document)
+      scale: medium
+      om_years: 3
+      deadline_months: null
+      features:
+      - payments
+      - grievances
+      - inventory
+      - billing
+      - bookings
+      - maps
+      custom_features: []
+  - id: gem-fsda-website-accounting
+    title: Development authority website and accounting software upgrade
+    buyer: FSDA
+    award_year: 2026
+    value_minor: 97500000
+    value_includes_tax: null
+    value_note: GeM award; scope read from the full document by the keyword reader (out-of-sample test set 2026-10-16)
+    source_url: https://bidplus.gem.gov.in/bidding/bid/getBidResultView/9384059
+    confidence: medium
+    use: true
+    model:
+      buyer: government
+      size: small
+      size_reason: judged from the scope before pricing (no EMD in the document)
+      scale: medium
+      om_years: 1
+      deadline_months: null
+      features:
+      - online_forms
+      - dashboards
+      - public_website
+      - grievances
+      - billing
+      custom_features: []

@@ -1,7 +1,8 @@
 """SQLAlchemy models. Import every model module here so Alembic sees all tables."""
 
 from app.models.base import Base
-from app.models.org import Organisation, Role, User
+from app.models.contact import ContactMessage
+from app.models.org import Organisation, OrgSettings, Role, User
 from app.models.project import (
     Assumption,
     ComponentInstance,
@@ -12,6 +13,7 @@ from app.models.project import (
     Project,
     QuestionnaireAnswer,
     Requirement,
+    Template,
 )
 from app.models.reference import (
     CatalogComponent,
@@ -26,9 +28,11 @@ __all__ = [
     "Base",
     "CatalogComponent",
     "ComponentInstance",
+    "ContactMessage",
     "CostLine",
     "Document",
     "Estimate",
+    "OrgSettings",
     "Organisation",
     "Outcome",
     "ParameterSet",
@@ -39,5 +43,6 @@ __all__ = [
     "Requirement",
     "Role",
     "TaxonomyVersion",
+    "Template",
     "User",
 ]

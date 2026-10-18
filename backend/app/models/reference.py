@@ -43,6 +43,8 @@ class RateCard(IdTimestampMixin, Base):
     effective_date: Mapped[date] = mapped_column(Date)
     status: Mapped[str] = mapped_column(String(20))  # draft / active / retired
     source: Mapped[str] = mapped_column(String(200))
+    region: Mapped[str] = mapped_column(String(20), default="india", server_default="india")
+    currency: Mapped[str] = mapped_column(String(3), default="INR", server_default="INR")
     items: Mapped[list["RateItem"]] = relationship(
         back_populates="rate_card", cascade="all, delete-orphan", order_by="RateItem.key"
     )
@@ -73,4 +75,5 @@ class ParameterSet(IdTimestampMixin, Base):
     version: Mapped[str] = mapped_column(String(40), unique=True)
     effective_date: Mapped[date] = mapped_column(Date)
     status: Mapped[str] = mapped_column(String(20))
+    region: Mapped[str] = mapped_column(String(20), default="india", server_default="india")
     data: Mapped[dict[str, Any]]  # full engine ParameterSet; each group carries its source

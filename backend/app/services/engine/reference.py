@@ -6,6 +6,7 @@ Every record carries a `source`. The value `placeholder` means "not yet calibrat
 real data"; using any placeholder marks an estimate as uncalibrated.
 """
 
+import re
 from datetime import date
 from decimal import Decimal
 from enum import StrEnum
@@ -14,6 +15,13 @@ from typing import Literal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 PLACEHOLDER = "placeholder"
+_VERSION = re.compile(r"^(.*?)(\d+)(.*)$")
+
+
+def version_key(version: str) -> tuple[str, int, str]:
+    """Natural order for version names: v9 < v10, us-v2 < us-v10 (plain text sorts v10 first)."""
+    m = _VERSION.match(version)
+    return (m.group(1), int(m.group(2)), m.group(3)) if m else (version, 0, "")
 
 
 class Frozen(BaseModel):
@@ -174,6 +182,8 @@ class RateItem(Sourced):
 class RateCard(Sourced):
     version: str
     effective_date: date
+    region: str = "india"  # which country's estimates this card prices
+    currency: str = "INR"  # estimate currency; other-currency items are converted via forex
     status: Literal["draft", "active", "retired"] = "active"
     items: list[RateItem]
 
@@ -232,6 +242,9 @@ class AiProductivity(Sourced):
     task_savings: dict[TaskType, Decimal]
     maturity_scale: dict[str, Decimal]
     max_saving: Decimal
+    # v12+: extra review of AI-written code, as a share of the effort AI saves, by this role.
+    review_share_of_saved: Decimal | None = Field(default=None, ge=0, le=1)
+    review_role: str | None = None
 
 
 class Timeline(Sourced):
@@ -268,6 +281,9 @@ class Hosting(Sourced):
     concurrent_users_per_vcpu: Decimal
     vcpu_per_app_server: Decimal
     min_app_servers: dict[str, Decimal]
+    # v12+: when the peak needs at most this many vCPUs, servers are priced at the provider's
+    # small server rate (`cloud.<provider>.app_server_small.month`) when the rate card has one.
+    small_app_server_max_vcpus: Decimal | None = None
     db_instances: dict[str, Decimal]
     base_storage_gb: Decimal
     db_storage_gb: Decimal
@@ -290,6 +306,9 @@ class AiRuntime(Sourced):
     volume_growth_per_year: Decimal
     annual_price_change: Decimal
     gpu_rate_key: str
+    # Smaller, cheaper model for simple chatbots (parameter sets v7+); None = one tier only.
+    simple_token_input_rate_key: str | None = None
+    simple_token_output_rate_key: str | None = None
     peak_factor: Decimal
     queries_per_second_per_gpu: Decimal
     min_gpus: dict[str, Decimal]
@@ -337,6 +356,7 @@ class Escalation(Sourced):
 
 
 class Commercial(Sourced):
+    tax_label: str = "GST"
     cost_of_capital: Decimal
     pbg_rate_key: str
     payment_delay_months: Decimal
@@ -381,6 +401,152 @@ class TaskRoles(Sourced):
     roles: dict[TaskType, str]
 
 
+class SegmentBacktest(Frozen):
+    """How a buyer segment's prices performed on real projects."""
+
+    projects: int = Field(ge=0)
+    within_25_percent: int = Field(ge=0)  # within ±25% of the price paid, or inside its band
+    note: str = ""
+
+
+class Calibration(Sourced):
+    """Global dials tuned by back-testing against real contract values (and adjustable per
+    company in Settings): effort_multiplier scales every component's base effort;
+    run_multiplier scales O&M support labour (helpdesk, bug-fix, patching, upgrades, CRs)."""
+
+    effort_multiplier: Decimal = Field(default=Decimal(1), gt=0)
+    run_multiplier: Decimal = Field(default=Decimal(1), gt=0)
+    notes: str = ""
+    segment_effort_multiplier: dict[str, Decimal] = {}  # e.g. {small_business: 0.3}
+    segment_run_multiplier: dict[str, Decimal] = {}
+    segment_backtest: dict[str, SegmentBacktest] = {}
+    # Build-effort factor by project size (small / medium / large), applied after the buyer
+    # segment factor; and how each size performed on real projects.
+    size_effort_multiplier: dict[str, Decimal] = {}
+    # v13+: build-effort factor by feature points (x = points, y = factor, straight lines in
+    # between), used instead of size_effort_multiplier when the estimate has size_points.
+    size_points_curve: list[Point] = []
+    # Segment factor for one size only, replacing segment_effort_multiplier there,
+    # e.g. {small_business: {small: 2.6}} (where a segment's data covers one size).
+    segment_size_effort_multiplier: dict[str, dict[str, Decimal]] = {}
+    size_backtest: dict[str, SegmentBacktest] = {}
+    # Build-effort factor by any questionnaire answer, e.g. {build_type: {ready_product: 0.3}}.
+    answer_effort_multiplier: dict[str, dict[str, Decimal]] = {}
+    # How the set did on projects it was not tuned on (the honest accuracy figure).
+    holdout_projects: int = 0
+    holdout_median_abs_error_percent: Decimal | None = None
+    # Shared model error by buyer segment, from back-test residuals: every base line in a
+    # simulation run is multiplied by one draw of triangular(1 − down, 1, 1 + up).
+    model_spread: dict[str, ClaritySpread] = {}
+    # v12+: the same by project size (used instead of the segment's when the size is known).
+    model_spread_by_size: dict[str, ClaritySpread] = {}
+    backtest_projects: int = 0  # real published contracts it was tested on
+    median_abs_error_percent: Decimal | None = None  # typical miss on those contracts
+
+
+class UsageService(Frozen):
+    """A third-party service billed by use or by subscription (SMS, email, maps, eKYC, app
+    stores, web firewall...). Priced only when its conditions hold:
+    `components` (any one in scope; empty = always), `segments` (buyer segments; empty = all),
+    `regions` (estimate country; empty = all), `min_users` and `needs_cloud_hosting`.
+
+    basis:
+      monthly   max(0, users × active_share × units_per_active_user_month − free_units_per_month)
+                × months_per_year
+      per_user  users × (first_year_units_per_user in year 1 else later_year_units_per_user)
+      fixed     count × periods (12 if rate_period = month, else 1; one_off only in year 1)
+    cost = units × rate / per_units × (1 + escalation_prices)^year
+    """
+
+    key: str
+    label: str
+    rate_key: str
+    basis: Literal["monthly", "per_user", "fixed"]
+    per_units: Decimal = Field(default=Decimal(1), gt=0)  # the rate is quoted per this many
+    components: list[str] = []
+    segments: list[str] = []
+    regions: list[str] = []
+    min_users: int = 0
+    needs_cloud_hosting: bool = False
+    units_per_active_user_month: Decimal = Decimal(0)
+    free_units_per_month: Decimal = Decimal(0)
+    first_year_units_per_user: Decimal = Decimal(0)
+    later_year_units_per_user: Decimal = Decimal(0)
+    count: Decimal = Decimal(1)
+    rate_period: Literal["month", "year", "one_off"] = "year"
+
+
+class AiFeatureRuntime(Frozen):
+    """Running cost of AI features other than the chatbot (summaries, classification, OCR...):
+    instances × users × active_share × calls_per_active_user_month × months_per_year
+    × (tokens_in × price_in + tokens_out × price_out) / tokens_per_unit."""
+
+    components: list[str]
+    calls_per_active_user_month: Decimal
+    tokens_in_per_call: Decimal
+    tokens_out_per_call: Decimal
+
+
+class DevTools(Frozen):
+    """Build-phase tool subscriptions, one seat per person-month of build effort:
+    AI coding assistant (only when the team uses AI tools) and the core dev tools suite."""
+
+    ai_coding_rate_key: str
+    dev_suite_rate_key: str
+
+
+class Translation(Frozen):
+    """Human translation of on-screen content into each extra language: words =
+    words_per_component × components; one-off = words × (languages − 1) × rate_per_word;
+    each later year = one-off × annual_update_share."""
+
+    rate_key: str
+    words_per_component: Decimal
+    annual_update_share: Decimal
+
+
+class ClientPaidNote(Frozen):
+    """A cost the client pays directly to a third party (not part of the quote), shown as a
+    rate: e.g. the payment gateway's fee on each online payment."""
+
+    key: str
+    label: str
+    components: list[str] = []
+    rate_keys: list[str]  # quoted in the note, in this order
+    text: str  # with {0}, {1}... for the rate amounts
+
+
+class ThirdParty(Sourced):
+    """Third-party running costs, build tools and client-paid items (parameter sets v5+)."""
+
+    services: list[UsageService] = []
+    ai_features: AiFeatureRuntime | None = None
+    dev_tools: DevTools | None = None
+    translation: Translation | None = None
+    client_paid_notes: list[ClientPaidNote] = []
+
+
+class Lean(Sourced):
+    """Lean delivery for private and small-business projects (parameter sets v6+): management
+    and hypercare scale with the work instead of the calendar, and test environments are priced
+    as one small cloud server each.
+
+      build PM pd    = min(pm_fte × months × pd_per_month, pm_share_of_build_pd × build_pd)
+      hypercare pd   = min(weeks × pd_per_week × Σ fte, hypercare_share_of_build_pd × build_pd)
+      O&M PM pd/year = min(om_pm_fte × pd_per_year, om_pm_share_of_build_pd × build_pd)
+    """
+
+    segments: list[str]
+    sizes: list[str] = []  # project sizes that are delivered lean whatever the buyer
+    # v13+: lean whenever no formal reports and review meetings are asked for (the project
+    # manager's time follows the work), whatever the size.
+    unless_governance: bool = False
+    pm_share_of_build_pd: Decimal = Field(gt=0, le=1)
+    hypercare_share_of_build_pd: Decimal = Field(gt=0, le=1)
+    om_pm_share_of_build_pd: Decimal = Field(gt=0, le=1)
+    environment_rate_key: str | None = None
+
+
 class Defaults(Sourced):
     """Questionnaire defaults, used (and listed as assumptions) when the user gives no answer."""
 
@@ -390,6 +556,7 @@ class Defaults(Sourced):
 class ParameterSet(Frozen):
     version: str
     effective_date: date
+    region: str = "india"
     status: Literal["draft", "active", "retired"] = "active"
     calendar: Calendar
     complexity_multipliers: dict[Complexity, Decimal]
@@ -408,3 +575,6 @@ class ParameterSet(Frozen):
     uncertainty: Uncertainty
     confidence: Confidence
     defaults: Defaults
+    calibration: Calibration | None = None
+    third_party: ThirdParty | None = None  # None (older sets): no third-party lines
+    lean: Lean | None = None  # None (older sets): calendar-based management for everyone

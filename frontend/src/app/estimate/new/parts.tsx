@@ -17,6 +17,105 @@ export type Choice = string | number;
 export const MANUAL_STEPS = ["What to build", "A few questions", "Your cost"];
 export const DOCUMENT_STEPS = ["Upload", "Check what we found", "Your cost"];
 
+/**
+ * Questions that only matter given other answers or the chosen features (from the options
+ * API): e.g. helpdesk hours only with a helpdesk team, hosting and fees only with support
+ * after launch, the chatbot question only when an AI feature is chosen.
+ */
+export function relevantQuestions<
+  T extends {
+    key: string;
+    default: Choice;
+    only_with_features?: string[];
+    only_with_custom_types?: string[];
+    hide_when?: Record<string, Choice[]>;
+  },
+>(
+  questions: T[],
+  choices: Record<string, Choice>,
+  features: string[],
+  customTypes: string[],
+): T[] {
+  const answer = (key: string) =>
+    String(choices[key] ?? questions.find((q) => q.key === key)?.default);
+  return questions.filter((q) => {
+    const hidden = Object.entries(q.hide_when ?? {}).some(([key, values]) =>
+      values.map(String).includes(answer(key)),
+    );
+    if (hidden) return false;
+    const needFeatures = q.only_with_features ?? [];
+    const needTypes = q.only_with_custom_types ?? [];
+    if (needFeatures.length === 0 && needTypes.length === 0) return true;
+    return (
+      needFeatures.some((f) => features.includes(f)) ||
+      needTypes.some((t) => customTypes.includes(t))
+    );
+  });
+}
+
+type DefaultBy = Record<string, Record<string, Choice>>;
+type DependentQuestion = {
+  key: string;
+  default: Choice;
+  default_by?: DefaultBy;
+};
+
+/** A question's default given the other answers (e.g. size "small" for a startup client). */
+export function defaultFor(
+  q: DependentQuestion,
+  choices: Record<string, Choice>,
+): Choice {
+  for (const [other, byValue] of Object.entries(q.default_by ?? {})) {
+    const value = byValue[String(choices[other])];
+    if (value !== undefined) return value;
+  }
+  return q.default;
+}
+
+/**
+ * Set one answer and refresh the defaults that follow it, except for questions the user (or
+ * the document) has already answered (`fixed`).
+ */
+export function setChoice(
+  questions: DependentQuestion[],
+  choices: Record<string, Choice>,
+  fixed: Set<string>,
+  key: string,
+  value: Choice,
+): Record<string, Choice> {
+  const next = { ...choices, [key]: value };
+  for (const q of questions) {
+    if (q.key !== key && !fixed.has(q.key) && q.default_by?.[key]) {
+      next[q.key] = defaultFor(q, next);
+    }
+  }
+  return next;
+}
+
+/** Starting answers: the given ones (fixed), then defaults that follow them. */
+export function initialChoices(
+  questions: DependentQuestion[],
+  given: Record<string, Choice>,
+): Record<string, Choice> {
+  const base: Record<string, Choice> = Object.fromEntries(
+    questions.map((q) => [q.key, given[q.key] ?? q.default]),
+  );
+  for (const q of questions) {
+    if (given[q.key] === undefined) base[q.key] = defaultFor(q, base);
+  }
+  return base;
+}
+
+/** Currency of the country the options were loaded for ("INR" by default). */
+export function optionsCurrency(options: {
+  country: string;
+  countries: { key: string; currency: string }[];
+}): string {
+  return (
+    options.countries.find((c) => c.key === options.country)?.currency ?? "INR"
+  );
+}
+
 export function StepIndicator({
   labels,
   current,
@@ -71,7 +170,7 @@ export function FeatureCard({
   hint: string;
   checked: boolean;
   onToggle: () => void;
-  /** Extra content under the card (e.g. where the tender says so). */
+  /** Extra content under the card (e.g. where the document says so). */
   children?: React.ReactNode;
 }) {
   return (
@@ -132,15 +231,28 @@ export function useQuestionImpact(
   return impacts;
 }
 
-/** Highest price impact first; questions without an impact keep their original order. */
-export function orderByImpact<T extends { key: string }>(
-  questions: T[],
-  impacts: Map<string, QuestionImpact>,
-): T[] {
-  return questions
-    .map((q, i) => ({ q, i, impact: impacts.get(q.key)?.impact_paise ?? -1 }))
-    .sort((a, b) => b.impact - a.impact || a.i - b.i)
-    .map(({ q }) => q);
+/** A question as the heading of its own screen, with how much it can move the price. */
+export function QuestionHeading({
+  question,
+  impact,
+  currency = "INR",
+}: {
+  question: QuickQuestion;
+  impact?: QuestionImpact;
+  currency?: string;
+}) {
+  return (
+    <div>
+      <h1 className="text-2xl font-semibold tracking-tight text-balance sm:text-3xl">
+        {question.label}
+      </h1>
+      <p className="mt-1 text-muted-foreground">
+        {impact && impact.impact_paise > 0
+          ? `This answer can change the price by about ${formatPaise(impact.impact_paise, currency)}.`
+          : "We have picked the usual answer. Change it if it does not fit."}
+      </p>
+    </div>
+  );
 }
 
 export function QuestionGroup({
@@ -149,6 +261,7 @@ export function QuestionGroup({
   onChange,
   hideLegend = false,
   impact,
+  currency = "INR",
 }: {
   question: QuickQuestion;
   value: Choice;
@@ -156,6 +269,7 @@ export function QuestionGroup({
   hideLegend?: boolean;
   /** Price per option from the engine, when known. */
   impact?: QuestionImpact;
+  currency?: string;
 }) {
   const prices = new Map(
     (impact?.options ?? []).map((o) => [String(o.value), o.likely_paise]),
@@ -168,7 +282,8 @@ export function QuestionGroup({
         {question.label}
         {impact && impact.impact_paise > 0 && !hideLegend ? (
           <span className="mt-0.5 block text-sm font-normal text-muted-foreground">
-            Can change the price by about {formatPaise(impact.impact_paise)}
+            Can change the price by about{" "}
+            {formatPaise(impact.impact_paise, currency)}
           </span>
         ) : null}
       </legend>
@@ -205,7 +320,7 @@ export function QuestionGroup({
                 <span className="pl-6 text-xs text-muted-foreground tabular-nums">
                   {price === null || price === undefined
                     ? "not possible"
-                    : `≈ ${formatPaise(price)}`}
+                    : `≈ ${formatPaise(price, currency)}`}
                 </span>
               ) : null}
             </label>
@@ -216,7 +331,7 @@ export function QuestionGroup({
   );
 }
 
-/** "Page 2 · Clause 4.3", with the exact sentence from the tender on demand. */
+/** "Page 2 · Clause 4.3", with the exact sentence from the document on demand. */
 export function Citation({
   evidence,
   approximatePages = false,
@@ -238,7 +353,9 @@ export function Citation({
         <span aria-hidden className="mr-1">
           📄
         </span>
-        Found in the tender: {where}
+        {first.checked === false
+          ? `From a scanned page — please verify on ${where.charAt(0).toLowerCase()}${where.slice(1)}`
+          : `Found in the document: ${where}`}
         <span className="ml-1 text-muted-foreground group-open:hidden">
           (show text)
         </span>

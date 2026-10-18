@@ -5,7 +5,7 @@ from decimal import Decimal
 
 from app.services.engine import spreads
 from app.services.engine.context import LineBuilder, PricingContext
-from app.services.engine.money import ZERO, ceil
+from app.services.engine.money import ONE, ZERO, ceil
 from app.services.engine.outputs import CostLineOut, Timeline
 from app.services.engine.timeline import size_band
 
@@ -33,7 +33,7 @@ def golive_lines(ctx: PricingContext, timeline: Timeline) -> list[CostLineOut]:
         idx = _band(t, timeline)
         audit_band: str = t.param("timeline", "size_bands", idx, "audit_band")
         prefix: str = t.param("go_live", "cert_in_audit_rate_prefix")
-        fee = t.rate_inr(f"{prefix}.{audit_band}")
+        fee = t.rate_local(f"{prefix}.{audit_band}")
         spreads.fixed(t, "fixed_fee")
         lines.append(t.finish(fee))
 
@@ -44,7 +44,7 @@ def golive_lines(ctx: PricingContext, timeline: Timeline) -> list[CostLineOut]:
         )
         re_prefix: str = r.param("go_live", "cert_in_reaudit_rate_prefix")
         spreads.fixed(r, "fixed_fee")
-        lines.append(r.finish(r.rate_inr(f"{re_prefix}.{audit_band}")))
+        lines.append(r.finish(r.rate_local(f"{re_prefix}.{audit_band}")))
 
     t = ctx.builder(
         line_key="go_live.certification/stqc",
@@ -55,7 +55,7 @@ def golive_lines(ctx: PricingContext, timeline: Timeline) -> list[CostLineOut]:
         formula_id="golive.stqc.v1",
     )
     if t.driver("stqc_certification"):
-        fee = t.rate_inr(t.param("go_live", "stqc_rate_key"))
+        fee = t.rate_local(t.param("go_live", "stqc_rate_key"))
         spreads.fixed(t, "fixed_fee")
         lines.append(t.finish(fee))
 
@@ -74,7 +74,7 @@ def golive_lines(ctx: PricingContext, timeline: Timeline) -> list[CostLineOut]:
         pd = t.step("trainer person-days", f"{sessions} × {pd_per}", sessions * pd_per)
         t.add_role_pd(role, pd)
         spreads.clarity(t, overall)
-        lines.append(t.finish(pd * t.rate_inr(role)))
+        lines.append(t.finish(pd * t.rate_local(role)))
 
     t = ctx.builder(
         line_key="go_live.training/travel",
@@ -87,7 +87,7 @@ def golive_lines(ctx: PricingContext, timeline: Timeline) -> list[CostLineOut]:
     outstation: int = t.driver("training_outstation_sessions")
     if outstation:
         trips: Decimal = t.param("go_live", "trips_per_outstation_session")
-        trip_rate = t.rate_inr(t.param("go_live", "travel_rate_key"))
+        trip_rate = t.rate_local(t.param("go_live", "travel_rate_key"))
         spreads.clarity(t, overall)
         lines.append(t.finish(outstation * trips * trip_rate))
 
@@ -103,14 +103,26 @@ def golive_lines(ctx: PricingContext, timeline: Timeline) -> list[CostLineOut]:
     if weeks:
         pd_per_week: Decimal = t.param("go_live", "pd_per_week")
         team: dict[str, Decimal] = t.param("go_live", "hypercare_team_fte")
+        scale = ONE
+        if t.lean():
+            t.formula_id = "golive.hypercare.v2"
+            full = weeks * pd_per_week * sum(team.values(), ZERO)
+            share: Decimal = t.param("lean", "hypercare_share_of_build_pd")
+            t.step("build effort", "Σ component effort (pd)", timeline.build_effort_pd)
+            cap = share * timeline.build_effort_pd
+            scale = t.step(
+                "lean hypercare scale",
+                f"min(1, {share} × {timeline.build_effort_pd:.2f} / {full:.2f})",
+                min(ONE, cap / full) if full else ONE,
+            )
         total = ZERO
         for role, fte in team.items():
-            pd = weeks * pd_per_week * fte
+            pd = weeks * pd_per_week * fte * scale
             t.add_role_pd(role, pd)
             total += t.step(
                 f"hypercare {role}",
-                f"{weeks} wk × {pd_per_week} × {fte} FTE",
-                pd * t.rate_inr(role),
+                f"{weeks} wk × {pd_per_week} × {fte} FTE × {scale:.4f}",
+                pd * t.rate_local(role),
             )
         spreads.clarity(t, overall)
         lines.append(t.finish(total))
@@ -150,35 +162,53 @@ def programme_lines(ctx: PricingContext, timeline: Timeline) -> list[CostLineOut
     pd_month: Decimal = t.param("calendar", "pd_per_month")
     pm_role: str = t.param("programme", "pm_role")
     pd = t.step("PM person-days", f"{fte} FTE × {months} × {pd_month}", fte * months * pd_month)
+    if t.lean():
+        t.formula_id = "programme.pm.v2"
+        share: Decimal = t.param("lean", "pm_share_of_build_pd")
+        pd = t.step(
+            "lean PM person-days",
+            f"min({pd:.2f}, {share} × {timeline.build_effort_pd:.2f})",
+            min(pd, share * timeline.build_effort_pd),
+        )
     t.add_role_pd(pm_role, pd)
-    lines.append(t.finish(pd * t.rate_inr(pm_role)))
+    lines.append(t.finish(pd * t.rate_local(pm_role)))
 
-    t = base(
-        "steering",
-        "programme.steering_meetings",
-        "Steering committee meetings",
-        "programme.steering.v1",
-    )
-    interval: Decimal = t.param("programme", "steering_interval_months")
-    meetings = t.step("meetings", f"ceil({months} / {interval})", ceil(months / interval))
-    lines.append(t.finish(meetings * t.rate_inr(t.param("programme", "steering_rate_key"))))
+    if ctx.q.governance_overheads:
+        t = base(
+            "steering",
+            "programme.steering_meetings",
+            "Steering committee meetings",
+            "programme.steering.v1",
+        )
+        interval: Decimal = t.param("programme", "steering_interval_months")
+        meetings = t.step("meetings", f"ceil({months} / {interval})", ceil(months / interval))
+        lines.append(t.finish(meetings * t.rate_local(t.param("programme", "steering_rate_key"))))
 
-    t = base("mis", "programme.mis_reports", "MIS reports", "programme.mis.v1")
-    mis_pd: Decimal = t.param("programme", "mis_pd_per_month")
-    mis_role: str = t.param("programme", "mis_role")
-    pd = t.step("MIS person-days", f"{months} × {mis_pd}", months * mis_pd)
-    t.add_role_pd(mis_role, pd)
-    lines.append(t.finish(pd * t.rate_inr(mis_role)))
+        t = base("mis", "programme.mis_reports", "MIS reports", "programme.mis.v1")
+        mis_pd: Decimal = t.param("programme", "mis_pd_per_month")
+        mis_role: str = t.param("programme", "mis_role")
+        pd = t.step("MIS person-days", f"{months} × {mis_pd}", months * mis_pd)
+        t.add_role_pd(mis_role, pd)
+        lines.append(t.finish(pd * t.rate_local(mis_role)))
 
-    t = base("travel", "programme.travel", "Programme travel", "programme.travel.v1")
-    trips: Decimal = t.param("programme", "travel_trips_per_month")
-    lines.append(t.finish(months * trips * t.rate_inr(t.param("programme", "travel_rate_key"))))
+        t = base("travel", "programme.travel", "Programme travel", "programme.travel.v1")
+        trips: Decimal = t.param("programme", "travel_trips_per_month")
+        lines.append(
+            t.finish(months * trips * t.rate_local(t.param("programme", "travel_rate_key")))
+        )
 
     t = base(
         "envs", "programme.environments", "Non-production environments", "programme.environments.v1"
     )
     envs: Decimal = t.param("programme", "non_prod_environments")
-    env_rate = t.rate_inr(t.param("programme", "environment_rate_key"))
+    if ctx.q.non_prod_environments is not None:
+        t.driver("non_prod_environments")
+        envs = Decimal(ctx.q.non_prod_environments)
+    lean_key = ctx.p.lean.environment_rate_key if ctx.p.lean else None
+    if lean_key and t.lean():
+        env_rate = t.rate_local(t.param("lean", "environment_rate_key"))
+    else:
+        env_rate = t.rate_local(t.param("programme", "environment_rate_key"))
     lines.append(t.finish(months * envs * env_rate))
 
     for year in range(1, ctx.q.om_years + 1):
@@ -195,9 +225,17 @@ def programme_lines(ctx: PricingContext, timeline: Timeline) -> list[CostLineOut
         fte = t.param("timeline", "size_bands", idx, "om_pm_fte")
         pd_year: Decimal = t.param("calendar", "pd_per_year")
         pd = fte * pd_year
+        if t.lean():
+            t.formula_id = "programme.om_pm.v2"
+            om_share: Decimal = t.param("lean", "om_pm_share_of_build_pd")
+            pd = t.step(
+                "lean O&M PM person-days",
+                f"min({pd:.2f}, {om_share} × {timeline.build_effort_pd:.2f})",
+                min(pd, om_share * timeline.build_effort_pd),
+            )
         t.add_role_pd(pm_role, pd)
         esc = t.escalation("labour", year)
         spreads.clarity(t, overall)
         spreads.om_year(t, year)
-        lines.append(t.finish(pd * t.rate_inr(pm_role) * esc))
+        lines.append(t.finish(pd * t.rate_local(pm_role) * esc))
     return lines

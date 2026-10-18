@@ -56,6 +56,7 @@ def require_roles(*roles: Role) -> Callable[[User], User]:
 
 EditorUser = Annotated[User, Depends(require_roles(*EDITOR_ROLES))]
 AdminUser = Annotated[User, Depends(require_roles(Role.ADMIN))]
+FinanceUser = Annotated[User, Depends(require_roles(*FINANCE_ROLES))]
 
 
 def can_see_margin(user: User) -> bool:

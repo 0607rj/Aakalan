@@ -1,0 +1,89 @@
+# Rate card us-v2 (2026-10-16) = us-v1 + build-phase tools and third-party service prices.
+# US rate card us-v1 (researched 2026-10-16). Amounts in USD. Role day rates = GSA CALC
+# ceiling-rate P50 for the labour category (IT Professional Services, SIN 54151S) × 8 hours.
+# CALC ceiling rates are fully loaded maximums; actual task-order prices are often lower.
+version: us-v2
+effective_date: 2026-10-16
+status: active
+region: us
+currency: USD
+source: "Public US benchmarks researched 2026-10-16 (see each item)"
+items:
+  # ---- roles: USD per person-day (CALC P50 $/h × 8) ---------------------------------------------
+  - {key: role.project_manager, kind: role, unit: per_person_day, amount: 1233.60, currency: USD, source: "GSA CALC ceiling P50 $154.20/h (n=5,471, SIN 54151S, 2026-10-16) x 8", source_url: "https://calc.gsa.gov/"}
+  - {key: role.solution_architect, kind: role, unit: per_person_day, amount: 1473.84, currency: USD, source: "GSA CALC ceiling P50 $184.23/h (n=333) x 8", source_url: "https://calc.gsa.gov/"}
+  - {key: role.business_analyst, kind: role, unit: per_person_day, amount: 967.52, currency: USD, source: "GSA CALC ceiling P50 $120.94/h (n=2,518) x 8", source_url: "https://calc.gsa.gov/"}
+  - {key: role.ui_ux_designer, kind: role, unit: per_person_day, amount: 1111.84, currency: USD, source: "GSA CALC ceiling P50 $138.98/h (n=176) x 8", source_url: "https://calc.gsa.gov/"}
+  - {key: role.senior_developer, kind: role, unit: per_person_day, amount: 1356.72, currency: USD, source: "GSA CALC ceiling P50 $169.59/h (n=101, small sample) x 8", source_url: "https://calc.gsa.gov/"}
+  - {key: role.developer, kind: role, unit: per_person_day, amount: 1079.12, currency: USD, source: "GSA CALC ceiling P50 $134.89/h (n=1,980) x 8", source_url: "https://calc.gsa.gov/"}
+  - {key: role.qa_engineer, kind: role, unit: per_person_day, amount: 836.64, currency: USD, source: "GSA CALC ceiling P50 $104.58/h (n=124) x 8", source_url: "https://calc.gsa.gov/"}
+  - {key: role.devops_engineer, kind: role, unit: per_person_day, amount: 1176.72, currency: USD, source: "GSA CALC ceiling P50 $147.09/h (n=344) x 8", source_url: "https://calc.gsa.gov/"}
+  - {key: role.ml_engineer, kind: role, unit: per_person_day, amount: 1366.64, currency: USD, source: "GSA CALC ceiling P50 $170.83/h (n=32, small sample) x 8", source_url: "https://calc.gsa.gov/"}
+  - {key: role.security_engineer, kind: role, unit: per_person_day, amount: 1223.60, currency: USD, source: "GSA CALC ceiling P50 $152.95/h (n=134) x 8", source_url: "https://calc.gsa.gov/"}
+  - {key: role.data_engineer, kind: role, unit: per_person_day, amount: 1189.60, currency: USD, source: "GSA CALC ceiling P50 $148.70/h (n=514) x 8", source_url: "https://calc.gsa.gov/"}
+  - {key: role.technical_writer, kind: role, unit: per_person_day, amount: 775.84, currency: USD, source: "GSA CALC ceiling P50 $96.98/h (n=2,301) x 8", source_url: "https://calc.gsa.gov/"}
+  - {key: role.trainer, kind: role, unit: per_person_day, amount: 889.36, currency: USD, source: "GSA CALC ceiling P50 $111.17/h (n=437) x 8", source_url: "https://calc.gsa.gov/"}
+  - {key: role.helpdesk_executive, kind: role, unit: per_person_day, amount: 390.64, currency: USD, source: "GSA CALC 'help desk' ceiling P10 $48.83/h x 8 (P10 used: the category mixes in managers; P50 $80.13/h)", source_url: "https://calc.gsa.gov/"}
+
+  # ---- AWS us-east-1 on-demand (hourly x 730) ------------------------------------------------
+  - {key: cloud.aws.app_server.month, kind: cloud_sku, unit: per_instance_month, amount: 140.16, currency: USD, region: us-east-1, source: "m6i.xlarge Linux $0.192/h x 730 (EC2 price list 2026-10-15)", source_url: "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/us-east-1/index.csv"}
+  - {key: cloud.aws.db.small.month, kind: cloud_sku, unit: per_instance_month, amount: 47.45, currency: USD, region: us-east-1, source: "RDS PostgreSQL db.t4g.medium Single-AZ $0.065/h x 730 (2026-10-06)", source_url: "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonRDS/current/us-east-1/index.json"}
+  - {key: cloud.aws.db.medium.month, kind: cloud_sku, unit: per_instance_month, amount: 116.07, currency: USD, region: us-east-1, source: "RDS PostgreSQL db.m6g.large Single-AZ $0.159/h x 730", source_url: "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonRDS/current/us-east-1/index.json"}
+  - {key: cloud.aws.db.large.month, kind: cloud_sku, unit: per_instance_month, amount: 464.28, currency: USD, region: us-east-1, source: "RDS PostgreSQL db.m6g.2xlarge Single-AZ $0.636/h x 730", source_url: "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonRDS/current/us-east-1/index.json"}
+  - {key: cloud.aws.storage.gb_month, kind: cloud_sku, unit: per_gb_month, amount: 0.023, currency: USD, region: us-east-1, source: "S3 Standard first 50 TB (2026-10-15)", source_url: "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonS3/current/us-east-1/index.json"}
+  - {key: cloud.aws.backup.gb_month, kind: cloud_sku, unit: per_gb_month, amount: 0.05, currency: USD, region: us-east-1, source: "EBS snapshot (EC2 price list 2026-10-15)", source_url: "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/us-east-1/index.csv"}
+  - {key: cloud.aws.transfer_out.gb, kind: cloud_sku, unit: per_gb, amount: 0.09, currency: USD, region: us-east-1, source: "Data transfer out to internet, first 10 TB/month (2026-09-16)", source_url: "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSDataTransfer/current/us-east-1/index.json"}
+  - {key: cloud.aws.load_balancer.month, kind: cloud_sku, unit: per_month, amount: 16.43, currency: USD, region: us-east-1, source: "Application Load Balancer $0.0225/h x 730 (LCU charges excluded)", source_url: "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSELB/current/us-east-1/index.json"}
+  - {key: cloud.aws.monitoring.month, kind: cloud_sku, unit: per_month, amount: 50.00, currency: USD, source: placeholder}
+
+  # ---- on-prem (USD) — no credible published source ----------------------------------------
+  - {key: onprem.server.unit, kind: other, unit: per_server_capex, amount: 8000, currency: USD, source: placeholder}
+  - {key: onprem.storage.tb, kind: other, unit: per_tb_capex, amount: 500, currency: USD, source: placeholder}
+  - {key: onprem.colocation.rack_month, kind: other, unit: per_rack_month, amount: 1500, currency: USD, source: placeholder}
+
+  # ---- AI runtime --------------------------------------------------------------------------
+  - {key: llm_token.default.input, kind: llm_token, unit: per_million_tokens, amount: 2.00, currency: USD, source: "Anthropic API list price, claude-sonnet-5-5 input (as of 2026-10-06)"}
+  - {key: llm_token.default.output, kind: llm_token, unit: per_million_tokens, amount: 10.00, currency: USD, source: "Anthropic API list price, claude-sonnet-5-5 output (as of 2026-10-06)"}
+  - {key: gpu_hour.l4, kind: gpu_hour, unit: per_gpu_hour, amount: 0.8048, currency: USD, region: us-east-1, source: "g6.xlarge (1x NVIDIA L4) Linux on-demand (2026-10-15)", source_url: "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/us-east-1/index.csv"}
+
+  # ---- licences ------------------------------------------------------------------------------
+  - {key: licence.bpm_suite.year, kind: licence, unit: per_year, amount: 18000, currency: USD, source: placeholder}
+  - {key: licence.cms.year, kind: licence, unit: per_year, amount: 5000, currency: USD, source: placeholder}
+  - {key: licence.chatbot_platform.year, kind: licence, unit: per_year, amount: 10000, currency: USD, source: placeholder}
+  - {key: licence.ssl_certificate.year, kind: licence, unit: per_year, amount: 99, currency: USD, source: "Sectigo OV single-domain, 1-year term (reseller list price, 2026-10-16)", source_url: "https://sectigostore.com/ssl-certificates/sectigo-ov-ssl"}
+  - {key: licence.domain.year, kind: licence, unit: per_year, amount: 0, currency: USD, source: placeholder}
+
+  # ---- security testing (USD per engagement) --------------------------------------------------
+  - {key: audit_fee.cert_in.small, kind: audit_fee, unit: per_audit, amount: 10000, currency: USD, source: "Penetration test, basic tier midpoint of $5k-15k (TCM Security 2025 pricing)", source_url: "https://tcm-sec.com/how-much-does-a-penetration-test-cost/"}
+  - {key: audit_fee.cert_in.medium, kind: audit_fee, unit: per_audit, amount: 20000, currency: USD, source: "Penetration test, comprehensive tier midpoint of $10k-30k", source_url: "https://tcm-sec.com/how-much-does-a-penetration-test-cost/"}
+  - {key: audit_fee.cert_in.large, kind: audit_fee, unit: per_audit, amount: 65000, currency: USD, source: "Penetration test, high-end tier midpoint of $30k-100k", source_url: "https://tcm-sec.com/how-much-does-a-penetration-test-cost/"}
+  - {key: audit_fee.cert_in_reaudit.small, kind: audit_fee, unit: per_audit, amount: 0, currency: USD, source: "Retest after remediation usually included (vendor pricing pages)", source_url: "https://tcm-sec.com/how-much-does-a-penetration-test-cost/"}
+  - {key: audit_fee.cert_in_reaudit.medium, kind: audit_fee, unit: per_audit, amount: 0, currency: USD, source: "Retest after remediation usually included (vendor pricing pages)", source_url: "https://tcm-sec.com/how-much-does-a-penetration-test-cost/"}
+  - {key: audit_fee.cert_in_reaudit.large, kind: audit_fee, unit: per_audit, amount: 0, currency: USD, source: "Retest after remediation usually included (vendor pricing pages)", source_url: "https://tcm-sec.com/how-much-does-a-penetration-test-cost/"}
+  - {key: audit_fee.cert_in_annual.small, kind: audit_fee, unit: per_year, amount: 10000, currency: USD, source: "Annual penetration test priced as a basic engagement", source_url: "https://tcm-sec.com/how-much-does-a-penetration-test-cost/"}
+  - {key: audit_fee.cert_in_annual.medium, kind: audit_fee, unit: per_year, amount: 20000, currency: USD, source: "Annual penetration test priced as a comprehensive engagement", source_url: "https://tcm-sec.com/how-much-does-a-penetration-test-cost/"}
+  - {key: audit_fee.cert_in_annual.large, kind: audit_fee, unit: per_year, amount: 65000, currency: USD, source: "Annual penetration test priced as a high-end engagement", source_url: "https://tcm-sec.com/how-much-does-a-penetration-test-cost/"}
+  - {key: audit_fee.stqc, kind: audit_fee, unit: per_certification, amount: 0, currency: USD, source: placeholder}
+
+  # ---- bank, travel, other ------------------------------------------------------------------
+  - {key: bank_charge.pbg_commission, kind: bank_charge, unit: ratio_per_year, amount: 0.005, currency: USD, source: "Performance bond premium 1-3% of contract value per contract (James Moore 2026-01; UFG Surety); spread as 0.5%/yr over a ~4-year term", source_url: "https://www.jmco.com/articles/curtis-c-j-leonard/how-much-does-a-surety-bond-cost-the-james-moore-guide/"}
+  - {key: forex.USD_INR, kind: other, unit: inr_per_usd, amount: 96.7733, currency: INR, source: "FBIL USD/INR reference rate, 2026-10-08", source_url: "https://www.fbil.org.in/"}
+  - {key: travel.outstation_trip, kind: other, unit: per_trip, amount: 1500, currency: USD, source: placeholder}
+  - {key: other.steering_meeting, kind: other, unit: per_meeting, amount: 1000, currency: USD, source: placeholder}
+  - {key: other.non_prod_environment.month, kind: other, unit: per_environment_month, amount: 1500, currency: USD, source: placeholder}
+
+  # ---- build-phase tools (v3 / us-v2, researched 2026-10-16): USD per seat-month -------------
+  - {key: tools.ai_coding.seat_month, kind: licence, unit: per_seat_month, amount: 20, currency: USD, source: "Claude Team standard seat, billed annually (includes Claude Code); GitHub Copilot Business is $19", source_url: "https://claude.com/pricing"}
+  - {key: tools.dev_suite.seat_month, kind: licence, unit: per_seat_month, amount: 14.91, currency: USD, source: "GitHub Team $4 + Jira Standard $7.91 (resolution.de, 2026-07; Atlassian page not readable) + Figma Collab seat $3", source_url: "https://github.com/pricing"}
+
+  # ---- third-party services ---------------------------------------------------------------------
+  - {key: service.email.thousand, kind: other, unit: per_1000_emails, amount: 0.10, currency: USD, source: "Amazon SES outbound email, $0.10 per 1,000 (retrieved 2026-10-16)", source_url: "https://aws.amazon.com/ses/pricing/"}
+  - {key: service.app_store.apple_year, kind: licence, unit: per_year, amount: 99, currency: USD, source: "Apple Developer Program annual fee", source_url: "https://developer.apple.com/programs/"}
+  - {key: service.app_store.google_once, kind: licence, unit: one_off, amount: 25, currency: USD, source: "Google Play developer registration, one-time fee", source_url: "https://support.google.com/googleplay/android-developer/answer/6112435"}
+  - {key: security.waf.base_month, kind: cloud_sku, unit: per_month, amount: 15, currency: USD, source: "AWS WAF $5 per web ACL + 10 rules x $1 per month", source_url: "https://aws.amazon.com/waf/pricing/"}
+  - {key: security.waf.million_requests, kind: cloud_sku, unit: per_million_requests, amount: 0.60, currency: USD, source: "AWS WAF $0.60 per million requests", source_url: "https://aws.amazon.com/waf/pricing/"}
+  - {key: service.sms.message, kind: other, unit: per_sms, amount: 0.0123, currency: USD, source: "Twilio US SMS $0.0083 per segment + carrier fee about $0.004 (AT&T $0.0035, Verizon $0.005)", source_url: "https://www.twilio.com/en-us/sms/pricing/us"}
+  - {key: service.maps.thousand_loads, kind: other, unit: per_1000_map_loads, amount: 7.00, currency: USD, source: "Google Maps Platform Dynamic Maps $7.00 per 1,000 loads (10k/month free, Essentials), w.e.f. 2025-03-01", source_url: "https://developers.google.com/maps/billing-and-pricing/pricing"}
+  - {key: service.translation.word, kind: other, unit: per_word, amount: 0.12, currency: USD, source: "Gengo English to Spanish, Advanced (professional) from $0.12 per word", source_url: "https://gengo.com/professional-translation/english-spanish/"}
+  - {key: client.payment_gateway.fee, kind: bank_charge, unit: ratio_per_payment, amount: 0.029, currency: USD, source: "Stripe US online domestic cards 2.9% + 30c (secondary source; stripe.com/us/pricing not readable from India)", source_url: "https://priceworld.com/merchant-fees/stripe/"}
+  - {key: client.payment_gateway.fixed, kind: bank_charge, unit: per_payment, amount: 0.30, currency: USD, source: "Stripe US online domestic cards 2.9% + 30c (secondary source)", source_url: "https://priceworld.com/merchant-fees/stripe/"}

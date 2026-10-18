@@ -1,0 +1,285 @@
+# US benchmark contracts (researched 2026-10-16) for back-testing the estimator.
+# `value_minor` is the published value in cents. `use` marks contracts comparable enough to tune
+# on (a defined portal build, labour-priced); others are kept for reference with the reason.
+# `model` is how the scope maps onto our quick-estimate form — a judgement from the scope text.
+country: us
+currency: USD
+# AI coding tools: rare before 2023, spreading 2023-24, common from 2025 (assumption).
+ai_adoption_by_year: {2020: none, 2023: low, 2025: medium}
+projects:
+  - id: sba-dlap-salesforce-chatbot
+    title: Salesforce, chatbot and Disaster Loan Application Portal replacement (COVID-19)
+    buyer: U.S. Small Business Administration
+    award_year: 2020
+    value_minor: 218042700
+    value_includes_tax: false
+    value_note: obligated = base + all options; 2020-03-28 to 2020-12-28
+    source_url: https://www.usaspending.gov/award/CONT_AWD_73351020P0014_7300_-NONE-_-NONE-
+    confidence: medium
+    use: true
+    model: {scale: large, om_years: 0, deadline_months: 9, features: [online_forms, ai_chatbot], custom_features: []}
+  - id: hrsa-salesforce-case-mgmt
+    title: Salesforce CRM-like case management system - design, development, implementation
+    buyer: HHS Health Resources and Services Administration
+    award_year: 2020
+    value_minor: 248024300
+    value_includes_tax: false
+    value_note: total obligated (base + 3 mods); 2020-12-18 to 2022-03-18
+    source_url: https://www.usaspending.gov/award/CONT_AWD_75R60221F34010_7526_75R60218A00014_7526
+    confidence: medium
+    use: true
+    model: {scale: small, om_years: 0, deadline_months: 15, features: [approval_workflow, staff_login, connect_existing, dashboards], custom_features: [{name: Provider data integration, category: integration, size: M}]}
+  - id: dol-ilab-knowledge-portal
+    title: ILAB Knowledge Base web portal development and O&M
+    buyer: U.S. Department of Labor
+    award_year: 2022
+    value_minor: 186154300
+    value_includes_tax: false
+    value_note: obligated 2022-01 to 2025-01 (ceiling incl. options $2.75M)
+    source_url: https://www.usaspending.gov/award/CONT_AWD_1605TA22F00013_1605_1605TA22A0001_1605
+    confidence: medium
+    use: true
+    model: {scale: medium, om_years: 2, deadline_months: null, features: [public_website, documents], custom_features: [{name: Knowledge base and research repository, category: module, size: M}]}
+  - id: state-gaza-evacuation-portal
+    title: Evacuation mission public-facing portal (rapid build)
+    buyer: U.S. Department of State
+    award_year: 2024
+    value_minor: 26370000
+    value_includes_tax: false
+    value_note: obligated = ceiling; 5-week crisis build via reseller; may bundle platform licences
+    source_url: https://www.usaspending.gov/award/CONT_AWD_19AQMM24F0815_1900_NNG15SD26B_8000
+    confidence: medium
+    use: false
+    reason: 5-week crisis build on an existing platform via a reseller; not comparable to a custom build
+    model: {scale: small, om_years: 0, deadline_months: 2, features: [online_forms], custom_features: []}
+  - id: sandy-springs-opengov-permitting
+    title: Permitting, planning and zoning portal (SaaS)
+    buyer: City of Sandy Springs, GA
+    award_year: 2023
+    value_minor: 39000000
+    value_includes_tax: false
+    value_note: council-approved ~$390k incl. SaaS subscription + implementation
+    source_url: https://www.appenmedia.com/sandy_springs/sandy-springs-opengov-platform-is-up-and-running/article_c9de22a2-3d64-11ef-b566-bb3850e60fe5.html
+    confidence: medium
+    use: false
+    reason: off-the-shelf SaaS subscription, not a custom build
+    model: {scale: medium, om_years: 1, deadline_months: 7, features: [online_forms, approval_workflow, documents, payments, staff_login], custom_features: []}
+  - id: college-station-tyler-permitting
+    title: Planning, permitting and code enforcement platform (SaaS)
+    buyer: City of College Station, TX
+    award_year: 2026
+    value_minor: 132000000
+    value_includes_tax: false
+    value_note: $451,300 implementation + $277,006/yr licence, hosting and portal
+    source_url: https://communityimpact.com/bryan-college-station/government/college-station-approves-13m-cloud-based-software-overhaul/
+    confidence: medium
+    use: false
+    reason: off-the-shelf SaaS licence; implementation-only part is $451k
+    model: {scale: medium, om_years: 3, deadline_months: null, features: [online_forms, approval_workflow, staff_login], custom_features: [{name: Inspections and code enforcement, category: module, size: M}]}
+  - id: illinois-idfpr-core-licensing
+    title: Professional licensing system (CORE)
+    buyer: Illinois Department of Financial and Professional Regulation
+    award_year: 2024
+    value_minor: 900000000
+    value_includes_tax: false
+    value_note: approx. $9M state budget over 3 years; contract value not published
+    source_url: https://idfpr.illinois.gov/content/soi/idfpr/en/news/2024/idfpr-announces-plans-for-new-digital-licensure-process.html
+    confidence: medium
+    use: false
+    reason: budget figure, not a contract value; vendor platform
+    model: {scale: large, om_years: 1, deadline_months: 24, features: [online_forms, approval_workflow, payments, staff_login], custom_features: []}
+  - id: usda-farmers-gov-cx-portal
+    title: Farmers.gov customer experience portal - development and O&M
+    buyer: U.S. Department of Agriculture
+    award_year: 2023
+    value_minor: 4854209900
+    value_includes_tax: false
+    value_note: obligated to date of a 4-5 year programme (ceiling $69.8M)
+    source_url: https://www.usaspending.gov/award/CONT_AWD_12314423F0411_1205_75N98120D00092_7529
+    confidence: medium
+    use: false
+    reason: multi-year national programme; scope far beyond a single portal build
+    model: {scale: large, om_years: 4, deadline_months: null, features: [public_website], custom_features: []}
+  - id: nps-youth-programs-portal
+    title: Youth programs portal development
+    buyer: National Park Service
+    award_year: 2020
+    value_minor: 52163300
+    value_includes_tax: false
+    value_note: obligated; 2020-09 to 2024-03 build + support
+    source_url: https://www.usaspending.gov/award/CONT_AWD_140P2120F0241_1443_GS35F0381L_4730
+    confidence: low
+    use: false
+    reason: scope not described beyond the title
+    model: {scale: small, om_years: 2, deadline_months: null, features: [online_forms], custom_features: []}
+  - id: hud-opfund-portal-modernization
+    title: Public Housing Operating Fund portal modernization, task order 2
+    buyer: U.S. Department of Housing and Urban Development
+    award_year: 2024
+    value_minor: 97199300
+    value_includes_tax: false
+    value_note: task order 2 only; 2024-09 to 2026-03
+    source_url: https://www.usaspending.gov/award/CONT_AWD_86615324F00017_8600_86615323D00001_8600
+    confidence: low
+    use: false
+    reason: second task order of a larger effort; scope not described
+    model: {scale: small, om_years: 0, deadline_months: 18, features: [], custom_features: []}
+  # ---- private and small-business projects (Clutch verified reviews, researched 2026-10-16) ----
+  # Build cost only (no support). value_high_minor marks a Clutch budget band. Search the vendor
+  # profile for the review title.
+  - id: clutch-henderson-house-nonprofit
+    title: Nonprofit site with fillable form, Spanish translation, event calendar and donations
+    buyer: Henderson House (via Buildable)
+    award_year: 2020
+    value_minor: 836700
+    value_includes_tax: false
+    value_note: "USD 8,367 stated; 3 months"
+    source_url: https://clutch.co/profile/buildable-custom-software
+    confidence: high
+    use: true
+    model:
+      buyer: small_business
+      scale: small
+      om_years: 0
+      deadline_months: 3
+      features: [online_forms, payments, public_website]
+      custom_features:
+        - {name: Spanish version of the site, category: module, size: S}
+        - {name: Event calendar, category: module, size: S}
+  - id: clutch-hti-truck-booking-ios
+    title: Internal iOS app for project managers to book trucks without double-booking
+    buyer: HTI Services LLC (via Simpalm)
+    award_year: 2024
+    value_minor: 1000000
+    value_high_minor: 4999900
+    value_includes_tax: false
+    value_note: "Clutch band USD 10,000-49,999; 2 months"
+    source_url: https://clutch.co/profile/simpalm
+    confidence: medium
+    use: true
+    model: {buyer: small_business, scale: small, om_years: 0, deadline_months: 2, features: [mobile_app, bookings], custom_features: []}
+  - id: clutch-avhero-technician-marketplace
+    title: Web platform connecting AV technicians with clients, with Stripe and Plaid
+    buyer: AV Hero, Inc. (via Bitcot)
+    award_year: 2020
+    value_minor: 3000000
+    value_includes_tax: false
+    value_note: "about USD 30,000 for the initial project; 5 months"
+    source_url: https://clutch.co/profile/bitcot
+    confidence: medium
+    use: true
+    model:
+      buyer: small_business
+      scale: small
+      om_years: 0
+      deadline_months: 5
+      features: [payments, connect_existing]
+      custom_features:
+        - {name: Technician marketplace - profiles, job requests and matching, category: module, size: M}
+  - id: clutch-paxxie-creative-hiring-ios
+    title: iOS marketplace app to browse, pay and book photographers and videographers
+    buyer: Paxxie (via Bitcot)
+    award_year: 2019
+    value_minor: 4000000
+    value_includes_tax: false
+    value_note: "USD 40,000 stated; 5 months"
+    source_url: https://clutch.co/profile/bitcot
+    confidence: high
+    use: true
+    model: {buyer: small_business, scale: small, om_years: 0, deadline_months: 5, features: [mobile_app, payments, bookings, documents], custom_features: []}
+  - id: clutch-mobile-ordering-apps
+    title: Customer and business iOS ordering apps plus web admin panel
+    buyer: Mobile ordering startup, D.C. area (via Simpalm)
+    award_year: 2020
+    value_minor: 3200000
+    value_includes_tax: false
+    value_note: "USD 32,000 stated; 13 months"
+    source_url: https://clutch.co/profile/simpalm
+    confidence: medium
+    use: true
+    model:
+      buyer: small_business
+      scale: small
+      om_years: 0
+      deadline_months: 13
+      features: [mobile_app, online_store]
+      custom_features:
+        - {name: Business-side ordering app, category: mobile, size: S}
+  - id: clutch-mohawk-daycamp-apps
+    title: Parent and staff apps with admin dashboard, messaging and photo sharing for a day camp
+    buyer: Mohawk Day Camp (via Fingent)
+    award_year: 2018
+    value_minor: 5000000
+    value_high_minor: 19999900
+    value_includes_tax: false
+    value_note: "Clutch band USD 50,000-199,999; 6 months (about USD 150k by 2021 incl. later work)"
+    source_url: https://clutch.co/profile/fingent
+    confidence: high
+    use: true
+    model:
+      buyer: small_business
+      scale: small
+      om_years: 0
+      deadline_months: 6
+      features: [mobile_app, dashboards]
+      custom_features:
+        - {name: Staff app, category: mobile, size: M}
+        - {name: Group and one-to-one messaging with photo sharing, category: module, size: M}
+  - id: clutch-spectrum-1031-platform
+    title: Cloud rebuild of a 25-year-old desktop back-office system for a 1031 tax-exchange firm
+    buyer: Spectrum Exchange (via Fingent)
+    award_year: 2021
+    value_minor: 12700000
+    value_includes_tax: false
+    value_note: "about USD 127,000 stated; 10 months"
+    source_url: https://clutch.co/profile/fingent
+    confidence: high
+    use: true
+    model:
+      buyer: small_business
+      scale: small
+      om_years: 0
+      deadline_months: 10
+      features: [documents, old_data, dashboards]
+      custom_features:
+        - {name: Exchange back-office - cases, parties and deadlines, category: module, size: L}
+        - {name: Document generation, category: module, size: M}
+  - id: clutch-trio-giving-tuesday
+    title: Giving Tuesday donation site with an external-platform integration
+    buyer: Trio Solutions (via Complete Web)
+    award_year: 2022
+    value_minor: 1000000
+    value_high_minor: 4999900
+    value_includes_tax: false
+    value_note: "Clutch band USD 10,000-49,999; 3 months"
+    source_url: https://clutch.co/profile/complete-web
+    confidence: low
+    use: false
+    reason: client country only inferred
+    model: {buyer: small_business, scale: small, om_years: 0, deadline_months: 3, features: [payments, connect_existing, public_website], custom_features: []}
+  - id: clutch-bonus-billing-android
+    title: Android app that tracks phone minutes for consulting retainers and exports invoices
+    buyer: Bonus Billing (via Bitcot)
+    award_year: 2018
+    value_minor: 1000000
+    value_high_minor: 4999900
+    value_includes_tax: false
+    value_note: "Clutch band USD 10,000-49,999; ongoing"
+    source_url: https://clutch.co/profile/bitcot
+    confidence: medium
+    use: false
+    reason: ongoing engagement when reviewed
+    model: {buyer: small_business, scale: small, om_years: 0, deadline_months: null, features: [mobile_app, billing, dashboards], custom_features: []}
+  - id: clutch-sendmammogram-portal
+    title: HIPAA medical-image and document exchange platform (feature build-out)
+    buyer: Send Mammogram (via Daffodil Software)
+    award_year: 2022
+    value_minor: 5000000
+    value_high_minor: 19999900
+    value_includes_tax: false
+    value_note: "Clutch band USD 50,000-199,999; 7 months"
+    source_url: https://clutch.co/profile/daffodil-software
+    confidence: medium
+    use: false
+    reason: enhancements to an existing product, not a new build
+    model: {buyer: private, scale: small, om_years: 0, deadline_months: 7, features: [documents, mobile_app, connect_existing], custom_features: []}

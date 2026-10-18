@@ -4,18 +4,23 @@ import * as React from "react";
 import Link from "next/link";
 
 import { ErrorNotice, Loading } from "@/components/status";
-import { api, type QuickSummary } from "@/lib/api/client";
-import { formatDate, formatDecimal, formatPaise } from "@/lib/format";
+import { api, errorText, type QuickSummary } from "@/lib/api/client";
+import {
+  formatApprox,
+  formatDate,
+  formatDecimal,
+  formatRange,
+} from "@/lib/format";
 import { useLoad } from "@/lib/use-load";
 
 const STEPS = [
   {
-    title: "Upload the tender",
+    title: "Upload the requirement document",
     text: "PDF or Word. We read it and find what it asks for, with page numbers. No document? Just tick what you need.",
   },
   {
     title: "Check and fill the gaps",
-    text: "Untick anything wrong and answer only what the tender doesn't say.",
+    text: "Untick anything wrong, add anything missing, and answer only what the document doesn't say.",
   },
   {
     title: "See your cost",
@@ -36,7 +41,7 @@ function CalibrationCard() {
       {share !== null ? (
         <p className="text-sm text-muted-foreground">
           Winning prices fell inside our range in {formatDecimal(share, 0)}% of
-          tenders ({report.with_l1} with a winning price recorded).
+          projects ({report.with_l1} with a winning price recorded).
         </p>
       ) : null}
       <p className="text-xs text-muted-foreground">
@@ -47,40 +52,77 @@ function CalibrationCard() {
   );
 }
 
-function EstimateCard({ summary }: { summary: QuickSummary }) {
+function EstimateCard({
+  summary,
+  onDelete,
+}: {
+  summary: QuickSummary;
+  onDelete: () => void;
+}) {
+  const [deleting, setDeleting] = React.useState(false);
+  async function remove() {
+    if (
+      !window.confirm(
+        `Delete "${summary.name}"? Its estimates and uploaded documents are removed. What the estimator has learned is kept.`,
+      )
+    )
+      return;
+    setDeleting(true);
+    try {
+      await api.deleteProject(summary.project_id);
+      onDelete();
+    } catch (e) {
+      setDeleting(false);
+      window.alert(errorText(e));
+    }
+  }
   return (
-    <Link
-      href={`/estimate/${summary.estimate_id}`}
-      className="group flex flex-col gap-2 rounded-xl border bg-card p-5 shadow-sm transition-colors hover:border-primary/40 hover:bg-muted/40"
-    >
-      <span className="font-semibold group-hover:text-primary">
-        {summary.name}
-      </span>
-      {summary.feasible ? (
-        <>
-          <span className="text-2xl font-semibold tracking-tight">
-            {formatPaise(summary.likely_paise)}
-          </span>
-          <span className="text-sm text-muted-foreground">
-            most likely · range {formatPaise(summary.low_paise)} –{" "}
-            {formatPaise(summary.high_paise)}
-          </span>
-        </>
-      ) : (
-        <span className="text-sm text-warning">
-          Deadline too short — no price yet
+    <div className="relative">
+      <Link
+        href={`/estimate/${summary.estimate_id}`}
+        className="group flex h-full flex-col gap-2 rounded-xl border bg-card p-5 pr-16 shadow-sm transition-colors hover:border-primary/40 hover:bg-muted/40"
+      >
+        <span className="font-semibold group-hover:text-primary">
+          {summary.name}
         </span>
-      )}
-      <span className="text-xs text-muted-foreground">
-        {formatDate(summary.created_at)}
-      </span>
-    </Link>
+        {summary.feasible ? (
+          <>
+            <span className="text-xl font-semibold tracking-tight">
+              {formatRange(
+                summary.low_paise,
+                summary.high_paise,
+                summary.currency,
+              )}
+            </span>
+            <span className="text-sm text-muted-foreground">
+              most likely {formatApprox(summary.likely_paise, summary.currency)}
+            </span>
+          </>
+        ) : (
+          <span className="text-sm text-warning">
+            Deadline too short — no price yet
+          </span>
+        )}
+        <span className="text-xs text-muted-foreground">
+          {formatDate(summary.created_at)}
+        </span>
+      </Link>
+      <button
+        type="button"
+        onClick={remove}
+        disabled={deleting}
+        className="absolute top-3 right-3 rounded-md px-2 py-1 text-xs text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+        aria-label={`Delete ${summary.name}`}
+      >
+        {deleting ? "Deleting…" : "Delete"}
+      </button>
+    </div>
   );
 }
 
 export function EstimatesHome() {
   const loader = React.useCallback(() => api.listQuickEstimates(), []);
-  const { state } = useLoad(loader);
+  const { state, reload } = useLoad(loader);
 
   return (
     <div className="flex flex-col gap-10">
@@ -127,7 +169,11 @@ export function EstimatesHome() {
         {state.kind === "ready" && state.data.length > 0 ? (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {state.data.map((summary) => (
-              <EstimateCard key={summary.estimate_id} summary={summary} />
+              <EstimateCard
+                key={summary.estimate_id}
+                summary={summary}
+                onDelete={reload}
+              />
             ))}
           </div>
         ) : null}

@@ -31,6 +31,7 @@ class EstimateCreate(BaseModel):
 
 class EstimateSummary(BaseModel):
     id: str
+    currency: str  # all *_paise amounts are minor units of this currency
     project_id: str
     version: int
     created_at: datetime

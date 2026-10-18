@@ -5,6 +5,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 from fastapi import APIRouter, HTTPException, Response, status
+from sqlalchemy import delete as sa_delete
 
 from app.api.deps import CurrentUser, DbSession, EditorUser, can_see_margin
 from app.core.tenancy import get_owned, scoped
@@ -58,6 +59,7 @@ def _line_out(line: CostLine, user: User) -> CostLineOut:
 def _summary(e: Estimate) -> EstimateSummary:
     return EstimateSummary(
         id=e.id,
+        currency=e.inputs_snapshot["rate_card"].get("currency", "INR"),
         project_id=e.project_id,
         version=e.version,
         created_at=e.created_at,
@@ -144,6 +146,17 @@ def list_estimates(project_id: str, db: DbSession, user: CurrentUser) -> list[Es
 @router.get("/estimates/{estimate_id}", response_model=EstimateOut)
 def get_estimate(estimate_id: str, db: DbSession, user: CurrentUser) -> EstimateOut:
     return _estimate_out(get_owned(db, Estimate, estimate_id, user.org_id), user)
+
+
+@router.delete("/estimates/{estimate_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_estimate(estimate_id: str, db: DbSession, user: EditorUser) -> Response:
+    """Delete one estimate version (its cost lines go with it); the project stays."""
+    estimate = get_owned(db, Estimate, estimate_id, user.org_id)
+    db.execute(
+        sa_delete(Estimate).where(Estimate.id == estimate.id, Estimate.org_id == user.org_id)
+    )
+    db.commit()
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.get("/estimates/{estimate_id}/lines/{line_id}/trace", response_model=TraceOut)

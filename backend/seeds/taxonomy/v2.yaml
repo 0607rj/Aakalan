@@ -1,0 +1,56 @@
+# Cost taxonomy v2 (2026-10-16): v1 plus developer tools, content translation and third-party
+# services.
+# Cost taxonomy (brief Section 8). Stored as data so buckets can be added without a release.
+# gst_percent: null -> parameters.commercial.gst_percent (default 18%).
+version: v2
+source: placeholder
+stages:
+  - {key: pre_build, name: Pre-build, order: 1}
+  - {key: build, name: Build, order: 2}
+  - {key: go_live, name: Go-live, order: 3}
+  - {key: run, name: Run (per year), order: 4}
+  - {key: programme, name: Programme, order: 5}
+  - {key: commercial, name: Commercial, order: 6}
+buckets:
+  - {key: pre_build.discovery, stage: pre_build, name: Discovery / requirement study, order: 1}
+  - {key: pre_build.architecture, stage: pre_build, name: Solution architecture, order: 2}
+  - {key: pre_build.ui_ux, stage: pre_build, name: UI/UX design, order: 3}
+  - {key: build.module_development, stage: build, name: Module development, order: 10}
+  - {key: build.integrations, stage: build, name: Integrations, order: 11}
+  - {key: build.ai_ml, stage: build, name: AI/ML work, order: 12}
+  - {key: build.data_migration, stage: build, name: Data migration, order: 13}
+  - {key: build.testing, stage: build, name: Testing, order: 14}
+  - {key: build.documentation, stage: build, name: Documentation, order: 15}
+  - {key: build.devops, stage: build, name: Environments and DevOps, order: 16}
+  - {key: build.tools, stage: build, name: Developer tools and AI subscriptions, order: 17}
+  - {key: build.content_translation, stage: build, name: Content translation, order: 18}
+  - {key: go_live.security_audit, stage: go_live, name: CERT-In security audit, order: 20}
+  - {key: go_live.certification, stage: go_live, name: STQC / other certification, order: 21}
+  - {key: go_live.training, stage: go_live, name: Training, order: 22}
+  - {key: go_live.hypercare, stage: go_live, name: Hypercare, order: 23}
+  - {key: go_live.infrastructure_procurement, stage: go_live, name: On-prem infrastructure procurement, order: 24}
+  - {key: run.hosting, stage: run, name: Hosting, order: 30}
+  - {key: run.backups, stage: run, name: Backups, order: 31}
+  - {key: run.dr, stage: run, name: Disaster recovery, order: 32}
+  - {key: run.ai_runtime, stage: run, name: AI runtime, order: 33}
+  - {key: run.licences, stage: run, name: Licences, order: 34}
+  - {key: run.helpdesk, stage: run, name: Helpdesk, order: 35}
+  - {key: run.onsite_resources, stage: run, name: Onsite resources, order: 36}
+  - {key: run.change_requests, stage: run, name: Change-request pool, order: 37}
+  - {key: run.patching_bugfix, stage: run, name: "Bug-fix, patching and upgrades", order: 38}
+  - {key: run.annual_audit, stage: run, name: Annual security re-audit, order: 39}
+  - {key: run.ssl_domain, stage: run, name: SSL and domain, order: 40}
+  - {key: run.third_party_services, stage: run, name: "Third-party services (SMS, email, maps, app stores...)", order: 41}
+  - {key: programme.project_management, stage: programme, name: Project management, order: 50}
+  - {key: programme.steering_meetings, stage: programme, name: Steering meetings, order: 51}
+  - {key: programme.mis_reports, stage: programme, name: MIS reports, order: 52}
+  - {key: programme.travel, stage: programme, name: Travel, order: 53}
+  - {key: programme.environments, stage: programme, name: Non-production environments, order: 54}
+  - {key: commercial.emd, stage: commercial, name: EMD lock-up cost, order: 60}
+  - {key: commercial.pbg, stage: commercial, name: PBG bank charges, order: 61}
+  - {key: commercial.working_capital, stage: commercial, name: Working capital, order: 62}
+  - {key: commercial.penalty_reserve, stage: commercial, name: Penalty / LD reserve, order: 63}
+  - {key: commercial.exit_management, stage: commercial, name: Exit management, order: 64}
+  - {key: commercial.contingency, stage: commercial, name: Contingency, order: 65}
+  - {key: commercial.margin, stage: commercial, name: Margin, order: 66}
+  - {key: commercial.gst, stage: commercial, name: GST, order: 67, gst_percent: 0}

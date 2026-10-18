@@ -30,44 +30,46 @@ from app.services.seeding.users import DEMO_EMAIL
 
 def seed_reference(session: Session, data: ReferenceData) -> list[str]:
     warnings: list[str] = []
-    tax = session.scalars(
-        select(TaxonomyVersion).where(TaxonomyVersion.version == data.taxonomy.version)
-    ).first()
-    if tax is None:
-        session.add(
-            TaxonomyVersion(
-                version=data.taxonomy.version,
-                source=data.taxonomy.source,
-                data=data.taxonomy.model_dump(mode="json"),
-            )
-        )
-    elif tax.data != data.taxonomy.model_dump(mode="json"):
-        warnings.append(f"taxonomy {tax.version} differs from seed; stored version kept")
-
-    existing = {
-        (c.key, c.version): c
-        for c in session.scalars(
-            select(CatalogComponent).where(CatalogComponent.version == data.catalog.version)
-        )
-    }
-    for comp in data.catalog.components:
-        row = existing.get((comp.key, data.catalog.version))
-        spec = comp.model_dump(mode="json")
-        if row is None:
+    for taxonomy in data.taxonomies:
+        tax = session.scalars(
+            select(TaxonomyVersion).where(TaxonomyVersion.version == taxonomy.version)
+        ).first()
+        if tax is None:
             session.add(
-                CatalogComponent(
-                    key=comp.key,
-                    version=data.catalog.version,
-                    name=comp.name,
-                    category=comp.category,
-                    bucket=comp.bucket,
-                    description=comp.description,
-                    source=comp.source,
-                    spec=spec,
+                TaxonomyVersion(
+                    version=taxonomy.version,
+                    source=taxonomy.source,
+                    data=taxonomy.model_dump(mode="json"),
                 )
             )
-        elif row.spec != spec:
-            warnings.append(f"catalog {comp.key}@{data.catalog.version} differs; stored kept")
+        elif tax.data != taxonomy.model_dump(mode="json"):
+            warnings.append(f"taxonomy {tax.version} differs from seed; stored version kept")
+
+    for catalog in data.catalogs:
+        existing = {
+            (c.key, c.version): c
+            for c in session.scalars(
+                select(CatalogComponent).where(CatalogComponent.version == catalog.version)
+            )
+        }
+        for comp in catalog.components:
+            row = existing.get((comp.key, catalog.version))
+            spec = comp.model_dump(mode="json")
+            if row is None:
+                session.add(
+                    CatalogComponent(
+                        key=comp.key,
+                        version=catalog.version,
+                        name=comp.name,
+                        category=comp.category,
+                        bucket=comp.bucket,
+                        description=comp.description,
+                        source=comp.source,
+                        spec=spec,
+                    )
+                )
+            elif row.spec != spec:
+                warnings.append(f"catalog {comp.key}@{catalog.version} differs; stored kept")
 
     for card in data.rate_cards:
         row_card = session.scalars(select(RateCard).where(RateCard.version == card.version)).first()
@@ -85,11 +87,12 @@ def seed_reference(session: Session, data: ReferenceData) -> list[str]:
                 ParameterSet(
                     version=params.version,
                     effective_date=params.effective_date,
+                    region=params.region,
                     status=params.status,
                     data=params.model_dump(mode="json"),
                 )
             )
-        elif row_ps.data != params.model_dump(mode="json"):
+        elif ref.ParameterSet.model_validate(row_ps.data) != params:  # compare values, not JSON
             warnings.append(f"parameter set {params.version} differs; stored version kept")
     session.flush()
     return warnings
@@ -106,6 +109,8 @@ def add_rate_card(session: Session, card: ref.RateCard) -> RateCard:
         effective_date=card.effective_date,
         status=card.status,
         source=card.source,
+        region=card.region,
+        currency=card.currency,
         items=[
             RateItem(
                 key=i.key,
@@ -131,6 +136,8 @@ def rate_card_model(row: RateCard) -> ref.RateCard:
         effective_date=row.effective_date,
         status=row.status,  # type: ignore[arg-type]
         source=row.source,
+        region=row.region,
+        currency=row.currency,
         items=[
             ref.RateItem(
                 key=i.key,

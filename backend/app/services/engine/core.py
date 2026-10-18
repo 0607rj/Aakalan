@@ -10,7 +10,7 @@ from decimal import Decimal, localcontext
 from typing import Literal
 
 from app.services.engine.commercial import base_commercial_lines, derived_lines
-from app.services.engine.components import base_effort, component_line
+from app.services.engine.components import ai_review_line, base_effort, component_line
 from app.services.engine.context import PricingContext
 from app.services.engine.golive_programme import golive_lines, programme_lines
 from app.services.engine.inputs import EstimateInput
@@ -24,12 +24,20 @@ from app.services.engine.outputs import (
     ManpowerRow,
     RangeDriver,
     SanityCheck,
+    SpreadFactor,
     Timeline,
     Totals,
 )
 from app.services.engine.reference import PLACEHOLDER
 from app.services.engine.run_costs import ai_runtime_lines, maintenance_lines
 from app.services.engine.simulation import simulate
+from app.services.engine.third_party import (
+    client_paid_lines,
+    client_paid_notes,
+    dev_tools_lines,
+    third_party_lines,
+    translation_lines,
+)
 from app.services.engine.timeline import build_timeline, phased_plan, size_band
 from app.services.hosting.sizing import hosting_lines
 
@@ -102,9 +110,13 @@ def _calculate(inp: EstimateInput) -> EstimateResult:
     m = timeline.compression_multiplier
     _, band = size_band(ctx, timeline.build_effort_pd)
     base: list[CostLineOut] = [component_line(ctx, e, m) for e in efforts]
+    base += ai_review_line(ctx, efforts, m)
+    base += dev_tools_lines(ctx, base)
+    base += translation_lines(ctx)
     base += golive_lines(ctx, timeline)
     base += hosting_lines(ctx)
     base += ai_runtime_lines(ctx)
+    base += third_party_lines(ctx)
     base += maintenance_lines(ctx, timeline.build_effort_pd, band.audit_band)
     base += programme_lines(ctx, timeline)
     base += base_commercial_lines(ctx, timeline)
@@ -118,7 +130,12 @@ def _calculate(inp: EstimateInput) -> EstimateResult:
     if len(keys) != len(set(keys)):
         raise AssertionError("duplicate line keys")
 
-    sim = simulate(lines, factors, inp.seed, runs, inp.taxonomy)
+    spread = _model_spread(ctx)
+    sim = simulate(
+        lines, factors, inp.seed, runs, inp.taxonomy, (spread.down, spread.up) if spread else None
+    )
+    client_paid = client_paid_lines(ctx)
+    notes = client_paid_notes(ctx)
     totals = Totals(
         likely_paise=sum(ln.likely_paise for ln in lines),
         low_sum_paise=sum(ln.low_paise for ln in lines),
@@ -149,6 +166,8 @@ def _calculate(inp: EstimateInput) -> EstimateResult:
         top_drivers_text=_drivers_text(top),
         calibration=_calibration(ctx),
         sanity_checks=_sanity(ctx, lines),
+        client_paid=client_paid,
+        client_paid_notes=notes,
         **common,  # type: ignore[arg-type]
     )
 
@@ -243,9 +262,32 @@ def _confidence(ctx: PricingContext) -> ConfidenceOut:
     )
 
 
+def _model_spread(ctx: PricingContext) -> SpreadFactor | None:
+    """The back-tested model error for this project size (parameter sets v12+) or else this
+    buyer segment, if the parameter set has one."""
+    cal = ctx.p.calibration
+    if cal is None:
+        return None
+    size = ctx.q.project_size
+    if size is not None and size in cal.model_spread_by_size:
+        s = cal.model_spread_by_size[size]
+        return SpreadFactor(
+            name=f"model error ({size} projects, back-tested)", down=s.down, up=s.up
+        )
+    segment = ctx.q.buyer_segment
+    if segment not in cal.model_spread:
+        return None
+    s = cal.model_spread[segment]
+    return SpreadFactor(name=f"model error ({segment}, back-tested)", down=s.down, up=s.up)
+
+
 def _calibration(ctx: PricingContext) -> Calibration:
     refs = sorted(ctx.placeholders)
-    return Calibration(status="uncalibrated" if refs else "calibrated", placeholder_refs=refs)
+    return Calibration(
+        status="uncalibrated" if refs else "calibrated",
+        placeholder_refs=refs,
+        model_spread=_model_spread(ctx),
+    )
 
 
 def _sanity(ctx: PricingContext, lines: list[CostLineOut]) -> list[SanityCheck]:

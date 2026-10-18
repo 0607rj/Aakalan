@@ -43,11 +43,11 @@ export function LoginForm() {
   }
 
   return (
-    <Card className="w-full max-w-sm">
+    <Card className="w-full max-w-sm rounded-[22px] shadow-[0_24px_60px_-28px_rgb(23_32_58/0.35)]">
       <CardHeader>
-        <CardTitle className="text-2xl text-primary">Aakalan</CardTitle>
+        <CardTitle className="text-2xl">Sign in</CardTitle>
         <CardDescription>
-          Sign in to estimate Government and PSU software tenders.
+          See your estimates and start new ones.
         </CardDescription>
       </CardHeader>
       <CardContent>
