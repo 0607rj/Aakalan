@@ -24,6 +24,7 @@ import {
   OngoingCosts,
   WhatsIncluded,
 } from "./cost-summary";
+import { exportBlocked, IndependentCheckCard, OpenAnswers } from "./check";
 import { Downloads } from "./downloads";
 import { RealityCheck } from "./reality";
 
@@ -74,9 +75,11 @@ function Headline({ summary }: { summary: QuickSummary }) {
         <p className="max-w-2xl text-sm text-muted-foreground">
           An estimate before the work starts, not a final quotation. The range
           is wide because scope, effort and other factors are still uncertain.{" "}
-          {years > 0
-            ? `It includes ${years} year${years === 1 ? "" : "s"} of support after launch, margin and tax.`
-            : "It covers building and launch only (no support after launch), with margin and tax."}
+          {summary.support_term_open
+            ? "The support period is not decided, so it includes one year of support after launch (a yearly price), margin and tax."
+            : years > 0
+              ? `It includes ${years} year${years === 1 ? "" : "s"} of support after launch, margin and tax.`
+              : "It covers building and launch only (no support after launch), with margin and tax."}
         </p>
       </div>
 
@@ -105,9 +108,11 @@ function Headline({ summary }: { summary: QuickSummary }) {
         <Fact
           label="Support included"
           value={
-            years > 0
-              ? `${years} year${years === 1 ? "" : "s"} after launch`
-              : "None (handed over after launch)"
+            summary.support_term_open
+              ? "Per year (term not decided)"
+              : years > 0
+                ? `${years} year${years === 1 ? "" : "s"} after launch`
+                : "None (handed over after launch)"
           }
         />
       </div>
@@ -886,7 +891,13 @@ function effortHint(summary: QuickSummary): string {
   return bits.join(" · ");
 }
 
-function SummaryView({ summary }: { summary: QuickSummary }) {
+function SummaryView({
+  summary,
+  onChange,
+}: {
+  summary: QuickSummary;
+  onChange: (summary: QuickSummary) => void;
+}) {
   const hasTeam =
     (summary.hours?.rows.length ?? 0) > 0 ||
     summary.team.length > 0 ||
@@ -911,7 +922,11 @@ function SummaryView({ summary }: { summary: QuickSummary }) {
           </p>
         </div>
         <div className="flex flex-wrap items-start gap-3">
-          <Downloads estimateId={summary.estimate_id} name={summary.name} />
+          <Downloads
+            estimateId={summary.estimate_id}
+            name={summary.name}
+            blocked={exportBlocked(summary)}
+          />
           <SaveTemplate summary={summary} />
         </div>
       </div>
@@ -926,7 +941,9 @@ function SummaryView({ summary }: { summary: QuickSummary }) {
       {summary.feasible ? (
         <>
           <Headline summary={summary} />
+          <IndependentCheckCard summary={summary} onChange={onChange} />
           <RealityCheck summary={summary} />
+          <OpenAnswers summary={summary} />
           <BidCheckCard summary={summary} />
           <CostSummary summary={summary} />
           <WhatsIncluded summary={summary} />
@@ -1013,9 +1030,9 @@ export function EstimateResult() {
     () => api.getEstimateSummary(estimateId),
     [estimateId],
   );
-  const { state } = useLoad(loader);
+  const { state, setData } = useLoad(loader);
   if (state.kind === "loading")
     return <Loading>Loading your estimate…</Loading>;
   if (state.kind === "error") return <ErrorNotice message={state.message} />;
-  return <SummaryView summary={state.data} />;
+  return <SummaryView summary={state.data} onChange={setData} />;
 }

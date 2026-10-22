@@ -67,6 +67,263 @@
         }
       }
     },
+    "/auth/signup": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Signup",
+        "description": "A new company with you as its admin; sign in after confirming the emailed code.",
+        "operationId": "signup_auth_signup_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SignupRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CodeSent"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/verify-email": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Verify Email",
+        "description": "Confirm the address with the emailed code; signs you in.",
+        "operationId": "verify_email_auth_verify_email_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyEmailRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/verify-email/resend": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Resend Verification",
+        "description": "A new code for an account not yet verified (the same answer for any other address).",
+        "operationId": "resend_verification_auth_verify_email_resend_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CodeSent"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/password/forgot": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Forgot Password",
+        "description": "Email a reset code. The answer is the same whether or not the account exists.",
+        "operationId": "forgot_password_auth_password_forgot_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CodeSent"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/password/reset": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Reset Password",
+        "description": "New password with the emailed code; signs you in and signs out every other session.",
+        "operationId": "reset_password_auth_password_reset_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResetPasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/password/change": {
+      "post": {
+        "tags": [
+          "auth"
+        ],
+        "summary": "Change Password",
+        "description": "New password while signed in; other sessions are signed out, this one gets a new token.",
+        "operationId": "change_password_auth_password_change_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/auth/me": {
       "get": {
         "tags": [
@@ -1652,6 +1909,106 @@
         }
       }
     },
+    "/estimates/{estimate_id}/check/confirm": {
+      "post": {
+        "tags": [
+          "quick estimate"
+        ],
+        "summary": "Confirm Independent Check",
+        "description": "The user has looked at the gap the independent check found; export is then allowed.",
+        "operationId": "confirm_independent_check_estimates__estimate_id__check_confirm_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "estimate_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Estimate Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuickSummary"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/estimates/{estimate_id}/options": {
+      "get": {
+        "tags": [
+          "quick estimate"
+        ],
+        "summary": "Open Options",
+        "description": "Questions left open (not in the document, or \"Not sure\"), each with what the other\nanswers would change in the likely price (nothing is saved).",
+        "operationId": "open_options_estimates__estimate_id__options_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "estimate_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Estimate Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PricedOption"
+                  },
+                  "title": "Response Open Options Estimates  Estimate Id  Options Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/estimates/{estimate_id}/second-opinion": {
       "get": {
         "tags": [
@@ -2652,6 +3009,44 @@
         ],
         "title": "AssumptionOut"
       },
+      "Band": {
+        "properties": {
+          "system_class": {
+            "type": "string",
+            "title": "System Class"
+          },
+          "size": {
+            "type": "string",
+            "title": "Size"
+          },
+          "low_months": {
+            "type": "string",
+            "title": "Low Months"
+          },
+          "high_months": {
+            "type": "string",
+            "title": "High Months"
+          },
+          "position": {
+            "type": "string",
+            "enum": [
+              "below",
+              "inside",
+              "above"
+            ],
+            "title": "Position"
+          }
+        },
+        "type": "object",
+        "required": [
+          "system_class",
+          "size",
+          "low_months",
+          "high_months",
+          "position"
+        ],
+        "title": "Band"
+      },
       "BaselineEra": {
         "type": "string",
         "enum": [
@@ -3342,6 +3737,26 @@
         ],
         "title": "Change"
       },
+      "ChangePasswordRequest": {
+        "properties": {
+          "current_password": {
+            "type": "string",
+            "maxLength": 128,
+            "title": "Current Password"
+          },
+          "new_password": {
+            "type": "string",
+            "maxLength": 128,
+            "title": "New Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "current_password",
+          "new_password"
+        ],
+        "title": "ChangePasswordRequest"
+      },
       "Check": {
         "properties": {
           "key": {
@@ -3369,6 +3784,24 @@
           "detail"
         ],
         "title": "Check"
+      },
+      "CheckLine": {
+        "properties": {
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "amount_paise": {
+            "type": "integer",
+            "title": "Amount Paise"
+          }
+        },
+        "type": "object",
+        "required": [
+          "label",
+          "amount_paise"
+        ],
+        "title": "CheckLine"
       },
       "ClientPays": {
         "properties": {
@@ -3468,6 +3901,25 @@
         ],
         "title": "ClientPays",
         "description": "A cost the client pays providers directly; not part of the price."
+      },
+      "CodeSent": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "message"
+        ],
+        "title": "CodeSent",
+        "description": "A code was emailed (or, for a reset, would be if the account exists)."
       },
       "CompanySettings-Input": {
         "properties": {
@@ -4112,6 +4564,47 @@
         ],
         "title": "CostLineOut"
       },
+      "CountLine": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "count": {
+            "type": "string",
+            "title": "Count"
+          },
+          "pd_each": {
+            "type": "string",
+            "title": "Pd Each"
+          },
+          "person_days": {
+            "type": "string",
+            "title": "Person Days"
+          },
+          "items": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "label",
+          "count",
+          "pd_each",
+          "person_days",
+          "items"
+        ],
+        "title": "CountLine"
+      },
       "CountryOut": {
         "properties": {
           "key": {
@@ -4462,6 +4955,21 @@
         ],
         "title": "EffortEvidence",
         "description": "One cited source behind a component's effort figures (catalog v6+)."
+      },
+      "EmailRequest": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "maxLength": 320,
+            "minLength": 3,
+            "title": "Email"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email"
+        ],
+        "title": "EmailRequest"
       },
       "EraBasis": {
         "type": "string",
@@ -4992,6 +5500,24 @@
         ],
         "title": "EstimateSummary"
       },
+      "Factor": {
+        "properties": {
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "value": {
+            "type": "string",
+            "title": "Value"
+          }
+        },
+        "type": "object",
+        "required": [
+          "label",
+          "value"
+        ],
+        "title": "Factor"
+      },
       "FeatureCost": {
         "properties": {
           "label": {
@@ -5177,6 +5703,140 @@
           "evidence"
         ],
         "title": "FoundFeature"
+      },
+      "FoundInventory": {
+        "properties": {
+          "prompt_version": {
+            "type": "string",
+            "title": "Prompt Version"
+          },
+          "entities": {
+            "items": {
+              "$ref": "#/components/schemas/FoundItem"
+            },
+            "type": "array",
+            "title": "Entities",
+            "default": []
+          },
+          "roles": {
+            "items": {
+              "$ref": "#/components/schemas/FoundItem"
+            },
+            "type": "array",
+            "title": "Roles",
+            "default": []
+          },
+          "screens": {
+            "items": {
+              "$ref": "#/components/schemas/FoundItem"
+            },
+            "type": "array",
+            "title": "Screens",
+            "default": []
+          },
+          "integrations": {
+            "items": {
+              "$ref": "#/components/schemas/FoundItem"
+            },
+            "type": "array",
+            "title": "Integrations",
+            "default": []
+          },
+          "hard_problems": {
+            "items": {
+              "$ref": "#/components/schemas/FoundItem"
+            },
+            "type": "array",
+            "title": "Hard Problems",
+            "default": []
+          },
+          "system_class": {
+            "type": "string",
+            "title": "System Class",
+            "default": ""
+          },
+          "quality": {
+            "type": "string",
+            "title": "Quality",
+            "default": ""
+          },
+          "ai_fit": {
+            "type": "string",
+            "title": "Ai Fit",
+            "default": ""
+          },
+          "clarity": {
+            "type": "string",
+            "title": "Clarity",
+            "default": ""
+          },
+          "tenancy": {
+            "type": "string",
+            "title": "Tenancy",
+            "default": "single"
+          },
+          "tenancy_evidence": {
+            "items": {
+              "$ref": "#/components/schemas/VerifiedEvidence"
+            },
+            "type": "array",
+            "title": "Tenancy Evidence",
+            "default": []
+          },
+          "dropped": {
+            "type": "integer",
+            "title": "Dropped",
+            "default": 0
+          }
+        },
+        "type": "object",
+        "required": [
+          "prompt_version"
+        ],
+        "title": "FoundInventory",
+        "description": "What the system must contain, for the independent check. The AI lists named items with\nquotes; only items whose quotes are found on the page are kept, and the code counts them.\nA classification the config does not know is stored as \"\"."
+      },
+      "FoundItem": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/VerifiedEvidence"
+            },
+            "type": "array",
+            "title": "Evidence"
+          },
+          "kind": {
+            "type": "string",
+            "title": "Kind",
+            "default": ""
+          },
+          "provider_selected": {
+            "type": "boolean",
+            "title": "Provider Selected",
+            "default": false
+          },
+          "problem": {
+            "type": "string",
+            "title": "Problem",
+            "default": ""
+          },
+          "feature": {
+            "type": "string",
+            "title": "Feature",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "evidence"
+        ],
+        "title": "FoundItem",
+        "description": "One thing the finished system must contain (services/extraction/inventory.py)."
       },
       "FoundNotPriced": {
         "properties": {
@@ -5554,6 +6214,176 @@
         "title": "HoursSummary",
         "description": "The build in hours: with the team's AI tools, without them, and the team's cost."
       },
+      "IndependentCheckOut": {
+        "properties": {
+          "available": {
+            "type": "boolean",
+            "title": "Available"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "counts": {
+            "items": {
+              "$ref": "#/components/schemas/CountLine"
+            },
+            "type": "array",
+            "title": "Counts",
+            "default": []
+          },
+          "hard_problems": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Hard Problems",
+            "default": []
+          },
+          "integrations_not_selected": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Integrations Not Selected",
+            "default": []
+          },
+          "factors": {
+            "items": {
+              "$ref": "#/components/schemas/Factor"
+            },
+            "type": "array",
+            "title": "Factors",
+            "default": []
+          },
+          "anchor_months": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Anchor Months"
+          },
+          "priced_months": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Priced Months"
+          },
+          "ratio": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ratio"
+          },
+          "band": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Band"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "flagged": {
+            "type": "boolean",
+            "title": "Flagged",
+            "default": false
+          },
+          "direction": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "high",
+                  "low"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Direction"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": ""
+          },
+          "top_lines": {
+            "items": {
+              "$ref": "#/components/schemas/CheckLine"
+            },
+            "type": "array",
+            "title": "Top Lines",
+            "default": []
+          },
+          "emd_flagged": {
+            "type": "boolean",
+            "title": "Emd Flagged",
+            "default": false
+          },
+          "emd_message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Emd Message"
+          },
+          "needs_confirmation": {
+            "type": "boolean",
+            "title": "Needs Confirmation",
+            "default": false
+          },
+          "confirmed_at": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confirmed At"
+          },
+          "note": {
+            "type": "string",
+            "title": "Note",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "available"
+        ],
+        "title": "IndependentCheckOut"
+      },
       "Infeasibility": {
         "properties": {
           "message": {
@@ -5836,6 +6666,43 @@
           "projects"
         ],
         "title": "MarketSource"
+      },
+      "OptionChange": {
+        "properties": {
+          "value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "integer"
+              }
+            ],
+            "title": "Value"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "change_paise": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Change Paise"
+          }
+        },
+        "type": "object",
+        "required": [
+          "value",
+          "label",
+          "change_paise"
+        ],
+        "title": "OptionChange"
       },
       "OptionOut": {
         "properties": {
@@ -6326,6 +7193,71 @@
           "query"
         ],
         "title": "PrebidQuery"
+      },
+      "PricedOption": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "question": {
+            "type": "string",
+            "title": "Question"
+          },
+          "priced_as": {
+            "type": "string",
+            "title": "Priced As"
+          },
+          "why": {
+            "type": "string",
+            "enum": [
+              "not_in_document",
+              "not_sure"
+            ],
+            "title": "Why"
+          },
+          "low_change_paise": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Low Change Paise"
+          },
+          "high_change_paise": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "High Change Paise"
+          },
+          "options": {
+            "items": {
+              "$ref": "#/components/schemas/OptionChange"
+            },
+            "type": "array",
+            "title": "Options"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "question",
+          "priced_as",
+          "why",
+          "low_change_paise",
+          "high_change_paise",
+          "options"
+        ],
+        "title": "PricedOption",
+        "description": "A question left open (not in the document, or answered \"Not sure\"): priced at its usual\nanswer, with what each other answer would change. Fast fixed-seed re-pricing (quick config\n`impact`) of the estimate's own snapshot, so the changes use its pinned rates."
       },
       "ProjectCreate": {
         "properties": {
@@ -6832,6 +7764,14 @@
             },
             "type": "array",
             "title": "Scope",
+            "default": []
+          },
+          "researched": {
+            "items": {
+              "$ref": "#/components/schemas/ResearchedOut"
+            },
+            "type": "array",
+            "title": "Researched",
             "default": []
           }
         },
@@ -7371,6 +8311,21 @@
             "anyOf": [
               {
                 "$ref": "#/components/schemas/RealityOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "support_term_open": {
+            "type": "boolean",
+            "title": "Support Term Open",
+            "default": false
+          },
+          "independent_check": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/IndependentCheckOut"
               },
               {
                 "type": "null"
@@ -8174,6 +9129,68 @@
         "title": "ResearchedFeature",
         "description": "A feature priced by a block researched for it (services/research): from published hours\nfound on the web and checked on the page (\"web\"), or from the AI's analysis of it as catalog\nblocks (\"analysis\"). Low confidence either way."
       },
+      "ResearchedOut": {
+        "properties": {
+          "catalog_key": {
+            "type": "string",
+            "title": "Catalog Key"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          },
+          "section": {
+            "type": "string",
+            "title": "Section"
+          },
+          "section_label": {
+            "type": "string",
+            "title": "Section Label"
+          }
+        },
+        "type": "object",
+        "required": [
+          "catalog_key",
+          "name",
+          "category",
+          "section",
+          "section_label"
+        ],
+        "title": "ResearchedOut",
+        "description": "A feature researched before, by this company or shared by the library (services/\nresearch): ticked, it is sent as a custom feature with this catalog key, so it is priced\nby the saved block, not searched again."
+      },
+      "ResetPasswordRequest": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "maxLength": 320,
+            "minLength": 3,
+            "title": "Email"
+          },
+          "code": {
+            "type": "string",
+            "maxLength": 12,
+            "minLength": 1,
+            "title": "Code"
+          },
+          "new_password": {
+            "type": "string",
+            "maxLength": 128,
+            "title": "New Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "code",
+          "new_password"
+        ],
+        "title": "ResetPasswordRequest"
+      },
       "Role": {
         "type": "string",
         "enum": [
@@ -8526,6 +9543,41 @@
           "opinion"
         ],
         "title": "SecondOpinionState"
+      },
+      "SignupRequest": {
+        "properties": {
+          "full_name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Full Name"
+          },
+          "company": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Company"
+          },
+          "email": {
+            "type": "string",
+            "maxLength": 320,
+            "minLength": 3,
+            "title": "Email"
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 128,
+            "title": "Password"
+          }
+        },
+        "type": "object",
+        "required": [
+          "full_name",
+          "company",
+          "email",
+          "password"
+        ],
+        "title": "SignupRequest"
       },
       "SimilarProject": {
         "properties": {
@@ -9044,6 +10096,16 @@
             "type": "array",
             "title": "Scope Set Aside",
             "default": []
+          },
+          "inventory": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FoundInventory"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object",
@@ -9630,6 +10692,28 @@
           "quote"
         ],
         "title": "VerifiedEvidence"
+      },
+      "VerifyEmailRequest": {
+        "properties": {
+          "email": {
+            "type": "string",
+            "maxLength": 320,
+            "minLength": 3,
+            "title": "Email"
+          },
+          "code": {
+            "type": "string",
+            "maxLength": 12,
+            "minLength": 1,
+            "title": "Code"
+          }
+        },
+        "type": "object",
+        "required": [
+          "email",
+          "code"
+        ],
+        "title": "VerifyEmailRequest"
       }
     },
     "securitySchemes": {

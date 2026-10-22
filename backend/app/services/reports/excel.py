@@ -62,7 +62,10 @@ def build_boq(data: ReportData) -> bytes:
         ("Low (P10)", _money(e.p10_paise)),
         ("Likely price (P50: planned cost + risk allowance, with GST)", _money(e.p50_paise)),
         ("High (P90)", _money(e.p90_paise)),
-        ("Planned cost (sum of the planned lines, before the risk allowance)", _money(e.likely_paise)),
+        (
+            "Planned cost (sum of the planned lines, before the risk allowance)",
+            _money(e.likely_paise),
+        ),
         ("Likely price without GST", _money(s.likely_without_tax_paise)),
         ("Cost to build only", _money(s.build_only_paise)),
         ("Time to build (months)", s.build_months),

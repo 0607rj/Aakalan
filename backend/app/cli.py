@@ -11,6 +11,8 @@ from app.core.db import get_session_factory
 
 
 def cmd_seed(args: argparse.Namespace) -> None:
+    from app.services.quick.config import quick_config
+    from app.services.research.library import seed_library, share_existing
     from app.services.seeding.database import seed_demo_project, seed_reference
     from app.services.seeding.reference import load_reference
     from app.services.seeding.users import seed_demo_users
@@ -21,6 +23,12 @@ def cmd_seed(args: argparse.Namespace) -> None:
         for warning in seed_reference(session, reference):
             sys.stderr.write(f"warning: {warning}\n")
         sys.stdout.write("Seeded reference data (taxonomy, catalog, rate cards, parameters).\n")
+        added = seed_library(session, settings.resolved_research_library)
+        research = quick_config().research
+        shared = share_existing(session) if research and research.share else 0
+        sys.stdout.write(
+            f"Research library: {added} loaded from the file, {shared} shared from companies.\n"
+        )
         if not args.no_demo:
             org = seed_demo_users(session, settings.seed_user_password)
             sys.stdout.write("Seeded demo organisation and users.\n")
@@ -134,6 +142,22 @@ def cmd_backtest(args: argparse.Namespace) -> None:
                 )
 
 
+def cmd_test_email(args: argparse.Namespace) -> None:
+    """Send one email the way sign-up codes go out, to check the SMTP settings."""
+    from app.services.email import EmailNotConfiguredError, LogSender, get_email_sender
+
+    sender = get_email_sender()
+    if isinstance(sender, LogSender):
+        sys.stderr.write("SMTP is not set up (SMTP_HOST / SMTP_PASSWORD in .env): not sent.\n")
+        raise SystemExit(1)
+    try:
+        sender.send(args.to, "Aakalan test email", "Email from Aakalan works.\n\nAakalan")
+    except EmailNotConfiguredError as exc:
+        sys.stderr.write(f"Not sent: {exc.__cause__ or exc}\n")
+        raise SystemExit(1) from exc
+    sys.stdout.write(f"Sent a test email to {args.to}.\n")
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(prog="app.cli")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -144,6 +168,9 @@ def main(argv: list[str] | None = None) -> None:
     p_openapi.add_argument("--out", default=str(BACKEND_DIR / "openapi.json"))
     p_openapi.set_defaults(func=cmd_openapi)
     sub.add_parser("golden", help="regenerate golden expectations").set_defaults(func=cmd_golden)
+    p_mail = sub.add_parser("test-email", help="send one email to check the SMTP settings")
+    p_mail.add_argument("to")
+    p_mail.set_defaults(func=cmd_test_email)
     p_bt = sub.add_parser("backtest", help="compare estimates with real published contracts")
     p_bt.add_argument("--country", default="india", choices=["india", "us"])
     p_bt.add_argument(

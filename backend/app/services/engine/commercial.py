@@ -244,10 +244,15 @@ def derived_lines(
     )
 
     t = builders["penalty_reserve"]
-    ld_build: Decimal = t.param("commercial", "ld_reserve_build_percent")
-    penalty_run: Decimal = t.param(
-        "commercial", "penalty_reserve_run_percent", t.driver("support_sla")
-    )
+    # v19+: no reserve for penalties the contract does not have (no cited penalty clause)
+    if ctx.p.commercial.penalty_needs_clause and not t.driver("penalty_clause"):
+        t.param("commercial", "penalty_needs_clause")
+        ld_build = penalty_run = t.step(
+            "penalty reserve", "no penalty clause in the contract", ZERO
+        )
+    else:
+        ld_build = t.param("commercial", "ld_reserve_build_percent")
+        penalty_run = t.param("commercial", "penalty_reserve_run_percent", t.driver("support_sla"))
 
     margin: Decimal = builders["margin"].driver("margin_percent")
 

@@ -28,6 +28,7 @@ from app.services.engine import reference as ref
 from app.services.engine.reference import BaselineEra, Size
 from app.services.estimates.reference_store import catalog_for
 from app.services.quick.config import QuickConfig, Research
+from app.services.research import library
 from app.services.research.fetch import FetchError, get_page_fetcher
 from app.services.seeding.reference import load_reference
 
@@ -531,6 +532,8 @@ def save(
     )
     db.add(row)
     db.flush()
+    if research.share:
+        library.share(db, row, method)
     return row
 
 

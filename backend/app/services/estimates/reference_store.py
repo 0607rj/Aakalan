@@ -14,6 +14,7 @@ from app.models import (
     ParameterSet,
     RateCard,
     ResearchedComponent,
+    SharedResearchedComponent,
     TaxonomyVersion,
 )
 from app.services.engine import reference as ref
@@ -88,17 +89,30 @@ def get_catalog(db: Session, version: str | None = None) -> ref.Catalog:
 
 
 def catalog_for(db: Session, org_id: str, version: str | None = None) -> ref.Catalog:
-    """The published catalog plus the organisation's active researched blocks (services/
-    research). The estimate's snapshot stores the merged list, so an estimate never changes
-    when blocks are researched or retired later."""
+    """The published catalog plus researched blocks (services/research): the organisation's
+    active ones, then the shared library's, less any the organisation retired. The estimate's
+    snapshot stores the merged list, so an estimate never changes when blocks are researched,
+    shared or retired later."""
     catalog = get_catalog(db, version)
     rows = db.scalars(
-        scoped(ResearchedComponent, org_id)
-        .where(ResearchedComponent.status == "active")
-        .order_by(ResearchedComponent.created_at, ResearchedComponent.key)
+        scoped(ResearchedComponent, org_id).order_by(
+            ResearchedComponent.created_at, ResearchedComponent.key
+        )
     ).all()
-    keys = {c.key for c in catalog.components}
-    extra = [ref.CatalogComponent.model_validate(r.spec) for r in rows if r.key not in keys]
+    shared = db.scalars(
+        select(SharedResearchedComponent)
+        .where(SharedResearchedComponent.status == "active")
+        .order_by(SharedResearchedComponent.created_at, SharedResearchedComponent.key)
+    ).all()
+    keys = {c.key for c in catalog.components} | {r.key for r in rows if r.status == "retired"}
+    extra: list[ref.CatalogComponent] = []
+    for key, spec in [
+        *((r.key, r.spec) for r in rows if r.status == "active"),
+        *((s.key, s.spec) for s in shared),
+    ]:
+        if key not in keys and spec is not None:
+            extra.append(ref.CatalogComponent.model_validate(spec))
+            keys.add(key)
     if not extra:
         return catalog
     return catalog.model_copy(update={"components": [*catalog.components, *extra]})

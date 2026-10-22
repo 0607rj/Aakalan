@@ -33,6 +33,10 @@ Estimates are saved as templates, and recorded outcomes calibrate future estimat
 - **Database:** SQLite at `./data/app.db` (WAL, `busy_timeout=5000`, `foreign_keys=ON`, `synchronous=NORMAL` on every connection; sqlite-vec loaded in the `connect` event when `SQLITE_VEC_ENABLED=true`).
 - **Frontend:** Next.js (App Router) + TypeScript strict, Tailwind CSS, shadcn/ui-style components, API types generated from FastAPI's OpenAPI schema with `openapi-typescript`.
 - **Auth:** JWT (HS256) + argon2; roles `admin`, `estimator`, `finance`, `viewer`. Margin visible only to `finance`/`admin`.
+  Sign-up creates a company with the person as admin; email verified and password reset by emailed
+  6-digit codes (`services/auth.py`, hashed, expiring, limited tries); a reset or change raises the
+  user's `token_version` (`tv` in the JWT) so older tokens stop working. Email through
+  `services/email.py` (SMTP, or the server log in development; tests use `set_email_sender`).
 - **Ops:** Docker + docker-compose (`python:3.12-slim`), later Caddy, Litestream → S3, Sentry.
 - **Licence rule:** no AGPL libraries (e.g. PyMuPDF) without a commercial licence.
 
@@ -58,13 +62,21 @@ backend/
       quick/              # simple mode: plain features/questions -> project -> estimate -> summary
                           #   reality.py: "does this price look real?" checks (explain only);
                           #   second_opinion.py: AI review of scope and levels (words, no numbers)
+                          #   anchor.py: independent check, a build counted from the document's
+                          #   items; far from the price => export blocked until confirmed
+                          #   (POST /estimates/{id}/check/confirm); open answers priced as
+                          #   options (GET /estimates/{id}/options)
       research/           # a feature the catalog lacks: catalog match, else AI web search with the
                           #   code checking every page, else AI analysis as catalog blocks; saved
                           #   per org (ResearchedComponent, auto-approved) and reused; config
-                          #   `research:` in quick_estimate.yaml; nothing searched without a key
+                          #   `research:` in quick_estimate.yaml; nothing searched without a key;
+                          #   the form lists them by section ("Researched before", no new search);
+                          #   library.py shares every block with all companies (no tenant data):
+                          #   table shared_researched_components + seeds/research/library.yaml
       documents/          # upload storage + PDF/DOCX parsing to page texts
       extraction/         # tender reading: AI (LLMClient) or basic keyword reader + citation check,
-                          #   merge of several files (corrigenda override), pre-bid queries
+                          #   merge of several files (corrigenda override), pre-bid queries;
+                          #   inventory.py: AI lists quoted items for the independent check
       reports/            # PDF report (reportlab) + Excel BoQ (openpyxl) from one ReportData
       outcomes.py         # bid results + calibration report
       documents/ extraction/ retrieval/ mapping/ reports/ templates/   # later milestones
@@ -78,6 +90,10 @@ backend/
                           #   catalog v6+: each component's effort `evidence` and `source_era`;
                           #   AI savings on pre_ai data (never ai_assisted); unknown counts as
                           #   pre_ai from parameters v18 (hours calibrated on pre-AI projects)
+                          #   parameters v19+: `reuse` shrinks the crud / ui_design shares
+                          #   for build_type cms or framework (placeholder priors); hard-problem
+                          #   components get a wider range and no reuse; penalty reserve only
+                          #   with a penalty clause
                           #   catalog v7+: a tech-stack `section` per component (core, web,
                           #   mobile, ecommerce, ai_ml, security, ...) and a `url` per source
   migrations/             # Alembic
@@ -106,6 +122,7 @@ Run from the repo root. `make <target>` and `python scripts/tasks.py <target>` a
 | Regenerate golden expectations (intentional engine change only) | `make golden` |
 | New migration after model change | `make migration m="describe change"` |
 | Back-test against real projects, priced as the app prices: error, bias (ours / published), P10-P90 coverage and band hits by size and client type, in one run / fit the smooth size curve (factor by feature points) | `cd backend && uv run python -m app.cli backtest --country india [--as-of YYYY-MM-DD] [--layers] [--calibrate]` |
+| Check the email (SMTP) settings: send one test email | `cd backend && uv run python -m app.cli test-email you@example.com` |
 | Show market prices (published contracts) on results again (off: they fluctuate too much, OPEN_QUESTIONS 127) | `show_market_prices:` in `backend/seeds/quick_estimate.yaml` |
 | Switch a country on/off in the app | `enabled:` under `countries:` in `backend/seeds/quick_estimate.yaml` (the US is off for now) |
 

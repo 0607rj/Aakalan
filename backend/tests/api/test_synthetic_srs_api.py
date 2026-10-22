@@ -49,7 +49,13 @@ def test_srs_upload_review_and_price(client: TestClient, admin_headers: H, name:
     assert ex["reader"] == "basic"
     offered = {s["key"] for s in ex["scope"]}
     expected = {r["key"] for r in m["requirements"] if r["kind"] == "scope" and r["offered"]}
-    assert offered == expected
+    # an item whose sentence already prices a ticked feature is not offered again
+    may_drop = {
+        r["key"]
+        for r in m["requirements"]
+        if r["kind"] == "scope" and r.get("pricing") == "already_included"
+    }
+    assert expected - may_drop <= offered <= expected
     for r in m["requirements"]:
         if r["kind"] == "scope" and not r["offered"]:
             assert r["key"] not in offered, r["id"]
@@ -74,7 +80,7 @@ def test_srs_upload_review_and_price(client: TestClient, admin_headers: H, name:
     ).json()
     items = {i["key"]: i for i in confirmed["scope_items"]}
     for r in m["requirements"]:
-        if r["kind"] != "scope" or not r["offered"]:
+        if r["kind"] != "scope" or not r["offered"] or r["key"] not in offered:
             continue
         item = items[r["key"]]
         assert (item["amount_paise"] > 0) == (r["pricing"] == "adds_work"), r["id"]

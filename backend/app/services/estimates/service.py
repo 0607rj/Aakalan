@@ -93,6 +93,7 @@ def build_input(
                 complexity=c.complexity,  # type: ignore[arg-type]
                 quantity=c.quantity,
                 requirement_ids=[x for x in c.requirement_ids if x in priced_ids],
+                hard_problem=bool(c.driver_values.get("hard_problem", False)),
             )
             for c in project.components
         ],

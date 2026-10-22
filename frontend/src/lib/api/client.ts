@@ -18,6 +18,8 @@ export type Role = Schemas["Role"];
 export type LoginRequest = Schemas["LoginRequest"];
 export type CurrentUser = Schemas["UserOut"];
 export type TokenResponse = Schemas["TokenResponse"];
+export type SignupRequest = Schemas["SignupRequest"];
+export type CodeSent = Schemas["CodeSent"];
 export type Health = Schemas["Health"];
 
 export type Project = Schemas["ProjectOut"];
@@ -49,6 +51,9 @@ export type Suggestion = Schemas["Suggestion"];
 export type ContactIn = Schemas["ContactIn"];
 export type QuickSummary = Schemas["QuickSummary"];
 export type SecondOpinionState = Schemas["SecondOpinionState"];
+export type IndependentCheck = Schemas["IndependentCheckOut"];
+export type PricedOption = Schemas["PricedOption"];
+export type Researched = Schemas["ResearchedOut"];
 export type PlainPart = Schemas["PlainPart"];
 export type TenderDocument = Schemas["DocumentOut"];
 export type TenderExtraction = Schemas["TenderExtraction"];
@@ -166,6 +171,41 @@ export const api = {
       auth: false,
     }),
   me: () => request<CurrentUser>("/auth/me"),
+  signup: (body: SignupRequest) =>
+    request<CodeSent>("/auth/signup", {
+      method: "POST",
+      body: JSON.stringify(body),
+      auth: false,
+    }),
+  verifyEmail: (email: string, code: string) =>
+    request<TokenResponse>("/auth/verify-email", {
+      method: "POST",
+      body: JSON.stringify({ email, code }),
+      auth: false,
+    }),
+  resendCode: (email: string) =>
+    request<CodeSent>("/auth/verify-email/resend", {
+      method: "POST",
+      body: JSON.stringify({ email }),
+      auth: false,
+    }),
+  forgotPassword: (email: string) =>
+    request<CodeSent>("/auth/password/forgot", {
+      method: "POST",
+      body: JSON.stringify({ email }),
+      auth: false,
+    }),
+  resetPassword: (email: string, code: string, newPassword: string) =>
+    request<TokenResponse>("/auth/password/reset", {
+      method: "POST",
+      body: JSON.stringify({ email, code, new_password: newPassword }),
+      auth: false,
+    }),
+  changePassword: (currentPassword: string, newPassword: string) =>
+    send<TokenResponse>("POST", "/auth/password/change", {
+      current_password: currentPassword,
+      new_password: newPassword,
+    }),
   health: () => request<Health>("/health", { auth: false }),
 
   listProjects: () => request<Project[]>("/projects"),
@@ -228,6 +268,10 @@ export const api = {
   listQuickEstimates: () => request<QuickSummary[]>("/quick-estimates"),
   getEstimateSummary: (estimateId: string) =>
     request<QuickSummary>(`/estimates/${estimateId}/summary`),
+  confirmCheck: (estimateId: string) =>
+    send<QuickSummary>("POST", `/estimates/${estimateId}/check/confirm`),
+  getPricedOptions: (estimateId: string) =>
+    request<PricedOption[]>(`/estimates/${estimateId}/options`),
 
   uploadDocument: (file: File) => {
     const form = new FormData();

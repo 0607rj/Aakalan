@@ -32,7 +32,12 @@ def get_current_user(
     except jwt.PyJWTError as exc:
         raise unauthorized from exc
     user = db.get(User, payload.get("sub"))
-    if user is None or not user.is_active or user.org_id != payload.get("org"):
+    if (
+        user is None
+        or not user.is_active
+        or user.org_id != payload.get("org")
+        or payload.get("tv", 0) != user.token_version
+    ):
         raise unauthorized
     return user
 

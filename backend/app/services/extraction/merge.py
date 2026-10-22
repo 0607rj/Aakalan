@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session
 
 from app.models import Document, Project
 from app.services.extraction.tender import FoundValue, TenderExtraction
+from app.services.quick.config import quick_config
 
 OVERRIDING_KINDS = frozenset({"corrigendum", "prebid_reply"})
 
@@ -128,7 +129,25 @@ def merge_extractions(
         for n in not_priced.values()
         if not (n.topic == "payment_terms" and merged.payment_terms is not None)
     ]
+    _answers_from_topics(merged)
     return merged, changes
+
+
+YES = "yes"
+
+
+def _answers_from_topics(merged: TenderExtraction) -> None:
+    """A question with `from_not_priced` that the reading did not answer is answered "yes" by
+    the quotes of that not-priced topic (e.g. a penalty clause), so the answer stays cited."""
+    topics = {n.topic: n for n in merged.not_priced if n.evidence}
+    for key, question in quick_config().questions.items():
+        topic = topics.get(question.from_not_priced or "")
+        if topic is None or key in merged.choices:
+            continue
+        option = question.option(YES)
+        merged.choices[key] = FoundValue(
+            value=option.value, label=option.label, evidence=list(topic.evidence)
+        )
 
 
 def project_documents(db: Session, project: Project) -> list[Document]:

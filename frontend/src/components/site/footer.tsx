@@ -22,6 +22,7 @@ const COLUMNS = [
     title: "Your account",
     links: [
       { href: "/login", label: "Sign in" },
+      { href: "/signup", label: "Create an account" },
       { href: "/projects", label: "Your estimates" },
     ],
   },

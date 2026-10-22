@@ -1,0 +1,1697 @@
+# Shared library of researched features (OPEN_QUESTIONS 142), written by the app.
+# A feature the catalog lacked, researched once (checked web sources, else the AI's analysis
+# as catalog blocks) and shared with every organisation; `make seed` loads it into new installs.
+# Only the feature name, section, hours and public sources: never a company, project or tender.
+# Removing an entry stops new installs loading it; an installed app keeps its copy until
+# the row is retired. Estimates that used a block keep their own snapshot either way.
+blocks:
+- key: researched_clinic_management_multi_staff
+  name: Multi-clinic and staff management
+  section: business
+  base_type: module
+  method: analysis
+  added: '2026-10-22'
+  spec:
+    source: 'AI analysis (no published hours found): Master data management (standard), Bookings / appointments
+      / scheduling (basic), Dashboards and MIS reports (basic); hours are those blocks'' own catalog hours
+      (S / L = one size smaller / larger); low confidence'
+    key: researched_clinic_management_multi_staff
+    name: Multi-clinic and staff management
+    category: custom
+    bucket: build.module_development
+    description: Lets an organisation run several clinics from one system, with each clinic's locations,
+      settings and staff managed centrally and staff assigned to clinics with their schedules.
+    task_mix:
+      crud: '0.55'
+      tests: '0.2'
+      ui_design: '0.05'
+      documentation: '0.05'
+      review_uat: '0.15'
+    base_effort_pd:
+      S: '22.6'
+      M: '31.6'
+      L: '87.9'
+    applicable_drivers:
+    - languages
+    - accessibility
+    - concurrency
+    tags: []
+    licence: null
+    section: business
+    source_era: unknown
+    era_reason: Composed from catalog blocks; AI use behind their hours is not established
+    confidence: low
+    evidence:
+    - id: researched_clinic_management_multi_staff.1
+      citation: 'AI analysis 2026-10-22: master_data_management standard (Admin screens to manage clinics,
+        branches, departments, locations and staff roles or designations as masters.); booking_appointments
+        basic (Staff working hours, shifts and clinic-wise availability resemble slot and resource calendars.);
+        dashboard_mis_reports basic (Clinic-wise and staff-wise summary views and reports for the organisation
+        owner.)'
+      source_type: expert_judgement
+      published: null
+      url: null
+      era: unknown
+      era_basis: not_established
+      ai_workflow: null
+      sample_size: null
+      quality: low
+  sources:
+  - kind: part
+    block: master_data_management
+    level: standard
+    why: Admin screens to manage clinics, branches, departments, locations and staff roles or designations
+      as masters.
+  - kind: part
+    block: booking_appointments
+    level: basic
+    why: Staff working hours, shifts and clinic-wise availability resemble slot and resource calendars.
+  - kind: part
+    block: dashboard_mis_reports
+    level: basic
+    why: Clinic-wise and staff-wise summary views and reports for the organisation owner.
+- key: researched_note_patient_visit
+  name: Patient visit notes
+  section: business
+  base_type: module
+  method: web
+  added: '2026-10-22'
+  spec:
+    source: '120 / 160 / 200 team hours (lowest / median / highest checked figure) x 0.9 / 8 h per day;
+      low confidence; web research: Cleveroad Electronic Health Records (EHR/EMR)'
+    key: researched_note_patient_visit
+    name: Patient visit notes
+    category: custom
+    bucket: build.module_development
+    description: Lets clinicians record, save and look back at clinical notes for each patient visit or
+      consultation, linked to the patient's record.
+    task_mix:
+      crud: '0.55'
+      tests: '0.2'
+      ui_design: '0.05'
+      documentation: '0.05'
+      review_uat: '0.15'
+    base_effort_pd:
+      S: '13.5'
+      M: '18.0'
+      L: '22.5'
+    applicable_drivers:
+    - languages
+    - accessibility
+    - concurrency
+    tags: []
+    licence: null
+    section: business
+    source_era: unknown
+    era_reason: Web sources; none states whether AI coding tools were used
+    confidence: low
+    evidence:
+    - id: researched_note_patient_visit.1
+      citation: 'Cleveroad, ''How to Develop Custom Telemedicine Software in 2026'': Electronic Health
+        Records (EHR/EMR): "| Electronic Health Records (EHR/EMR)  | 120-200 hours  | $8,000-$15,000  |"
+        (web research, checked on the page 2026-10-22)'
+      source_type: vendor_estimate
+      published: 2026
+      url: https://www.cleveroad.com/blog/telemedicine-software-development/
+      era: unknown
+      era_basis: not_established
+      ai_workflow: null
+      sample_size: null
+      quality: low
+  sources:
+  - url: https://www.cleveroad.com/blog/telemedicine-software-development/
+    publisher: Cleveroad
+    title: How to Develop Custom Telemedicine Software in 2026
+    year: 2026
+    label: Electronic Health Records (EHR/EMR)
+    quote: '| Electronic Health Records (EHR/EMR)  | 120-200 hours  | $8,000-$15,000  |'
+    hours:
+    - '120'
+    - '200'
+    scope: unclear
+    ok: true
+    reason: ''
+- key: researched_appointment_history_statu_tracking
+  name: Appointment status tracking and history
+  section: business
+  base_type: module
+  method: analysis
+  added: '2026-10-22'
+  spec:
+    source: 'AI analysis (no published hours found): Bookings / appointments / scheduling (basic), Dashboards
+      and MIS reports (basic); hours are those blocks'' own catalog hours (S / L = one size smaller /
+      larger); low confidence'
+    key: researched_appointment_history_statu_tracking
+    name: Appointment status tracking and history
+    category: custom
+    bucket: build.module_development
+    description: Lets users and staff see the current status of an appointment (requested, confirmed,
+      rescheduled, cancelled, completed) and view a timeline of past status changes.
+    task_mix:
+      crud: '0.55'
+      tests: '0.2'
+      ui_design: '0.05'
+      documentation: '0.05'
+      review_uat: '0.15'
+    base_effort_pd:
+      S: '18.1'
+      M: '18.1'
+      L: '54.1'
+    applicable_drivers:
+    - languages
+    - accessibility
+    - concurrency
+    tags: []
+    licence: null
+    section: business
+    source_era: unknown
+    era_reason: Composed from catalog blocks; AI use behind their hours is not established
+    confidence: low
+    evidence:
+    - id: researched_appointment_history_statu_tracking.1
+      citation: 'AI analysis 2026-10-22: booking_appointments basic (Needs appointment status states and
+        transitions on existing bookings, without building the full slot and calendar engine.); dashboard_mis_reports
+        basic (A status timeline and history list view for users and staff, with simple filtering.)'
+      source_type: expert_judgement
+      published: null
+      url: null
+      era: unknown
+      era_basis: not_established
+      ai_workflow: null
+      sample_size: null
+      quality: low
+  sources:
+  - kind: part
+    block: booking_appointments
+    level: basic
+    why: Needs appointment status states and transitions on existing bookings, without building the full
+      slot and calendar engine.
+  - kind: part
+    block: dashboard_mis_reports
+    level: basic
+    why: A status timeline and history list view for users and staff, with simple filtering.
+- key: researched_face_matching_passport_photo
+  name: Passport photo face matching
+  section: ai_ml
+  base_type: ai
+  method: analysis
+  added: '2026-10-22'
+  spec:
+    source: 'AI analysis (no published hours found): AI recognises images (advanced), AI reads documents
+      (OCR and data extraction) (basic), Camera, QR code and barcode scanning (basic), AI evaluation set
+      and harness (basic), Masking personal data (PII) (basic); hours are those blocks'' own catalog hours
+      (S / L = one size smaller / larger); low confidence'
+    key: researched_face_matching_passport_photo
+    name: Passport photo face matching
+    category: custom
+    bucket: build.ai_ml
+    description: Compares a user's live or uploaded photo against the photo on their passport to confirm
+      they are the same person, with a review path for uncertain matches.
+    task_mix:
+      ai_engineering: '0.5'
+      crud: '0.2'
+      tests: '0.15'
+      review_uat: '0.15'
+    base_effort_pd:
+      S: '22.3'
+      M: '25.7'
+      L: '35.2'
+    applicable_drivers:
+    - security_level
+    tags:
+    - ai
+    licence: null
+    section: ai_ml
+    source_era: unknown
+    era_reason: Composed from catalog blocks; AI use behind their hours is not established
+    confidence: low
+    evidence:
+    - id: researched_face_matching_passport_photo.1
+      citation: 'AI analysis 2026-10-22: ai_image_recognition advanced (Face detection and comparison
+        with a hosted or trained model, including match score thresholds.); ai_document_extraction basic
+        (Locating and extracting the photo region from the scanned passport page.); mobile_camera_scanning
+        basic (Capturing the live selfie and passport photo and sending them to the server.); ai_evaluation_set
+        basic (Accuracy checks of match and false-accept rates on a sample set of faces.); pii_masking
+        basic (Face images and passport data are sensitive and need protecting in logs and stored copies.)'
+      source_type: expert_judgement
+      published: null
+      url: null
+      era: unknown
+      era_basis: not_established
+      ai_workflow: null
+      sample_size: null
+      quality: low
+  sources:
+  - kind: part
+    block: ai_image_recognition
+    level: advanced
+    why: Face detection and comparison with a hosted or trained model, including match score thresholds.
+  - kind: part
+    block: ai_document_extraction
+    level: basic
+    why: Locating and extracting the photo region from the scanned passport page.
+  - kind: part
+    block: mobile_camera_scanning
+    level: basic
+    why: Capturing the live selfie and passport photo and sending them to the server.
+  - kind: part
+    block: ai_evaluation_set
+    level: basic
+    why: Accuracy checks of match and false-accept rates on a sample set of faces.
+  - kind: part
+    block: pii_masking
+    level: basic
+    why: Face images and passport data are sensitive and need protecting in logs and stored copies.
+- key: researched_control_grati_registration
+  name: Gratis registration control
+  section: business
+  base_type: module
+  method: analysis
+  added: '2026-10-22'
+  spec:
+    source: 'AI analysis (no published hours found): Coupons, discounts and promotions (basic), Master
+      data management (basic), Online registration / empanelment application (basic); hours are those
+      blocks'' own catalog hours (S / L = one size smaller / larger); low confidence'
+    key: researched_control_grati_registration
+    name: Gratis registration control
+    category: custom
+    bucket: build.module_development
+    description: Lets an admin control free (gratis) registrations, for example by setting who qualifies,
+      how many free registrations are allowed and when they apply, so that registration fees are waived
+      only for eligible applicants.
+    task_mix:
+      crud: '0.55'
+      tests: '0.2'
+      ui_design: '0.05'
+      documentation: '0.05'
+      review_uat: '0.15'
+    base_effort_pd:
+      S: '21.6'
+      M: '21.6'
+      L: '54.9'
+    applicable_drivers:
+    - languages
+    - accessibility
+    - concurrency
+    tags: []
+    licence: null
+    section: business
+    source_era: unknown
+    era_reason: Composed from catalog blocks; AI use behind their hours is not established
+    confidence: low
+    evidence:
+    - id: researched_control_grati_registration.1
+      citation: 'AI analysis 2026-10-22: coupons_promotions basic (Waiving a fee for eligible registrants
+        works like a discount rule with validity dates and usage limits.); master_data_management basic
+        (Admin screens are needed to maintain the eligibility categories and gratis quotas.); registration_empanelment
+        basic (The gratis check has to be applied inside the existing registration flow and show status
+        to the applicant.)'
+      source_type: expert_judgement
+      published: null
+      url: null
+      era: unknown
+      era_basis: not_established
+      ai_workflow: null
+      sample_size: null
+      quality: low
+  sources:
+  - kind: part
+    block: coupons_promotions
+    level: basic
+    why: Waiving a fee for eligible registrants works like a discount rule with validity dates and usage
+      limits.
+  - kind: part
+    block: master_data_management
+    level: basic
+    why: Admin screens are needed to maintain the eligibility categories and gratis quotas.
+  - kind: part
+    block: registration_empanelment
+    level: basic
+    why: The gratis check has to be applied inside the existing registration flow and show status to the
+      applicant.
+- key: researched_booking_entry_exhibition_passe_space
+  name: Exhibition space booking and entry passes
+  section: business
+  base_type: module
+  method: web
+  added: '2026-10-22'
+  spec:
+    source: '150 / 185 / 300 team hours (lowest / median / highest checked figure) x 0.9 / 8 h per day;
+      low confidence; web research: Appinventiv Interactive seat map; CISIN (Cyber Infrastructure) Booking
+      Flow'
+    key: researched_booking_entry_exhibition_passe_space
+    name: Exhibition space booking and entry passes
+    category: custom
+    bucket: build.module_development
+    description: Lets exhibitors pick and reserve booth or exhibition space online, and issues entry passes
+      or tickets to visitors.
+    task_mix:
+      crud: '0.55'
+      tests: '0.2'
+      ui_design: '0.05'
+      documentation: '0.05'
+      review_uat: '0.15'
+    base_effort_pd:
+      S: '16.9'
+      M: '20.8'
+      L: '33.8'
+    applicable_drivers:
+    - languages
+    - accessibility
+    - concurrency
+    tags: []
+    licence: null
+    section: business
+    source_era: unknown
+    era_reason: Web sources; none states whether AI coding tools were used
+    confidence: low
+    evidence:
+    - id: researched_booking_entry_exhibition_passe_space.1
+      citation: 'Appinventiv, ''Cost to Build An App Like Ticketmaster: A Complete Guide'': Interactive
+        seat map: "Take an interactive seat map – that’s complex stuff, probably 150-300 hours of work."
+        (web research, checked on the page 2026-10-22)'
+      source_type: vendor_estimate
+      published: null
+      url: https://appinventiv.com/blog/cost-to-build-an-app-like-ticketmaster/
+      era: unknown
+      era_basis: not_established
+      ai_workflow: null
+      sample_size: null
+      quality: low
+    - id: researched_booking_entry_exhibition_passe_space.2
+      citation: 'CISIN (Cyber Infrastructure), ''Event Ticket Booking App Development Cost & Estimation
+        Guide'': Booking Flow: "Booking Flow  | Seat Selection, Cart Management, Ticket Quantity  | 150
+        - 220" (web research, checked on the page 2026-10-22)'
+      source_type: vendor_estimate
+      published: null
+      url: https://www.cisin.com/coffee-break/estimatation-for-event-ticket-booking-app-development.html
+      era: unknown
+      era_basis: not_established
+      ai_workflow: null
+      sample_size: null
+      quality: low
+  sources:
+  - url: https://appinventiv.com/blog/cost-to-build-an-app-like-ticketmaster/
+    publisher: Appinventiv
+    title: 'Cost to Build An App Like Ticketmaster: A Complete Guide'
+    year: null
+    label: Interactive seat map
+    quote: Take an interactive seat map – that’s complex stuff, probably 150-300 hours of work.
+    hours:
+    - '150'
+    - '300'
+    scope: unclear
+    ok: true
+    reason: ''
+  - url: https://www.cisin.com/coffee-break/estimatation-for-event-ticket-booking-app-development.html
+    publisher: CISIN (Cyber Infrastructure)
+    title: Event Ticket Booking App Development Cost & Estimation Guide
+    year: null
+    label: Booking Flow
+    quote: Booking Flow  | Seat Selection, Cart Management, Ticket Quantity  | 150 - 220
+    hours:
+    - '150'
+    - '220'
+    scope: unclear
+    ok: true
+    reason: ''
+- key: researched_payment_receipt_reconciliation
+  name: Payment reconciliation and receipts
+  section: business
+  base_type: report
+  method: analysis
+  added: '2026-10-22'
+  spec:
+    source: 'AI analysis (no published hours found): Payment gateway integration (PayGov / bank) (standard),
+      Billing and invoicing (standard), Dashboards and MIS reports (standard); hours are those blocks''
+      own catalog hours (S / L = one size smaller / larger); low confidence'
+    key: researched_payment_receipt_reconciliation
+    name: Payment reconciliation and receipts
+    category: custom
+    bucket: build.module_development
+    description: Matches payments received through the gateway or bank against orders or invoices, flags
+      mismatches, and issues receipts to payers.
+    task_mix:
+      crud: '0.6'
+      analysis: '0.1'
+      tests: '0.15'
+      review_uat: '0.15'
+    base_effort_pd:
+      S: '20.3'
+      M: '61.9'
+      L: '151.9'
+    applicable_drivers:
+    - languages
+    tags: []
+    licence: null
+    section: business
+    source_era: unknown
+    era_reason: Composed from catalog blocks; AI use behind their hours is not established
+    confidence: low
+    evidence:
+    - id: researched_payment_receipt_reconciliation.1
+      citation: 'AI analysis 2026-10-22: integration_payment_gateway standard (Needs settlement and transaction
+        data from the gateway or bank to match against records.); billing_invoicing standard (Receipts
+        and matching against invoices or dues resemble invoicing and receipt generation.); dashboard_mis_reports
+        standard (Reconciliation reports showing matched, unmatched and pending payments with exports.)'
+      source_type: expert_judgement
+      published: null
+      url: null
+      era: unknown
+      era_basis: not_established
+      ai_workflow: null
+      sample_size: null
+      quality: low
+  sources:
+  - kind: part
+    block: integration_payment_gateway
+    level: standard
+    why: Needs settlement and transaction data from the gateway or bank to match against records.
+  - kind: part
+    block: billing_invoicing
+    level: standard
+    why: Receipts and matching against invoices or dues resemble invoicing and receipt generation.
+  - kind: part
+    block: dashboard_mis_reports
+    level: standard
+    why: Reconciliation reports showing matched, unmatched and pending payments with exports.
+- key: researched_audit_cms_control_trail_version
+  name: CMS audit trail and version control
+  section: core
+  base_type: module
+  method: web
+  added: '2026-10-22'
+  spec:
+    source: '300 team hours (lowest / median / highest checked figure) x 0.9 / 8 h per day; low confidence;
+      web research: DEV Community Audit log (build it yourself)'
+    key: researched_audit_cms_control_trail_version
+    name: CMS audit trail and version control
+    category: custom
+    bucket: build.module_development
+    description: A CMS feature that records who changed which content and when, and keeps earlier versions
+      of content so editors can compare them and restore them.
+    task_mix:
+      crud: '0.55'
+      tests: '0.2'
+      ui_design: '0.05'
+      documentation: '0.05'
+      review_uat: '0.15'
+    base_effort_pd:
+      S: '33.8'
+      M: '33.8'
+      L: '33.8'
+    applicable_drivers:
+    - languages
+    - accessibility
+    - concurrency
+    tags: []
+    licence: null
+    section: core
+    source_era: unknown
+    era_reason: Web sources; none states whether AI coding tools were used
+    confidence: low
+    evidence:
+    - id: researched_audit_cms_control_trail_version.1
+      citation: 'DEV Community, ''Audit log API vs building it yourself: The real cost breakdown - DEV
+        Community'': Audit log (build it yourself): "That 300 hours your senior engineer spent building
+        audit logs?" (web research, checked on the page 2026-10-22)'
+      source_type: vendor_estimate
+      published: null
+      url: https://dev.to/auditledge/audit-log-api-vs-building-it-yourself-the-real-cost-breakdown-3n1n
+      era: unknown
+      era_basis: not_established
+      ai_workflow: null
+      sample_size: null
+      quality: low
+  sources:
+  - url: https://dev.to/auditledge/audit-log-api-vs-building-it-yourself-the-real-cost-breakdown-3n1n
+    publisher: DEV Community
+    title: 'Audit log API vs building it yourself: The real cost breakdown - DEV Community'
+    year: null
+    label: Audit log (build it yourself)
+    quote: That 300 hours your senior engineer spent building audit logs?
+    hours:
+    - '300'
+    scope: dev-only
+    ok: true
+    reason: ''
+- key: researched_api_information_registered_user
+  name: Registered user information API
+  section: core
+  base_type: integration
+  method: web
+  added: '2026-10-22'
+  spec:
+    source: '25 / 40 / 70 team hours (lowest / median / highest checked figure) x 0.9 / 8 h per day; low
+      confidence; web research: Uptech User profile; Agile Tech Forge User profiles; Project Cost Estimator
+      User profiles + settings'
+    key: researched_api_information_registered_user
+    name: Registered user information API
+    category: custom
+    bucket: build.integrations
+    description: An API that returns the stored profile details (such as name, contact info and settings)
+      of a registered user to the app or to other systems.
+    task_mix:
+      integration: '0.6'
+      analysis: '0.05'
+      tests: '0.2'
+      documentation: '0.05'
+      review_uat: '0.1'
+    base_effort_pd:
+      S: '2.8'
+      M: '4.5'
+      L: '7.9'
+    applicable_drivers:
+    - security_level
+    tags:
+    - integration
+    licence: null
+    section: core
+    source_era: unknown
+    era_reason: Web sources; none states whether AI coding tools were used
+    confidence: low
+    evidence:
+    - id: researched_api_information_registered_user.1
+      citation: 'Uptech, ''How Much Does It Cost To Make a Mobile App: A Detailed Breakdown'': User profile:
+        "| User profile | Change app settingsFAQ, terms of usePersonal info, edit info  | 30-70 hours
+        | $1500-$3500 |" (web research, checked on the page 2026-10-22)'
+      source_type: vendor_estimate
+      published: null
+      url: https://www.uptech.team/blog/cost-of-making-mobile-app
+      era: unknown
+      era_basis: not_established
+      ai_workflow: null
+      sample_size: null
+      quality: low
+    - id: researched_api_information_registered_user.2
+      citation: 'Agile Tech Forge, ''App Development Cost Calculator'': User profiles: "User profiles
+        40 h" (web research, checked on the page 2026-10-22)'
+      source_type: vendor_estimate
+      published: null
+      url: https://agiletechforge.com/tools/app-development-cost-calculator
+      era: unknown
+      era_basis: not_established
+      ai_workflow: null
+      sample_size: null
+      quality: low
+    - id: researched_api_information_registered_user.3
+      citation: 'Project Cost Estimator, ''MVP Estimation: How to Estimate MVP Cost ($6K-$95K)'': User
+        profiles + settings: "| User profiles + settings | 10 – 20h | 25 – 40h |" (web research, checked
+        on the page 2026-10-22)'
+      source_type: vendor_estimate
+      published: 2026
+      url: https://projectcostestimator.com/blog/mvp-estimation-guide-2026
+      era: unknown
+      era_basis: not_established
+      ai_workflow: null
+      sample_size: null
+      quality: low
+  sources:
+  - url: https://www.uptech.team/blog/cost-of-making-mobile-app
+    publisher: Uptech
+    title: 'How Much Does It Cost To Make a Mobile App: A Detailed Breakdown'
+    year: null
+    label: User profile
+    quote: '| User profile | Change app settingsFAQ, terms of usePersonal info, edit info  | 30-70 hours
+      | $1500-$3500 |'
+    hours:
+    - '30'
+    - '70'
+    scope: unclear
+    ok: true
+    reason: ''
+  - url: https://agiletechforge.com/tools/app-development-cost-calculator
+    publisher: Agile Tech Forge
+    title: App Development Cost Calculator
+    year: null
+    label: User profiles
+    quote: User profiles 40 h
+    hours:
+    - '40'
+    scope: unclear
+    ok: true
+    reason: ''
+  - url: https://projectcostestimator.com/blog/mvp-estimation-guide-2026
+    publisher: Project Cost Estimator
+    title: 'MVP Estimation: How to Estimate MVP Cost ($6K-$95K)'
+    year: 2026
+    label: User profiles + settings
+    quote: '| User profiles + settings | 10 – 20h | 25 – 40h |'
+    hours:
+    - '25'
+    - '40'
+    scope: unclear
+    ok: true
+    reason: ''
+- key: researched_integration_multichannel_national_portal
+  name: Multichannel and national portal integration
+  section: integrations
+  base_type: integration
+  method: analysis
+  added: '2026-10-22'
+  spec:
+    source: 'AI analysis (no published hours found): ERP / legacy system integration (standard), SSO /
+      identity integration (Parichay, LDAP) (basic), Master data management (basic), Dashboards and MIS
+      reports (basic); hours are those blocks'' own catalog hours (S / L = one size smaller / larger);
+      low confidence'
+    key: researched_integration_multichannel_national_portal
+    name: Multichannel and national portal integration
+    category: custom
+    bucket: build.integrations
+    description: Connects the system to several outside channels and national government portals so that
+      data and requests flow between them and the application.
+    task_mix:
+      integration: '0.6'
+      analysis: '0.05'
+      tests: '0.2'
+      documentation: '0.05'
+      review_uat: '0.1'
+    base_effort_pd:
+      S: '21.5'
+      M: '37.2'
+      L: '112.6'
+    applicable_drivers:
+    - security_level
+    tags:
+    - integration
+    licence: null
+    section: integrations
+    source_era: unknown
+    era_reason: Composed from catalog blocks; AI use behind their hours is not established
+    confidence: low
+    evidence:
+    - id: researched_integration_multichannel_national_portal.1
+      citation: 'AI analysis 2026-10-22: integration_erp_legacy standard (API or ETL data exchange with
+        external national portals and departmental systems is the core of the feature.); integration_sso_identity
+        basic (National portals usually need shared login or identity federation for users arriving from
+        other channels.); master_data_management basic (Code lists and channel mappings must be kept in
+        step between the portals and this system.); dashboard_mis_reports basic (Officials need to see
+        the volume and status of requests arriving through each channel.)'
+      source_type: expert_judgement
+      published: null
+      url: null
+      era: unknown
+      era_basis: not_established
+      ai_workflow: null
+      sample_size: null
+      quality: low
+  sources:
+  - kind: part
+    block: integration_erp_legacy
+    level: standard
+    why: API or ETL data exchange with external national portals and departmental systems is the core
+      of the feature.
+  - kind: part
+    block: integration_sso_identity
+    level: basic
+    why: National portals usually need shared login or identity federation for users arriving from other
+      channels.
+  - kind: part
+    block: master_data_management
+    level: basic
+    why: Code lists and channel mappings must be kept in step between the portals and this system.
+  - kind: part
+    block: dashboard_mis_reports
+    level: basic
+    why: Officials need to see the volume and status of requests arriving through each channel.
+- key: researched_identity_match_passport_photo_verification
+  name: Passport identity verification with photo match
+  section: integrations
+  base_type: ai
+  method: web
+  added: '2026-10-22'
+  spec:
+    source: '120 / 160 / 200 team hours (lowest / median / highest checked figure) x 0.9 / 8 h per day;
+      low confidence; web research: TRUETECH KYC/KYB Verification in a Mobile App'
+    key: researched_identity_match_passport_photo_verification
+    name: Passport identity verification with photo match
+    category: custom
+    bucket: build.ai_ml
+    description: Lets a user scan a passport or other photo ID and take a selfie, then checks that the
+      face matches the document photo, usually through a third-party KYC provider's SDK.
+    task_mix:
+      ai_engineering: '0.5'
+      crud: '0.2'
+      tests: '0.15'
+      review_uat: '0.15'
+    base_effort_pd:
+      S: '13.5'
+      M: '18.0'
+      L: '22.5'
+    applicable_drivers:
+    - security_level
+    tags:
+    - ai
+    licence: null
+    section: integrations
+    source_era: unknown
+    era_reason: Web sources; none states whether AI coding tools were used
+    confidence: low
+    evidence:
+    - id: researched_identity_match_passport_photo_verification.1
+      citation: 'TRUETECH, ''KYC/KYB Verification in Mobile Apps: Integration & Implementation — TRUETECH'':
+        KYC/KYB Verification in a Mobile App: "How long does KYC integration take?","acceptedAnswer":{"text":"On
+        average, 15–25 business days." (web research, checked on the page 2026-10-22)'
+      source_type: vendor_estimate
+      published: null
+      url: https://truetech.dev/mobile-apps-development/services/auth/kyc-kyb-verification-mobile.html
+      era: unknown
+      era_basis: not_established
+      ai_workflow: null
+      sample_size: null
+      quality: low
+  sources:
+  - url: https://truetech.dev/mobile-apps-development/services/auth/kyc-kyb-verification-mobile.html
+    publisher: TRUETECH
+    title: 'KYC/KYB Verification in Mobile Apps: Integration & Implementation — TRUETECH'
+    year: null
+    label: KYC/KYB Verification in a Mobile App
+    quote: How long does KYC integration take?","acceptedAnswer":{"text":"On average, 15–25 business days.
+    hours:
+    - '120'
+    - '200'
+    scope: unclear
+    ok: true
+    reason: ''
+- key: researched_application_channel_device_multi_web
+  name: Multi-channel web application devices
+  section: web
+  base_type: integration
+  method: analysis
+  added: '2026-10-22'
+  spec:
+    source: 'AI analysis (no published hours found): Search engine set-up (SEO) (basic), Accessibility
+      and GIGW compliance (basic), Performance and load testing (basic); hours are those blocks'' own
+      catalog hours (S / L = one size smaller / larger); low confidence'
+    key: researched_application_channel_device_multi_web
+    name: Multi-channel web application devices
+    category: custom
+    bucket: build.integrations
+    description: A web application that works across multiple devices and channels (desktop, tablet, phone
+      browsers), with a consistent responsive experience and installable PWA behaviour where needed.
+    task_mix:
+      integration: '0.6'
+      analysis: '0.05'
+      tests: '0.2'
+      documentation: '0.05'
+      review_uat: '0.1'
+    base_effort_pd:
+      S: '15.6'
+      M: '15.6'
+      L: '37.7'
+    applicable_drivers:
+    - security_level
+    tags:
+    - integration
+    licence: null
+    section: web
+    source_era: unknown
+    era_reason: Composed from catalog blocks; AI use behind their hours is not established
+    confidence: low
+    evidence:
+    - id: researched_application_channel_device_multi_web.1
+      citation: 'AI analysis 2026-10-22: seo_setup basic (Public pages reached through different channels
+        need basic meta tags and sitemap for discoverability.); accessibility_gigw_compliance basic (Consistent
+        usability across devices calls for basic accessibility conformance checks.); performance_load_testing
+        basic (Performance across devices and network conditions needs basic load and speed testing.)'
+      source_type: expert_judgement
+      published: null
+      url: null
+      era: unknown
+      era_basis: not_established
+      ai_workflow: null
+      sample_size: null
+      quality: low
+  sources:
+  - kind: part
+    block: seo_setup
+    level: basic
+    why: Public pages reached through different channels need basic meta tags and sitemap for discoverability.
+  - kind: part
+    block: accessibility_gigw_compliance
+    level: basic
+    why: Consistent usability across devices calls for basic accessibility conformance checks.
+  - kind: part
+    block: performance_load_testing
+    level: basic
+    why: Performance across devices and network conditions needs basic load and speed testing.
+- key: researched_feedback_form
+  name: Feedback form
+  section: web
+  base_type: module
+  method: web
+  added: '2026-10-22'
+  spec:
+    source: '16 / 24 / 32 team hours (lowest / median / highest checked figure) x 0.9 / 8 h per day; low
+      confidence; web research: Space-O Technologies Custom Forms and Surveys'
+    key: researched_feedback_form
+    name: Feedback form
+    category: custom
+    bucket: build.module_development
+    description: A form on a website or app where users submit feedback, comments or survey answers, which
+      are saved and can be reviewed.
+    task_mix:
+      crud: '0.55'
+      tests: '0.2'
+      ui_design: '0.05'
+      documentation: '0.05'
+      review_uat: '0.15'
+    base_effort_pd:
+      S: '1.8'
+      M: '2.7'
+      L: '3.6'
+    applicable_drivers:
+    - languages
+    - accessibility
+    - concurrency
+    tags: []
+    licence: null
+    section: web
+    source_era: unknown
+    era_reason: Web sources; none states whether AI coding tools were used
+    confidence: low
+    evidence:
+    - id: researched_feedback_form.1
+      citation: 'Space-O Technologies, ''Web App Development Cost: 2026 Insights & Estimation Guide'':
+        Custom Forms and Surveys: "Custom Forms and Surveys Ability to create custom forms and surveys
+        for user input and feedback, including form creation, data collection, and analytics. 16-32 hours"
+        (web research, checked on the page 2026-10-22)'
+      source_type: vendor_estimate
+      published: 2026
+      url: https://www.spaceotechnologies.com/blog/web-app-development-cost/
+      era: unknown
+      era_basis: not_established
+      ai_workflow: null
+      sample_size: null
+      quality: low
+  sources:
+  - url: https://www.spaceotechnologies.com/blog/web-app-development-cost/
+    publisher: Space-O Technologies
+    title: 'Web App Development Cost: 2026 Insights & Estimation Guide'
+    year: 2026
+    label: Custom Forms and Surveys
+    quote: Custom Forms and Surveys Ability to create custom forms and surveys for user input and feedback,
+      including form creation, data collection, and analytics. 16-32 hours
+    hours:
+    - '16'
+    - '32'
+    scope: unclear
+    ok: true
+    reason: ''
+- key: researched_application_device_grassroot_multichannel
+  name: Multichannel grassroots device application
+  section: mobile
+  base_type: integration
+  method: analysis
+  added: '2026-10-22'
+  spec:
+    source: 'AI analysis (no published hours found): Mobile app works offline and syncs later (standard),
+      Multilingual framework (i18n) (standard), Push notifications (app and browser) (basic), Dashboards
+      and MIS reports (basic); hours are those blocks'' own catalog hours (S / L = one size smaller /
+      larger); low confidence'
+    key: researched_application_device_grassroot_multichannel
+    name: Multichannel grassroots device application
+    category: custom
+    bucket: build.integrations
+    description: A multichannel application for grassroots field users that works on mobile devices and
+      the web, so data can be captured in the field and used across channels.
+    task_mix:
+      integration: '0.6'
+      analysis: '0.05'
+      tests: '0.2'
+      documentation: '0.05'
+      review_uat: '0.1'
+    base_effort_pd:
+      S: '19.7'
+      M: '30.8'
+      L: '67.6'
+    applicable_drivers:
+    - security_level
+    tags:
+    - integration
+    licence: null
+    section: mobile
+    source_era: unknown
+    era_reason: Composed from catalog blocks; AI use behind their hours is not established
+    confidence: low
+    evidence:
+    - id: researched_application_device_grassroot_multichannel.1
+      citation: 'AI analysis 2026-10-22: mobile_offline_sync standard (Grassroots users often have poor
+        connectivity, so data must be stored on the device and synced later.); multilingual_i18n standard
+        (Grassroots users need the app in local languages.); push_notifications basic (Field users need
+        alerts and reminders on their devices.); dashboard_mis_reports basic (Collected field data needs
+        simple reporting for supervisors.)'
+      source_type: expert_judgement
+      published: null
+      url: null
+      era: unknown
+      era_basis: not_established
+      ai_workflow: null
+      sample_size: null
+      quality: low
+  sources:
+  - kind: part
+    block: mobile_offline_sync
+    level: standard
+    why: Grassroots users often have poor connectivity, so data must be stored on the device and synced
+      later.
+  - kind: part
+    block: multilingual_i18n
+    level: standard
+    why: Grassroots users need the app in local languages.
+  - kind: part
+    block: push_notifications
+    level: basic
+    why: Field users need alerts and reminders on their devices.
+  - kind: part
+    block: dashboard_mis_reports
+    level: basic
+    why: Collected field data needs simple reporting for supervisors.
+- key: researched_cms_content_publishing_timed
+  name: Timed content publishing in CMS
+  section: web
+  base_type: module
+  method: analysis
+  added: '2026-10-22'
+  spec:
+    source: 'AI analysis (no published hours found): CMS and public website (basic); hours are those blocks''
+      own catalog hours (S / L = one size smaller / larger); low confidence'
+    key: researched_cms_content_publishing_timed
+    name: Timed content publishing in CMS
+    category: custom
+    bucket: build.module_development
+    description: Lets CMS editors schedule pages, notices or articles to go live and expire automatically
+      at set dates and times, with a scheduled status and automatic publish/unpublish.
+    task_mix:
+      crud: '0.55'
+      tests: '0.2'
+      ui_design: '0.05'
+      documentation: '0.05'
+      review_uat: '0.15'
+    base_effort_pd:
+      S: '6.8'
+      M: '6.8'
+      L: '22.5'
+    applicable_drivers:
+    - languages
+    - accessibility
+    - concurrency
+    tags: []
+    licence: null
+    section: web
+    source_era: unknown
+    era_reason: Composed from catalog blocks; AI use behind their hours is not established
+    confidence: low
+    evidence:
+    - id: researched_cms_content_publishing_timed.1
+      citation: 'AI analysis 2026-10-22: cms_public_website basic (Adds publish and expiry date fields
+        and a scheduled job to the existing CMS content model and editor screens.)'
+      source_type: expert_judgement
+      published: null
+      url: null
+      era: unknown
+      era_basis: not_established
+      ai_workflow: null
+      sample_size: null
+      quality: low
+  sources:
+  - kind: part
+    block: cms_public_website
+    level: basic
+    why: Adds publish and expiry date fields and a scheduled job to the existing CMS content model and
+      editor screens.
+- key: researched_login_mission_portal
+  name: Mission login portal
+  section: core
+  base_type: module
+  method: web
+  added: '2026-10-22'
+  spec:
+    source: '16 / 60 / 100 team hours (lowest / median / highest checked figure) x 0.9 / 8 h per day;
+      low confidence; web research: Zuplo Authentication flows (signup, login, password reset); Abbacus
+      Technologies Login'
+    key: researched_login_mission_portal
+    name: Mission login portal
+    category: custom
+    bucket: build.module_development
+    description: A login portal where users sign in to their accounts with credentials, including related
+      flows such as sign-up and password reset.
+    task_mix:
+      crud: '0.55'
+      tests: '0.2'
+      ui_design: '0.05'
+      documentation: '0.05'
+      review_uat: '0.15'
+    base_effort_pd:
+      S: '1.8'
+      M: '6.8'
+      L: '11.3'
+    applicable_drivers:
+    - languages
+    - accessibility
+    - concurrency
+    tags: []
+    licence: null
+    section: core
+    source_era: unknown
+    era_reason: Web sources; none states whether AI coding tools were used
+    confidence: low
+    evidence:
+    - id: researched_login_mission_portal.1
+      citation: 'Zuplo, ''Developer Portal Cost Breakdown: Build vs Buy in 2026 - Zuplo'': Authentication
+        flows (signup, login, password reset): "Authentication flows (signup, login, password reset):
+        60–100 hours" (web research, checked on the page 2026-10-22)'
+      source_type: vendor_estimate
+      published: 2026
+      url: https://zuplo.com/learning-center/developer-portal-cost-build-vs-buy-analysis
+      era: unknown
+      era_basis: not_established
+      ai_workflow: null
+      sample_size: null
+      quality: low
+    - id: researched_login_mission_portal.2
+      citation: 'Abbacus Technologies, ''How Long Does Web Application Development Take?'': Login: "Login:
+        16 hours" (web research, checked on the page 2026-10-22)'
+      source_type: vendor_estimate
+      published: null
+      url: https://www.abbacustechnologies.com/how-long-does-web-application-development-take-3/
+      era: unknown
+      era_basis: not_established
+      ai_workflow: null
+      sample_size: null
+      quality: low
+  sources:
+  - url: https://zuplo.com/learning-center/developer-portal-cost-build-vs-buy-analysis
+    publisher: Zuplo
+    title: 'Developer Portal Cost Breakdown: Build vs Buy in 2026 - Zuplo'
+    year: 2026
+    label: Authentication flows (signup, login, password reset)
+    quote: 'Authentication flows (signup, login, password reset): 60–100 hours'
+    hours:
+    - '60'
+    - '100'
+    scope: unclear
+    ok: true
+    reason: ''
+  - url: https://www.abbacustechnologies.com/how-long-does-web-application-development-take-3/
+    publisher: Abbacus Technologies
+    title: How Long Does Web Application Development Take?
+    year: null
+    label: Login
+    quote: 'Login: 16 hours'
+    hours:
+    - '16'
+    scope: unclear
+    ok: true
+    reason: ''
+- key: researched_country_interactive_learning_profile
+  name: Interactive country profiles and e-learning
+  section: web
+  base_type: module
+  method: web
+  added: '2026-10-22'
+  spec:
+    source: '42 / 50 / 100 team hours (lowest / median / highest checked figure) x 0.9 / 8 h per day;
+      low confidence; web research: Cleveroad Courses screen; Abbacus Technologies Basic quiz'
+    key: researched_country_interactive_learning_profile
+    name: Interactive country profiles and e-learning
+    category: custom
+    bucket: build.module_development
+    description: A web section with interactive, filterable profile pages for each country, plus an e-learning
+      area with courses and quizzes.
+    task_mix:
+      crud: '0.55'
+      tests: '0.2'
+      ui_design: '0.05'
+      documentation: '0.05'
+      review_uat: '0.15'
+    base_effort_pd:
+      S: '4.7'
+      M: '5.6'
+      L: '11.3'
+    applicable_drivers:
+    - languages
+    - accessibility
+    - concurrency
+    tags: []
+    licence: null
+    section: web
+    source_era: unknown
+    era_reason: Web sources; none states whether AI coding tools were used
+    confidence: low
+    evidence:
+    - id: researched_country_interactive_learning_profile.1
+      citation: 'Cleveroad, ''E Learning App Development: Features and Cost'': Courses screen: "| Courses
+        screen  | 42 hours  | $2,100  |" (web research, checked on the page 2026-10-22)'
+      source_type: vendor_estimate
+      published: 2026
+      url: https://www.cleveroad.com/blog/e-learning-application-development/
+      era: unknown
+      era_basis: not_established
+      ai_workflow: null
+      sample_size: null
+      quality: low
+    - id: researched_country_interactive_learning_profile.2
+      citation: 'Abbacus Technologies, ''How to Develop a Custom Learning Management System (LMS) with
+        Quiz Functionality'': Basic quiz: "Complexity of quiz logic: Basic quiz (50-100 hours) vs. adaptive
+        + proctored quiz (300-500 hours)." (web research, checked on the page 2026-10-22)'
+      source_type: vendor_estimate
+      published: null
+      url: https://www.abbacustechnologies.com/how-to-develop-a-custom-learning-management-system-lms-with-quiz-functionality/
+      era: unknown
+      era_basis: not_established
+      ai_workflow: null
+      sample_size: null
+      quality: low
+  sources:
+  - url: https://www.cleveroad.com/blog/e-learning-application-development/
+    publisher: Cleveroad
+    title: 'E Learning App Development: Features and Cost'
+    year: 2026
+    label: Courses screen
+    quote: '| Courses screen  | 42 hours  | $2,100  |'
+    hours:
+    - '42'
+    scope: unclear
+    ok: true
+    reason: ''
+  - url: https://www.abbacustechnologies.com/how-to-develop-a-custom-learning-management-system-lms-with-quiz-functionality/
+    publisher: Abbacus Technologies
+    title: How to Develop a Custom Learning Management System (LMS) with Quiz Functionality
+    year: null
+    label: Basic quiz
+    quote: 'Complexity of quiz logic: Basic quiz (50-100 hours) vs. adaptive + proctored quiz (300-500
+      hours).'
+    hours:
+    - '50'
+    - '100'
+    scope: unclear
+    ok: true
+    reason: ''
+- key: researched_integration_media_multimedia_social
+  name: Multimedia and social media integration
+  section: integrations
+  base_type: integration
+  method: web
+  added: '2026-10-22'
+  spec:
+    source: '8 / 60 / 450 team hours (lowest / median / highest checked figure) x 0.9 / 8 h per day; low
+      confidence; web research: CMARIX Linking app account ID with social media account ID; bundle.social
+      Instagram integration; Appinventiv Media upload and processing; MobileAppDaily Multi-media sharing'
+    key: researched_integration_media_multimedia_social
+    name: Multimedia and social media integration
+    category: custom
+    bucket: build.integrations
+    description: Lets an app share, upload and play multimedia content (photos, video, audio) and connect
+      to social media platforms, for example through account linking, posting to social networks and media
+      sharing.
+    task_mix:
+      integration: '0.6'
+      analysis: '0.05'
+      tests: '0.2'
+      documentation: '0.05'
+      review_uat: '0.1'
+    base_effort_pd:
+      S: '0.9'
+      M: '6.8'
+      L: '50.6'
+    applicable_drivers:
+    - security_level
+    tags:
+    - integration
+    licence: null
+    section: integrations
+    source_era: unknown
+    era_reason: Web sources; none states whether AI coding tools were used
+    confidence: low
+    evidence:
+    - id: researched_integration_media_multimedia_social.1
+      citation: 'CMARIX, ''How Much Does It Cost to Make a Social Networking App Like Instagram?'': Linking
+        app account ID with social media account ID: "The process requires linking up your app account
+        ID with the social media account ID that usually takes 8-10 hours" (web research, checked on the
+        page 2026-10-22)'
+      source_type: vendor_estimate
+      published: null
+      url: https://www.cmarix.com/blog/cost-to-develop-a-social-networking-app-like-instagram/
+      era: unknown
+      era_basis: not_established
+      ai_workflow: null
+      sample_size: null
+      quality: low
+    - id: researched_integration_media_multimedia_social.2
+      citation: 'bundle.social, ''The Best Social Media API for Startups: A Founder''s Guide'': Instagram
+        integration: "| Instagram integration | 60-80 hours |" (web research, checked on the page 2026-10-22)'
+      source_type: vendor_estimate
+      published: null
+      url: https://bundle.social/blog/social-media-api-startups-build-vs-buy
+      era: unknown
+      era_basis: not_established
+      ai_workflow: null
+      sample_size: null
+      quality: low
+    - id: researched_integration_media_multimedia_social.3
+      citation: 'Appinventiv, ''Social Media App Development Cost for Modern Platforms'': Media upload
+        and processing: "| Media upload and processing | 200–450 hrs | $20k – $70k |" (web research, checked
+        on the page 2026-10-22)'
+      source_type: vendor_estimate
+      published: null
+      url: https://appinventiv.com/blog/how-much-social-media-app-development-costs/
+      era: unknown
+      era_basis: not_established
+      ai_workflow: null
+      sample_size: null
+      quality: low
+    - id: researched_integration_media_multimedia_social.4
+      citation: 'MobileAppDaily, ''Social Media App Development Cost'': Multi-media sharing: "Multi-media
+        sharing | Sharing media files including audio, video, text. | 15 Hours | 45+hours | 45+hours |
+        $2,250 |" (web research, checked on the page 2026-10-22)'
+      source_type: vendor_estimate
+      published: 2026
+      url: https://www.mobileappdaily.com/knowledge-hub/social-media-app-development-cost
+      era: unknown
+      era_basis: not_established
+      ai_workflow: null
+      sample_size: null
+      quality: low
+  sources:
+  - url: https://www.cmarix.com/blog/cost-to-develop-a-social-networking-app-like-instagram/
+    publisher: CMARIX
+    title: How Much Does It Cost to Make a Social Networking App Like Instagram?
+    year: null
+    label: Linking app account ID with social media account ID
+    quote: The process requires linking up your app account ID with the social media account ID that usually
+      takes 8-10 hours
+    hours:
+    - '8'
+    - '10'
+    scope: unclear
+    ok: true
+    reason: ''
+  - url: https://bundle.social/blog/social-media-api-startups-build-vs-buy
+    publisher: bundle.social
+    title: 'The Best Social Media API for Startups: A Founder''s Guide'
+    year: null
+    label: Instagram integration
+    quote: '| Instagram integration | 60-80 hours |'
+    hours:
+    - '60'
+    - '80'
+    scope: unclear
+    ok: true
+    reason: ''
+  - url: https://appinventiv.com/blog/how-much-social-media-app-development-costs/
+    publisher: Appinventiv
+    title: Social Media App Development Cost for Modern Platforms
+    year: null
+    label: Media upload and processing
+    quote: '| Media upload and processing | 200–450 hrs | $20k – $70k |'
+    hours:
+    - '200'
+    - '450'
+    scope: unclear
+    ok: true
+    reason: ''
+  - url: https://www.mobileappdaily.com/knowledge-hub/social-media-app-development-cost
+    publisher: MobileAppDaily
+    title: Social Media App Development Cost
+    year: 2026
+    label: Multi-media sharing
+    quote: Multi-media sharing | Sharing media files including audio, video, text. | 15 Hours | 45+hours
+      | 45+hours | $2,250 |
+    hours:
+    - '45'
+    scope: dev-only
+    ok: true
+    reason: ''
+- key: researched_archiving_auto_content
+  name: Auto-archiving of content
+  section: custom
+  base_type: module
+  method: analysis
+  added: '2026-10-22'
+  spec:
+    source: 'AI analysis (no published hours found): Document management (basic), Master data management
+      (basic); hours are those blocks'' own catalog hours (S / L = one size smaller / larger); low confidence'
+    key: researched_archiving_auto_content
+    name: Auto-archiving of content
+    category: custom
+    bucket: build.module_development
+    description: Automatically moves old or expired content into an archive based on age or status rules,
+      keeping it retrievable but out of active listings.
+    task_mix:
+      crud: '0.55'
+      tests: '0.2'
+      ui_design: '0.05'
+      documentation: '0.05'
+      review_uat: '0.15'
+    base_effort_pd:
+      S: '13.5'
+      M: '13.5'
+      L: '41.6'
+    applicable_drivers:
+    - languages
+    - accessibility
+    - concurrency
+    tags: []
+    licence: null
+    section: custom
+    source_era: unknown
+    era_reason: Composed from catalog blocks; AI use behind their hours is not established
+    confidence: low
+    evidence:
+    - id: researched_archiving_auto_content.1
+      citation: 'AI analysis 2026-10-22: document_management basic (Archived content needs an archive
+        state, secure storage and retrieval of older items.); master_data_management basic (Admins need
+        a simple screen to set archive rules such as age limits per content category.)'
+      source_type: expert_judgement
+      published: null
+      url: null
+      era: unknown
+      era_basis: not_established
+      ai_workflow: null
+      sample_size: null
+      quality: low
+  sources:
+  - kind: part
+    block: document_management
+    level: basic
+    why: Archived content needs an archive state, secure storage and retrieval of older items.
+  - kind: part
+    block: master_data_management
+    level: basic
+    why: Admins need a simple screen to set archive rules such as age limits per content category.
+- key: researched_change_logging_server
+  name: Change and server logging
+  section: core
+  base_type: module
+  method: web
+  added: '2026-10-22'
+  spec:
+    source: '300 team hours (lowest / median / highest checked figure) x 0.9 / 8 h per day; low confidence;
+      web research: DEV Community (AuditLedge) Audit log'
+    key: researched_change_logging_server
+    name: Change and server logging
+    category: custom
+    bucket: build.module_development
+    description: Records who changed what and when (change or audit log) and server events, with a way
+      to view and search the logs.
+    task_mix:
+      crud: '0.55'
+      tests: '0.2'
+      ui_design: '0.05'
+      documentation: '0.05'
+      review_uat: '0.15'
+    base_effort_pd:
+      S: '33.8'
+      M: '33.8'
+      L: '33.8'
+    applicable_drivers:
+    - languages
+    - accessibility
+    - concurrency
+    tags: []
+    licence: null
+    section: core
+    source_era: unknown
+    era_reason: Web sources; none states whether AI coding tools were used
+    confidence: low
+    evidence:
+    - id: researched_change_logging_server.1
+      citation: 'DEV Community (AuditLedge), ''Audit log API vs building it yourself: The real cost breakdown'':
+        Audit log: "That 300 hours your senior engineer spent building audit logs?" (web research, checked
+        on the page 2026-10-22)'
+      source_type: vendor_estimate
+      published: 2026
+      url: https://dev.to/auditledge/audit-log-api-vs-building-it-yourself-the-real-cost-breakdown-3n1n
+      era: unknown
+      era_basis: not_established
+      ai_workflow: null
+      sample_size: null
+      quality: low
+  sources:
+  - url: https://dev.to/auditledge/audit-log-api-vs-building-it-yourself-the-real-cost-breakdown-3n1n
+    publisher: DEV Community (AuditLedge)
+    title: 'Audit log API vs building it yourself: The real cost breakdown'
+    year: 2026
+    label: Audit log
+    quote: That 300 hours your senior engineer spent building audit logs?
+    hours:
+    - '300'
+    scope: dev-only
+    ok: true
+    reason: ''
+- key: researched_check_duplicate_lookup_patient
+  name: Patient duplicate check and lookup
+  section: business
+  base_type: module
+  method: analysis
+  added: '2026-10-22'
+  spec:
+    source: 'AI analysis (no published hours found): Search (standard), Master data management (basic),
+      Masking personal data (PII) (basic); hours are those blocks'' own catalog hours (S / L = one size
+      smaller / larger); low confidence'
+    key: researched_check_duplicate_lookup_patient
+    name: Patient duplicate check and lookup
+    category: custom
+    bucket: build.module_development
+    description: Searches existing patient records by name, phone, date of birth or ID to find a patient
+      quickly and warns staff about likely duplicate records before a new one is created.
+    task_mix:
+      crud: '0.55'
+      tests: '0.2'
+      ui_design: '0.05'
+      documentation: '0.05'
+      review_uat: '0.15'
+    base_effort_pd:
+      S: '11.5'
+      M: '19.4'
+      L: '52.7'
+    applicable_drivers:
+    - languages
+    - accessibility
+    - concurrency
+    tags: []
+    licence: null
+    section: business
+    source_era: unknown
+    era_reason: Composed from catalog blocks; AI use behind their hours is not established
+    confidence: low
+    evidence:
+    - id: researched_check_duplicate_lookup_patient.1
+      citation: 'AI analysis 2026-10-22: search_module standard (Patient lookup needs fast search across
+        several fields with fuzzy matching on names and phone numbers.); master_data_management basic
+        (Duplicate flagging and merge screens for patient records resemble an admin screen for managing
+        master records.); pii_masking basic (Patient identifiers shown in search results and possible-match
+        lists should be partly masked for staff without full access.)'
+      source_type: expert_judgement
+      published: null
+      url: null
+      era: unknown
+      era_basis: not_established
+      ai_workflow: null
+      sample_size: null
+      quality: low
+  sources:
+  - kind: part
+    block: search_module
+    level: standard
+    why: Patient lookup needs fast search across several fields with fuzzy matching on names and phone
+      numbers.
+  - kind: part
+    block: master_data_management
+    level: basic
+    why: Duplicate flagging and merge screens for patient records resemble an admin screen for managing
+      master records.
+  - kind: part
+    block: pii_masking
+    level: basic
+    why: Patient identifiers shown in search results and possible-match lists should be partly masked
+      for staff without full access.
+- key: researched_clinic_data_separation_wise
+  name: Clinic-wise data separation
+  section: core
+  base_type: module
+  method: web
+  added: '2026-10-22'
+  spec:
+    source: '30 / 60 / 90 team hours (lowest / median / highest checked figure) x 0.9 / 8 h per day; low
+      confidence; web research: Project Cost Estimator Multi-tenancy'
+    key: researched_clinic_data_separation_wise
+    name: Clinic-wise data separation
+    category: custom
+    bucket: build.module_development
+    description: Keeps each clinic's records, users and settings separate so staff at one clinic see only
+      their own clinic's data (multi-clinic or multi-tenant data isolation).
+    task_mix:
+      crud: '0.55'
+      tests: '0.2'
+      ui_design: '0.05'
+      documentation: '0.05'
+      review_uat: '0.15'
+    base_effort_pd:
+      S: '3.4'
+      M: '6.8'
+      L: '10.1'
+    applicable_drivers:
+    - languages
+    - accessibility
+    - concurrency
+    tags: []
+    licence: null
+    section: core
+    source_era: unknown
+    era_reason: Web sources; none states whether AI coding tools were used
+    confidence: low
+    evidence:
+    - id: researched_clinic_data_separation_wise.1
+      citation: 'Project Cost Estimator, ''SaaS Development Cost in 2026: $15K–$250K+ [Real Data]'': Multi-tenancy:
+        "| Multi-tenancy | $4,000 – $12,000 | 30–90h | Data isolation, tenant config, subdomain routing
+        |" (web research, checked on the page 2026-10-22)'
+      source_type: vendor_estimate
+      published: 2026
+      url: https://projectcostestimator.com/blog/saas-development-cost-2026
+      era: unknown
+      era_basis: not_established
+      ai_workflow: null
+      sample_size: null
+      quality: low
+  sources:
+  - url: https://projectcostestimator.com/blog/saas-development-cost-2026
+    publisher: Project Cost Estimator
+    title: 'SaaS Development Cost in 2026: $15K–$250K+ [Real Data]'
+    year: 2026
+    label: Multi-tenancy
+    quote: '| Multi-tenancy | $4,000 – $12,000 | 30–90h | Data isolation, tenant config, subdomain routing
+      |'
+    hours:
+    - '30'
+    - '90'
+    scope: unclear
+    ok: true
+    reason: ''
+- key: researched_based_data_device_entry_field_mobile
+  name: Mobile-based data entry for field devices
+  section: mobile
+  base_type: integration
+  method: analysis
+  added: '2026-10-22'
+  spec:
+    source: 'AI analysis (no published hours found): Mobile app works offline and syncs later (standard),
+      Camera, QR code and barcode scanning (basic), Online registration / empanelment application (basic),
+      Master data management (basic); hours are those blocks'' own catalog hours (S / L = one size smaller
+      / larger); low confidence'
+    key: researched_based_data_device_entry_field_mobile
+    name: Mobile-based data entry for field devices
+    category: custom
+    bucket: build.integrations
+    description: A mobile app that lets field staff enter data on their phones or tablets, including in
+      low-connectivity areas, and sends it to the central system.
+    task_mix:
+      integration: '0.6'
+      analysis: '0.05'
+      tests: '0.2'
+      documentation: '0.05'
+      review_uat: '0.1'
+    base_effort_pd:
+      S: '26.6'
+      M: '30.2'
+      L: '65.7'
+    applicable_drivers:
+    - security_level
+    tags:
+    - integration
+    licence: null
+    section: mobile
+    source_era: unknown
+    era_reason: Composed from catalog blocks; AI use behind their hours is not established
+    confidence: low
+    evidence:
+    - id: researched_based_data_device_entry_field_mobile.1
+      citation: 'AI analysis 2026-10-22: mobile_offline_sync standard (Field devices often lose connectivity,
+        so entries are stored on the phone and synced later with conflict handling.); mobile_camera_scanning
+        basic (Field data entry usually includes taking photos and scanning QR codes or barcodes to attach
+        to records.); registration_empanelment basic (Structured multi-step data entry forms with validation
+        and submission status resemble the form-building work.); master_data_management basic (Forms need
+        dropdown values and lookups, such as locations and categories, managed by an admin.)'
+      source_type: expert_judgement
+      published: null
+      url: null
+      era: unknown
+      era_basis: not_established
+      ai_workflow: null
+      sample_size: null
+      quality: low
+  sources:
+  - kind: part
+    block: mobile_offline_sync
+    level: standard
+    why: Field devices often lose connectivity, so entries are stored on the phone and synced later with
+      conflict handling.
+  - kind: part
+    block: mobile_camera_scanning
+    level: basic
+    why: Field data entry usually includes taking photos and scanning QR codes or barcodes to attach to
+      records.
+  - kind: part
+    block: registration_empanelment
+    level: basic
+    why: Structured multi-step data entry forms with validation and submission status resemble the form-building
+      work.
+  - kind: part
+    block: master_data_management
+    level: basic
+    why: Forms need dropdown values and lookups, such as locations and categories, managed by an admin.
+- key: researched_form_mis_printing_report
+  name: E-form MIS reports and printing
+  section: business
+  base_type: report
+  method: analysis
+  added: '2026-10-22'
+  spec:
+    source: 'AI analysis (no published hours found): Dashboards and MIS reports (standard), Document management
+      (basic); hours are those blocks'' own catalog hours (S / L = one size smaller / larger); low confidence'
+    key: researched_form_mis_printing_report
+    name: E-form MIS reports and printing
+    category: custom
+    bucket: build.module_development
+    description: Provides MIS reports on submitted e-forms with filters, summaries and exports, plus printable
+      versions of individual forms and reports.
+    task_mix:
+      crud: '0.6'
+      analysis: '0.1'
+      tests: '0.15'
+      review_uat: '0.15'
+    base_effort_pd:
+      S: '15.8'
+      M: '29.3'
+      L: '78.7'
+    applicable_drivers:
+    - languages
+    tags: []
+    licence: null
+    section: business
+    source_era: unknown
+    era_reason: Composed from catalog blocks; AI use behind their hours is not established
+    confidence: low
+    evidence:
+    - id: researched_form_mis_printing_report.1
+      citation: 'AI analysis 2026-10-22: dashboard_mis_reports standard (Core of the feature: standard
+        MIS reports on e-form data with filters and PDF/Excel exports.); document_management basic (Printable
+        form output (PDF generation) and retrieval of generated documents.)'
+      source_type: expert_judgement
+      published: null
+      url: null
+      era: unknown
+      era_basis: not_established
+      ai_workflow: null
+      sample_size: null
+      quality: low
+  sources:
+  - kind: part
+    block: dashboard_mis_reports
+    level: standard
+    why: 'Core of the feature: standard MIS reports on e-form data with filters and PDF/Excel exports.'
+  - kind: part
+    block: document_management
+    level: basic
+    why: Printable form output (PDF generation) and retrieval of generated documents.

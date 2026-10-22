@@ -69,11 +69,17 @@ class Question(Frozen):
     # Not asked when this number is known (e.g. users_total): the answer is the option whose
     # max_users covers it.
     answered_by_number: str | None = None
+    # A document whose reading lists this not-priced topic (with quotes) answers "yes" (e.g.
+    # penalties): readings made before the question existed still answer it.
+    from_not_priced: str | None = None
 
     @model_validator(mode="after")
     def _default_exists(self) -> "Question":
-        if self.default not in {o.value for o in self.options}:
+        values = {o.value for o in self.options}
+        if self.default not in values:
             raise ValueError(f"default {self.default!r} is not an option")
+        if self.from_not_priced and "yes" not in values:
+            raise ValueError("a question answered by a not-priced topic needs a 'yes' option")
         return self
 
     def option(self, value: str | int) -> Option:
@@ -236,11 +242,56 @@ class ClientMode(Frozen):
 
 
 class NotSure(Frozen):
-    """clarity = max(min_clarity, requirement_clarity − ceil(not-sure answers / per step))."""
+    """clarity = max(min_clarity, requirement_clarity − ceil(not-sure answers / per step)
+    − min(assumed_max_steps, ceil(assumed answers / assumed_per_step))). Assumed: after an
+    upload, a question the document does not answer, priced at its usual answer."""
 
     source: str
     answers_per_step: int = Field(ge=1)
     min_clarity: int = Field(ge=1, le=5)
+    assumed_per_step: int | None = Field(default=None, ge=1)  # None: assumed answers count 0
+    assumed_max_steps: int = Field(default=0, ge=0)
+
+
+SizeTierName = Literal["small", "medium", "large"]
+
+
+class IndependentCheck(Frozen):
+    """The independent check (services/quick/anchor.py): a build estimate from what the system
+    must contain, counted from the document, compared with the priced build effort. Every
+    figure is a placeholder prior with a source; the AI only lists named items with quotes."""
+
+    source: str
+    prompt: str  # prompts/<prompt>.md
+    pd_per_entity: Decimal = Field(ge=0)
+    pd_per_screen: Decimal = Field(ge=0)
+    pd_per_role: Decimal = Field(ge=0)
+    pd_per_integration: Decimal = Field(ge=0)
+    pd_per_hard_problem: Decimal = Field(ge=0)
+    screen_weight: dict[str, Decimal]  # single / list_detail_edit
+    tenancy_pd: dict[str, Decimal]
+    wrapper: Decimal = Field(gt=0)
+    quality: dict[str, Decimal]
+    ai_fit: dict[str, Decimal]
+    clarity: dict[str, Decimal]
+    ratio_low: Decimal = Field(gt=0, lt=1)
+    ratio_high: Decimal = Field(gt=1)
+    emd_block_factor: Decimal = Field(ge=1)
+    size_tier: dict[str, SizeTierName]  # our project size -> the bands' size
+    system_classes: dict[str, str]  # key -> plain label
+    bands: dict[str, dict[SizeTierName, tuple[Decimal, Decimal]]]  # person-months [low, high]
+    hard_problems: dict[str, str]  # key -> plain label
+
+    @model_validator(mode="after")
+    def _bands(self) -> "IndependentCheck":
+        if set(self.bands) != set(self.system_classes):
+            raise ValueError("independent_check.bands needs one entry per system class")
+        for key, tiers in self.bands.items():
+            if set(tiers) != {"small", "medium", "large"}:
+                raise ValueError(f"independent_check.bands.{key} needs small, medium and large")
+            if any(not 0 < low <= high for low, high in tiers.values()):
+                raise ValueError(f"independent_check.bands.{key}: need 0 < low <= high")
+        return self
 
 
 class NotPricedTopic(Frozen):
@@ -316,6 +367,8 @@ class Research(Frozen):
     feature_level_factor: Decimal = Field(gt=0, le=1)  # catalog v5 method (x 0.9)
     match_threshold: Decimal = Field(gt=0, le=1)  # word overlap to reuse an existing block
     retry_no_evidence_days: int = Field(ge=0)
+    # Share each researched block with every organisation (services/research/library.py).
+    share: bool = True
     fetch_timeout_seconds: int = Field(ge=1, le=120)
     fetch_max_bytes: int = Field(ge=10_000)
     quote_window_chars: int = Field(ge=20)  # a figure counts only near the feature's words
@@ -401,6 +454,7 @@ class QuickConfig(Frozen):
     research: Research | None = None
     reality_check: RealityCheck | None = None
     always_included: AlwaysIncluded | None = None
+    independent_check: IndependentCheck | None = None
 
     @model_validator(mode="after")
     def _scope_keys(self) -> "QuickConfig":

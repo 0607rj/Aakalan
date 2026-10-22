@@ -7,9 +7,16 @@ from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
 
+from app.core.config import get_settings
+from app.core.security import hash_password
 from app.llm.client import FakeClient, set_llm_client
+from app.models import Organisation, Role, User
+from app.models.base import utcnow
 from app.services.research.fetch import set_page_fetcher
+from app.services.research.library import read_library
+from tests.conftest import TEST_PASSWORD, login
 
 H = dict[str, str]
 PAGE = "Feature hours table. Fleet geofencing alerts: 120-200 hours. Other rows follow."
@@ -88,9 +95,33 @@ def test_web_research_is_saved_and_reused(
     again = estimate(client, admin_headers, "Geofencing alerts for fleet")
     assert len(fakes) == asked  # found in the catalog: no AI call
     assert again["researched"][0]["name"] == name
+
+    # the form lists it under its section; ticked, it is sent with its block: no search
+    options = client.get("/quick-estimate/options", headers=admin_headers).json()
+    [listed] = [r for r in options["researched"] if r["name"] == name]
+    assert listed["section"] == "integrations"
+    assert listed["section_label"] == "Connections to other systems"
+    ticked = {
+        "name": "Research test",
+        "features": ["online_forms"],
+        "custom_features": [
+            {
+                "name": name,
+                "category": listed["category"],
+                "size": "M",
+                "catalog_key": listed["catalog_key"],
+            }
+        ],
+    }
+    r = client.post("/quick-estimates", json=ticked, headers=admin_headers)
+    assert r.status_code == 201 and len(fakes) == asked
+    assert trace_key(client, admin_headers, r.json(), name) == listed["catalog_key"]
+
     retire_all(client, admin_headers)
     after = estimate(client, admin_headers, "Fleet geofencing alerts")
     assert after["researched"] == []  # retired: not searched again, the generic block prices it
+    options = client.get("/quick-estimate/options", headers=admin_headers).json()
+    assert all(r["name"] != name for r in options["researched"])  # retired: not offered
 
 
 def test_analysis_when_no_page_checks_out(
@@ -149,3 +180,45 @@ def test_unknown_catalog_key_is_refused(client: TestClient, admin_headers: H) ->
         ],
     }
     assert client.post("/quick-estimates", json=body, headers=admin_headers).status_code == 422
+
+
+def test_research_is_shared_with_every_company(
+    client: TestClient, admin_headers: H, db: Session, fakes: list[str]
+) -> None:
+    """Researched once by one company, the feature joins the shared library (table and file):
+    another company is priced by it and sees it on the form, with no AI call of its own."""
+    ai(fakes, [], [{"block": "push_notifications", "level": "standard", "why": "alerts"}])
+    name = "Parcel locker pickup slots"
+    first = estimate(client, admin_headers, name)
+    [found] = first["researched"]
+    key = trace_key(client, admin_headers, first, name)
+    assert key.startswith("researched_") and found["section"] == "mobile"
+    library = read_library(get_settings().resolved_research_library)
+    [entry] = [e for e in library if e.key == key]
+    assert entry.name == name and entry.method == "analysis" and entry.spec["key"] == key
+
+    other = Organisation(name="Other SI (research)")
+    db.add(other)
+    db.flush()
+    db.add(
+        User(
+            org_id=other.id,
+            email="research@other.local",
+            full_name="Other",
+            role=Role.ADMIN,
+            password_hash=hash_password(TEST_PASSWORD),
+            email_verified_at=utcnow(),
+        )
+    )
+    db.commit()
+    them = login(client, "research@other.local")
+    asked = len(fakes)
+    theirs = estimate(client, them, name)
+    assert len(fakes) == asked  # priced from the library: no search
+    assert trace_key(client, them, theirs, name) == key
+    options = client.get("/quick-estimate/options", headers=them).json()
+    assert [r["section"] for r in options["researched"] if r["catalog_key"] == key] == ["mobile"]
+    assert (
+        client.get("/research-blocks", headers=them).json() == []
+    )  # nothing of the first company's
+    retire_all(client, admin_headers)

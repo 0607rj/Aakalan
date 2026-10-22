@@ -11,11 +11,12 @@ import type {
   CustomFeatureType,
   Evidence,
   FoundOtherFeature,
+  Researched,
   Size,
 } from "@/lib/api/client";
 import { cn } from "@/lib/utils";
 
-import { Citation } from "./parts";
+import { Citation, FeatureCard } from "./parts";
 
 /** A feature outside the ready-made list, as the user is editing it. */
 export interface CustomItem {
@@ -28,6 +29,8 @@ export interface CustomItem {
   description: string;
   evidence: Evidence[];
   included: boolean;
+  /** A feature researched before: priced by its saved block, not searched again. */
+  catalogKey?: string | null;
 }
 
 const SIZES: { value: Size; label: string }[] = [
@@ -66,7 +69,77 @@ export function itemsFromTemplate(saved: CustomFeature[]): CustomItem[] {
     description: "",
     evidence: [],
     included: true,
+    catalogKey: f.catalog_key ?? null,
   }));
+}
+
+/**
+ * Features the company had researched before, under their section (web, mobile, ...). Ticking
+ * one adds it to "Features you added" with its saved block, so it is not searched again.
+ */
+export function ResearchedFeatures({
+  researched,
+  items,
+  onChange,
+}: {
+  researched: Researched[];
+  items: CustomItem[];
+  onChange: (items: CustomItem[]) => void;
+}) {
+  if (researched.length === 0) return null;
+  const ticked = new Set(items.map((i) => i.catalogKey).filter(Boolean));
+  const sections = [...new Set(researched.map((r) => r.section_label))];
+
+  function toggle(r: Researched) {
+    if (ticked.has(r.catalog_key)) {
+      onChange(items.filter((i) => i.catalogKey !== r.catalog_key));
+      return;
+    }
+    onChange([
+      ...items,
+      {
+        id: `researched-${r.catalog_key}`,
+        name: r.name,
+        category: r.category,
+        size: "M",
+        foundIndex: null,
+        description: "",
+        evidence: [],
+        included: true,
+        catalogKey: r.catalog_key,
+      },
+    ]);
+  }
+
+  return (
+    <section className="flex flex-col gap-3">
+      <div>
+        <h2 className="text-lg font-semibold">Researched before</h2>
+        <p className="text-sm text-muted-foreground">
+          Features that were not in the list, researched earlier by you or other
+          users. They are priced from the saved research, with no new search.
+        </p>
+      </div>
+      {sections.map((label) => (
+        <div key={label} className="flex flex-col gap-2">
+          <h3 className="text-sm font-medium text-muted-foreground">{label}</h3>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {researched
+              .filter((r) => r.section_label === label)
+              .map((r) => (
+                <FeatureCard
+                  key={r.catalog_key}
+                  label={r.name}
+                  hint="Researched before"
+                  checked={ticked.has(r.catalog_key)}
+                  onToggle={() => toggle(r)}
+                />
+              ))}
+          </div>
+        </div>
+      ))}
+    </section>
+  );
 }
 
 /** The items to send to the API (only included ones with a name). */
@@ -78,6 +151,7 @@ export function toCustomFeatures(items: CustomItem[]): CustomFeature[] {
       category: i.category,
       size: i.size,
       found_index: i.foundIndex,
+      catalog_key: i.catalogKey ?? null,
     }));
 }
 

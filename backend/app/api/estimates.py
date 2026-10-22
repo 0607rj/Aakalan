@@ -22,6 +22,7 @@ from app.schemas.estimate import (
 from app.services.engine.outputs import AssumptionOut, LineTrace
 from app.services.engine.scenarios import Scenario
 from app.services.estimates import service
+from app.services.quick.service import QuickSummary
 from app.services.reports.data import build_report
 from app.services.reports.excel import build_boq
 from app.services.reports.pdf import build_pdf
@@ -216,11 +217,24 @@ def _download_name(project: Project, estimate: Estimate, ext: str) -> str:
     return f"{stem}-v{estimate.version}.{ext}"
 
 
+def _require_confirmed_check(summary: QuickSummary | None) -> None:
+    """An estimate the independent check disagrees with is exported only after a person has
+    confirmed they looked at the gap (POST /estimates/{id}/check/confirm)."""
+    check = summary.independent_check if summary else None
+    if check is not None and check.needs_confirmation and check.confirmed_at is None:
+        raise HTTPException(
+            status.HTTP_409_CONFLICT,
+            "The independent check disagrees with this price. Look at the gap on the estimate "
+            "page and confirm it before exporting.",
+        )
+
+
 @router.get("/estimates/{estimate_id}/report.pdf")
 def report_pdf(estimate_id: str, db: DbSession, user: CurrentUser) -> Response:
     estimate = get_owned(db, Estimate, estimate_id, user.org_id)
     project = get_owned(db, Project, estimate.project_id, user.org_id)
     data = build_report(db, estimate, project, margin_visible=can_see_margin(user))
+    _require_confirmed_check(data.summary)
     name = _download_name(project, estimate, "pdf")
     return Response(
         build_pdf(data),
@@ -234,6 +248,7 @@ def boq_xlsx(estimate_id: str, db: DbSession, user: CurrentUser) -> Response:
     estimate = get_owned(db, Estimate, estimate_id, user.org_id)
     project = get_owned(db, Project, estimate.project_id, user.org_id)
     data = build_report(db, estimate, project, margin_visible=can_see_margin(user))
+    _require_confirmed_check(data.summary)
     name = _download_name(project, estimate, "xlsx")
     return Response(
         build_boq(data),

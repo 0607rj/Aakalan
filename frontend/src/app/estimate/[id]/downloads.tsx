@@ -20,9 +20,12 @@ function slug(name: string): string {
 export function Downloads({
   estimateId,
   name,
+  blocked = false,
 }: {
   estimateId: string;
   name: string;
+  /** The independent check asks for a look at a gap first (see the card on the page). */
+  blocked?: boolean;
 }) {
   const [busy, setBusy] = React.useState<Kind | null>(null);
   const [error, setError] = React.useState<string | null>(null);
@@ -50,14 +53,14 @@ export function Downloads({
       <div className="flex flex-wrap gap-3">
         <Button
           variant="outline"
-          disabled={busy !== null}
+          disabled={busy !== null || blocked}
           onClick={() => download("pdf")}
         >
           {busy === "pdf" ? "Preparing report…" : "Download report (PDF)"}
         </Button>
         <Button
           variant="outline"
-          disabled={busy !== null}
+          disabled={busy !== null || blocked}
           onClick={() => download("xlsx")}
         >
           {busy === "xlsx"
@@ -65,6 +68,11 @@ export function Downloads({
             : "Download bill of quantities (Excel)"}
         </Button>
       </div>
+      {blocked ? (
+        <span className="text-sm text-muted-foreground">
+          Confirm the independent check below to download.
+        </span>
+      ) : null}
       <ErrorNotice message={error} />
     </div>
   );

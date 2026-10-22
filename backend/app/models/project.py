@@ -137,6 +137,10 @@ class Estimate(IdTimestampMixin, TenantMixin, Base):
         String(36), ForeignKey("estimates.id", ondelete="SET NULL")
     )
     created_by: Mapped[str | None] = mapped_column(String(36), ForeignKey("users.id"))
+    # When the independent check disagrees with the price, a person confirms they looked at the
+    # gap before the estimate can be exported (services/quick/anchor.py).
+    check_confirmed_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    check_confirmed_by: Mapped[str | None] = mapped_column(String(36), ForeignKey("users.id"))
 
     lines: Mapped[list["CostLine"]] = relationship(
         back_populates="estimate", cascade="all, delete-orphan", order_by="CostLine.sort_order"

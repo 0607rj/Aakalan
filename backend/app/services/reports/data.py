@@ -13,7 +13,7 @@ from app.models import Document, Estimate, Project
 from app.services.extraction.prebid import PrebidQuery, prebid_queries
 from app.services.extraction.tender import TenderExtraction
 from app.services.quick.config import quick_config
-from app.services.quick.service import QuickSummary, summarise
+from app.services.quick.service import QuickSummary, summary_for
 
 MARGIN_BUCKET = "commercial.margin"
 PAISE_PER_RUPEE = Decimal(100)
@@ -194,7 +194,7 @@ def build_report(
     return ReportData(
         project_name=project.name,
         estimate=estimate,
-        summary=summarise(estimate, project, cfg, margin_visible=margin_visible),
+        summary=summary_for(db, estimate, project, cfg, margin_visible=margin_visible),
         result=result,
         lines=lines,
         margin_visible=margin_visible,

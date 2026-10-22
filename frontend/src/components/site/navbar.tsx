@@ -159,10 +159,10 @@ export function SiteNavBar() {
               Sign in
             </Link>
             <Link
-              href="/estimate/new"
+              href="/signup"
               className={buttonVariants({ size: "default" })}
             >
-              Start an estimate
+              Sign up
             </Link>
           </>
         )

@@ -398,12 +398,15 @@ questions:
       - {value: lot, label: "Yes, a lot", hint: "Years of records from old software", add_features: {old_data: advanced}, answers: {}}
       - {value: not_sure, label: Not sure, hint: "We assume a few tables and show a wider range", add_features: {old_data: standard}, unsure: true, answers: {}}
   build_type:
-    label: Should it be built from scratch, or set up on a ready-made product?
-    group: document   # not asked on the form; read from an uploaded document, else the usual answer
+    # asked on the form and after an upload (unless the document says): what the build reuses
+    # changes the price a lot (parameter sets v19+: reuse)
+    label: How will it be built?
     default: custom
     options:
-      - {value: custom, label: Built from scratch, hint: "Written for you by a development team", answers: {build_type: custom}}
-      - {value: ready_product, label: Set up a ready-made product, hint: "An existing product configured for you: a SaaS service, WordPress or Shopify, an existing chatbot platform", answers: {build_type: ready_product}}
+      - {value: custom, label: Built from scratch, hint: "Custom code on the usual tools (e.g. React, Java, .NET): every screen written for you", answers: {build_type: custom}}
+      - {value: framework, label: On a framework with ready admin screens, hint: "e.g. Django admin, Laravel Nova, Rails, a low-code tool: forms, lists and logins are mostly generated", answers: {build_type: framework}}
+      - {value: cms, label: On a CMS with custom parts added, hint: "e.g. Drupal or WordPress with your own modules: common for government portals", answers: {build_type: cms}}
+      - {value: ready_product, label: Set up a ready-made product, hint: "An existing product configured, not built: a SaaS service, Shopify, a WordPress theme as it is, a chatbot platform", answers: {build_type: ready_product}}
       - {value: not_sure, label: Not sure, hint: "We price building from scratch and show a wider range", unsure: true, answers: {build_type: custom}}
   hosting:
     label: Where will it run?
@@ -418,8 +421,11 @@ questions:
   support_years:
     label: For how many years should it be looked after once it is live?
     group: detail  # optional: skipped = the usual answer, which is priced
-    default: 3
+    # no term is assumed: a yearly price is quoted until a term is chosen (outside review,
+    # OPEN_QUESTIONS 139); the price then includes one year of support
+    default: per_year
     options:
+      - {value: per_year, label: "Not decided: show a yearly price", hint: "The price includes one year of support; each further year costs about the same", answers: {om_years: 1}}
       - {value: 0, label: "Not needed", hint: "Handed over after launch; you run and maintain it", answers: {om_years: 0}}
       - {value: 1, label: 1 year, answers: {om_years: 1}}
       - {value: 2, label: 2 years, answers: {om_years: 2}}
@@ -458,6 +464,25 @@ questions:
     options:
       - {value: "no", label: "No", hint: "Backups are enough", answers: {disaster_recovery: false}}
       - {value: "yes", label: "Yes", hint: "A standby copy in another place, ready to take over (disaster recovery)", answers: {disaster_recovery: true}}
+  penalties:
+    # a reserve for penalties is priced only when the contract has them, cited from the document
+    # (parameter sets v19+); an older reading's "not priced: penalties" quotes count too
+    label: Does the contract have penalties for late delivery or downtime?
+    group: detail
+    on_upload: document
+    default: "no"
+    from_not_priced: penalties
+    options:
+      - {value: "no", label: "No", hint: "No penalty clause", answers: {penalty_clause: false}}
+      - {value: "yes", label: "Yes", hint: "Liquidated damages or service-level penalties: a small reserve is priced", answers: {penalty_clause: true}}
+  web_domain:
+    # free from NIC only for a .gov.in / .nic.in address the document names (v19+)
+    label: What web address will it use?
+    group: document
+    default: commercial
+    options:
+      - {value: commercial, label: "A .in or .com address", hint: "Bought from a registrar every year", answers: {web_domain: commercial}}
+      - {value: gov_in, label: "A .gov.in or .nic.in address", hint: "Free from NIC for government bodies", answers: {web_domain: gov_in}}
   security_audit:
     label: Do you need an independent security check before launch?
     group: document   # not asked on the form; read from an uploaded document, else the usual answer
@@ -533,6 +558,11 @@ not_sure:
   source: placeholder
   answers_per_step: 2
   min_clarity: 1
+  # v19 (outside review): after an upload, what the document does not state and is priced at the
+  # usual answer is open too, so it widens the range (raising the risk allowance), at most
+  # assumed_max_steps steps (OPEN_QUESTIONS 139)
+  assumed_per_step: 4
+  assumed_max_steps: 1
 
 # Ranking the open questions by price impact re-prices the form once per option. Fewer
 # simulation runs keep it fast; a fixed seed keeps the ranking stable between requests.
@@ -810,6 +840,66 @@ reality_check:
   emd_share_max: 0.05
   emd_band_factor: 1   # any price outside the EMD range is flagged (the review of the PBD estimate, OPEN_QUESTIONS 135)
 
+# Independent check (OPEN_QUESTIONS 140): a second estimate from what the system must contain,
+# counted from the document itself (never from our feature list, which follows how much the
+# document says), compared with the build effort before the price is shared. The AI only lists
+# named items with quotes (prompts/count_system_v1.md); the code counts them and does the sums:
+#   anchor_pd = (entities × pd_per_entity + Σ screens × screen_weight × pd_per_screen
+#                + roles × pd_per_role + selected integrations × pd_per_integration
+#                + hard problems × pd_per_hard_problem + tenancy_pd) × wrapper
+#                × quality × ai_fit × clarity
+# A ratio of our build effort to the anchor outside [ratio_low, ratio_high], or a price more
+# than emd_block_factor outside the EMD range, needs a person to confirm before export.
+# Every figure is a prior from an outside review of the PBD and clinic estimates (2026-10-22),
+# not measured: calibrate on finished projects (outcomes).
+independent_check:
+  source: placeholder
+  prompt: count_system_v1
+  pd_per_entity: 6
+  pd_per_screen: 3
+  pd_per_role: 2
+  pd_per_integration: 8          # only integrations whose provider the document names
+  pd_per_hard_problem: 12
+  screen_weight: {single: 1, list_detail_edit: 1.5}
+  tenancy_pd: {single: 0, multi_tenant: 6, multi_region: 15}
+  wrapper: 1.35                  # testing, documents and deployment around the engineering
+  quality: {internal_tool: 1.0, commercial: 1.15, regulated_or_govt: 1.35}
+  ai_fit: {greenfield_standard_stack: 0.88, greenfield_novel_domain: 0.95, brownfield_familiar: 1.0, large_legacy_codebase: 1.05}
+  clarity: {clear: 1.0, vague: 1.1, contradictory: 1.2}
+  ratio_low: 0.67
+  ratio_high: 1.5
+  emd_block_factor: 2
+  # our project sizes as the bands' three sizes
+  size_tier: {small: small, small_medium: small, medium: medium, medium_large: large, large: large}
+  system_classes:
+    content_site: "Content website (pages, news, documents)"
+    crud_workflow: "Forms and approval workflow"
+    booking_scheduling: "Booking and scheduling"
+    marketplace: "Marketplace (buyers and sellers)"
+    data_platform: "Data platform (reports, analytics)"
+    ai_product: "AI product"
+    integration_mw: "Integration middleware"
+    realtime_system: "Real-time system (live tracking, chat, video)"
+  # person-months for the whole build by kind of system and size: [low, high]
+  bands:
+    content_site:       {small: [2, 4],   medium: [5, 9],   large: [10, 18]}
+    crud_workflow:      {small: [4, 7],   medium: [8, 15],  large: [16, 30]}
+    booking_scheduling: {small: [6, 10],  medium: [11, 20], large: [21, 40]}
+    marketplace:        {small: [10, 16], medium: [17, 30], large: [31, 60]}
+    data_platform:      {small: [8, 14],  medium: [15, 28], large: [29, 55]}
+    ai_product:         {small: [8, 15],  medium: [16, 30], large: [31, 60]}
+    integration_mw:     {small: [5, 9],   medium: [10, 18], large: [19, 35]}
+    realtime_system:    {small: [10, 18], medium: [19, 35], large: [36, 70]}
+  hard_problems:
+    concurrency: "Concurrency: double booking or stock contention"
+    money_movement: "Money movement: reconciliation, refunds, settlement"
+    tenant_isolation: "Several client organisations kept strictly apart"
+    legacy_migration: "Moving data of unknown quality from an old system"
+    realtime_latency: "Hard real-time or response-time guarantees"
+    legacy_integration: "Connecting to an old system that cannot be tested"
+    audit_evidence: "Audit evidence that must stand up to scrutiny"
+    statistical_output: "Results that must be statistically right (ML, OCR, fuzzy matching)"
+
 # Work every estimate already prices: the size tiers' base blocks and the run costs (backups,
 # hosting, SSL). The document reader links a requirement that is only a part of one of these
 # to its key, and it is not priced again as an extra (services/extraction/tender.py).
@@ -845,6 +935,7 @@ research:
   feature_level_factor: 0.9
   match_threshold: 0.6
   retry_no_evidence_days: 30
+  share: true  # every researched feature joins the shared library (seeds/research/library.yaml) for all users
   fetch_timeout_seconds: 15
   fetch_max_bytes: 3000000
   quote_window_chars: 300
@@ -1046,10 +1137,17 @@ keywords:
       mvp: [minimum viable product, mvp, pilot project, pilot phase, pilot implementation, proof of concept]
     availability:
       critical: ["99.95%", "99.99%"]
-    disaster_site:
-      "yes": [disaster recovery, dr site, recovery point objective, recovery time objective]
       high: ["99.9%"]
       normal: ["99.5%"]
+    disaster_site:
+      "yes": [disaster recovery, dr site, recovery point objective, recovery time objective]
+    # a named CMS only: "content management" alone is a feature every portal has, not a platform
+    build_type:
+      cms: [drupal, wordpress, joomla]
+    penalties:
+      "yes": [liquidated damages, penalty clause, penalties for delay]
+    web_domain:
+      gov_in: [".gov.in domain", ".nic.in domain", "gov.in domain", "nic.in domain"]
     hosting:
       indian_cloud: [meity empanelled, meity-empanelled, meghraj, government community cloud, gcc]
       existing: [state data centre, state data center, sdc, nic cloud, nic data centre, nic data center, provided by the department, provided by the client]

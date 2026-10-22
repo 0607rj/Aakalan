@@ -24,13 +24,16 @@ def verify_password(password: str, password_hash: str) -> bool:
         return False
 
 
-def create_access_token(user_id: str, org_id: str, role: str) -> str:
+def create_access_token(user_id: str, org_id: str, role: str, token_version: int = 0) -> str:
+    """`tv`: the user's token version; a password reset or change raises it, so every token
+    issued before stops working (api/deps.py)."""
     settings = get_settings()
     now = utcnow()
     payload: dict[str, Any] = {
         "sub": user_id,
         "org": org_id,
         "role": role,
+        "tv": token_version,
         "iat": now,
         "exp": now + timedelta(minutes=settings.access_token_minutes),
     }

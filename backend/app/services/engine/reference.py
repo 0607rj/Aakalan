@@ -362,6 +362,8 @@ class NfrMultipliers(Sourced):
     # v17+: components that build accessibility as their own work; when the project has one,
     # the accessibility factor is not applied to the other components as well.
     accessibility_components: list[str] = []
+    # v19+: the same for languages (a multilingual framework component)
+    languages_components: list[str] = []
 
 
 class AiProductivity(Sourced):
@@ -374,6 +376,21 @@ class AiProductivity(Sourced):
     # v18+: effort data of unknown era counts as pre-AI (the hours are calibrated against
     # finished pre-AI projects), so the team's AI savings apply to it in the estimate itself.
     unknown_era_is_pre_ai: bool = False
+
+
+class Reuse(Sourced):
+    """v19+: what the build reuses (questionnaire build_type). A CMS or a framework that
+    generates the admin screens shrinks only the listed task shares; a build type without a
+    factor (custom, ready_product) keeps 1."""
+
+    tasks: list[TaskType]
+    factor_by_build_type: dict[str, Decimal]
+
+    @model_validator(mode="after")
+    def _factors(self) -> "Reuse":
+        if any(not Decimal(0) < f <= Decimal(1) for f in self.factor_by_build_type.values()):
+            raise ValueError("reuse factors must be in (0, 1]")
+        return self
 
 
 class Timeline(Sourced):
@@ -470,6 +487,9 @@ class Maintenance(Sourced):
     domain_rate_key: str
     rule_of_thumb_low: Decimal
     rule_of_thumb_high: Decimal
+    # v19+: the domain rate by the address the document names (questionnaire web_domain), e.g.
+    # a free .gov.in address only when the document asks for one; empty = domain_rate_key.
+    domain_rate_key_by_type: dict[str, str] = {}
 
 
 class GoLive(Sourced):
@@ -499,6 +519,9 @@ class Commercial(Sourced):
     contingency_at_clarity: list[Point]  # x = clarity 1..5, y = contingency fraction
     exit_role: str
     gst_percent: Decimal
+    # v19+: the penalty reserve only when the contract has a penalty clause (questionnaire
+    # penalty_clause, cited from the document); False = always, as before.
+    penalty_needs_clause: bool = False
 
 
 class ClaritySpread(Frozen):
@@ -518,6 +541,9 @@ class Uncertainty(Sourced):
     fixed_fee: ClaritySpread
     monte_carlo_runs: int
     distribution: Literal["triangular"]
+    # v19+: extra spread on a component that holds a hard problem (concurrency, money movement,
+    # legacy data...): the range widens, the planned cost does not change.
+    hard_problem_extra: ClaritySpread | None = None
 
 
 class Confidence(Sourced):
@@ -533,6 +559,15 @@ class Confidence(Sourced):
 
 class TaskRoles(Sourced):
     roles: dict[TaskType, str]
+    # v19+: a task shared by several roles, e.g. review: {role.developer: 0.7,
+    # role.senior_developer: 0.3} (peer review and sign-off); used instead of `roles` there.
+    split: dict[TaskType, dict[str, Decimal]] = {}
+
+    @model_validator(mode="after")
+    def _shares(self) -> "TaskRoles":
+        if any(sum(shares.values()) != Decimal(1) for shares in self.split.values()):
+            raise ValueError("task_roles.split shares must sum to 1")
+        return self
 
 
 class SegmentBacktest(Frozen):
@@ -711,6 +746,7 @@ class ParameterSet(Frozen):
     complexity_source: str
     nfr: NfrMultipliers
     ai_productivity: AiProductivity
+    reuse: Reuse | None = None  # None (older sets): every build priced as written from scratch
     task_roles: TaskRoles
     timeline: Timeline
     programme: Programme
