@@ -124,6 +124,47 @@ on every cost item and feature, `traditional_paise`: the same line priced withou
 person-days AI tools save × the review role's rate, so the AI saving is net of checking the
 AI's work.
 
+Source eras (catalog v6): every component records its effort `evidence` and a `source_era`
+(`pre_ai` / `ai_assisted` / `unknown`, derived from the evidence; a date before
+`era_rules.pre_ai_before_year` is only a provisional `date_heuristic`).
+`components.ai_saving_applies` decides whether the team's AI savings reduce a component: always
+for catalogs without eras (v1-v5, as before), once for `pre_ai`, never for `ai_assisted`, and
+for `unknown` only when `EstimateInput.era_scenario == "pre_ai_sensitivity"`. The review line
+is priced on the saving actually applied, so it follows automatically. Lines of v6 components
+use `component_labour.v3` and record `source_era`, `evidence`, `ai_saving` and `era_scenario`.
+`estimates.service.era_sensitivity` runs the engine a second time with unknown-era components
+read as pre-AI (same seed and reference data, like `traditional_price`) and stores
+`result.era_sensitivity`: that run's P10/P50/P90 and the range `min(P10 of both) .. P90 of the
+estimate`. The estimate's P50 stays the price; the quick summary shows the second run beside it
+(`era_sensitivity`). `calibration_basis` in catalog v6 documents what `effort_multiplier` was
+checked against (not reproducible; never changes a source era). Catalog-level notes
+(`era_rules`, `calibration_basis`) live in the seed file; the database mirror stores components.
+
+Scope items (`QuickRequest.scope`, quick config `scope`): `plan_quick` turns each chosen item
+into a `scope` requirement and adds its catalog blocks at their levels after the features'
+blocks, through the same `component_reqs` / `component_level` merge (one block per key, the
+larger level wins; a standard block is sized `max(tier.base_size, item size)`). Blocks only
+items asked for carry the item's label and get their own `feature_costs` row. The engine is
+unchanged: the added blocks are priced, era-checked and simulated like any other component.
+Both readers return `scope` findings with a status (prompt `extract_tender_v5`; the basic reader's
+`_scope` reads each matched sentence: ruled out / later phase / asked for / only mentioned).
+`verify_findings` keeps known keys with a quote found on the page: `explicit` and `inferred`
+are offered (`scope`), `excluded`, `future` and `background` are listed apart
+(`scope_set_aside`); a corrigendum can rule an item out when files are merged;
+`ScopeStep` (both flows) marks them *Suggested* and never ticks them for the user: only ticked items are sent and priced. Chosen items are planned in the config's order, so the order they were ticked never changes component ids or the simulation's draws. An item may ask for a standard block only at basic (config validator): a whole size step is a larger module, not one item's increment. The summary's `scope_items` gives each chosen item's added building cost (0 = its block was already there).
+
+Risk and market comparison (parameter set v16): no fixed contingency; the Monte Carlo is the one
+risk mechanism and `risk_allowance = P50 − planned`. The engine's `market_check.v1` (P50 ×
+`market_by_size`) only runs for parameter sets that still have bands (v14-v15). The summary's
+market box (`quick.service._published_prices`) is computed from `seeds/benchmarks/<country>.yaml`
+instead: benchmarks the app gives the same size (`_benchmark_sizes`, via
+`calibration.backtest.derived_size`, cached per country), neighbouring sizes added below
+`market_comparison.min_projects`, prices in today's money with GST, P25 / median / P75, sources
+by web address. It is descriptive, never scaled to the estimate and never fed back into it.
+`calibration.backtest.backtest(..., as_of=)` adds `segments` (`segment_metrics`: median |error|,
+bias = exp(median log ratio), P10-P90 coverage and band hits by size, app size and client
+type) to its report.
+
 The manual and document flows ask one thing per screen (`estimate/new/steps.tsx`, `?step=<key>`
 in the web address): features → first version or full product (optional "change levels") →
 (document: key numbers) → each `group: main` question → deadline → the optional `detail`

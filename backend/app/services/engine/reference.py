@@ -120,6 +120,73 @@ class ComponentLicence(Frozen):
     effort_factor: Decimal = Field(gt=0, le=1)  # build effort multiplier with the licensed product
 
 
+class BaselineEra(StrEnum):
+    """Whether the effort data behind a component was measured with AI coding tools in use."""
+
+    PRE_AI = "pre_ai"  # workflows that did not materially use AI coding tools
+    AI_ASSISTED = "ai_assisted"  # observed with AI coding tools already in use
+    UNKNOWN = "unknown"  # AI use cannot be established
+
+
+class EraBasis(StrEnum):
+    """Why an evidence item has its era. A date is only a provisional heuristic; an explicit
+    statement or a documented workflow takes precedence."""
+
+    EXPLICIT_STATEMENT = "explicit_statement"
+    DOCUMENTED_WORKFLOW = "documented_workflow"
+    DATE_HEURISTIC = "date_heuristic"
+    NOT_ESTABLISHED = "not_established"
+
+
+Quality = Literal["low", "low_medium", "medium", "high"]
+
+
+class EffortEvidence(Frozen):
+    """One cited source behind a component's effort figures (catalog v6+)."""
+
+    id: str
+    citation: str = Field(min_length=1)
+    source_type: Literal[
+        "measured_projects",
+        "published_dataset",
+        "published_study",
+        "vendor_estimate",
+        "expert_judgement",
+    ]
+    published: int | None = None  # year the data was published or measured; None = undated
+    url: str | None = None  # where the figure can be checked (catalog v7+)
+    era: BaselineEra
+    era_basis: EraBasis
+    ai_workflow: str | None = None  # AI tools and practice, when the source states them
+    sample_size: int | None = Field(default=None, ge=1)
+    quality: Quality
+
+    @model_validator(mode="after")
+    def _check(self) -> "EffortEvidence":
+        if self.era is BaselineEra.AI_ASSISTED and self.era_basis not in {
+            EraBasis.EXPLICIT_STATEMENT,
+            EraBasis.DOCUMENTED_WORKFLOW,
+        }:
+            raise ValueError(f"{self.id}: ai_assisted needs an explicit statement or workflow")
+        if self.era_basis is EraBasis.DATE_HEURISTIC and (
+            self.era is not BaselineEra.PRE_AI or self.published is None
+        ):
+            raise ValueError(f"{self.id}: a date heuristic can only give pre_ai, with a year")
+        if self.era_basis is EraBasis.NOT_ESTABLISHED and self.era is not BaselineEra.UNKNOWN:
+            raise ValueError(f"{self.id}: an era that is not established is unknown")
+        return self
+
+
+def derived_era(evidence: list[EffortEvidence]) -> BaselineEra:
+    """pre_ai only if every source is pre_ai; ai_assisted only if every source is; else unknown."""
+    eras = {e.era for e in evidence}
+    if eras == {BaselineEra.PRE_AI}:
+        return BaselineEra.PRE_AI
+    if eras == {BaselineEra.AI_ASSISTED}:
+        return BaselineEra.AI_ASSISTED
+    return BaselineEra.UNKNOWN
+
+
 class CatalogComponent(Sourced):
     key: str
     name: str
@@ -131,6 +198,15 @@ class CatalogComponent(Sourced):
     applicable_drivers: list[Driver] = []
     tags: list[Literal["integration", "ai", "data_migration"]] = []
     licence: ComponentLicence | None = None
+    # Catalog v7+: the tech-stack section it belongs to (one of the catalog's `sections`), so a
+    # reader can look at the relevant sections first. Never used in pricing.
+    section: str | None = None
+    # Catalog v6+: where the effort figures come from. None (catalogs v1-v5) prices as before:
+    # AI savings on every task. Otherwise the era must follow from the evidence (derived_era).
+    source_era: BaselineEra | None = None
+    era_reason: str = ""
+    confidence: Quality | None = None
+    evidence: list[EffortEvidence] = []
 
     @model_validator(mode="after")
     def _check(self) -> "CatalogComponent":
@@ -141,12 +217,59 @@ class CatalogComponent(Sourced):
         e = self.base_effort_pd
         if not (Decimal(0) < e[Size.S] <= e[Size.M] <= e[Size.L]):
             raise ValueError(f"{self.key}: base effort must satisfy 0 < S <= M <= L")
+        if self.source_era is None:
+            if self.evidence:
+                raise ValueError(f"{self.key}: evidence needs a source_era")
+        elif not self.evidence:
+            raise ValueError(f"{self.key}: source_era needs at least one evidence item")
+        elif self.source_era is not derived_era(self.evidence):
+            raise ValueError(f"{self.key}: source_era must be {derived_era(self.evidence)}")
         return self
+
+
+class EraRules(Frozen):
+    """How evidence eras are set (catalog v6+). The cutoff is a provisional heuristic."""
+
+    pre_ai_before_year: int  # data published / measured before this year may be dated pre_ai
+    source: str = Field(min_length=1)
+
+
+class CalibrationBasis(Frozen):
+    """What the effort level of these figures was calibrated against (documentation only: the
+    engine never reads it). Kept apart from the source era: a calibration against pre-AI data
+    does not make a component's own sources pre-AI."""
+
+    parameter: str  # the dial it explains, e.g. "calibration.effort_multiplier"
+    parameter_sets: list[str]
+    method: str
+    data: str
+    reproducible: bool
+    limitations: list[str]
+    source: str = Field(min_length=1)
 
 
 class Catalog(Frozen):
     version: str
     components: list[CatalogComponent]
+    # Seed-file notes (catalog v6+). The database mirror stores components only.
+    era_rules: EraRules | None = None
+    calibration_basis: CalibrationBasis | None = None
+    sections: dict[str, str] = {}  # catalog v7+: section key -> label; every component in one
+
+    @model_validator(mode="after")
+    def _check_dates(self) -> "Catalog":
+        if self.sections:
+            for c in self.components:
+                if c.section not in self.sections:
+                    raise ValueError(f"{c.key}: section {c.section!r} is not a catalog section")
+        if self.era_rules is None:
+            return self
+        for c in self.components:
+            for e in c.evidence:
+                dated = e.era_basis is EraBasis.DATE_HEURISTIC
+                if dated and (e.published or 0) >= self.era_rules.pre_ai_before_year:
+                    raise ValueError(f"{e.id}: too recent to be dated pre_ai")
+        return self
 
     def get(self, key: str) -> CatalogComponent:
         for c in self.components:

@@ -26,7 +26,7 @@ def priced(
         inp = tweak(
             golden("small"),
             taxonomy=reference.taxonomy,
-            catalog=reference.catalog,
+            catalog=reference.catalog_version("v5"),  # before source eras (v6)
             rate_card=reference.rate_card("v3"),
             parameters=reference.parameter_set(version),
         )

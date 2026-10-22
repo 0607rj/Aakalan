@@ -31,12 +31,34 @@ class SuggestedFeature(BaseModel):
     quote: str  # the user's words that asked for it
 
 
+class SuggestedScope(BaseModel):
+    key: str
+    label: str
+    quote: str  # the user's words that suggested it
+    status: str  # explicit (asked for) / inferred (probably needed: please check)
+
+
 class Suggestion(BaseModel):
     reader: str  # "ai" | "basic"
     features: list[SuggestedFeature]
     other_features: list[FoundOtherFeature]  # not in the list: added as the user's own features
     choices: dict[str, str | int]  # question answers the text gives (e.g. a mobile app)
+    scope: list[SuggestedScope] = []  # scope items the words ask for (e.g. two-step sign-in)
+    not_priced: list[str] = []  # asked for, but not something this estimate can price
     note: str | None  # e.g. why the basic reader may miss things
+
+
+def with_everyday_words(cfg: QuickConfig) -> QuickConfig:
+    """The keyword lists plus the everyday words people use in a short description."""
+    extra = cfg.keywords.description_features
+    if not extra:
+        return cfg
+    words = {
+        key: [*cfg.keywords.features.get(key, []), *extra.get(key, [])]
+        for key in {*cfg.keywords.features, *extra}
+    }
+    keywords = cfg.keywords.model_copy(update={"features": words})
+    return cfg.model_copy(update={"keywords": keywords})
 
 
 def suggest_features(cfg: QuickConfig, text: str) -> Suggestion:
@@ -58,7 +80,11 @@ def suggest_features(cfg: QuickConfig, text: str) -> Suggestion:
         if raw is None:
             note = "The AI could not read this just now, so we matched keywords instead."
     if llm is None or raw is None:
-        raw, reader, version = basic_read(cfg, parsed), "basic", BASIC_READER_VERSION
+        raw, reader, version = (
+            basic_read(with_everyday_words(cfg), parsed),
+            "basic",
+            BASIC_READER_VERSION,
+        )
         note = note or (
             "Matched by keywords (no AI key set), so some features may be missed: "
             "please tick anything else you need."
@@ -75,5 +101,11 @@ def suggest_features(cfg: QuickConfig, text: str) -> Suggestion:
         ],
         other_features=found.other_features,
         choices={k: v.value for k, v in found.choices.items()},
+        scope=[
+            SuggestedScope(key=sc.key, label=sc.label, quote=sc.evidence[0].quote, status=sc.status)
+            for sc in found.scope
+            if sc.evidence
+        ],
+        not_priced=[n.label for n in found.not_priced],
         note=note,
     )

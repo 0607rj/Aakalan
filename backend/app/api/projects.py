@@ -31,7 +31,7 @@ from app.schemas.project import (
 from app.services.engine.context import resolve_questionnaire
 from app.services.engine.inputs import QUESTIONNAIRE_KEYS, Questionnaire
 from app.services.engine.inputs import AnswerIn as EngineAnswer
-from app.services.estimates.reference_store import get_catalog, get_parameter_set
+from app.services.estimates.reference_store import catalog_for, get_parameter_set
 
 router = APIRouter(tags=["projects"])
 
@@ -271,7 +271,7 @@ def _errors(exc: Exception) -> Any:
 
 @router.get("/catalog", response_model=CatalogOut)
 def catalog(db: DbSession, user: CurrentUser) -> CatalogOut:
-    cat = get_catalog(db)
+    cat = catalog_for(db, user.org_id)
     return CatalogOut(
         version=cat.version,
         components=[
@@ -303,7 +303,7 @@ def put_components(
 ) -> list[ComponentInstance]:
     """Replace the component mapping; saving it is the user's confirmation (rule 6)."""
     project = get_owned(db, Project, project_id, user.org_id)
-    keys = {c.key for c in get_catalog(db).components}
+    keys = {c.key for c in catalog_for(db, user.org_id).components}
     req_ids = {r.id for r in project.requirements}
     for c in body.components:
         if c.catalog_key not in keys:

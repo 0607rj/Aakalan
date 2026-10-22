@@ -155,11 +155,18 @@ def test_options_list_custom_feature_types(client: TestClient, admin_headers: H)
 
 
 def test_traditional_vs_ai_era_price(client: TestClient, admin_headers: H) -> None:
-    """Every estimate also prices the same scope as if built without AI tools."""
+    """Every estimate also prices the same scope as if built without AI tools. Catalog v6:
+    most blocks' effort data has unknown AI use, so the estimate takes no AI saving off them
+    and is about the traditional price; the pre-AI reading shows what the saving could be."""
     s = quick(client, admin_headers, features=["online_forms", "approval_workflow"]).json()
-    assert s["traditional_paise"] > s["likely_paise"]
-    assert s["traditional_build_only_paise"] > s["build_only_paise"]
-    assert 0 < s["ai_saving_percent"] < 100
+    assert s["traditional_paise"] > 0 and s["traditional_build_only_paise"] > 0
+    assert abs(s["ai_saving_percent"]) <= 1  # no saving claimed on unknown-era data
+    era = s["era_sensitivity"]
+    assert 0 < era["unknown_components"] <= era["components"]
+    assert era["pre_ai_likely_paise"] < s["likely_paise"]  # shown beside the price, not in it
+    assert era["pre_ai_likely_paise"] < s["traditional_paise"]
+    assert era["low_paise"] <= s["low_paise"] and era["high_paise"] == s["high_paise"]
+    assert "AI tools" in era["note"]
 
 
 def test_client_paid_costs_listed_separately(client: TestClient, admin_headers: H) -> None:
@@ -202,7 +209,19 @@ def test_price_follows_what_is_built_not_who_orders_it(
     assert basic["build_only_paise"] * 2 < advanced["build_only_paise"]  # same users, more work
     assert basic["high_paise"] - basic["low_paise"] > basic["likely_paise"] // 5  # honest range
     assert basic["should_cost"] and "hours each feature takes" in basic["accuracy_note"]
-    assert basic["market"]["projects"] > 0  # real contracts of this size, for comparison
+    assert basic["market"] is None  # market prices are not shown (show_market_prices off)
+
+
+def test_no_market_prices_are_shown(client: TestClient, admin_headers: H) -> None:
+    """Market prices fluctuate too much to check an estimate against (show_market_prices off):
+    no market box and no similar contracts, and the note says the price comes from hours."""
+    small = quick(client, admin_headers, features=["online_forms"]).json()
+    assert small["market"] is None and small["similar_projects"] == []
+    assert "not from what vendors charged" in small["accuracy_note"]
+    assert (
+        "not yet been checked against what finished projects really cost"
+        in (small["accuracy_note"])
+    )
 
 
 def test_ai_usage_shown_apart_from_support(client: TestClient, admin_headers: H) -> None:
@@ -233,8 +252,9 @@ def test_cost_items_explain_the_whole_price(client: TestClient, admin_headers: H
     assert items["ai_coding"]["amount_paise"] > 0 and items["dev_tools"]["amount_paise"] > 0
     assert items["team_build"]["person_days"] > 0
     assert items["tax"]["group_label"] == "Margin, risk buffer and tax"
-    # every item also says what it would cost without AI tools
-    assert items["team_build"]["traditional_paise"] > items["team_build"]["amount_paise"]
+    # every item also says what it would cost without AI tools (the same for the team on
+    # catalog v6 when no block's effort data is pre-AI: no saving is taken off unknown-era data)
+    assert items["team_build"]["traditional_paise"] >= items["team_build"]["amount_paise"]
     assert items["ai_coding"]["traditional_paise"] == 0  # no AI subscriptions without AI
     assert items["ai_review"]["person_days"] > 0  # people check what the AI wrote
     assert items["ai_review"]["traditional_paise"] == 0
@@ -328,7 +348,6 @@ def test_feature_levels_drive_the_price(client: TestClient, admin_headers: H) ->
     assert basic["likely_paise"] < standard["likely_paise"] < advanced["likely_paise"]
     assert (basic["project_size"], basic["size_points"]) == ("Small", 4)
     assert (advanced["project_size"], advanced["size_points"]) == ("Medium", 16)
-    assert basic["market"]["project_size"] == "Small"
     detail = client.get(f"/estimates/{basic['estimate_id']}", headers=admin_headers).json()
     basic_buckets = {ln["bucket"] for ln in detail["lines"]}
     assert "programme.steering_meetings" not in basic_buckets  # delivered lean
@@ -351,7 +370,8 @@ def test_cost_by_feature_with_and_without_ai(client: TestClient, admin_headers: 
     costs = {c["label"]: c for c in s["feature_costs"]}
     forms = costs["Online application or registration forms"]
     assert forms["level"] == "Advanced"
-    assert forms["traditional_paise"] > forms["amount_paise"] > 0  # AI tools save effort
+    # unknown-era effort data (catalog v6): no AI saving taken off the feature itself
+    assert forms["traditional_paise"] == forms["amount_paise"] > 0
     assert costs["Search"]["level"] is None  # one size only
     assert list(costs)[-1].startswith("Standard building blocks")
     detail = client.get(f"/estimates/{s['estimate_id']}", headers=admin_headers).json()
@@ -406,17 +426,12 @@ def test_ready_made_product_costs_far_less(client: TestClient, admin_headers: H)
     assert "not from what vendors charged" in custom["accuracy_note"]  # should-cost
 
 
-def test_similar_real_projects_are_shown(client: TestClient, admin_headers: H) -> None:
+def test_similar_real_projects_are_not_shown(client: TestClient, admin_headers: H) -> None:
     s = quick(
         client, admin_headers, features=["mobile_app", "payments", "bookings"],
         feature_levels={"mobile_app": "basic", "payments": "basic", "bookings": "basic"},
     ).json()  # fmt: skip
-    similar = s["similar_projects"]
-    assert 1 <= len(similar) <= 5
-    scores = [p["match_percent"] for p in similar]
-    assert scores == sorted(scores, reverse=True)
-    assert all(p["high_paise"] >= p["low_paise"] and p["source_url"] for p in similar)
-    assert similar[0]["size"] == "small"
+    assert s["similar_projects"] == []  # show_market_prices off
 
 
 def test_client_mode_gives_a_bid_check_at_market_rates(
@@ -493,13 +508,15 @@ def test_not_sure_prices_the_usual_answer_with_a_wider_range(
     def width(s: dict[str, Any]) -> float:
         return float(s["high_paise"] - s["low_paise"]) / float(s["likely_paise"])
 
-    def buffer_share(s: dict[str, Any]) -> float:
-        items = {i["key"]: i for i in s["cost_items"]}
-        return float(items["buffer"]["amount_paise"]) / float(s["planned_paise"])
+    def upside(s: dict[str, Any]) -> float:
+        """How far the items' own pessimistic values sit above the plan (deterministic)."""
+        t = client.get(f"/estimates/{s['estimate_id']}", headers=admin_headers).json()["totals"]
+        return float(t["high_sum_paise"] - t["likely_paise"]) / float(t["likely_paise"])
 
-    # vaguer requirements: a bigger risk buffer (deterministic) and a range at least as wide
-    # (the simulation's own noise is a few percent, as each estimate draws its own seed)
-    assert buffer_share(unsure) > buffer_share(sure)
+    # vaguer requirements: wider item spreads (deterministic; parameter set v16 has no fixed
+    # contingency, the simulation carries the risk) and a range at least as wide (the
+    # simulation's own noise is a few percent, as each estimate draws its own seed)
+    assert upside(unsure) > upside(sure)
     assert width(unsure) > 0.95 * width(sure)
     assert unsure["not_sure"] == [
         "How many people will use it?",
@@ -523,3 +540,52 @@ def test_first_screen_kinds_of_software(client: TestClient, admin_headers: H) ->
     store = quick(client, admin_headers, **same, project_type="store").json()
     assert booking["planned_paise"] == store["planned_paise"]
     assert quick(client, admin_headers, **same, project_type="rocket").status_code == 422
+
+
+def test_scope_items_priced_and_shown(client: TestClient, admin_headers: H) -> None:
+    """What else a feature needs: offered with the options, priced only when chosen, shown as
+    its own building cost when it adds a block, and listed in the summary."""
+    options = client.get("/quick-estimate/options", headers=admin_headers).json()
+    groups = {g["key"]: g for g in options["scope"]}
+    assert groups["sign_in"]["feature"] is None  # every project
+    assert groups["forms_scope"]["feature"] == "online_forms"
+    base = quick(client, admin_headers, features=["online_forms"]).json()
+    more = quick(
+        client, admin_headers, features=["online_forms"], scope=["enterprise_sso", "forms_ekyc"]
+    ).json()
+    assert base["scope"] == [] and len(more["scope"]) == 2
+    assert more["market"] == base["market"]  # published prices: scope never moves them
+    assert more["build_only_paise"] > base["build_only_paise"]
+    costs = {c["label"]: c for c in more["feature_costs"]}
+    sso = next(v for k, v in costs.items() if k.startswith("Sign-in and user accounts: Single"))
+    assert sso["amount_paise"] > 0
+    form = costs["Online application or registration forms"]
+    assert (
+        form["amount_paise"]
+        == {c["label"]: c for c in base["feature_costs"]}[
+            "Online application or registration forms"
+        ]["amount_paise"]
+    )  # the feature itself costs the same; the item is its own row
+    assert sum(c["amount_paise"] for c in more["feature_costs"]) > sum(
+        c["amount_paise"] for c in base["feature_costs"]
+    )
+    items = {i["key"]: i for i in more["scope_items"]}
+    assert items["enterprise_sso"]["amount_paise"] == sso["amount_paise"] > 0
+    assert items["forms_ekyc"]["amount_paise"] > 0 and items["enterprise_sso"]["note"]
+    # an item whose block is already in the project adds nothing, and says so (0)
+    paid = quick(client, admin_headers, features=["online_forms", "payments"], scope=["forms_fee"])
+    assert {i["key"]: i["amount_paise"] for i in paid.json()["scope_items"]} == {"forms_fee": 0}
+    bad = quick(client, admin_headers, features=["online_forms"], scope=["booking_payment"])
+    assert bad.status_code == 422  # bookings not ticked
+
+
+def test_typed_description_suggests_scope(client: TestClient, admin_headers: H) -> None:
+    text = (
+        "A portal where vendors apply online with their documents. "
+        "Staff must use two-factor authentication to sign in."
+    )
+    r = client.post("/quick-estimate/suggest", json={"text": text}, headers=admin_headers)
+    assert r.status_code == 200, r.text
+    scope = {s["key"]: s for s in r.json()["scope"]}
+    assert "two_step_sign_in" in scope
+    assert "two-factor authentication" in scope["two_step_sign_in"]["quote"]

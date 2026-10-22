@@ -52,6 +52,9 @@ def merge_extractions(
     merged = first.model_copy(deep=True)
     merged.features, merged.choices, merged.numbers, merged.unclear_points = [], {}, {}, []
     merged.other_features, merged.not_priced, merged.payment_terms = [], [], None
+    merged.scope, merged.scope_set_aside = [], []
+    scope: dict[str, Any] = {}
+    set_aside: dict[str, Any] = {}
     others: dict[str, Any] = {}
     not_priced: dict[str, Any] = {}
     merged.dropped_findings = 0
@@ -91,6 +94,19 @@ def merge_extractions(
             apply(merged.choices, key, value, doc)
         for key, value in ex.numbers.items():
             apply(merged.numbers, key, value, doc)
+        for sc in ex.scope:
+            set_aside.pop(sc.key, None)
+            if sc.key in scope:
+                scope[sc.key].evidence.extend(sc.evidence)
+                if sc.status == "explicit":
+                    scope[sc.key].status = "explicit"
+            else:
+                scope[sc.key] = sc.model_copy(deep=True)
+        for sc in ex.scope_set_aside:
+            if doc.kind in OVERRIDING_KINDS:  # a corrigendum ruling it out wins
+                scope.pop(sc.key, None)
+            if sc.key not in scope:
+                set_aside.setdefault(sc.key, sc.model_copy(deep=True))
         for n in ex.not_priced:
             if n.topic in not_priced:
                 not_priced[n.topic].evidence.extend(n.evidence)
@@ -104,6 +120,8 @@ def merge_extractions(
         merged.dropped_findings += ex.dropped_findings
     merged.features = list(features.values())
     merged.other_features = list(others.values())
+    merged.scope = list(scope.values())
+    merged.scope_set_aside = list(set_aside.values())
     # payment terms that were read are priced, so they are no longer "not priced"
     merged.not_priced = [
         n

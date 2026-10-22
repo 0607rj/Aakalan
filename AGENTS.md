@@ -56,6 +56,12 @@ backend/
       estimates/          # DB rows -> EstimateInput snapshot -> engine -> persisted Estimate
       seeding/            # seed YAML loading, DB seeding, demo data, golden fixtures
       quick/              # simple mode: plain features/questions -> project -> estimate -> summary
+                          #   reality.py: "does this price look real?" checks (explain only);
+                          #   second_opinion.py: AI review of scope and levels (words, no numbers)
+      research/           # a feature the catalog lacks: catalog match, else AI web search with the
+                          #   code checking every page, else AI analysis as catalog blocks; saved
+                          #   per org (ResearchedComponent, auto-approved) and reused; config
+                          #   `research:` in quick_estimate.yaml; nothing searched without a key
       documents/          # upload storage + PDF/DOCX parsing to page texts
       extraction/         # tender reading: AI (LLMClient) or basic keyword reader + citation check,
                           #   merge of several files (corrigenda override), pre-bid queries
@@ -64,12 +70,19 @@ backend/
       documents/ extraction/ retrieval/ mapping/ reports/ templates/   # later milestones
     llm/                  # LLMClient protocol, AnthropicClient, FakeClient; prompts/*.md (versioned)
     jobs/                 # Huey instance and tasks
-  seeds/                  # taxonomy/v1..v2, catalog/v1..v5, rate_cards/, parameters/,
+  seeds/                  # taxonomy/v1..v2, catalog/v1..v7, rate_cards/, parameters/,
                           #   quick_estimate.yaml (plain features/questions for simple mode)
+                          #   + `scope`: what else a feature needs, as catalog blocks at a level
                           #   (every value has a `source`; `placeholder` = uncalibrated)
                           #   prices follow what is built (feature levels), never the client type
+                          #   catalog v6+: each component's effort `evidence` and `source_era`;
+                          #   AI savings only on pre_ai data (never ai_assisted; unknown only
+                          #   in the labelled pre-AI sensitivity run)
+                          #   catalog v7+: a tech-stack `section` per component (core, web,
+                          #   mobile, ecommerce, ai_ml, security, ...) and a `url` per source
   migrations/             # Alembic
   tests/                  # api/, core/, engine/ (unit, property, golden/*.yaml + *.expected.json)
+                          #   fixtures/srs/: synthetic requirement documents + expected-results manifests
 frontend/                 # Next.js app (src/app, src/components, src/lib); see frontend/AGENTS.md
 data/                     # gitignored: app.db, huey.db, uploads/, reports/, models/
 ```
@@ -92,7 +105,8 @@ Run from the repo root. `make <target>` and `python scripts/tasks.py <target>` a
 | Regenerate OpenAPI JSON + TS types | `make openapi` |
 | Regenerate golden expectations (intentional engine change only) | `make golden` |
 | New migration after model change | `make migration m="describe change"` |
-| Back-test against real projects, priced as the app prices (all, by size, by client type) / fit the smooth size curve (factor by feature points) on all client types | `cd backend && uv run python -m app.cli backtest --country india [--calibrate]` |
+| Back-test against real projects, priced as the app prices: error, bias (ours / published), P10-P90 coverage and band hits by size and client type, in one run / fit the smooth size curve (factor by feature points) | `cd backend && uv run python -m app.cli backtest --country india [--as-of YYYY-MM-DD] [--layers] [--calibrate]` |
+| Show market prices (published contracts) on results again (off: they fluctuate too much, OPEN_QUESTIONS 127) | `show_market_prices:` in `backend/seeds/quick_estimate.yaml` |
 | Switch a country on/off in the app | `enabled:` under `countries:` in `backend/seeds/quick_estimate.yaml` (the US is off for now) |
 
 ## Coding conventions

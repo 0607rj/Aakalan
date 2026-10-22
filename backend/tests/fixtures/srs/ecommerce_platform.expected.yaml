@@ -1,0 +1,99 @@
+# Expected results for ecommerce_platform.md (see clinic_management.expected.yaml for the fields).
+document: ecommerce_platform.md
+project: E-commerce Platform
+features: [online_store, search, payments, billing, dashboards]
+not_features: [inventory, mobile_app, connect_existing, marketplace]
+choices: {availability: high, hosting: aws}
+not_priced: [data_rules]
+not_listed: [realtime_media]
+requirements:
+  - id: ECM-1.3
+    text: The warehouse team currently uses a barcode scanner app on its phones.
+    classification: background
+    kind: feature
+    key: inventory
+    offered: false
+    affects_estimate_when_confirmed: false
+    pricing: unmapped
+    explanation: A description of today's tools, not a request for stock management.
+  - id: ECM-3.1
+    text: The store shall show a product catalogue with photos, prices and variants.
+    classification: explicit
+    kind: feature
+    key: online_store
+    offered: true
+    affects_estimate_when_confirmed: true
+    pricing: feature
+    explanation: The online store feature.
+  - id: ECM-3.2
+    text: Customers shall find products through advanced search with filters.
+    classification: explicit
+    kind: feature
+    key: search
+    offered: true
+    affects_estimate_when_confirmed: true
+    pricing: feature
+    explanation: The search feature.
+  - id: ECM-3.5
+    text: Customers shall subscribe to a monthly coffee box with recurring payments.
+    classification: explicit
+    kind: scope
+    key: subscriptions
+    offered: true
+    affects_estimate_when_confirmed: true
+    pricing: already_included
+    explanation: Its billing block is already brought by the billing feature (GST invoices).
+  - id: ECM-3.6
+    text: Every order shall come with a GST invoice that the customer can download.
+    classification: explicit
+    kind: scope
+    key: store_invoices
+    offered: true
+    affects_estimate_when_confirmed: true
+    pricing: already_included
+    explanation: The billing feature already brings the billing block.
+  - id: ECM-3.7
+    text: Customers shall track each order's status from packed to delivered.
+    classification: explicit
+    kind: unmapped
+    key: null
+    offered: false
+    affects_estimate_when_confirmed: false
+    pricing: unmapped
+    explanation: Part of the online store block's order handling; no separate item.
+  - id: ECM-5.1
+    text: Payments follow PCI DSS through the gateway.
+    classification: explicit
+    kind: not_priced
+    key: data_rules
+    offered: false
+    affects_estimate_when_confirmed: false
+    pricing: not_priced
+    explanation: A compliance rule listed as not priced.
+  - id: ECM-6.1
+    text: Marketplace seller payouts are out of scope.
+    classification: excluded
+    kind: feature
+    key: marketplace
+    offered: false
+    affects_estimate_when_confirmed: false
+    pricing: unmapped
+    explanation: Ruled out, so the marketplace feature (catalog v7, which prices seller payouts) must not be found.
+  - id: ECM-6.2
+    text: Video calls with customers are not required.
+    classification: excluded
+    kind: not_priced
+    key: realtime_media
+    offered: false
+    affects_estimate_when_confirmed: false
+    pricing: unmapped
+    explanation: Ruled out, so it must not be listed.
+  - id: ECM-7.1
+    text: A loyalty programme and a mobile app may be considered in phase 2.
+    classification: future
+    kind: feature
+    key: mobile_app
+    offered: false
+    affects_estimate_when_confirmed: false
+    pricing: unmapped
+    explanation: A later phase; the mobile app must not be found for this release.

@@ -18,6 +18,8 @@ from app.services.extraction.tender import (
     FeatureFinding,
     NotPricedFinding,
     NumberFinding,
+    ScopeFinding,
+    ScopeStatus,
     UnclearFinding,
 )
 from app.services.quick.config import QuickConfig
@@ -132,11 +134,100 @@ NOT_DELIVERY = re.compile(
 )
 
 
+# How a sentence talks about a scope item (checked in this order). Wording patterns, not
+# tunable numbers: "MFA is not required" rules it out, "payments in phase 2" is for later.
+EXCLUDED = re.compile(
+    r"\b(not\s+(?:be\s+)?(?:required|needed|necessary|included|in\s+(?:the\s+)?scope|part\s+of)"
+    r"|withdrawn"
+    r"|no\s+need|out\s+of\s+(?:the\s+)?scope|excluded|exclude[sd]?|shall\s+not|will\s+not"
+    r"|need\s+not|does\s+not\s+(?:require|need)|is\s+not\s+expected)\b",
+    re.I,
+)
+FUTURE = re.compile(
+    r"\b(future|later\s+(?:phase|stage)|phase[-\s]?(?:2|ii|two)|next\s+phase|subsequent\s+phase"
+    r"|in\s+due\s+course|may\s+be\s+(?:added|considered|required|taken\s+up)|optional(?:ly)?"
+    r"|nice\s+to\s+have|if\s+required)\b",
+    re.I,
+)
+ASKED = re.compile(
+    r"\b(shall|must|required|requires|should|mandatory|needs?\s+to|will\s+(?:provide|have"
+    r"|support|offer|include|use)|is\s+to\s+be|are\s+to\s+be|to\s+be\s+(?:provided|built"
+    r"|implemented|developed))\b",
+    re.I,
+)
+BACKGROUND = re.compile(
+    r"\b(currently|at\s+present|presently|existing|present\s+system|old\s+(?:system|portal|site)"
+    r"|legacy|already\s+(?:uses?|has|have|in\s+place)|today|for\s+reference)\b",
+    re.I,
+)
+STRENGTH: dict[str, int] = {
+    "explicit": 5,
+    "inferred": 4,
+    "future": 3,
+    "background": 2,
+    "excluded": 1,
+}
+SET_ASIDE = ("excluded", "future", "background")
+
+
+def _context(ev: Evidence, m: re.Match[str]) -> str:
+    """The matched sentence plus a lead-in that ends with a colon on the same line, so that
+    "9.2 Not included: payouts, video calls" reads every item as ruled out."""
+    text = m.string
+    bounds = [b.end() for b in SENTENCE_END.finditer(text, 0, m.start())]
+    start = bounds[-1] if bounds else 0
+    line_start = text.rfind("\n", 0, m.start()) + 1
+    lead = text[line_start:start].strip()
+    return f"{lead} {ev.quote}" if lead.endswith(":") else ev.quote
+
+
+def _asked(sentence: str) -> bool:
+    """A finding counts only from a sentence that asks for it now (explicit or inferred)."""
+    return scope_status(sentence) not in SET_ASIDE
+
+
+def scope_status(sentence: str) -> ScopeStatus:
+    """excluded / future when the sentence says so; explicit when it asks for it; background
+    when it describes what exists today ("currently uses", "the legacy system"); else a mention,
+    offered as probably needed (inferred) for the user to check."""
+    if EXCLUDED.search(sentence):
+        return "excluded"
+    if FUTURE.search(sentence):
+        return "future"
+    if ASKED.search(sentence):
+        return "explicit"
+    return "background" if BACKGROUND.search(sentence) else "inferred"
+
+
+def _scope(cfg: QuickConfig, doc: ParsedDocument, features: set[str]) -> list[ScopeFinding]:
+    """Scope items whose keywords appear, each with its strongest status and the quotes that give
+    it. An item of a feature not found is only reported as set aside (a corrigendum ruling out
+    an item does not repeat the feature)."""
+    out = []
+    for group in cfg.scope:
+        gated = group.feature is not None and group.feature not in features
+        for item in group.items:
+            if not item.keywords:
+                continue
+            hits = [
+                (scope_status(_context(ev, m)), ev)
+                for ev, m in _evidence(doc, _phrase(item.keywords))
+            ]
+            if gated:
+                hits = [(st, ev) for st, ev in hits if st in SET_ASIDE]
+            if not hits:
+                continue
+            best = max((status for status, _ in hits), key=lambda st: STRENGTH[st])
+            evidence = [ev for status, ev in hits if status == best][:MAX_EVIDENCE]
+            out.append(ScopeFinding(key=item.key, status=best, evidence=evidence))
+    return out
+
+
 def basic_read(cfg: QuickConfig, doc: ParsedDocument) -> ExtractionOutput:
     long_doc = len(doc.pages) >= cfg.keywords.long_document_pages
     features = []
     for key, words in cfg.keywords.features.items():
-        all_hits = [ev for ev, _ in _evidence(doc, _phrase(words))]
+        all_hits = [ev for ev, m in _evidence(doc, _phrase(words)) if _asked(_context(ev, m))]
         if all_hits:
             mentions = len({(ev.page, ev.quote) for ev in all_hits})
             # In a long document a feature named once or twice is often boilerplate
@@ -182,7 +273,7 @@ def basic_read(cfg: QuickConfig, doc: ParsedDocument) -> ExtractionOutput:
     choices = []
     for question, options in cfg.keywords.choices.items():
         for option, words in options.items():  # options are listed strongest first
-            hit = next(_evidence(doc, _phrase(words)), None)
+            hit = next((h for h in _evidence(doc, _phrase(words)) if _asked(_context(*h))), None)
             if hit:
                 choices.append(ChoiceFinding(question=question, value=option, evidence=[hit[0]]))
                 break
@@ -219,7 +310,7 @@ def basic_read(cfg: QuickConfig, doc: ParsedDocument) -> ExtractionOutput:
 
     not_priced = []
     for topic, rule in cfg.not_priced_topics.items():
-        hits = [ev for ev, _ in _evidence(doc, _phrase(rule.words))]
+        hits = [ev for ev, m in _evidence(doc, _phrase(rule.words)) if _asked(_context(ev, m))]
         if hits:
             not_priced.append(NotPricedFinding(topic=topic, evidence=hits[:MAX_EVIDENCE]))
 
@@ -236,4 +327,5 @@ def basic_read(cfg: QuickConfig, doc: ParsedDocument) -> ExtractionOutput:
         numbers=numbers,
         unclear_points=unclear,
         not_priced=not_priced,
+        scope=_scope(cfg, doc, {f.key for f in features}),
     )

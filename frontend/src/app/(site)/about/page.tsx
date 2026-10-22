@@ -22,7 +22,7 @@ const PRINCIPLES = [
   },
   {
     title: "Honest about how sure we are",
-    body: "We publish how the prices did against real projects and show a range, not a single number pretending to be exact.",
+    body: "We say where every price comes from, show real project prices beside it and give a range, not a single number pretending to be exact.",
   },
 ];
 
@@ -56,20 +56,22 @@ export default function AboutPage() {
           <h3 className="text-lg font-bold">How we test the prices</h3>
           <p className="text-muted-foreground">
             We collected 56 Indian projects with published prices: government
-            contracts and private and startup projects. Each was priced with
-            settings tuned only on the others.
+            contracts and private and startup projects. The prices are not tuned
+            to them; they come from hours and rates. Each estimate shows what
+            real projects of its size were bought for, as published.
           </p>
           <ul className="flex flex-col gap-2">
             <li>
-              <strong>Small projects:</strong> typically within about 21% of the
-              price paid
+              <strong>Small projects:</strong> real contracts mostly came in
+              below our estimate (lowest winning bids, simpler builds)
             </li>
             <li>
-              <strong>All sizes together:</strong> typically within about 43%
+              <strong>Medium and large projects:</strong> real contracts mostly
+              came in above it (years of operations, hardware, staff on site)
             </li>
             <li>
-              <strong>Large projects:</strong> vary most, so their range is
-              widest
+              <strong>Not yet checked:</strong> what finished projects really
+              cost; recorded outcomes will do that
             </li>
           </ul>
           <RangeTape

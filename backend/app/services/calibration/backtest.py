@@ -21,7 +21,7 @@ floating-point statistics on ratios.
 """
 
 import math
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from decimal import Decimal
 from itertools import pairwise
 from pathlib import Path
@@ -121,6 +121,47 @@ class BacktestRow(BaseModel):
     inside_range: bool | None = None  # the published price (or band) meets our P10-P90 range
     ratio: float | None  # estimate / published
     error_percent: float | None
+    size: str | None = None  # the size class set by hand from the scope text
+    derived_size: str | None = None  # the size the app gives the scope (feature points)
+    award_year: int | None = None
+    band: bool = False  # published as a price band (inside it counts as exact)
+
+
+class SegmentMetrics(BaseModel):
+    """How one group of projects did. bias = exp(median log(ours / published)): above 1 we
+    price higher than the published contracts. band_hits = projects counted exact only because
+    our price fell inside a published band (they flatter the error and the bias)."""
+
+    segment: str
+    projects: int
+    median_abs_error_percent: float
+    bias: float
+    within_25_percent: int
+    inside_range: int  # published price meets our P10-P90
+    band_hits: int
+
+
+def segment_metrics(rows: list[BacktestRow], key: str) -> list[SegmentMetrics]:
+    """Metrics per value of `key` ("size", "derived_size", "buyer", or "all"), used rows only."""
+    used = [r for r in rows if r.use and r.ratio]
+    groups: dict[str, list[BacktestRow]] = {}
+    for r in used:
+        groups.setdefault("all" if key == "all" else str(getattr(r, key)), []).append(r)
+    out = []
+    for name, group in sorted(groups.items()):
+        errors = [abs(r.error_percent or 0) for r in group]
+        out.append(
+            SegmentMetrics(
+                segment=name,
+                projects=len(group),
+                median_abs_error_percent=round(median(errors), 1),
+                bias=round(math.exp(median(math.log(r.ratio or 1) for r in group)), 3),
+                within_25_percent=sum(1 for e in errors if e <= 25),
+                inside_range=sum(1 for r in group if r.inside_range),
+                band_hits=sum(1 for r in group if r.band and r.ratio == 1.0),
+            )
+        )
+    return out
 
 
 class BacktestReport(BaseModel):
@@ -133,6 +174,7 @@ class BacktestReport(BaseModel):
     within_25_percent: int
     inside_range: int = 0  # projects whose published price falls inside our P10-P90 range
     rows: list[BacktestRow]
+    segments: dict[str, list[SegmentMetrics]] = {}  # by size, derived_size, buyer
 
 
 def load_benchmarks(path: Path) -> BenchmarkSet:
@@ -229,6 +271,7 @@ def estimate_range_for(
     ai_level: str = "medium",
     *,
     pin_size: bool = True,
+    as_of: date | None = None,
 ) -> tuple[int, int, int] | None:
     """Our (P10, P50, P90) for the benchmark scope (`benchmark_request`), with or without tax
     to match the published value. `pin_size` prices it at its own size class instead of the
@@ -237,7 +280,12 @@ def estimate_range_for(
     size = b.model.size or "medium"
     plan = plan_quick(cfg, req, None, "benchmark", project_size=size if pin_size else None)
     inp = plan_to_input(
-        plan, b.title[:300], reference, datetime.now(UTC).date(), BACKTEST_SEED, BACKTEST_RUNS
+        plan,
+        b.title[:300],
+        reference,
+        as_of or datetime.now(UTC).date(),
+        BACKTEST_SEED,
+        BACKTEST_RUNS,
     )
     result = calculate(inp)
     if result.totals is None:
@@ -282,6 +330,7 @@ def backtest(
     build_type: str | None = None,
     answer_factors: dict[str, dict[str, Decimal]] | None = None,
     pin_size: bool = False,
+    as_of: date | None = None,
 ) -> BacktestReport:
     """Price every benchmark (or one segment: government / commercial / private /
     small_business, and/or one project size) and compare, priced the way the app prices
@@ -294,7 +343,8 @@ def backtest(
         "clarity": cfg.requirement_clarity,
     }
     escalation = params.escalation.labour
-    this_year = datetime.now(UTC).year
+    as_of = as_of or datetime.now(UTC).date()  # pin it for a reproducible report
+    this_year = as_of.year
     rows = []
     for b in bench.projects:
         if used_only and not b.use:
@@ -312,10 +362,17 @@ def backtest(
         )
         try:
             found = estimate_range_for(
-                cfg, b, ref, tax_included, bench.ai_level(b.award_year), pin_size=pin_size
+                cfg,
+                b,
+                ref,
+                tax_included,
+                bench.ai_level(b.award_year),
+                pin_size=pin_size,
+                as_of=as_of,
             )
+            sized: str | None = derived_size(cfg, b, ref["rate_card"].region)
         except HTTPException:  # scope too thin to model (e.g. no features known)
-            found = None
+            found, sized = None, None
         ours = found[1] if found else None
         low = today_value(b.value_minor, b.award_year, this_year, escalation)
         high = (
@@ -340,6 +397,10 @@ def backtest(
                 inside_range=inside,
                 ratio=round(ratio, 3) if ratio else None,
                 error_percent=round((ratio - 1) * PERCENT, 1) if ratio else None,
+                size=b.model.size,
+                derived_size=sized,
+                award_year=b.award_year,
+                band=b.value_high_minor is not None,
             )
         )
     used = [r for r in rows if r.use and r.ratio]
@@ -354,6 +415,7 @@ def backtest(
         within_25_percent=sum(1 for e in errors if e <= 25),
         inside_range=sum(1 for r in used if r.inside_range),
         rows=rows,
+        segments={k: segment_metrics(rows, k) for k in ("all", "size", "derived_size", "buyer")},
     )
 
 
@@ -510,3 +572,70 @@ def fit_points_curve(cfg: QuickConfig, bench: BenchmarkSet, reference: dict[str,
         by_size=by_size,
         by_buyer=by_buyer,
     )
+
+
+LAYER_ORDER = (
+    "feature blocks",
+    "standard blocks",
+    "other build",  # tools, review of AI-written code
+    "management",
+    "launch",
+    "running",
+    "commercial",
+)
+
+
+def layer_shares(
+    cfg: QuickConfig,
+    bench: BenchmarkSet,
+    reference: dict[str, Any],
+    *,
+    as_of: date | None = None,
+) -> dict[str, dict[str, float]]:
+    """How the planned cost (sum of line items) splits into layers, median share by hand-set
+    size, priced as the app prices: feature blocks (components a feature or scope item asked
+    for), standard blocks (asked for by none), management (programme stage), launch (go-live),
+    running (run), commercial, and other build lines. A diagnostic of how size changes the
+    mix, never a fit."""
+    ref = {**reference, "clarity": cfg.requirement_clarity}
+    shares: dict[str, dict[str, list[float]]] = {}
+    for b in bench.projects:
+        if not b.use:
+            continue
+        try:
+            req = benchmark_request(cfg, b, ref["rate_card"].region, bench.ai_level(b.award_year))
+            plan = plan_quick(cfg, req, None, "benchmark")
+        except HTTPException:  # scope too thin to model
+            continue
+        inp = plan_to_input(
+            plan,
+            b.title[:300],
+            ref,
+            as_of or datetime.now(UTC).date(),
+            BACKTEST_SEED,
+            BACKTEST_RUNS,
+        )
+        asked = {c.id for c in inp.components if c.requirement_ids}
+        layers = dict.fromkeys(LAYER_ORDER, 0)
+        stage_layer = {
+            "programme": "management",
+            "go_live": "launch",
+            "run": "running",
+            "commercial": "commercial",
+        }
+        for line in calculate(inp).lines:
+            if line.component_instance_id:
+                key = "feature blocks" if line.component_instance_id in asked else "standard blocks"
+            else:
+                key = stage_layer.get(line.stage, "other build")
+            layers[key] += line.likely_paise
+        total = sum(layers.values())
+        if total <= 0:
+            continue
+        group = shares.setdefault(b.model.size or "unknown", {k: [] for k in LAYER_ORDER})
+        for key, value in layers.items():
+            group[key].append(value / total)
+    return {
+        size: {k: round(median(v), 3) for k, v in by_layer.items() if v}
+        for size, by_layer in shares.items()
+    }

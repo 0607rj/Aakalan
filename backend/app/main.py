@@ -13,6 +13,7 @@ from app.api import (
     outcomes,
     projects,
     quick,
+    research,
     templates,
 )
 from app.api import settings as settings_api
@@ -41,6 +42,7 @@ def create_app() -> FastAPI:
     app.include_router(settings_api.router)
     app.include_router(templates.router)
     app.include_router(contact.router)
+    app.include_router(research.router)
     return app
 
 

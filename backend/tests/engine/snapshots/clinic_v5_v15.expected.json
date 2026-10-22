@@ -1,0 +1,8 @@
+{
+  "note": "Result of the input above, computed before catalog v6 / baseline eras (commit 0d05c1f).",
+  "result_sha256": "fc12103f9a4cec7756ad468e7904657c4cdf1ae6f4901bef08d8afcda341bb88",
+  "p10_paise": 247059542,
+  "p50_paise": 324498498,
+  "p90_paise": 421231757,
+  "likely_paise": 269325952
+}

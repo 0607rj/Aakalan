@@ -9,7 +9,7 @@ stated quantities, which the user then confirms.
 
 import re
 from decimal import Decimal
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel
 
@@ -17,8 +17,8 @@ from app.llm.client import LLMClient, LLMResult, load_prompt
 from app.services.documents.parsing import ParsedDocument, normalise
 from app.services.quick.config import QuickConfig
 
-PROMPT_FILE = "extract_tender_v4.md"
-PROMPT_VERSION = "extract_tender_v4"
+PROMPT_FILE = "extract_tender_v6.md"
+PROMPT_VERSION = "extract_tender_v6"
 SIZES = frozenset({"S", "M", "L"})
 BASIC_READER_VERSION = "basic_reader_v1"
 PAGE_TOLERANCE = 1  # a quote may straddle into the neighbouring page
@@ -35,6 +35,7 @@ NUMBER_FIELDS: dict[str, str] = {
     "emd_rupees": "emd_paise",
     "pbg_percent": "pbg_percent",
     "onsite_staff": "onsite_staff",
+    "onsite_days": "onsite_days",
 }
 PAYMENT_WHEN = ("on_order", "during_build", "go_live", "after_go_live")
 PERCENT = 100
@@ -64,6 +65,9 @@ class OtherFeatureFinding(BaseModel):
     category: str
     size: str
     evidence: list[Evidence]
+    # a listed feature key or an always-included key this is only a part of ("" = new work);
+    # such parts are already priced there, so they are not priced again
+    part_of: str = ""
 
 
 class ChoiceFinding(BaseModel):
@@ -108,6 +112,21 @@ class NotPricedFinding(BaseModel):
     evidence: list[Evidence]
 
 
+ScopeStatus = Literal["explicit", "inferred", "excluded", "future", "background"]
+SUGGESTED_SCOPE = ("explicit", "inferred")  # offered to the user (never ticked for them)
+
+
+class ScopeFinding(BaseModel):
+    """A scope item (quick config `scope` key) the document talks about, and how: asked for
+    (explicit), probably needed but not stated (inferred), ruled out (excluded), for a later
+    phase or optional (future), or only mentioned (background)."""
+
+    key: str
+    status: ScopeStatus
+    note: str = ""
+    evidence: list[Evidence]
+
+
 class PaymentFinding(BaseModel):
     percent: float  # of the contract value, e.g. 30 for 30%
     when: str  # on_order | during_build | go_live | after_go_live
@@ -129,6 +148,7 @@ class ExtractionOutput(BaseModel):
     unclear_points: list[UnclearFinding]
     not_priced: list[NotPricedFinding] = []
     payment_terms: PaymentTermsFinding | None = None
+    scope: list[ScopeFinding] = []
 
 
 # --- verified result stored on the Document -------------------------------------------------
@@ -148,6 +168,16 @@ class FoundFeature(BaseModel):
     evidence: list[VerifiedEvidence]
     mentions: int = 1
     suggested: bool = True  # False: mentioned only in passing in a long document
+
+
+class FoundScope(BaseModel):
+    """A scope item the document mentions (quick config `scope`), with its quotes."""
+
+    key: str
+    label: str  # "group: item"
+    status: ScopeStatus = "explicit"
+    note: str = ""
+    evidence: list[VerifiedEvidence]
 
 
 class FoundOtherFeature(BaseModel):
@@ -198,6 +228,8 @@ class TenderExtraction(BaseModel):
     dropped_findings: int
     not_priced: list[FoundNotPriced] = []  # asked for in the document, not in the price
     payment_terms: FoundPaymentTerms | None = None
+    scope: list[FoundScope] = []  # asked for or probably needed: offered, never pre-ticked
+    scope_set_aside: list[FoundScope] = []  # ruled out, later phase / optional, or a mention
 
 
 def _fence(doc: ParsedDocument) -> str:
@@ -225,13 +257,32 @@ def build_prompt(cfg: QuickConfig) -> str:
         and q.group != "hidden"  # the company's own settings, not in the document
     )
     not_priced = "\n".join(f"- {k}: {t.label}" for k, t in cfg.not_priced_topics.items())
+    scope = "\n".join(
+        f"- {i.key}: {g.label}: {i.label}"
+        + (f" (only when the feature {g.feature} is required)" if g.feature else "")
+        for g in cfg.scope
+        for i in g.items
+    )
     return (
         load_prompt(PROMPT_FILE)
         .replace("{features}", features)
+        .replace("{scope}", scope)
         .replace("{custom_types}", custom)
         .replace("{choices}", choices)
         .replace("{not_priced}", not_priced)
+        .replace("{included}", included_list(cfg))
     )
+
+
+def included_keys(cfg: QuickConfig) -> set[str]:
+    return {i.key for i in cfg.always_included.items} if cfg.always_included else set()
+
+
+def included_list(cfg: QuickConfig) -> str:
+    """What every project's price already has, as prompt lines (quick config always_included)."""
+    if cfg.always_included is None:
+        return "- (none)"
+    return "\n".join(f"- {i.key}: {i.label}" for i in cfg.always_included.items)
 
 
 def _verify(
@@ -294,11 +345,59 @@ def _number(field: str, value: float) -> Any:
     return round(value)
 
 
+GAP_PROMPT_FILE = "gap_check_v1.md"
+
+
+class GapOutput(BaseModel):
+    other_features: list[OtherFeatureFinding]
+
+
+def _covered(raw: ExtractionOutput) -> str:
+    """What the first reading found, as plain lines for the gap check."""
+    lines = [f"- {f.key}" for f in raw.features]
+    lines += [f"- {o.name}: {o.description}" for o in raw.other_features]
+    lines += [f"- scope: {s.key} ({s.status})" for s in raw.scope]
+    lines += [f"- not priced: {n.topic}" for n in raw.not_priced]
+    return "\n".join(lines) or "- (nothing)"
+
+
+def gap_check(
+    llm: LLMClient, cfg: QuickConfig, doc: ParsedDocument, first: LLMResult[ExtractionOutput]
+) -> LLMResult[ExtractionOutput]:
+    """A second pass that asks only for what the first reading missed (a single reading varies
+    from run to run). The extras it adds are checked like any other finding."""
+    custom = "\n".join(f"- {k}: {t.label}" for k, t in cfg.custom_feature_types.items())
+    features = "\n".join(f"- {f.key}: {f.label}" for f in cfg.features)
+    system = (
+        load_prompt(GAP_PROMPT_FILE)
+        .replace("{custom_types}", custom)
+        .replace("{features}", features)
+        .replace("{included}", included_list(cfg))
+    )
+    user = (
+        f"{_fence(doc)}\n\n<already_found>\n{_covered(first.output)}\n</already_found>\n\n"
+        "Return the requirements the first reading missed."
+    )
+    extra = llm.extract(system=system, user=user, schema=GapOutput)
+    known = {o.name.strip().lower() for o in first.output.other_features}
+    added = [o for o in extra.output.other_features if o.name.strip().lower() not in known]
+    merged = first.output.model_copy(
+        update={"other_features": [*first.output.other_features, *added]}
+    )
+    return LLMResult(
+        output=merged,
+        model=first.model,
+        input_tokens=first.input_tokens + extra.input_tokens,
+        output_tokens=first.output_tokens + extra.output_tokens,
+    )
+
+
 def ai_read(
     llm: LLMClient, cfg: QuickConfig, doc: ParsedDocument, pdf: bytes | None = None
 ) -> LLMResult[ExtractionOutput]:
     """Ask the LLM for findings; the document is fenced as data (rule 7). Scanned PDFs are sent
-    as the PDF itself (the model reads the page images, including Hindi)."""
+    as the PDF itself (the model reads the page images, including Hindi). A second pass then
+    asks only for what the first one missed (text documents)."""
     if doc.scanned and pdf is not None:
         return llm.extract_pdf(
             system=build_prompt(cfg),
@@ -309,11 +408,12 @@ def ai_read(
             ),
             schema=ExtractionOutput,
         )
-    return llm.extract(
+    first = llm.extract(
         system=build_prompt(cfg),
         user=_fence(doc) + "\n\nRead the tender above and return your findings.",
         schema=ExtractionOutput,
     )
+    return gap_check(llm, cfg, doc, first)
 
 
 def verify_findings(
@@ -351,6 +451,16 @@ def verify_findings(
     others: dict[str, FoundOtherFeature] = {}
     for o in raw.other_features:
         ev = _verify(doc, o.evidence, document)
+        part = o.part_of.strip()
+        if part in included_keys(cfg):
+            continue  # already in every project's price (e.g. login and roles, captcha)
+        if part in labels and ev:  # a piece of a listed feature: priced by that feature
+            if part in features:
+                features[part].evidence.extend(ev)
+                features[part].mentions += 1
+            else:
+                features[part] = FoundFeature(key=part, label=labels[part], evidence=ev)
+            continue
         name = o.name.strip()[:200]
         size = o.size.strip().upper()[:1]
         if not name or o.category not in cfg.custom_feature_types or size not in SIZES or not ev:
@@ -411,6 +521,31 @@ def verify_findings(
                 topic=item.topic, label=topic.label, note=item.note.strip()[:300], evidence=ev
             )
 
+    labels_scope = {i.key: f"{g.label}: {i.label}" for g in cfg.scope for i in g.items}
+    scope: dict[str, FoundScope] = {}
+    set_aside: dict[str, FoundScope] = {}
+    for sf in raw.scope:
+        ev = _verify(doc, sf.evidence, document)
+        if sf.key not in labels_scope or not ev:
+            dropped += 1
+            continue
+        target = scope if sf.status in SUGGESTED_SCOPE else set_aside
+        if sf.key in target:
+            found = target[sf.key]
+            found.evidence.extend(ev)
+            if sf.status == "explicit":
+                found.status = "explicit"
+            continue
+        target[sf.key] = FoundScope(
+            key=sf.key,
+            label=labels_scope[sf.key],
+            status=sf.status,
+            note=sf.note.strip()[:300],
+            evidence=ev,
+        )
+    for key in scope:  # asked for in one place, ruled out for a part elsewhere: still offered
+        set_aside.pop(key, None)
+
     return TenderExtraction(
         reader=reader,
         prompt_version=version,
@@ -424,6 +559,8 @@ def verify_findings(
         dropped_findings=dropped,
         not_priced=list(not_priced.values()),
         payment_terms=payment_terms,
+        scope=list(scope.values()),
+        scope_set_aside=list(set_aside.values()),
     )
 
 

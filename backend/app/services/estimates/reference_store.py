@@ -8,7 +8,14 @@ from fastapi import HTTPException, status
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from app.models import CatalogComponent, ParameterSet, RateCard, TaxonomyVersion
+from app.core.tenancy import scoped
+from app.models import (
+    CatalogComponent,
+    ParameterSet,
+    RateCard,
+    ResearchedComponent,
+    TaxonomyVersion,
+)
 from app.services.engine import reference as ref
 from app.services.seeding.database import rate_card_model
 
@@ -78,6 +85,23 @@ def get_catalog(db: Session, version: str | None = None) -> ref.Catalog:
         version=version,
         components=[ref.CatalogComponent.model_validate(r.spec) for r in rows],
     )
+
+
+def catalog_for(db: Session, org_id: str, version: str | None = None) -> ref.Catalog:
+    """The published catalog plus the organisation's active researched blocks (services/
+    research). The estimate's snapshot stores the merged list, so an estimate never changes
+    when blocks are researched or retired later."""
+    catalog = get_catalog(db, version)
+    rows = db.scalars(
+        scoped(ResearchedComponent, org_id)
+        .where(ResearchedComponent.status == "active")
+        .order_by(ResearchedComponent.created_at, ResearchedComponent.key)
+    ).all()
+    keys = {c.key for c in catalog.components}
+    extra = [ref.CatalogComponent.model_validate(r.spec) for r in rows if r.key not in keys]
+    if not extra:
+        return catalog
+    return catalog.model_copy(update={"components": [*catalog.components, *extra]})
 
 
 def _newest(rows: Sequence[Any]) -> Any:

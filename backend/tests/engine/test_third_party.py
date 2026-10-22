@@ -37,7 +37,7 @@ def current(
             base,
             components=components,
             taxonomy=reference.taxonomy,
-            catalog=reference.catalog,
+            catalog=reference.catalog_version("v5"),  # before source eras (v6)
             rate_card=reference.rate_card(region[0]),
             parameters=reference.parameter_set(region[1]),
         )
@@ -193,7 +193,7 @@ def test_simple_ai_model_is_cheaper(
     base = tweak(
         golden("medium"),
         taxonomy=reference.taxonomy,
-        catalog=reference.catalog,
+        catalog=reference.catalog_version("v5"),  # before source eras (v6)
         rate_card=reference.rate_card("v4"),
         parameters=reference.parameter_set("v7"),
     )

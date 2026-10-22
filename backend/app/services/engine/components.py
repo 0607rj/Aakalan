@@ -8,7 +8,7 @@ from app.services.engine.context import LineBuilder, PricingContext
 from app.services.engine.inputs import ComponentInstanceIn
 from app.services.engine.money import ONE, ZERO, dsum
 from app.services.engine.outputs import CostLineOut
-from app.services.engine.reference import CatalogComponent, Driver, Size, TaskType
+from app.services.engine.reference import BaselineEra, CatalogComponent, Driver, Size, TaskType
 
 
 @dataclass(frozen=True)
@@ -55,6 +55,24 @@ def _uses_licence(ctx: PricingContext, catalog: CatalogComponent) -> bool:
     return catalog.licence is not None and ctx.q.licensing == "licensed"
 
 
+def ai_saving_applies(ctx: PricingContext, catalog: CatalogComponent) -> bool:
+    """Whether the team's AI savings may reduce this component's effort, so they are applied
+    at most once:
+
+      no era recorded (catalogs v1-v5) → yes, as before
+      pre_ai                           → yes
+      ai_assisted                      → never (the observed hours already include AI tools)
+      unknown                          → no in the estimate; yes only in the pre-AI
+                                         sensitivity run (EstimateInput.era_scenario)
+    """
+    era = catalog.source_era
+    if era is None or era is BaselineEra.PRE_AI:
+        return True
+    if era is BaselineEra.AI_ASSISTED:
+        return False
+    return ctx.inp.era_scenario == "pre_ai_sensitivity"
+
+
 def base_effort(ctx: PricingContext, ci: ComponentInstanceIn) -> ComponentEffort:
     """Effort in person-days before compression (used to size the timeline).
 
@@ -77,7 +95,8 @@ def base_effort(ctx: PricingContext, ci: ComponentInstanceIn) -> ComponentEffort
 def _task_efforts(
     t: LineBuilder, ci: ComponentInstanceIn, catalog: CatalogComponent
 ) -> tuple[dict[TaskType, Decimal], dict[TaskType, Decimal]]:
-    """(effort, effort saved by AI tools) per task type, in person-days."""
+    """(effort, effort saved by AI tools) per task type, in person-days. The saving is zero when
+    `ai_saving_applies` says the component's effort data must not be discounted."""
     base: Decimal = catalog.base_effort_pd[Size(ci.size)] * t.calibration("effort_multiplier")
     m_cx: Decimal = t.param("complexity_multipliers", ci.complexity.value)
     m_nfr = nfr_multiplier(t, catalog)
@@ -85,15 +104,19 @@ def _task_efforts(
     if _uses_licence(t.ctx, catalog) and catalog.licence is not None:
         t.driver("licensing")
         lic = catalog.licence.effort_factor
-    maturity = t.driver("team_ai_maturity")
-    scale: Decimal = t.param("ai_productivity", "maturity_scale", maturity)
-    cap: Decimal = t.param("ai_productivity", "max_saving")
+    applies = ai_saving_applies(t.ctx, catalog)
+    if applies:
+        maturity = t.driver("team_ai_maturity")
+        scale: Decimal = t.param("ai_productivity", "maturity_scale", maturity)
+        cap: Decimal = t.param("ai_productivity", "max_saving")
     efforts: dict[TaskType, Decimal] = {}
     saved: dict[TaskType, Decimal] = {}
     for task, share in catalog.task_mix.items():
-        saving: Decimal = t.param("ai_productivity", "task_savings", task.value)
-        effective_saving = min(cap, saving * scale)
         without_ai = base * ci.quantity * share * m_cx * m_nfr * lic
+        effective_saving = ZERO
+        if applies:
+            saving: Decimal = t.param("ai_productivity", "task_savings", task.value)
+            effective_saving = min(cap, saving * scale)
         efforts[task] = without_ai * (ONE - effective_saving)
         saved[task] = without_ai * effective_saving
     return efforts, saved
@@ -102,7 +125,9 @@ def _task_efforts(
 def component_line(
     ctx: PricingContext, effort: ComponentEffort, compression: Decimal
 ) -> CostLineOut:
-    """Price one component instance; the line carries per-task steps and role person-days."""
+    """Price one component instance; the line carries per-task steps and role person-days.
+    Catalog v6+ components also record where their effort data comes from and whether the AI
+    saving was applied (formula component_labour.v3)."""
     ci, catalog = effort.instance, effort.catalog
     stage = catalog.bucket.split(".", 1)[0]
     t = ctx.builder(
@@ -111,7 +136,7 @@ def component_line(
         bucket=catalog.bucket,
         year=0,
         label=ci.label or catalog.name,
-        formula_id="component_labour.v2",
+        formula_id="component_labour.v2" if catalog.source_era is None else "component_labour.v3",
         uncertainty_group=f"{catalog.bucket}|{ci.id}",
     )
     t.link_component(ci, catalog)
@@ -122,6 +147,13 @@ def component_line(
         base_effort_pd=str(catalog.base_effort_pd[Size(ci.size)]),
         compression_multiplier=str(compression),
     )
+    if catalog.source_era is not None:
+        t.add_input(
+            source_era=catalog.source_era.value,
+            evidence=[e.id for e in catalog.evidence],
+            ai_saving="applied" if ai_saving_applies(ctx, catalog) else "not applied",
+            era_scenario=ctx.inp.era_scenario,
+        )
     efforts, _ = _task_efforts(t, ci, catalog)
     total = ZERO
     for task, pd in efforts.items():

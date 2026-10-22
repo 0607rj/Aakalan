@@ -22,6 +22,8 @@ from app.models.reference import (
     RateItem,
     TaxonomyVersion,
 )
+from app.models.research import ResearchedComponent
+from app.models.review import SecondOpinion
 
 __all__ = [
     "Assumption",
@@ -41,7 +43,9 @@ __all__ = [
     "RateCard",
     "RateItem",
     "Requirement",
+    "ResearchedComponent",
     "Role",
+    "SecondOpinion",
     "TaxonomyVersion",
     "Template",
     "User",

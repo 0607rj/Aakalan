@@ -1,0 +1,3297 @@
+{
+ "project": {
+  "name": "Clinic MVP",
+  "buyer_type": "govt",
+  "domain": "quick_estimate"
+ },
+ "as_of_date": "2026-10-19",
+ "seed": 2026,
+ "template_match": "none",
+ "requirements": [
+  {
+   "id": "REQ-001",
+   "code": "REQ-001",
+   "text": "Bookings / appointments. Calendars and slots - book, reschedule, cancel, reminders.",
+   "category": "functional",
+   "clarity_score": 3,
+   "source_refs": [
+    {
+     "clause_ref": "Feature: Bookings / appointments",
+     "page": null,
+     "document": "Quick estimate form",
+     "chunk_id": null
+    }
+   ]
+  },
+  {
+   "id": "REQ-002",
+   "code": "REQ-002",
+   "text": "Online fee payment. Pay fees through a payment gateway.",
+   "category": "functional",
+   "clarity_score": 3,
+   "source_refs": [
+    {
+     "clause_ref": "Feature: Online fee payment",
+     "page": null,
+     "document": "Quick estimate form",
+     "chunk_id": null
+    }
+   ]
+  },
+  {
+   "id": "REQ-003",
+   "code": "REQ-003",
+   "text": "SMS, email and app notifications. OTP login, reminders, booking confirmations and alerts by SMS, email or push.",
+   "category": "functional",
+   "clarity_score": 3,
+   "source_refs": [
+    {
+     "clause_ref": "Feature: SMS, email and app notifications",
+     "page": null,
+     "document": "Quick estimate form",
+     "chunk_id": null
+    }
+   ]
+  },
+  {
+   "id": "REQ-004",
+   "code": "REQ-004",
+   "text": "Mobile app (Android / iOS). A phone app for customers or staff, in addition to the website.",
+   "category": "functional",
+   "clarity_score": 3,
+   "source_refs": [
+    {
+     "clause_ref": "Feature: Mobile app (Android / iOS)",
+     "page": null,
+     "document": "Quick estimate form",
+     "chunk_id": null
+    }
+   ]
+  }
+ ],
+ "components": [
+  {
+   "id": "C001",
+   "catalog_key": "ui_ux_design",
+   "label": null,
+   "size": "S",
+   "complexity": "medium",
+   "quantity": 1,
+   "requirement_ids": []
+  },
+  {
+   "id": "C002",
+   "catalog_key": "user_management_rbac",
+   "label": null,
+   "size": "S",
+   "complexity": "medium",
+   "quantity": 1,
+   "requirement_ids": []
+  },
+  {
+   "id": "C003",
+   "catalog_key": "responsive_frontend",
+   "label": null,
+   "size": "S",
+   "complexity": "medium",
+   "quantity": 1,
+   "requirement_ids": []
+  },
+  {
+   "id": "C004",
+   "catalog_key": "functional_testing_uat_support",
+   "label": null,
+   "size": "S",
+   "complexity": "medium",
+   "quantity": 1,
+   "requirement_ids": []
+  },
+  {
+   "id": "C005",
+   "catalog_key": "devops_cicd_setup",
+   "label": null,
+   "size": "S",
+   "complexity": "medium",
+   "quantity": 1,
+   "requirement_ids": []
+  },
+  {
+   "id": "C006",
+   "catalog_key": "booking_appointments",
+   "label": null,
+   "size": "S",
+   "complexity": "medium",
+   "quantity": 1,
+   "requirement_ids": [
+    "REQ-001"
+   ]
+  },
+  {
+   "id": "C007",
+   "catalog_key": "integration_payment_gateway",
+   "label": null,
+   "size": "S",
+   "complexity": "medium",
+   "quantity": 1,
+   "requirement_ids": [
+    "REQ-002"
+   ]
+  },
+  {
+   "id": "C008",
+   "catalog_key": "notifications",
+   "label": null,
+   "size": "S",
+   "complexity": "medium",
+   "quantity": 1,
+   "requirement_ids": [
+    "REQ-003"
+   ]
+  },
+  {
+   "id": "C009",
+   "catalog_key": "integration_sms_email_gateway",
+   "label": null,
+   "size": "S",
+   "complexity": "medium",
+   "quantity": 1,
+   "requirement_ids": [
+    "REQ-003"
+   ]
+  },
+  {
+   "id": "C010",
+   "catalog_key": "custom_mobile_app",
+   "label": null,
+   "size": "S",
+   "complexity": "medium",
+   "quantity": 1,
+   "requirement_ids": [
+    "REQ-004"
+   ]
+  }
+ ],
+ "answers": [
+  {
+   "key": "governance_overheads",
+   "value": false,
+   "requirement_ids": []
+  },
+  {
+   "key": "cert_in_audit",
+   "value": false,
+   "requirement_ids": []
+  },
+  {
+   "key": "stqc_certification",
+   "value": false,
+   "requirement_ids": []
+  },
+  {
+   "key": "gigw_accessibility",
+   "value": false,
+   "requirement_ids": []
+  },
+  {
+   "key": "languages",
+   "value": 1,
+   "requirement_ids": []
+  },
+  {
+   "key": "emd_paise",
+   "value": 0,
+   "requirement_ids": []
+  },
+  {
+   "key": "pbg_percent",
+   "value": 0,
+   "requirement_ids": []
+  },
+  {
+   "key": "project_size",
+   "value": "small",
+   "requirement_ids": []
+  },
+  {
+   "key": "size_points",
+   "value": 3,
+   "requirement_ids": []
+  },
+  {
+   "key": "training_sessions",
+   "value": 1,
+   "requirement_ids": []
+  },
+  {
+   "key": "training_outstation_sessions",
+   "value": 0,
+   "requirement_ids": []
+  },
+  {
+   "key": "hypercare_weeks",
+   "value": 1,
+   "requirement_ids": []
+  },
+  {
+   "key": "non_prod_environments",
+   "value": 1,
+   "requirement_ids": []
+  },
+  {
+   "key": "users_total",
+   "value": 10000,
+   "requirement_ids": []
+  },
+  {
+   "key": "peak_concurrent_users",
+   "value": 200,
+   "requirement_ids": []
+  },
+  {
+   "key": "documents_per_month",
+   "value": 1000,
+   "requirement_ids": []
+  },
+  {
+   "key": "chatbot_queries_per_day",
+   "value": 0,
+   "requirement_ids": []
+  },
+  {
+   "key": "build_type",
+   "value": "custom",
+   "requirement_ids": []
+  },
+  {
+   "key": "hosting_provider",
+   "value": "aws",
+   "requirement_ids": []
+  },
+  {
+   "key": "hosting_in_scope",
+   "value": true,
+   "requirement_ids": []
+  },
+  {
+   "key": "om_years",
+   "value": 1,
+   "requirement_ids": []
+  },
+  {
+   "key": "helpdesk_in_scope",
+   "value": false,
+   "requirement_ids": []
+  },
+  {
+   "key": "support_sla",
+   "value": "8x5",
+   "requirement_ids": []
+  },
+  {
+   "key": "uptime_sla",
+   "value": "99.5",
+   "requirement_ids": []
+  },
+  {
+   "key": "ai_model_tier",
+   "value": "simple",
+   "requirement_ids": []
+  },
+  {
+   "key": "team_ai_maturity",
+   "value": "medium",
+   "requirement_ids": []
+  }
+ ],
+ "taxonomy": {
+  "source": "placeholder",
+  "version": "v2",
+  "stages": [
+   {
+    "key": "pre_build",
+    "name": "Pre-build",
+    "order": 1
+   },
+   {
+    "key": "build",
+    "name": "Build",
+    "order": 2
+   },
+   {
+    "key": "go_live",
+    "name": "Go-live",
+    "order": 3
+   },
+   {
+    "key": "run",
+    "name": "Run (per year)",
+    "order": 4
+   },
+   {
+    "key": "programme",
+    "name": "Programme",
+    "order": 5
+   },
+   {
+    "key": "commercial",
+    "name": "Commercial",
+    "order": 6
+   }
+  ],
+  "buckets": [
+   {
+    "key": "pre_build.discovery",
+    "stage": "pre_build",
+    "name": "Discovery / requirement study",
+    "order": 1,
+    "gst_percent": null
+   },
+   {
+    "key": "pre_build.architecture",
+    "stage": "pre_build",
+    "name": "Solution architecture",
+    "order": 2,
+    "gst_percent": null
+   },
+   {
+    "key": "pre_build.ui_ux",
+    "stage": "pre_build",
+    "name": "UI/UX design",
+    "order": 3,
+    "gst_percent": null
+   },
+   {
+    "key": "build.module_development",
+    "stage": "build",
+    "name": "Module development",
+    "order": 10,
+    "gst_percent": null
+   },
+   {
+    "key": "build.integrations",
+    "stage": "build",
+    "name": "Integrations",
+    "order": 11,
+    "gst_percent": null
+   },
+   {
+    "key": "build.ai_ml",
+    "stage": "build",
+    "name": "AI/ML work",
+    "order": 12,
+    "gst_percent": null
+   },
+   {
+    "key": "build.data_migration",
+    "stage": "build",
+    "name": "Data migration",
+    "order": 13,
+    "gst_percent": null
+   },
+   {
+    "key": "build.testing",
+    "stage": "build",
+    "name": "Testing",
+    "order": 14,
+    "gst_percent": null
+   },
+   {
+    "key": "build.documentation",
+    "stage": "build",
+    "name": "Documentation",
+    "order": 15,
+    "gst_percent": null
+   },
+   {
+    "key": "build.devops",
+    "stage": "build",
+    "name": "Environments and DevOps",
+    "order": 16,
+    "gst_percent": null
+   },
+   {
+    "key": "build.tools",
+    "stage": "build",
+    "name": "Developer tools and AI subscriptions",
+    "order": 17,
+    "gst_percent": null
+   },
+   {
+    "key": "build.content_translation",
+    "stage": "build",
+    "name": "Content translation",
+    "order": 18,
+    "gst_percent": null
+   },
+   {
+    "key": "go_live.security_audit",
+    "stage": "go_live",
+    "name": "CERT-In security audit",
+    "order": 20,
+    "gst_percent": null
+   },
+   {
+    "key": "go_live.certification",
+    "stage": "go_live",
+    "name": "STQC / other certification",
+    "order": 21,
+    "gst_percent": null
+   },
+   {
+    "key": "go_live.training",
+    "stage": "go_live",
+    "name": "Training",
+    "order": 22,
+    "gst_percent": null
+   },
+   {
+    "key": "go_live.hypercare",
+    "stage": "go_live",
+    "name": "Hypercare",
+    "order": 23,
+    "gst_percent": null
+   },
+   {
+    "key": "go_live.infrastructure_procurement",
+    "stage": "go_live",
+    "name": "On-prem infrastructure procurement",
+    "order": 24,
+    "gst_percent": null
+   },
+   {
+    "key": "run.hosting",
+    "stage": "run",
+    "name": "Hosting",
+    "order": 30,
+    "gst_percent": null
+   },
+   {
+    "key": "run.backups",
+    "stage": "run",
+    "name": "Backups",
+    "order": 31,
+    "gst_percent": null
+   },
+   {
+    "key": "run.dr",
+    "stage": "run",
+    "name": "Disaster recovery",
+    "order": 32,
+    "gst_percent": null
+   },
+   {
+    "key": "run.ai_runtime",
+    "stage": "run",
+    "name": "AI runtime",
+    "order": 33,
+    "gst_percent": null
+   },
+   {
+    "key": "run.licences",
+    "stage": "run",
+    "name": "Licences",
+    "order": 34,
+    "gst_percent": null
+   },
+   {
+    "key": "run.helpdesk",
+    "stage": "run",
+    "name": "Helpdesk",
+    "order": 35,
+    "gst_percent": null
+   },
+   {
+    "key": "run.onsite_resources",
+    "stage": "run",
+    "name": "Onsite resources",
+    "order": 36,
+    "gst_percent": null
+   },
+   {
+    "key": "run.change_requests",
+    "stage": "run",
+    "name": "Change-request pool",
+    "order": 37,
+    "gst_percent": null
+   },
+   {
+    "key": "run.patching_bugfix",
+    "stage": "run",
+    "name": "Bug-fix, patching and upgrades",
+    "order": 38,
+    "gst_percent": null
+   },
+   {
+    "key": "run.annual_audit",
+    "stage": "run",
+    "name": "Annual security re-audit",
+    "order": 39,
+    "gst_percent": null
+   },
+   {
+    "key": "run.ssl_domain",
+    "stage": "run",
+    "name": "SSL and domain",
+    "order": 40,
+    "gst_percent": null
+   },
+   {
+    "key": "run.third_party_services",
+    "stage": "run",
+    "name": "Third-party services (SMS, email, maps, app stores...)",
+    "order": 41,
+    "gst_percent": null
+   },
+   {
+    "key": "programme.project_management",
+    "stage": "programme",
+    "name": "Project management",
+    "order": 50,
+    "gst_percent": null
+   },
+   {
+    "key": "programme.steering_meetings",
+    "stage": "programme",
+    "name": "Steering meetings",
+    "order": 51,
+    "gst_percent": null
+   },
+   {
+    "key": "programme.mis_reports",
+    "stage": "programme",
+    "name": "MIS reports",
+    "order": 52,
+    "gst_percent": null
+   },
+   {
+    "key": "programme.travel",
+    "stage": "programme",
+    "name": "Travel",
+    "order": 53,
+    "gst_percent": null
+   },
+   {
+    "key": "programme.environments",
+    "stage": "programme",
+    "name": "Non-production environments",
+    "order": 54,
+    "gst_percent": null
+   },
+   {
+    "key": "commercial.emd",
+    "stage": "commercial",
+    "name": "EMD lock-up cost",
+    "order": 60,
+    "gst_percent": null
+   },
+   {
+    "key": "commercial.pbg",
+    "stage": "commercial",
+    "name": "PBG bank charges",
+    "order": 61,
+    "gst_percent": null
+   },
+   {
+    "key": "commercial.working_capital",
+    "stage": "commercial",
+    "name": "Working capital",
+    "order": 62,
+    "gst_percent": null
+   },
+   {
+    "key": "commercial.penalty_reserve",
+    "stage": "commercial",
+    "name": "Penalty / LD reserve",
+    "order": 63,
+    "gst_percent": null
+   },
+   {
+    "key": "commercial.exit_management",
+    "stage": "commercial",
+    "name": "Exit management",
+    "order": 64,
+    "gst_percent": null
+   },
+   {
+    "key": "commercial.contingency",
+    "stage": "commercial",
+    "name": "Contingency",
+    "order": 65,
+    "gst_percent": null
+   },
+   {
+    "key": "commercial.margin",
+    "stage": "commercial",
+    "name": "Margin",
+    "order": 66,
+    "gst_percent": null
+   },
+   {
+    "key": "commercial.gst",
+    "stage": "commercial",
+    "name": "GST",
+    "order": 67,
+    "gst_percent": "0"
+   }
+  ]
+ },
+ "catalog": {
+  "version": "v5",
+  "components": [
+   {
+    "source": "150 / 400 / 900 team hours, / 8 h per day; medium confidence; ScienceSoft and Clockwise discovery durations (3-12 weeks of BA and architect); Cleveroad CRM role table (BA 8.7%); Capers Jones 2017 (requirements 0.96 h/FP)",
+    "key": "discovery_requirement_study",
+    "name": "Discovery and requirement study",
+    "category": "pre_build",
+    "bucket": "pre_build.discovery",
+    "description": "As-is study, stakeholder workshops, SRS and requirement traceability matrix.",
+    "task_mix": {
+     "analysis": "0.7",
+     "architecture": "0.1",
+     "documentation": "0.2"
+    },
+    "base_effort_pd": {
+     "S": "18.8",
+     "M": "50",
+     "L": "112.5"
+    },
+    "applicable_drivers": [],
+    "tags": [],
+    "licence": null
+   },
+   {
+    "source": "60 / 160 / 400 team hours, / 8 h per day; low-medium confidence; Cleveroad CRM role table (architect + tech lead 4.3%); Capers Jones 2017 (architecture and design h/FP); reasoned",
+    "key": "solution_architecture",
+    "name": "Solution architecture",
+    "category": "pre_build",
+    "bucket": "pre_build.architecture",
+    "description": "Application, data, security and deployment architecture; HLD and LLD.",
+    "task_mix": {
+     "architecture": "0.8",
+     "documentation": "0.2"
+    },
+    "base_effort_pd": {
+     "S": "7.5",
+     "M": "20",
+     "L": "50"
+    },
+    "applicable_drivers": [
+     "uptime_sla",
+     "security_level",
+     "concurrency"
+    ],
+    "tags": [],
+    "licence": null
+   },
+   {
+    "source": "80 / 250 / 600 team hours, / 8 h per day; medium confidence; Cleveroad CRM role table (UI/UX 380 h); Whidegroup (~8 h per page design); Cleveroad Flutter (design 40-90+ h)",
+    "key": "ui_ux_design",
+    "name": "UI/UX design",
+    "category": "pre_build",
+    "bucket": "pre_build.ui_ux",
+    "description": "Wireframes, visual design and design system aligned to GIGW.",
+    "task_mix": {
+     "ui_design": "0.85",
+     "review_uat": "0.15"
+    },
+    "base_effort_pd": {
+     "S": "10",
+     "M": "31.3",
+     "L": "75"
+    },
+    "applicable_drivers": [
+     "languages",
+     "accessibility"
+    ],
+    "tags": [],
+    "licence": null
+   },
+   {
+    "source": "60 / 200 / 500 team hours x 0.9 (whole-app design and testing priced separately), / 8 h per day; medium confidence; Space-O, CompletApp, Techsy, Cleveroad, MindK feature-hour tables (auth, profile, roles; >10x spread)",
+    "key": "user_management_rbac",
+    "name": "User management and role-based access",
+    "category": "module",
+    "bucket": "build.module_development",
+    "description": "Registration, login, roles, permissions, password policy, session management.",
+    "task_mix": {
+     "crud": "0.55",
+     "tests": "0.2",
+     "architecture": "0.05",
+     "security_testing": "0.05",
+     "documentation": "0.05",
+     "review_uat": "0.1"
+    },
+    "base_effort_pd": {
+     "S": "6.8",
+     "M": "22.5",
+     "L": "56.3"
+    },
+    "applicable_drivers": [
+     "security_level",
+     "languages"
+    ],
+    "tags": [],
+    "licence": null
+   },
+   {
+    "source": "120 / 320 / 700 team hours x 0.9 (whole-app design and testing priced separately), / 8 h per day; low confidence; CompletApp onboarding, Space-O forms, Techsy media upload; ~70 IFPUG FP per application type; reasoned",
+    "key": "registration_empanelment",
+    "name": "Online registration / empanelment application",
+    "category": "module",
+    "bucket": "build.module_development",
+    "description": "Multi-step application forms, document upload, validation, status tracking.",
+    "task_mix": {
+     "crud": "0.6",
+     "tests": "0.2",
+     "ui_design": "0.05",
+     "documentation": "0.05",
+     "review_uat": "0.1"
+    },
+    "base_effort_pd": {
+     "S": "13.5",
+     "M": "36",
+     "L": "78.8"
+    },
+    "applicable_drivers": [
+     "languages",
+     "accessibility",
+     "concurrency"
+    ],
+    "tags": [],
+    "licence": null
+   },
+   {
+    "source": "150 / 400 / 1000 team hours x 0.9 (whole-app design and testing priced separately), / 8 h per day; low confidence; Aalpha rules-based automation 150-200+ dev h; MindK org structures/access rules 200-300 h; reasoned",
+    "key": "workflow_engine",
+    "name": "Approval workflow engine",
+    "category": "module",
+    "bucket": "build.module_development",
+    "description": "Configurable multi-level scrutiny and approval workflows with SLAs and escalation.",
+    "task_mix": {
+     "crud": "0.45",
+     "architecture": "0.1",
+     "tests": "0.2",
+     "documentation": "0.05",
+     "review_uat": "0.2"
+    },
+    "base_effort_pd": {
+     "S": "16.9",
+     "M": "45",
+     "L": "112.5"
+    },
+    "applicable_drivers": [
+     "concurrency"
+    ],
+    "tags": [],
+    "licence": {
+     "rate_key": "licence.bpm_suite.year",
+     "effort_factor": "0.6"
+    }
+   },
+   {
+    "source": "80 / 250 / 600 team hours x 0.9 (whole-app design and testing priced separately), / 8 h per day; low confidence; Techsy media upload 60/100 h; reasoned (no DMS-specific source)",
+    "key": "document_management",
+    "name": "Document management",
+    "category": "module",
+    "bucket": "build.module_development",
+    "description": "Upload, versioning, metadata, secure storage and retrieval of documents.",
+    "task_mix": {
+     "crud": "0.55",
+     "tests": "0.2",
+     "integration": "0.05",
+     "documentation": "0.05",
+     "review_uat": "0.15"
+    },
+    "base_effort_pd": {
+     "S": "9",
+     "M": "28.1",
+     "L": "67.5"
+    },
+    "applicable_drivers": [
+     "security_level",
+     "concurrency"
+    ],
+    "tags": [],
+    "licence": null
+   },
+   {
+    "source": "60 / 180 / 450 team hours x 0.9 (whole-app design and testing priced separately), / 8 h per day; medium confidence; Space-O, Techsy, Cleveroad, CompletApp, MindK dashboard/report hours; IFPUG 4-7 FP per report",
+    "key": "dashboard_mis_reports",
+    "name": "Dashboards and MIS reports",
+    "category": "module",
+    "bucket": "build.module_development",
+    "description": "Role-wise dashboards, standard MIS reports, exports.",
+    "task_mix": {
+     "crud": "0.6",
+     "analysis": "0.1",
+     "tests": "0.15",
+     "review_uat": "0.15"
+    },
+    "base_effort_pd": {
+     "S": "6.8",
+     "M": "20.3",
+     "L": "50.6"
+    },
+    "applicable_drivers": [
+     "languages",
+     "accessibility"
+    ],
+    "tags": [],
+    "licence": null
+   },
+   {
+    "source": "30 / 80 / 200 team hours x 0.9 (whole-app design and testing priced separately), / 8 h per day; medium confidence; Cleveroad, CompletApp, Techsy, MindK notification hours",
+    "key": "notifications",
+    "name": "Notifications (email / SMS / in-app)",
+    "category": "module",
+    "bucket": "build.module_development",
+    "description": "Templated notifications, triggers and delivery logs.",
+    "task_mix": {
+     "crud": "0.5",
+     "integration": "0.2",
+     "tests": "0.2",
+     "review_uat": "0.1"
+    },
+    "base_effort_pd": {
+     "S": "3.4",
+     "M": "9",
+     "L": "22.5"
+    },
+    "applicable_drivers": [],
+    "tags": [],
+    "licence": null
+   },
+   {
+    "source": "60 / 200 / 500 team hours x 0.9 (whole-app design and testing priced separately), / 8 h per day; medium-low confidence; Space-O CMS 32-48 h; Techsy admin/CMS 80/160 h; Whidegroup per-page design",
+    "key": "cms_public_website",
+    "name": "CMS and public website",
+    "category": "module",
+    "bucket": "build.module_development",
+    "description": "Public pages, notices, circulars, FAQs managed through a CMS.",
+    "task_mix": {
+     "crud": "0.5",
+     "ui_design": "0.2",
+     "tests": "0.15",
+     "review_uat": "0.15"
+    },
+    "base_effort_pd": {
+     "S": "6.8",
+     "M": "22.5",
+     "L": "56.3"
+    },
+    "applicable_drivers": [
+     "languages",
+     "accessibility"
+    ],
+    "tags": [],
+    "licence": {
+     "rate_key": "licence.cms.year",
+     "effort_factor": "0.5"
+    }
+   },
+   {
+    "source": "30 / 100 / 300 team hours x 0.9 (whole-app design and testing priced separately), / 8 h per day; medium confidence; Space-O, CompletApp, MindK, Cleveroad search hours",
+    "key": "search_module",
+    "name": "Search",
+    "category": "module",
+    "bucket": "build.module_development",
+    "description": "Faceted search across applications, documents and public content.",
+    "task_mix": {
+     "crud": "0.5",
+     "architecture": "0.1",
+     "tests": "0.25",
+     "review_uat": "0.15"
+    },
+    "base_effort_pd": {
+     "S": "3.4",
+     "M": "11.3",
+     "L": "33.8"
+    },
+    "applicable_drivers": [
+     "languages",
+     "concurrency"
+    ],
+    "tags": [],
+    "licence": null
+   },
+   {
+    "source": "30 / 80 / 200 team hours x 0.9 (whole-app design and testing priced separately), / 8 h per day; low confidence; reasoned (~20 IFPUG FP); MindK bundles audit logs in a 200-300 h module",
+    "key": "audit_trail_logging",
+    "name": "Audit trail and logging",
+    "category": "module",
+    "bucket": "build.module_development",
+    "description": "Tamper-evident audit trail of user and admin actions.",
+    "task_mix": {
+     "crud": "0.6",
+     "tests": "0.25",
+     "security_testing": "0.05",
+     "review_uat": "0.1"
+    },
+    "base_effort_pd": {
+     "S": "3.4",
+     "M": "9",
+     "L": "22.5"
+    },
+    "applicable_drivers": [
+     "security_level"
+    ],
+    "tags": [],
+    "licence": null
+   },
+   {
+    "source": "120 / 320 / 700 team hours x 0.9 (whole-app design and testing priced separately), / 8 h per day; low confidence; reasoned (~70-90 IFPUG FP); no hour source found",
+    "key": "grievance_helpdesk",
+    "name": "Grievance and helpdesk ticketing",
+    "category": "module",
+    "bucket": "build.module_development",
+    "description": "Citizen/vendor grievance submission, routing, tracking and closure.",
+    "task_mix": {
+     "crud": "0.6",
+     "tests": "0.2",
+     "documentation": "0.05",
+     "review_uat": "0.15"
+    },
+    "base_effort_pd": {
+     "S": "13.5",
+     "M": "36",
+     "L": "78.8"
+    },
+    "applicable_drivers": [
+     "languages"
+    ],
+    "tags": [],
+    "licence": null
+   },
+   {
+    "source": "40 / 120 / 300 team hours x 0.9 (whole-app design and testing priced separately), / 8 h per day; low confidence; reasoned (~8-10 h per master screen); no hour source found",
+    "key": "master_data_management",
+    "name": "Master data management",
+    "category": "module",
+    "bucket": "build.module_development",
+    "description": "Admin screens for masters (departments, categories, locations, fees).",
+    "task_mix": {
+     "crud": "0.65",
+     "tests": "0.2",
+     "review_uat": "0.15"
+    },
+    "base_effort_pd": {
+     "S": "4.5",
+     "M": "13.5",
+     "L": "33.8"
+    },
+    "applicable_drivers": [],
+    "tags": [],
+    "licence": null
+   },
+   {
+    "source": "40 / 120 / 300 team hours, / 8 h per day; low confidence; Whidegroup per-page design covers desktop and mobile; reasoned 10-15% front-end uplift",
+    "key": "responsive_frontend",
+    "name": "Responsive web front end",
+    "category": "module",
+    "bucket": "build.module_development",
+    "description": "Responsive / PWA front-end shell, navigation and shared components.",
+    "task_mix": {
+     "ui_design": "0.3",
+     "crud": "0.45",
+     "tests": "0.15",
+     "review_uat": "0.1"
+    },
+    "base_effort_pd": {
+     "S": "5",
+     "M": "15",
+     "L": "37.5"
+    },
+    "applicable_drivers": [
+     "languages",
+     "accessibility"
+    ],
+    "tags": [],
+    "licence": null
+   },
+   {
+    "source": "40 / 100 / 250 team hours, / 8 h per day; medium confidence; Space-O; We Are Affective 40-60 dev h; Cleveroad 70 h; Kolonell +15-25% of dev",
+    "key": "multilingual_i18n",
+    "name": "Multilingual framework (i18n)",
+    "category": "module",
+    "bucket": "build.module_development",
+    "description": "Internationalisation framework, content translation workflow, language switch.",
+    "task_mix": {
+     "crud": "0.5",
+     "tests": "0.2",
+     "documentation": "0.1",
+     "review_uat": "0.2"
+    },
+    "base_effort_pd": {
+     "S": "5",
+     "M": "12.5",
+     "L": "31.3"
+    },
+    "applicable_drivers": [],
+    "tags": [],
+    "licence": null
+   },
+   {
+    "source": "60 / 160 / 400 team hours, / 8 h per day; low-medium confidence; WebAIM list: 2-8 h per page template to test and fix x ~10/25/60 templates",
+    "key": "accessibility_gigw_compliance",
+    "name": "Accessibility and GIGW compliance",
+    "category": "module",
+    "bucket": "build.module_development",
+    "description": "WCAG 2.1 AA / GIGW 3.0 conformance work and accessibility testing.",
+    "task_mix": {
+     "ui_design": "0.3",
+     "crud": "0.3",
+     "tests": "0.25",
+     "review_uat": "0.15"
+    },
+    "base_effort_pd": {
+     "S": "7.5",
+     "M": "20",
+     "L": "50"
+    },
+    "applicable_drivers": [],
+    "tags": [],
+    "licence": null
+   },
+   {
+    "source": "60 / 150 / 350 team hours, / 8 h per day; medium-low confidence; MindK security 80-120 h; Capers Jones 2017 security testing h/FP",
+    "key": "security_hardening",
+    "name": "Application security hardening",
+    "category": "module",
+    "bucket": "build.module_development",
+    "description": "OWASP controls, encryption, CAPTCHA, rate limiting, secure headers.",
+    "task_mix": {
+     "architecture": "0.2",
+     "crud": "0.4",
+     "security_testing": "0.3",
+     "review_uat": "0.1"
+    },
+    "base_effort_pd": {
+     "S": "7.5",
+     "M": "18.8",
+     "L": "43.8"
+    },
+    "applicable_drivers": [
+     "security_level"
+    ],
+    "tags": [],
+    "licence": null
+   },
+   {
+    "source": "30 / 100 / 300 team hours x 0.9 (whole-app design and testing priced separately), / 8 h per day; medium confidence; CompletApp social login; MindK SSO/API 80-150 h; SSOJet SAML/OIDC weeks",
+    "key": "integration_sso_identity",
+    "name": "SSO / identity integration (Parichay, LDAP)",
+    "category": "integration",
+    "bucket": "build.integrations",
+    "description": "",
+    "task_mix": {
+     "integration": "0.65",
+     "tests": "0.2",
+     "documentation": "0.05",
+     "review_uat": "0.1"
+    },
+    "base_effort_pd": {
+     "S": "3.4",
+     "M": "11.3",
+     "L": "33.8"
+    },
+    "applicable_drivers": [
+     "security_level"
+    ],
+    "tags": [
+     "integration"
+    ],
+    "licence": null
+   },
+   {
+    "source": "60 / 160 / 350 team hours x 0.9 (whole-app design and testing priced separately), / 8 h per day; low confidence; reasoned (aggregator / direct KUA-ASA with Aadhaar Data Vault / biometric); no hour source found",
+    "key": "integration_aadhaar_ekyc",
+    "name": "Aadhaar eKYC / authentication integration",
+    "category": "integration",
+    "bucket": "build.integrations",
+    "description": "",
+    "task_mix": {
+     "integration": "0.6",
+     "tests": "0.2",
+     "security_testing": "0.05",
+     "documentation": "0.05",
+     "review_uat": "0.1"
+    },
+    "base_effort_pd": {
+     "S": "6.8",
+     "M": "18",
+     "L": "39.4"
+    },
+    "applicable_drivers": [
+     "security_level"
+    ],
+    "tags": [
+     "integration"
+    ],
+    "licence": null
+   },
+   {
+    "source": "40 / 100 / 250 team hours x 0.9 (whole-app design and testing priced separately), / 8 h per day; low confidence; reasoned; no hour source found",
+    "key": "integration_digilocker",
+    "name": "DigiLocker integration",
+    "category": "integration",
+    "bucket": "build.integrations",
+    "description": "",
+    "task_mix": {
+     "integration": "0.65",
+     "tests": "0.2",
+     "documentation": "0.05",
+     "review_uat": "0.1"
+    },
+    "base_effort_pd": {
+     "S": "4.5",
+     "M": "11.3",
+     "L": "28.1"
+    },
+    "applicable_drivers": [],
+    "tags": [
+     "integration"
+    ],
+    "licence": null
+   },
+   {
+    "source": "40 / 120 / 300 team hours x 0.9 (whole-app design and testing priced separately), / 8 h per day; medium confidence; Space-O, CompletApp, Aalpha, Techsy, Cleveroad, MindK payment hours",
+    "key": "integration_payment_gateway",
+    "name": "Payment gateway integration (PayGov / bank)",
+    "category": "integration",
+    "bucket": "build.integrations",
+    "description": "",
+    "task_mix": {
+     "integration": "0.6",
+     "tests": "0.25",
+     "review_uat": "0.15"
+    },
+    "base_effort_pd": {
+     "S": "4.5",
+     "M": "13.5",
+     "L": "33.8"
+    },
+    "applicable_drivers": [
+     "security_level"
+    ],
+    "tags": [
+     "integration"
+    ],
+    "licence": null
+   },
+   {
+    "source": "20 / 60 / 150 team hours x 0.9 (whole-app design and testing priced separately), / 8 h per day; medium-low confidence; Aalpha Twilio 30-60 h, SendGrid 20-40 h; DLT template registration",
+    "key": "integration_sms_email_gateway",
+    "name": "SMS / email gateway integration",
+    "category": "integration",
+    "bucket": "build.integrations",
+    "description": "",
+    "task_mix": {
+     "integration": "0.6",
+     "tests": "0.25",
+     "review_uat": "0.15"
+    },
+    "base_effort_pd": {
+     "S": "2.3",
+     "M": "6.8",
+     "L": "16.9"
+    },
+    "applicable_drivers": [],
+    "tags": [
+     "integration"
+    ],
+    "licence": null
+   },
+   {
+    "source": "60 / 200 / 600 team hours x 0.9 (whole-app design and testing priced separately), / 8 h per day; low-medium confidence; Aalpha 20-80+ h per API; Synarion 60-100 h; MindK 80-150 h",
+    "key": "integration_erp_legacy",
+    "name": "ERP / legacy system integration",
+    "category": "integration",
+    "bucket": "build.integrations",
+    "description": "API or ETL integration with SAP or departmental legacy systems.",
+    "task_mix": {
+     "integration": "0.55",
+     "analysis": "0.1",
+     "tests": "0.2",
+     "documentation": "0.05",
+     "review_uat": "0.1"
+    },
+    "base_effort_pd": {
+     "S": "6.8",
+     "M": "22.5",
+     "L": "67.5"
+    },
+    "applicable_drivers": [
+     "security_level"
+    ],
+    "tags": [
+     "integration"
+    ],
+    "licence": null
+   },
+   {
+    "source": "30 / 80 / 200 team hours x 0.9 (whole-app design and testing priced separately), / 8 h per day; low confidence; reasoned as one API integration (Aalpha 20-80 h)",
+    "key": "integration_bhashini_translation",
+    "name": "Bhashini translation / speech integration",
+    "category": "integration",
+    "bucket": "build.integrations",
+    "description": "",
+    "task_mix": {
+     "integration": "0.6",
+     "tests": "0.25",
+     "review_uat": "0.15"
+    },
+    "base_effort_pd": {
+     "S": "3.4",
+     "M": "9",
+     "L": "22.5"
+    },
+    "applicable_drivers": [
+     "languages"
+    ],
+    "tags": [
+     "integration"
+    ],
+    "licence": null
+   },
+   {
+    "source": "80 / 250 / 600 team hours x 0.9 (whole-app design and testing priced separately), / 8 h per day; medium confidence; dev.to chatbot build hours (FAQ 40-100, RAG 150-400, with actions 300-700); Synarion; CompletApp",
+    "key": "ai_chatbot_rag",
+    "name": "AI chatbot (RAG)",
+    "category": "ai",
+    "bucket": "build.ai_ml",
+    "description": "Retrieval-augmented chatbot - retrieval pipeline, prompts, chat UI, handoff.",
+    "task_mix": {
+     "ai_engineering": "0.5",
+     "crud": "0.2",
+     "tests": "0.15",
+     "documentation": "0.05",
+     "review_uat": "0.1"
+    },
+    "base_effort_pd": {
+     "S": "9",
+     "M": "28.1",
+     "L": "67.5"
+    },
+    "applicable_drivers": [
+     "languages",
+     "concurrency",
+     "security_level"
+    ],
+    "tags": [
+     "ai"
+    ],
+    "licence": {
+     "rate_key": "licence.chatbot_platform.year",
+     "effort_factor": "0.6"
+    }
+   },
+   {
+    "source": "40 / 120 / 350 team hours x 0.9 (whole-app design and testing priced separately), / 8 h per day; low-medium confidence; Synarion RAG pipeline and vector DB 40-70 h; reasoned for OCR / Indic",
+    "key": "ai_knowledge_ingestion",
+    "name": "Chatbot knowledge-base ingestion",
+    "category": "ai",
+    "bucket": "build.ai_ml",
+    "description": "Document ingestion, chunking, embeddings and knowledge-base admin.",
+    "task_mix": {
+     "ai_engineering": "0.45",
+     "crud": "0.25",
+     "data_migration": "0.1",
+     "tests": "0.1",
+     "review_uat": "0.1"
+    },
+    "base_effort_pd": {
+     "S": "4.5",
+     "M": "13.5",
+     "L": "39.4"
+    },
+    "applicable_drivers": [
+     "languages"
+    ],
+    "tags": [
+     "ai"
+    ],
+    "licence": null
+   },
+   {
+    "source": "20 / 60 / 160 team hours x 0.9 (whole-app design and testing priced separately), / 8 h per day; low confidence; Synarion security, guardrails and evaluation 30-50 h combined",
+    "key": "ai_guardrails_safety",
+    "name": "AI guardrails and safety",
+    "category": "ai",
+    "bucket": "build.ai_ml",
+    "description": "Prompt-injection defences, PII redaction, moderation, refusal policies.",
+    "task_mix": {
+     "ai_engineering": "0.55",
+     "security_testing": "0.2",
+     "tests": "0.15",
+     "review_uat": "0.1"
+    },
+    "base_effort_pd": {
+     "S": "2.3",
+     "M": "6.8",
+     "L": "18"
+    },
+    "applicable_drivers": [
+     "security_level"
+    ],
+    "tags": [
+     "ai"
+    ],
+    "licence": null
+   },
+   {
+    "source": "20 / 60 / 160 team hours x 0.9 (whole-app design and testing priced separately), / 8 h per day; low confidence; Synarion (same combined figure); reasoned 150-300 Q&A pairs",
+    "key": "ai_evaluation_set",
+    "name": "AI evaluation set and harness",
+    "category": "ai",
+    "bucket": "build.ai_ml",
+    "description": "Golden question sets, automated evaluation, red-teaming.",
+    "task_mix": {
+     "ai_engineering": "0.4",
+     "analysis": "0.2",
+     "tests": "0.3",
+     "review_uat": "0.1"
+    },
+    "base_effort_pd": {
+     "S": "2.3",
+     "M": "6.8",
+     "L": "18"
+    },
+    "applicable_drivers": [
+     "languages"
+    ],
+    "tags": [
+     "ai"
+    ],
+    "licence": null
+   },
+   {
+    "source": "60 / 200 / 600 team hours x 0.9 (whole-app design and testing priced separately), / 8 h per day; low-medium confidence; Codementor ~2 entities per day (dev); x2 for mapping and reconciliation",
+    "key": "data_migration",
+    "name": "Legacy data migration",
+    "category": "data",
+    "bucket": "build.data_migration",
+    "description": "",
+    "task_mix": {
+     "data_migration": "0.6",
+     "analysis": "0.1",
+     "tests": "0.2",
+     "review_uat": "0.1"
+    },
+    "base_effort_pd": {
+     "S": "6.8",
+     "M": "22.5",
+     "L": "67.5"
+    },
+    "applicable_drivers": [],
+    "tags": [
+     "data_migration"
+    ],
+    "licence": null
+   },
+   {
+    "source": "250 / 700 / 1800 team hours, / 8 h per day; medium confidence; ISBSG testing effort 1-3 h/FP; Cleveroad QA 20% of dev; Capers Jones 2017 system testing",
+    "key": "functional_testing_uat_support",
+    "name": "Functional testing and UAT support",
+    "category": "testing",
+    "bucket": "build.testing",
+    "description": "",
+    "task_mix": {
+     "tests": "0.6",
+     "review_uat": "0.3",
+     "documentation": "0.1"
+    },
+    "base_effort_pd": {
+     "S": "31.3",
+     "M": "87.5",
+     "L": "225"
+    },
+    "applicable_drivers": [],
+    "tags": [],
+    "licence": null
+   },
+   {
+    "source": "50 / 120 / 300 team hours, / 8 h per day; low-medium confidence; Capers Jones 2017 performance testing 0.33 h/FP",
+    "key": "performance_load_testing",
+    "name": "Performance and load testing",
+    "category": "testing",
+    "bucket": "build.testing",
+    "description": "",
+    "task_mix": {
+     "tests": "0.7",
+     "devops": "0.2",
+     "review_uat": "0.1"
+    },
+    "base_effort_pd": {
+     "S": "6.3",
+     "M": "15",
+     "L": "37.5"
+    },
+    "applicable_drivers": [
+     "concurrency"
+    ],
+    "tags": [],
+    "licence": null
+   },
+   {
+    "source": "40 / 100 / 250 team hours, / 8 h per day; low confidence; WhiteHat remediation hours per finding (search snippet); reasoned 20-60 findings + retests",
+    "key": "vapt_remediation",
+    "name": "Internal VAPT and audit remediation",
+    "category": "testing",
+    "bucket": "build.testing",
+    "description": "",
+    "task_mix": {
+     "security_testing": "0.6",
+     "review_uat": "0.4"
+    },
+    "base_effort_pd": {
+     "S": "5",
+     "M": "12.5",
+     "L": "31.3"
+    },
+    "applicable_drivers": [
+     "security_level"
+    ],
+    "tags": [],
+    "licence": null
+   },
+   {
+    "source": "80 / 200 / 500 team hours, / 8 h per day; medium confidence; Hackos 1994 via TechScribe (3-7 h per page); Capers Jones 2017 0.29 h/FP",
+    "key": "documentation_manuals",
+    "name": "Documentation and manuals",
+    "category": "documentation",
+    "bucket": "build.documentation",
+    "description": "Design documents, user/admin manuals, SOPs, training material.",
+    "task_mix": {
+     "documentation": "0.8",
+     "analysis": "0.1",
+     "review_uat": "0.1"
+    },
+    "base_effort_pd": {
+     "S": "10",
+     "M": "25",
+     "L": "62.5"
+    },
+    "applicable_drivers": [
+     "languages"
+    ],
+    "tags": [],
+    "licence": null
+   },
+   {
+    "source": "40 / 100 / 250 team hours, / 8 h per day; medium confidence; SmartDev CI/CD 40-120 h; Cleveroad DevOps 220 h",
+    "key": "devops_cicd_setup",
+    "name": "Environments, CI/CD and deployment",
+    "category": "devops",
+    "bucket": "build.devops",
+    "description": "",
+    "task_mix": {
+     "devops": "0.8",
+     "documentation": "0.1",
+     "review_uat": "0.1"
+    },
+    "base_effort_pd": {
+     "S": "5",
+     "M": "12.5",
+     "L": "31.3"
+    },
+    "applicable_drivers": [
+     "uptime_sla",
+     "security_level"
+    ],
+    "tags": [],
+    "licence": null
+   },
+   {
+    "source": "80 / 250 / 600 team hours x 0.9 (whole-app design and testing priced separately), / 8 h per day; low confidence; reasoned: like a listed module (registration, documents, billing)",
+    "key": "custom_module",
+    "name": "Custom screens / module",
+    "category": "custom",
+    "bucket": "build.module_development",
+    "description": "A feature from the requirement document that is not in the ready-made list (forms, screens, business rules).",
+    "task_mix": {
+     "crud": "0.55",
+     "tests": "0.2",
+     "ui_design": "0.05",
+     "documentation": "0.05",
+     "review_uat": "0.15"
+    },
+    "base_effort_pd": {
+     "S": "9",
+     "M": "28.1",
+     "L": "67.5"
+    },
+    "applicable_drivers": [
+     "languages",
+     "accessibility",
+     "concurrency"
+    ],
+    "tags": [],
+    "licence": null
+   },
+   {
+    "source": "40 / 120 / 300 team hours x 0.9 (whole-app design and testing priced separately), / 8 h per day; low confidence; reasoned: like one API integration (Aalpha 20-80+ h per API)",
+    "key": "custom_integration",
+    "name": "Custom integration",
+    "category": "custom",
+    "bucket": "build.integrations",
+    "description": "Connection to another system named in the requirement document.",
+    "task_mix": {
+     "integration": "0.6",
+     "analysis": "0.05",
+     "tests": "0.2",
+     "documentation": "0.05",
+     "review_uat": "0.1"
+    },
+    "base_effort_pd": {
+     "S": "4.5",
+     "M": "13.5",
+     "L": "33.8"
+    },
+    "applicable_drivers": [
+     "security_level"
+    ],
+    "tags": [
+     "integration"
+    ],
+    "licence": null
+   },
+   {
+    "source": "60 / 180 / 450 team hours x 0.9 (whole-app design and testing priced separately), / 8 h per day; low confidence; reasoned: like dashboards and reports",
+    "key": "custom_report",
+    "name": "Custom reports / dashboard",
+    "category": "custom",
+    "bucket": "build.module_development",
+    "description": "Reports, dashboards or analytics asked for in the requirement document.",
+    "task_mix": {
+     "crud": "0.6",
+     "analysis": "0.1",
+     "tests": "0.15",
+     "review_uat": "0.15"
+    },
+    "base_effort_pd": {
+     "S": "6.8",
+     "M": "20.3",
+     "L": "50.6"
+    },
+    "applicable_drivers": [
+     "languages"
+    ],
+    "tags": [],
+    "licence": null
+   },
+   {
+    "source": "60 / 180 / 450 team hours x 0.9 (whole-app design and testing priced separately), / 8 h per day; low confidence; reasoned: CompletApp LLM feature 40-100 dev h; dev.to chatbot hours",
+    "key": "custom_ai_feature",
+    "name": "Custom AI feature",
+    "category": "custom",
+    "bucket": "build.ai_ml",
+    "description": "An AI capability beyond the chatbot (e.g. document classification, prediction, OCR).",
+    "task_mix": {
+     "ai_engineering": "0.5",
+     "crud": "0.2",
+     "tests": "0.15",
+     "review_uat": "0.15"
+    },
+    "base_effort_pd": {
+     "S": "6.8",
+     "M": "20.3",
+     "L": "50.6"
+    },
+    "applicable_drivers": [
+     "security_level"
+    ],
+    "tags": [
+     "ai"
+    ],
+    "licence": null
+   },
+   {
+    "source": "350 / 900 / 2000 team hours x 0.9 (whole-app design and testing priced separately), / 8 h per day; medium confidence; Cleveroad Flutter 300-600 / 600-1,200 / 1,200-3,000 h; Netguru React Native 1,200-1,500 h",
+    "key": "custom_mobile_app",
+    "name": "Mobile app",
+    "category": "custom",
+    "bucket": "build.module_development",
+    "description": "An Android / iOS app asked for in the requirement document.",
+    "task_mix": {
+     "ui_design": "0.15",
+     "crud": "0.5",
+     "tests": "0.2",
+     "devops": "0.05",
+     "review_uat": "0.1"
+    },
+    "base_effort_pd": {
+     "S": "39.4",
+     "M": "101.3",
+     "L": "225"
+    },
+    "applicable_drivers": [
+     "languages",
+     "accessibility"
+    ],
+    "tags": [],
+    "licence": null
+   },
+   {
+    "source": "200 / 500 / 1200 team hours x 0.9 (whole-app design and testing priced separately), / 8 h per day; low confidence; reasoned (only price figures found)",
+    "key": "inventory_management",
+    "name": "Inventory / stock management",
+    "category": "module",
+    "bucket": "build.module_development",
+    "description": "Items, stock in/out, locations, reorder levels, stock reports (barcode-ready).",
+    "task_mix": {
+     "crud": "0.6",
+     "analysis": "0.05",
+     "tests": "0.2",
+     "documentation": "0.05",
+     "review_uat": "0.1"
+    },
+    "base_effort_pd": {
+     "S": "22.5",
+     "M": "56.3",
+     "L": "135"
+    },
+    "applicable_drivers": [
+     "concurrency"
+    ],
+    "tags": [],
+    "licence": null
+   },
+   {
+    "source": "80 / 250 / 600 team hours x 0.9 (whole-app design and testing priced separately), / 8 h per day; low-medium confidence; MindK payments and invoicing 150-250 h; Techsy 80/120 h",
+    "key": "billing_invoicing",
+    "name": "Billing and invoicing",
+    "category": "module",
+    "bucket": "build.module_development",
+    "description": "Quotes, invoices, tax (GST/sales tax), receipts, credit notes, statements.",
+    "task_mix": {
+     "crud": "0.55",
+     "analysis": "0.1",
+     "tests": "0.2",
+     "documentation": "0.05",
+     "review_uat": "0.1"
+    },
+    "base_effort_pd": {
+     "S": "9",
+     "M": "28.1",
+     "L": "67.5"
+    },
+    "applicable_drivers": [
+     "security_level"
+    ],
+    "tags": [],
+    "licence": null
+   },
+   {
+    "source": "100 / 300 / 700 team hours x 0.9 (whole-app design and testing priced separately), / 8 h per day; low-medium confidence; Cleveroad hotel booking (booking 260 h + cancellations 95 h dev)",
+    "key": "booking_appointments",
+    "name": "Bookings / appointments / scheduling",
+    "category": "module",
+    "bucket": "build.module_development",
+    "description": "Slots and calendars, booking, reminders, cancellations, resource allocation.",
+    "task_mix": {
+     "crud": "0.55",
+     "ui_design": "0.05",
+     "tests": "0.2",
+     "documentation": "0.05",
+     "review_uat": "0.15"
+    },
+    "base_effort_pd": {
+     "S": "11.3",
+     "M": "33.8",
+     "L": "78.8"
+    },
+    "applicable_drivers": [
+     "concurrency"
+    ],
+    "tags": [],
+    "licence": null
+   },
+   {
+    "source": "150 / 500 / 1200 team hours x 0.9 (whole-app design and testing priced separately), / 8 h per day; medium confidence; Cleveroad e-commerce 936 dev h; Whidegroup catalogue, cart, checkout hours; Space-O",
+    "key": "ecommerce_storefront",
+    "name": "Online store (catalogue, cart, checkout, orders)",
+    "category": "module",
+    "bucket": "build.module_development",
+    "description": "Product catalogue, cart, checkout, order tracking and an order admin.",
+    "task_mix": {
+     "crud": "0.5",
+     "ui_design": "0.1",
+     "tests": "0.2",
+     "documentation": "0.05",
+     "review_uat": "0.15"
+    },
+    "base_effort_pd": {
+     "S": "16.9",
+     "M": "56.3",
+     "L": "135"
+    },
+    "applicable_drivers": [
+     "concurrency",
+     "security_level"
+    ],
+    "tags": [],
+    "licence": null
+   },
+   {
+    "source": "150 / 450 / 1200 team hours x 0.9 (whole-app design and testing priced separately), / 8 h per day; low-medium confidence; Aalpha pipeline 40-60 h and automation 150-200+ h; Cleveroad full CRM 10,190 h",
+    "key": "crm_module",
+    "name": "Customer management (CRM)",
+    "category": "module",
+    "bucket": "build.module_development",
+    "description": "Leads, contacts, follow-ups, pipeline and activity history.",
+    "task_mix": {
+     "crud": "0.6",
+     "analysis": "0.05",
+     "tests": "0.2",
+     "documentation": "0.05",
+     "review_uat": "0.1"
+    },
+    "base_effort_pd": {
+     "S": "16.9",
+     "M": "50.6",
+     "L": "135"
+    },
+    "applicable_drivers": [
+     "concurrency"
+    ],
+    "tags": [],
+    "licence": null
+   },
+   {
+    "source": "30 / 100 / 300 team hours x 0.9 (whole-app design and testing priced separately), / 8 h per day; medium confidence; Space-O, CompletApp, Techsy, MindK maps hours",
+    "key": "maps_location",
+    "name": "Maps and location",
+    "category": "module",
+    "bucket": "build.module_development",
+    "description": "Maps on screens, address search (geocoding), nearby search, pins and simple tracking.",
+    "task_mix": {
+     "integration": "0.45",
+     "crud": "0.2",
+     "ui_design": "0.1",
+     "tests": "0.15",
+     "review_uat": "0.1"
+    },
+    "base_effort_pd": {
+     "S": "3.4",
+     "M": "11.3",
+     "L": "33.8"
+    },
+    "applicable_drivers": [
+     "concurrency"
+    ],
+    "tags": [],
+    "licence": null
+   }
+  ]
+ },
+ "rate_card": {
+  "source": "Public benchmarks researched 2026-10-15 and 2026-10-16 (see each item)",
+  "version": "v5",
+  "effective_date": "2026-10-18",
+  "region": "india",
+  "currency": "INR",
+  "status": "active",
+  "items": [
+   {
+    "source": "PayScale IN avg CTC ₹18,08,231 × 1.75 ÷ 264",
+    "key": "role.project_manager",
+    "kind": "role",
+    "unit": "per_person_day",
+    "amount": "11986",
+    "currency": "INR",
+    "region": null,
+    "source_url": "https://www.payscale.com/research/IN/Job=Project_Manager%2C_Information_Technology_(IT)/Salary"
+   },
+   {
+    "source": "PayScale IN avg CTC ₹28,52,277 (n=664, Jul 2026) × 1.75 ÷ 264",
+    "key": "role.solution_architect",
+    "kind": "role",
+    "unit": "per_person_day",
+    "amount": "18907",
+    "currency": "INR",
+    "region": null,
+    "source_url": "https://www.payscale.com/research/IN/Job=Solutions_Architect/Salary"
+   },
+   {
+    "source": "PayScale IN avg CTC ₹7,42,591 (n=970, Jul 2026) × 1.75 ÷ 264",
+    "key": "role.business_analyst",
+    "kind": "role",
+    "unit": "per_person_day",
+    "amount": "4922",
+    "currency": "INR",
+    "region": null,
+    "source_url": "https://www.payscale.com/research/IN/Job=Business_Analyst%2C_IT/Salary"
+   },
+   {
+    "source": "PayScale IN avg CTC ₹6,06,130 (n=181, Oct 2025) × 1.75 ÷ 264",
+    "key": "role.ui_ux_designer",
+    "kind": "role",
+    "unit": "per_person_day",
+    "amount": "4018",
+    "currency": "INR",
+    "region": null,
+    "source_url": "https://www.payscale.com/research/IN/Job=User_Experience_Designer/Salary"
+   },
+   {
+    "source": "PayScale IN avg CTC ₹16,71,574 (n=4,319, Jul 2026) × 1.75 ÷ 264",
+    "key": "role.senior_developer",
+    "kind": "role",
+    "unit": "per_person_day",
+    "amount": "11081",
+    "currency": "INR",
+    "region": null,
+    "source_url": "https://www.payscale.com/research/IN/Job=Senior_Software_Engineer/Salary"
+   },
+   {
+    "source": "PayScale IN avg CTC ₹7,16,462 (n=2,101, Jul 2026) × 1.75 ÷ 264",
+    "key": "role.developer",
+    "kind": "role",
+    "unit": "per_person_day",
+    "amount": "4749",
+    "currency": "INR",
+    "region": null,
+    "source_url": "https://www.payscale.com/research/IN/Job=Software_Developer/Salary"
+   },
+   {
+    "source": "PayScale IN avg CTC ~₹5.6 L (n=604) × 1.75 ÷ 264",
+    "key": "role.qa_engineer",
+    "kind": "role",
+    "unit": "per_person_day",
+    "amount": "3712",
+    "currency": "INR",
+    "region": null,
+    "source_url": "https://www.payscale.com/research/IN/Job=Quality_Assurance_(QA)_Engineer/Salary"
+   },
+   {
+    "source": "PayScale IN avg CTC ₹9,98,346 (n=896) × 1.75 ÷ 264",
+    "key": "role.devops_engineer",
+    "kind": "role",
+    "unit": "per_person_day",
+    "amount": "6618",
+    "currency": "INR",
+    "region": null,
+    "source_url": "https://www.payscale.com/research/IN/Job=Development_Operations_(DevOps)_Engineer/Salary"
+   },
+   {
+    "source": "PayScale IN avg CTC ₹10,09,824 × 1.75 ÷ 264",
+    "key": "role.ml_engineer",
+    "kind": "role",
+    "unit": "per_person_day",
+    "amount": "6694",
+    "currency": "INR",
+    "region": null,
+    "source_url": "https://www.payscale.com/research/IN/Job=Machine_Learning_Engineer/Salary"
+   },
+   {
+    "source": "PayScale IN avg CTC ₹8,81,602 × 1.75 ÷ 264",
+    "key": "role.security_engineer",
+    "kind": "role",
+    "unit": "per_person_day",
+    "amount": "5844",
+    "currency": "INR",
+    "region": null,
+    "source_url": "https://www.payscale.com/research/IN/Job=Cyber_Security_Engineer/Salary"
+   },
+   {
+    "source": "PayScale IN avg CTC ₹9,74,783 (n=1,284) × 1.75 ÷ 264; Glassdoor ₹9.45 L cross-check",
+    "key": "role.data_engineer",
+    "kind": "role",
+    "unit": "per_person_day",
+    "amount": "6462",
+    "currency": "INR",
+    "region": null,
+    "source_url": "https://www.payscale.com/research/IN/Job=Data_Engineer/Salary"
+   },
+   {
+    "source": "PayScale IN avg CTC ₹6,50,870 (n=315, Jan 2026) × 1.75 ÷ 264",
+    "key": "role.technical_writer",
+    "kind": "role",
+    "unit": "per_person_day",
+    "amount": "4314",
+    "currency": "INR",
+    "region": null,
+    "source_url": "https://www.payscale.com/research/IN/Job=Technical_Writer/Salary"
+   },
+   {
+    "source": "PayScale IN avg CTC ₹7,84,281 (n=29, Mar 2026, small sample) × 1.75 ÷ 264",
+    "key": "role.trainer",
+    "kind": "role",
+    "unit": "per_person_day",
+    "amount": "5199",
+    "currency": "INR",
+    "region": null,
+    "source_url": "https://www.payscale.com/research/IN/Job=Technical_Trainer/Salary"
+   },
+   {
+    "source": "PayScale IN avg CTC ₹3,76,067 (n=22, Jan 2026, small sample) × 1.75 ÷ 264",
+    "key": "role.helpdesk_executive",
+    "kind": "role",
+    "unit": "per_person_day",
+    "amount": "2493",
+    "currency": "INR",
+    "region": null,
+    "source_url": "https://www.payscale.com/research/IN/Job=Help_Desk_Technician/Salary"
+   },
+   {
+    "source": "m6i.xlarge Linux $0.202/h × 730 (EC2 price list 2026-10-12)",
+    "key": "cloud.aws.app_server.month",
+    "kind": "cloud_sku",
+    "unit": "per_instance_month",
+    "amount": "147.46",
+    "currency": "USD",
+    "region": "ap-south-1",
+    "source_url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-south-1/index.json"
+   },
+   {
+    "source": "placeholder",
+    "key": "cloud.aws.app_server_small.month",
+    "kind": "cloud_sku",
+    "unit": "per_instance_month",
+    "amount": "32.7",
+    "currency": "USD",
+    "region": "ap-south-1",
+    "source_url": null
+   },
+   {
+    "source": "RDS PostgreSQL db.t4g.medium Single-AZ $0.084/h × 730 (RDS price list 2026-10-06)",
+    "key": "cloud.aws.db.small.month",
+    "kind": "cloud_sku",
+    "unit": "per_instance_month",
+    "amount": "61.32",
+    "currency": "USD",
+    "region": "ap-south-1",
+    "source_url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonRDS/current/ap-south-1/index.json"
+   },
+   {
+    "source": "RDS PostgreSQL db.m6g.large Single-AZ $0.226/h × 730",
+    "key": "cloud.aws.db.medium.month",
+    "kind": "cloud_sku",
+    "unit": "per_instance_month",
+    "amount": "164.98",
+    "currency": "USD",
+    "region": "ap-south-1",
+    "source_url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonRDS/current/ap-south-1/index.json"
+   },
+   {
+    "source": "RDS PostgreSQL db.m6g.2xlarge Single-AZ $0.904/h × 730",
+    "key": "cloud.aws.db.large.month",
+    "kind": "cloud_sku",
+    "unit": "per_instance_month",
+    "amount": "659.92",
+    "currency": "USD",
+    "region": "ap-south-1",
+    "source_url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonRDS/current/ap-south-1/index.json"
+   },
+   {
+    "source": "S3 Standard first 50 TB (S3 price list 2026-10-14)",
+    "key": "cloud.aws.storage.gb_month",
+    "kind": "cloud_sku",
+    "unit": "per_gb_month",
+    "amount": "0.025",
+    "currency": "USD",
+    "region": "ap-south-1",
+    "source_url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonS3/current/ap-south-1/index.json"
+   },
+   {
+    "source": "EBS snapshot $0.05/GB-month (EC2 price list 2026-10-12)",
+    "key": "cloud.aws.backup.gb_month",
+    "kind": "cloud_sku",
+    "unit": "per_gb_month",
+    "amount": "0.05",
+    "currency": "USD",
+    "region": "ap-south-1",
+    "source_url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-south-1/index.json"
+   },
+   {
+    "source": "Data transfer out to internet, up to 10 TB/month (first 100 GB free not applied)",
+    "key": "cloud.aws.transfer_out.gb",
+    "kind": "cloud_sku",
+    "unit": "per_gb",
+    "amount": "0.1093",
+    "currency": "USD",
+    "region": "ap-south-1",
+    "source_url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSDataTransfer/current/ap-south-1/index.json"
+   },
+   {
+    "source": "Application Load Balancer $0.0239/h × 730 (LCU charges excluded)",
+    "key": "cloud.aws.load_balancer.month",
+    "kind": "cloud_sku",
+    "unit": "per_month",
+    "amount": "17.45",
+    "currency": "USD",
+    "region": "ap-south-1",
+    "source_url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AWSELB/current/ap-south-1/index.json"
+   },
+   {
+    "source": "placeholder",
+    "key": "cloud.aws.monitoring.month",
+    "kind": "cloud_sku",
+    "unit": "per_month",
+    "amount": "50.0",
+    "currency": "USD",
+    "region": "ap-south-1",
+    "source_url": null
+   },
+   {
+    "source": "Yotta Yntraa g4amd.1X-Large 4 vCPU/16 GB, effective 2026-04-01",
+    "key": "cloud.indian_cloud.app_server.month",
+    "kind": "cloud_sku",
+    "unit": "per_instance_month",
+    "amount": "4600",
+    "currency": "INR",
+    "region": "india",
+    "source_url": "https://yntraacloud.ai/public-cloud/compute-service/virtual-machine/"
+   },
+   {
+    "source": "placeholder",
+    "key": "cloud.indian_cloud.app_server_small.month",
+    "kind": "cloud_sku",
+    "unit": "per_instance_month",
+    "amount": "2300",
+    "currency": "INR",
+    "region": "india",
+    "source_url": null
+   },
+   {
+    "source": "placeholder",
+    "key": "cloud.indian_cloud.db.small.month",
+    "kind": "cloud_sku",
+    "unit": "per_instance_month",
+    "amount": "5000",
+    "currency": "INR",
+    "region": "india",
+    "source_url": null
+   },
+   {
+    "source": "placeholder",
+    "key": "cloud.indian_cloud.db.medium.month",
+    "kind": "cloud_sku",
+    "unit": "per_instance_month",
+    "amount": "15000",
+    "currency": "INR",
+    "region": "india",
+    "source_url": null
+   },
+   {
+    "source": "placeholder",
+    "key": "cloud.indian_cloud.db.large.month",
+    "kind": "cloud_sku",
+    "unit": "per_instance_month",
+    "amount": "55000",
+    "currency": "INR",
+    "region": "india",
+    "source_url": null
+   },
+   {
+    "source": "Yotta Yntraa disk ₹7/GB-month, effective 2026-04-01",
+    "key": "cloud.indian_cloud.storage.gb_month",
+    "kind": "cloud_sku",
+    "unit": "per_gb_month",
+    "amount": "7.0",
+    "currency": "INR",
+    "region": "india",
+    "source_url": "https://yntraacloud.ai/public-cloud/compute-service/virtual-machine/"
+   },
+   {
+    "source": "CtrlS backup ₹1,150/TB-month ÷ 1024",
+    "key": "cloud.indian_cloud.backup.gb_month",
+    "kind": "cloud_sku",
+    "unit": "per_gb_month",
+    "amount": "1.12",
+    "currency": "INR",
+    "region": "india",
+    "source_url": "https://www.ctrls.com/cloud-infrastructure-rate-card/"
+   },
+   {
+    "source": "placeholder",
+    "key": "cloud.indian_cloud.transfer_out.gb",
+    "kind": "cloud_sku",
+    "unit": "per_gb",
+    "amount": "6.0",
+    "currency": "INR",
+    "region": "india",
+    "source_url": null
+   },
+   {
+    "source": "placeholder",
+    "key": "cloud.indian_cloud.load_balancer.month",
+    "kind": "cloud_sku",
+    "unit": "per_month",
+    "amount": "2500",
+    "currency": "INR",
+    "region": "india",
+    "source_url": null
+   },
+   {
+    "source": "placeholder",
+    "key": "cloud.indian_cloud.monitoring.month",
+    "kind": "cloud_sku",
+    "unit": "per_month",
+    "amount": "3000",
+    "currency": "INR",
+    "region": "india",
+    "source_url": null
+   },
+   {
+    "source": "placeholder",
+    "key": "onprem.server.unit",
+    "kind": "other",
+    "unit": "per_server_capex",
+    "amount": "600000",
+    "currency": "INR",
+    "region": null,
+    "source_url": null
+   },
+   {
+    "source": "placeholder",
+    "key": "onprem.storage.tb",
+    "kind": "other",
+    "unit": "per_tb_capex",
+    "amount": "40000",
+    "currency": "INR",
+    "region": null,
+    "source_url": null
+   },
+   {
+    "source": "placeholder",
+    "key": "onprem.colocation.rack_month",
+    "kind": "other",
+    "unit": "per_rack_month",
+    "amount": "45000",
+    "currency": "INR",
+    "region": null,
+    "source_url": null
+   },
+   {
+    "source": "Anthropic API list price, claude-sonnet-5-5 input (as of 2026-10-06)",
+    "key": "llm_token.default.input",
+    "kind": "llm_token",
+    "unit": "per_million_tokens",
+    "amount": "2.0",
+    "currency": "USD",
+    "region": null,
+    "source_url": null
+   },
+   {
+    "source": "Anthropic API list price, claude-sonnet-5-5 output (as of 2026-10-06)",
+    "key": "llm_token.default.output",
+    "kind": "llm_token",
+    "unit": "per_million_tokens",
+    "amount": "10.0",
+    "currency": "USD",
+    "region": null,
+    "source_url": null
+   },
+   {
+    "source": "g6.xlarge (1× NVIDIA L4) Linux on-demand (EC2 price list 2026-10-12)",
+    "key": "gpu_hour.l4",
+    "kind": "gpu_hour",
+    "unit": "per_gpu_hour",
+    "amount": "0.9664",
+    "currency": "USD",
+    "region": "ap-south-1",
+    "source_url": "https://pricing.us-east-1.amazonaws.com/offers/v1.0/aws/AmazonEC2/current/ap-south-1/index.json"
+   },
+   {
+    "source": "placeholder",
+    "key": "licence.bpm_suite.year",
+    "kind": "licence",
+    "unit": "per_year",
+    "amount": "1500000",
+    "currency": "INR",
+    "region": null,
+    "source_url": null
+   },
+   {
+    "source": "placeholder",
+    "key": "licence.cms.year",
+    "kind": "licence",
+    "unit": "per_year",
+    "amount": "400000",
+    "currency": "INR",
+    "region": null,
+    "source_url": null
+   },
+   {
+    "source": "placeholder",
+    "key": "licence.chatbot_platform.year",
+    "kind": "licence",
+    "unit": "per_year",
+    "amount": "800000",
+    "currency": "INR",
+    "region": null,
+    "source_url": null
+   },
+   {
+    "source": "DigiCert Basic OV single-domain list price (resellers sell OV for $30-200)",
+    "key": "licence.ssl_certificate.year",
+    "kind": "licence",
+    "unit": "per_year",
+    "amount": "218",
+    "currency": "USD",
+    "region": null,
+    "source_url": "https://www.digicert.com/tls-ssl/compare-certificates"
+   },
+   {
+    "source": ".gov.in domains are free; NIC is the sole registrar",
+    "key": "licence.domain.year",
+    "kind": "licence",
+    "unit": "per_year",
+    "amount": "0",
+    "currency": "INR",
+    "region": null,
+    "source_url": "https://kolkatadc.nic.in/gov.in-domain.php"
+   },
+   {
+    "source": "Midpoint of ₹40k-90k quoted for small web apps by CERT-In empanelled vendors (vendor blogs, weak)",
+    "key": "audit_fee.cert_in.small",
+    "kind": "audit_fee",
+    "unit": "per_audit",
+    "amount": "65000",
+    "currency": "INR",
+    "region": null,
+    "source_url": "https://cybersigmacs.com/blog/vapt-cost-india/"
+   },
+   {
+    "source": "Midpoint of ₹0.8-2 L quoted for medium web apps (vendor blogs, weak)",
+    "key": "audit_fee.cert_in.medium",
+    "kind": "audit_fee",
+    "unit": "per_audit",
+    "amount": "140000",
+    "currency": "INR",
+    "region": null,
+    "source_url": "https://cybersigmacs.com/blog/vapt-cost-india/"
+   },
+   {
+    "source": "Midpoint of ₹4-5 L+ quoted for large web apps (vendor blogs, weak)",
+    "key": "audit_fee.cert_in.large",
+    "kind": "audit_fee",
+    "unit": "per_audit",
+    "amount": "450000",
+    "currency": "INR",
+    "region": null,
+    "source_url": "https://bharatcyber.solutions/blog/cert-in_pricing_cost"
+   },
+   {
+    "source": "One retest after remediation is usually included in the audit fee (vendor blogs)",
+    "key": "audit_fee.cert_in_reaudit.small",
+    "kind": "audit_fee",
+    "unit": "per_audit",
+    "amount": "0",
+    "currency": "INR",
+    "region": null,
+    "source_url": "https://cybersigmacs.com/blog/vapt-cost-india/"
+   },
+   {
+    "source": "One retest after remediation is usually included in the audit fee (vendor blogs)",
+    "key": "audit_fee.cert_in_reaudit.medium",
+    "kind": "audit_fee",
+    "unit": "per_audit",
+    "amount": "0",
+    "currency": "INR",
+    "region": null,
+    "source_url": "https://cybersigmacs.com/blog/vapt-cost-india/"
+   },
+   {
+    "source": "One retest after remediation is usually included in the audit fee (vendor blogs)",
+    "key": "audit_fee.cert_in_reaudit.large",
+    "kind": "audit_fee",
+    "unit": "per_audit",
+    "amount": "0",
+    "currency": "INR",
+    "region": null,
+    "source_url": "https://cybersigmacs.com/blog/vapt-cost-india/"
+   },
+   {
+    "source": "Annual re-audit priced as a full audit (small), vendor blogs",
+    "key": "audit_fee.cert_in_annual.small",
+    "kind": "audit_fee",
+    "unit": "per_year",
+    "amount": "65000",
+    "currency": "INR",
+    "region": null,
+    "source_url": "https://cybersigmacs.com/blog/vapt-cost-india/"
+   },
+   {
+    "source": "Annual re-audit priced as a full audit (medium), vendor blogs",
+    "key": "audit_fee.cert_in_annual.medium",
+    "kind": "audit_fee",
+    "unit": "per_year",
+    "amount": "140000",
+    "currency": "INR",
+    "region": null,
+    "source_url": "https://cybersigmacs.com/blog/vapt-cost-india/"
+   },
+   {
+    "source": "Annual re-audit priced as a full audit (large), vendor blogs",
+    "key": "audit_fee.cert_in_annual.large",
+    "kind": "audit_fee",
+    "unit": "per_year",
+    "amount": "450000",
+    "currency": "INR",
+    "region": null,
+    "source_url": "https://bharatcyber.solutions/blog/cert-in_pricing_cost"
+   },
+   {
+    "source": "STQC software security testing ₹1,50,000 per module (charges, July 2021)",
+    "key": "audit_fee.stqc",
+    "kind": "audit_fee",
+    "unit": "per_certification",
+    "amount": "150000",
+    "currency": "INR",
+    "region": null,
+    "source_url": "https://www.stqc.gov.in/sites/default/files/tender-award/charges_July_2021.pdf"
+   },
+   {
+    "source": "SBI performance BG commission, rating band SB5-10, w.e.f. 2025-06-01",
+    "key": "bank_charge.pbg_commission",
+    "kind": "bank_charge",
+    "unit": "ratio_per_year",
+    "amount": "0.018",
+    "currency": "INR",
+    "region": null,
+    "source_url": "https://sbi.bank.in/documents/16012/22770835/02052025_Advances+Related+Service+Charges+w.e.f.+01.06.2025.pdf/8af187b9-c59e-656a-68f4-061ce0af89fd?t=1746184789453"
+   },
+   {
+    "source": "FBIL USD/INR reference rate, 2026-10-08",
+    "key": "forex.USD_INR",
+    "kind": "other",
+    "unit": "inr_per_usd",
+    "amount": "96.7733",
+    "currency": "INR",
+    "region": null,
+    "source_url": "https://www.fbil.org.in/"
+   },
+   {
+    "source": "placeholder",
+    "key": "travel.outstation_trip",
+    "kind": "other",
+    "unit": "per_trip",
+    "amount": "25000",
+    "currency": "INR",
+    "region": null,
+    "source_url": null
+   },
+   {
+    "source": "placeholder",
+    "key": "other.steering_meeting",
+    "kind": "other",
+    "unit": "per_meeting",
+    "amount": "15000",
+    "currency": "INR",
+    "region": null,
+    "source_url": null
+   },
+   {
+    "source": "placeholder",
+    "key": "other.non_prod_environment.month",
+    "kind": "other",
+    "unit": "per_environment_month",
+    "amount": "40000",
+    "currency": "INR",
+    "region": null,
+    "source_url": null
+   },
+   {
+    "source": "Claude Team standard seat, billed annually (includes Claude Code); GitHub Copilot Business is $19",
+    "key": "tools.ai_coding.seat_month",
+    "kind": "licence",
+    "unit": "per_seat_month",
+    "amount": "20",
+    "currency": "USD",
+    "region": null,
+    "source_url": "https://claude.com/pricing"
+   },
+   {
+    "source": "GitHub Team $4 + Jira Standard $7.91 (resolution.de, 2026-07; Atlassian page not readable) + Figma Collab seat $3",
+    "key": "tools.dev_suite.seat_month",
+    "kind": "licence",
+    "unit": "per_seat_month",
+    "amount": "14.91",
+    "currency": "USD",
+    "region": null,
+    "source_url": "https://github.com/pricing"
+   },
+   {
+    "source": "Amazon SES outbound email, $0.10 per 1,000 (retrieved 2026-10-16)",
+    "key": "service.email.thousand",
+    "kind": "other",
+    "unit": "per_1000_emails",
+    "amount": "0.1",
+    "currency": "USD",
+    "region": null,
+    "source_url": "https://aws.amazon.com/ses/pricing/"
+   },
+   {
+    "source": "Apple Developer Program annual fee",
+    "key": "service.app_store.apple_year",
+    "kind": "licence",
+    "unit": "per_year",
+    "amount": "99",
+    "currency": "USD",
+    "region": null,
+    "source_url": "https://developer.apple.com/programs/"
+   },
+   {
+    "source": "Google Play developer registration, one-time fee",
+    "key": "service.app_store.google_once",
+    "kind": "licence",
+    "unit": "one_off",
+    "amount": "25",
+    "currency": "USD",
+    "region": null,
+    "source_url": "https://support.google.com/googleplay/android-developer/answer/6112435"
+   },
+   {
+    "source": "AWS WAF $5 per web ACL + 10 rules x $1 per month",
+    "key": "security.waf.base_month",
+    "kind": "cloud_sku",
+    "unit": "per_month",
+    "amount": "15",
+    "currency": "USD",
+    "region": null,
+    "source_url": "https://aws.amazon.com/waf/pricing/"
+   },
+   {
+    "source": "AWS WAF $0.60 per million requests",
+    "key": "security.waf.million_requests",
+    "kind": "cloud_sku",
+    "unit": "per_million_requests",
+    "amount": "0.6",
+    "currency": "USD",
+    "region": null,
+    "source_url": "https://aws.amazon.com/waf/pricing/"
+   },
+   {
+    "source": "MSG91 India SMS, Rs 0.20 per SMS on the 16.5k pack (0.25 at 5k, 0.17 at 60k), excl. GST",
+    "key": "service.sms.message",
+    "kind": "other",
+    "unit": "per_sms",
+    "amount": "0.2",
+    "currency": "INR",
+    "region": null,
+    "source_url": "https://msg91.com/in/pricing/sms"
+   },
+   {
+    "source": "UIDAI Circular 15 of 2025: e-KYC Rs 3.60 per successful transaction incl. taxes, w.e.f. 2025-11-01 (from search extraction of the PDF)",
+    "key": "service.aadhaar_ekyc.check",
+    "kind": "other",
+    "unit": "per_transaction",
+    "amount": "3.6",
+    "currency": "INR",
+    "region": null,
+    "source_url": "https://uidai.gov.in/images/Circular_15_of_2025_08122025revised_Pricing_wef_Nov_2025.pdf"
+   },
+   {
+    "source": "Google Maps Platform India pricing, Dynamic Maps $2.10 per 1,000 loads (70k/month free), w.e.f. 2024-08-01",
+    "key": "service.maps.thousand_loads",
+    "kind": "other",
+    "unit": "per_1000_map_loads",
+    "amount": "2.1",
+    "currency": "USD",
+    "region": null,
+    "source_url": "https://developers.google.com/maps/billing-and-pricing/pricing-india"
+   },
+   {
+    "source": "ProZ freelancer self-listed rates Rs 1.5-10 per word; Rs 2.50 English to Hindi/Marathi (weak evidence, no agency rate card found)",
+    "key": "service.translation.word",
+    "kind": "other",
+    "unit": "per_word",
+    "amount": "2.5",
+    "currency": "INR",
+    "region": null,
+    "source_url": "https://www.proz.com/profile/2060177"
+   },
+   {
+    "source": "Razorpay Standard 2% on domestic cards, UPI, netbanking and wallets (+18% GST on the fee); PayU India also 2%",
+    "key": "client.payment_gateway.fee",
+    "kind": "bank_charge",
+    "unit": "ratio_per_payment",
+    "amount": "0.02",
+    "currency": "INR",
+    "region": null,
+    "source_url": "https://razorpay.com/pricing/"
+   },
+   {
+    "source": "Anthropic API list price, Claude Haiku 5.5 input, prompts up to 100K tokens (claude.com/pricing, retrieved 2026-10-16)",
+    "key": "llm_token.simple.input",
+    "kind": "llm_token",
+    "unit": "per_million_tokens",
+    "amount": "0.1",
+    "currency": "USD",
+    "region": null,
+    "source_url": "https://claude.com/pricing"
+   },
+   {
+    "source": "Anthropic API list price, Claude Haiku 5.5 output, prompts up to 100K tokens (claude.com/pricing, retrieved 2026-10-16)",
+    "key": "llm_token.simple.output",
+    "kind": "llm_token",
+    "unit": "per_million_tokens",
+    "amount": "0.5",
+    "currency": "USD",
+    "region": null,
+    "source_url": "https://claude.com/pricing"
+   }
+  ]
+ },
+ "parameters": {
+  "version": "v15",
+  "effective_date": "2026-10-18",
+  "region": "india",
+  "status": "active",
+  "calendar": {
+   "source": "placeholder",
+   "pd_per_month": "22",
+   "pd_per_year": "264",
+   "hours_per_month": "730",
+   "hours_per_year": "8760",
+   "days_per_year": "365",
+   "seconds_per_day": "86400"
+  },
+  "complexity_multipliers": {
+   "low": "0.7",
+   "medium": "1.0",
+   "high": "1.5",
+   "very_high": "2.2"
+  },
+  "complexity_source": "placeholder",
+  "nfr": {
+   "source": "placeholder",
+   "uptime_sla": {
+    "99.0": "1.0",
+    "99.5": "1.05",
+    "99.9": "1.12",
+    "99.95": "1.2"
+   },
+   "security_level": {
+    "standard": "1.0",
+    "high": "1.1",
+    "very_high": "1.25"
+   },
+   "per_additional_language": "0.04",
+   "languages_cap": "1.4",
+   "accessibility": {
+    "false": "1.0",
+    "true": "1.08"
+   },
+   "concurrency_bands": [
+    {
+     "name": "low",
+     "max_peak_users": 200,
+     "multiplier": "1.0",
+     "db_tier": "small"
+    },
+    {
+     "name": "medium",
+     "max_peak_users": 1000,
+     "multiplier": "1.05",
+     "db_tier": "medium"
+    },
+    {
+     "name": "high",
+     "max_peak_users": 5000,
+     "multiplier": "1.12",
+     "db_tier": "large"
+    },
+    {
+     "name": "very_high",
+     "max_peak_users": null,
+     "multiplier": "1.25",
+     "db_tier": "large"
+    }
+   ]
+  },
+  "ai_productivity": {
+   "source": "Published AI productivity studies 2023-2026 (see comment); low-confidence rows are reasoned defaults",
+   "task_savings": {
+    "documentation": "0.45",
+    "crud": "0.35",
+    "tests": "0.3",
+    "architecture": "0.05",
+    "integration": "0.05",
+    "review_uat": "0.0",
+    "pm": "0.0",
+    "analysis": "0.15",
+    "ui_design": "0.15",
+    "ai_engineering": "0.1",
+    "data_migration": "0.25",
+    "security_testing": "0.0",
+    "devops": "0.15",
+    "training": "0.2"
+   },
+   "maturity_scale": {
+    "none": "0.0",
+    "low": "0.5",
+    "medium": "1.0",
+    "high": "1.25"
+   },
+   "max_saving": "0.5",
+   "review_share_of_saved": "0.25",
+   "review_role": "role.senior_developer"
+  },
+  "task_roles": {
+   "source": "placeholder",
+   "roles": {
+    "analysis": "role.business_analyst",
+    "architecture": "role.solution_architect",
+    "ui_design": "role.ui_ux_designer",
+    "crud": "role.developer",
+    "integration": "role.senior_developer",
+    "ai_engineering": "role.ml_engineer",
+    "data_migration": "role.data_engineer",
+    "tests": "role.qa_engineer",
+    "security_testing": "role.security_engineer",
+    "devops": "role.devops_engineer",
+    "documentation": "role.technical_writer",
+    "review_uat": "role.senior_developer",
+    "pm": "role.project_manager",
+    "training": "role.trainer"
+   }
+  },
+  "timeline": {
+   "source": "placeholder",
+   "min_duration_months": "2",
+   "max_team_curve": [
+    {
+     "x": "0",
+     "y": "3"
+    },
+    {
+     "x": "30",
+     "y": "6"
+    },
+    {
+     "x": "120",
+     "y": "12"
+    },
+    {
+     "x": "600",
+     "y": "25"
+    }
+   ],
+   "size_bands": [
+    {
+     "name": "small",
+     "max_build_pd": "1000",
+     "pm_fte": "0.5",
+     "om_pm_fte": "0.1",
+     "exit_management_pd": "10",
+     "audit_band": "small"
+    },
+    {
+     "name": "medium",
+     "max_build_pd": "4000",
+     "pm_fte": "1.0",
+     "om_pm_fte": "0.25",
+     "exit_management_pd": "20",
+     "audit_band": "medium"
+    },
+    {
+     "name": "large",
+     "max_build_pd": null,
+     "pm_fte": "2.0",
+     "om_pm_fte": "0.5",
+     "exit_management_pd": "40",
+     "audit_band": "large"
+    }
+   ],
+   "compression_curve": [
+    {
+     "x": "0.6",
+     "y": "1.4"
+    },
+    {
+     "x": "1.0",
+     "y": "1.0"
+    }
+   ],
+   "infeasible_below_ratio": "0.5",
+   "duration_quantum_months": "0.1"
+  },
+  "programme": {
+   "source": "placeholder",
+   "pm_role": "role.project_manager",
+   "steering_interval_months": "3",
+   "steering_rate_key": "other.steering_meeting",
+   "mis_pd_per_month": "1",
+   "mis_role": "role.business_analyst",
+   "travel_trips_per_month": "1",
+   "travel_rate_key": "travel.outstation_trip",
+   "non_prod_environments": "2",
+   "environment_rate_key": "other.non_prod_environment.month"
+  },
+  "hosting": {
+   "source": "placeholder",
+   "pattern_by_sla": {
+    "99.0": "single",
+    "99.5": "ha",
+    "99.9": "ha",
+    "99.95": "ha_dr"
+   },
+   "concurrent_users_per_vcpu": "100",
+   "vcpu_per_app_server": "4",
+   "min_app_servers": {
+    "single": "1",
+    "ha": "2",
+    "ha_dr": "2"
+   },
+   "small_app_server_max_vcpus": "2",
+   "db_instances": {
+    "single": "1",
+    "ha": "2",
+    "ha_dr": "2"
+   },
+   "base_storage_gb": "50",
+   "db_storage_gb": "20",
+   "backup_factor": "2.0",
+   "monthly_active_share": "0.1",
+   "transfer_mb_per_active_user_month": "50",
+   "dr_cost_factor": "0.5",
+   "reserved_discount": {
+    "aws": "0.3",
+    "indian_cloud": "0.2",
+    "on_prem": "0"
+   },
+   "forex_rate_key": "forex.USD_INR",
+   "forex_buffer": "0.03",
+   "mb_per_gb": "1024",
+   "gb_per_tb": "1024",
+   "on_prem": {
+    "source": "placeholder",
+    "server_rate_key": "onprem.server.unit",
+    "storage_tb_rate_key": "onprem.storage.tb",
+    "colocation_rate_key": "onprem.colocation.rack_month",
+    "servers_per_rack": "10",
+    "hw_amc_percent": "0.1"
+   }
+  },
+  "ai_runtime": {
+   "source": "placeholder",
+   "token_input_rate_key": "llm_token.default.input",
+   "token_output_rate_key": "llm_token.default.output",
+   "tokens_per_unit": "1000000",
+   "volume_growth_per_year": "0.15",
+   "annual_price_change": "0.0",
+   "gpu_rate_key": "gpu_hour.l4",
+   "simple_token_input_rate_key": "llm_token.simple.input",
+   "simple_token_output_rate_key": "llm_token.simple.output",
+   "peak_factor": "3",
+   "queries_per_second_per_gpu": "2",
+   "min_gpus": {
+    "single": "1",
+    "ha": "2",
+    "ha_dr": "2"
+   }
+  },
+  "maintenance": {
+   "source": "placeholder",
+   "helpdesk_seats_by_users": [
+    {
+     "max_users": 10000,
+     "seats": "1"
+    },
+    {
+     "max_users": 100000,
+     "seats": "2"
+    },
+    {
+     "max_users": 1000000,
+     "seats": "4"
+    },
+    {
+     "max_users": null,
+     "seats": "8"
+    }
+   ],
+   "helpdesk_coverage_fte": {
+    "8x5": "1.0",
+    "24x7": "4.2"
+   },
+   "helpdesk_role": "role.helpdesk_executive",
+   "bugfix_share_of_build_pd": "0.06",
+   "bugfix_role": "role.developer",
+   "patching_share_of_build_pd": "0.02",
+   "patching_role": "role.devops_engineer",
+   "upgrade_share_of_build_pd": "0.03",
+   "upgrade_role": "role.senior_developer",
+   "change_request_share_of_build_pd": "0.05",
+   "change_request_role": "role.developer",
+   "annual_audit_rate_prefix": "audit_fee.cert_in_annual",
+   "ssl_rate_key": "licence.ssl_certificate.year",
+   "domain_rate_key": "licence.domain.year",
+   "rule_of_thumb_low": "0.15",
+   "rule_of_thumb_high": "0.25"
+  },
+  "go_live": {
+   "source": "placeholder",
+   "cert_in_audit_rate_prefix": "audit_fee.cert_in",
+   "cert_in_reaudit_rate_prefix": "audit_fee.cert_in_reaudit",
+   "stqc_rate_key": "audit_fee.stqc",
+   "trainer_role": "role.trainer",
+   "training_pd_per_session": "1.5",
+   "travel_rate_key": "travel.outstation_trip",
+   "trips_per_outstation_session": "2",
+   "hypercare_team_fte": {
+    "role.developer": "2",
+    "role.devops_engineer": "0.5",
+    "role.project_manager": "0.25"
+   },
+   "pd_per_week": "5"
+  },
+  "escalation": {
+   "source": "placeholder",
+   "labour": "0.08",
+   "prices": "0.08"
+  },
+  "commercial": {
+   "source": "placeholder",
+   "tax_label": "GST",
+   "cost_of_capital": "0.12",
+   "pbg_rate_key": "bank_charge.pbg_commission",
+   "payment_delay_months": "2",
+   "ld_reserve_build_percent": "0.01",
+   "penalty_reserve_run_percent": {
+    "8x5": "0.01",
+    "24x7": "0.02"
+   },
+   "contingency_at_clarity": [
+    {
+     "x": "1",
+     "y": "0.15"
+    },
+    {
+     "x": "5",
+     "y": "0.05"
+    }
+   ],
+   "exit_role": "role.project_manager",
+   "gst_percent": "0.18"
+  },
+  "uncertainty": {
+   "source": "placeholder",
+   "default_clarity": "3",
+   "clarity_spread": {
+    "1": {
+     "down": "0.25",
+     "up": "0.75"
+    },
+    "2": {
+     "down": "0.2",
+     "up": "0.5"
+    },
+    "3": {
+     "down": "0.15",
+     "up": "0.35"
+    },
+    "4": {
+     "down": "0.12",
+     "up": "0.25"
+    },
+    "5": {
+     "down": "0.1",
+     "up": "0.15"
+    }
+   },
+   "template_match_extra_up": {
+    "none": "0.1",
+    "weak": "0.05",
+    "strong": "0.0"
+   },
+   "tag_extra_up": {
+    "integration": "0.25",
+    "ai": "0.2",
+    "data_migration": "0.2"
+   },
+   "compression_extra_up_per_unit": "1.0",
+   "om_extra_up_per_year": "0.03",
+   "hosting": {
+    "down": "0.1",
+    "up": "0.25"
+   },
+   "ai_runtime": {
+    "down": "0.4",
+    "up": "1.0"
+   },
+   "fixed_fee": {
+    "down": "0.05",
+    "up": "0.15"
+   },
+   "monte_carlo_runs": 10000,
+   "distribution": "triangular"
+  },
+  "confidence": {
+   "source": "placeholder",
+   "weight_clarity": "0.5",
+   "weight_template": "0.3",
+   "weight_freshness": "0.2",
+   "template_score": {
+    "none": "0.0",
+    "weak": "0.5",
+    "strong": "1.0"
+   },
+   "fresh_days": 180,
+   "stale_days": 730,
+   "high_threshold": "0.75",
+   "medium_threshold": "0.5"
+  },
+  "defaults": {
+   "source": "placeholder",
+   "values": {
+    "usage_fees_in_scope": false,
+    "om_years": 3,
+    "team_ai_maturity": "medium",
+    "deadline_months": null,
+    "uptime_sla": "99.5",
+    "security_level": "standard",
+    "languages": 2,
+    "gigw_accessibility": true,
+    "users_total": 10000,
+    "peak_concurrent_users": 200,
+    "documents_per_month": 1000,
+    "avg_document_mb": 1,
+    "chatbot_queries_per_day": 1000,
+    "tokens_in_per_query": 2000,
+    "tokens_out_per_query": 400,
+    "hosting_provider": "aws",
+    "hosting_pricing": "on_demand",
+    "ai_runtime_mode": "api",
+    "licensing": "open_source",
+    "support_sla": "8x5",
+    "onsite_resources": [],
+    "change_request_pd_per_year": null,
+    "cert_in_audit": true,
+    "stqc_certification": false,
+    "training_sessions": 4,
+    "training_outstation_sessions": 0,
+    "hypercare_weeks": 4,
+    "emd_paise": 0,
+    "emd_lock_months": 6,
+    "pbg_percent": 0.03,
+    "pbg_validity_months": null,
+    "payment_schedule": [
+     {
+      "at_build_fraction": 0.5,
+      "offset_months": 0,
+      "percent": 0.2
+     },
+     {
+      "at_build_fraction": 1.0,
+      "offset_months": 0,
+      "percent": 0.4
+     },
+     {
+      "at_build_fraction": 1.0,
+      "offset_months": 3,
+      "percent": 0.4
+     }
+    ],
+    "margin_percent": 0.15,
+    "contingency_percent": null,
+    "gst_percent": null,
+    "escalation_labour": null,
+    "escalation_prices": null
+   }
+  },
+  "calibration": {
+   "source": "should-cost: no factor fitted to market prices. Effort per block from published effort data (catalog v5); the spread between teams from ISBSG (Java h/FP P10-P90 4.8-29.4, P25-P75 5.9-15.6) and Anda, Sjoberg & Mockus 2009 (35 firms, one specification).",
+   "effort_multiplier": "1.4",
+   "run_multiplier": "1.0",
+   "notes": "Should-cost: what the work should cost from its hours (checked against 825 finished projects) and rates, not what vendors charged. Small apps were bought for about half of this (median 0.55x; Indian vendors and lowest-bid tenders price below a full-effort cost); medium and large contracts cost about 1.5x and 3x more, as they carry much more than the features they list (years of operations, staff on site, hardware, change requests).",
+   "segment_effort_multiplier": {},
+   "segment_run_multiplier": {},
+   "segment_backtest": {},
+   "size_effort_multiplier": {},
+   "size_points_curve": [],
+   "segment_size_effort_multiplier": {},
+   "size_backtest": {},
+   "answer_effort_multiplier": {
+    "build_type": {
+     "ready_product": "0.2"
+    }
+   },
+   "holdout_projects": 0,
+   "holdout_median_abs_error_percent": null,
+   "model_spread": {
+    "government": {
+     "down": "0.35",
+     "up": "0.7"
+    },
+    "private": {
+     "down": "0.35",
+     "up": "0.7"
+    },
+    "small_business": {
+     "down": "0.35",
+     "up": "0.7"
+    }
+   },
+   "model_spread_by_size": {
+    "small": {
+     "down": "0.35",
+     "up": "0.7"
+    },
+    "small_medium": {
+     "down": "0.35",
+     "up": "0.7"
+    },
+    "medium": {
+     "down": "0.35",
+     "up": "0.7"
+    },
+    "medium_large": {
+     "down": "0.35",
+     "up": "0.7"
+    },
+    "large": {
+     "down": "0.35",
+     "up": "0.7"
+    }
+   },
+   "should_cost": true,
+   "market_by_size": {
+    "small": {
+     "projects": 30,
+     "low": "0.29",
+     "mid": "0.55",
+     "high": "1.0"
+    },
+    "small_medium": {
+     "projects": 0,
+     "low": "0.61",
+     "mid": "0.9",
+     "high": "1.66"
+    },
+    "medium": {
+     "projects": 17,
+     "low": "1.28",
+     "mid": "1.48",
+     "high": "2.74"
+    },
+    "medium_large": {
+     "projects": 0,
+     "low": "1.39",
+     "mid": "2.17",
+     "high": "4.22"
+    },
+    "large": {
+     "projects": 9,
+     "low": "1.51",
+     "mid": "3.19",
+     "high": "6.5"
+    }
+   },
+   "backtest_projects": 0,
+   "median_abs_error_percent": null
+  },
+  "third_party": {
+   "source": "placeholder",
+   "services": [
+    {
+     "key": "sms",
+     "label": "SMS messages",
+     "rate_key": "service.sms.message",
+     "basis": "monthly",
+     "per_units": "1",
+     "components": [
+      "notifications",
+      "integration_sms_email_gateway"
+     ],
+     "segments": [],
+     "regions": [],
+     "min_users": 0,
+     "needs_cloud_hosting": false,
+     "units_per_active_user_month": "2",
+     "free_units_per_month": "0",
+     "first_year_units_per_user": "0",
+     "later_year_units_per_user": "0",
+     "count": "1",
+     "rate_period": "year"
+    },
+    {
+     "key": "email",
+     "label": "Email sending",
+     "rate_key": "service.email.thousand",
+     "basis": "monthly",
+     "per_units": "1000",
+     "components": [
+      "notifications",
+      "integration_sms_email_gateway"
+     ],
+     "segments": [],
+     "regions": [],
+     "min_users": 0,
+     "needs_cloud_hosting": false,
+     "units_per_active_user_month": "10",
+     "free_units_per_month": "0",
+     "first_year_units_per_user": "0",
+     "later_year_units_per_user": "0",
+     "count": "1",
+     "rate_period": "year"
+    },
+    {
+     "key": "aadhaar_ekyc",
+     "label": "Aadhaar eKYC checks",
+     "rate_key": "service.aadhaar_ekyc.check",
+     "basis": "per_user",
+     "per_units": "1",
+     "components": [
+      "integration_aadhaar_ekyc"
+     ],
+     "segments": [],
+     "regions": [
+      "india"
+     ],
+     "min_users": 0,
+     "needs_cloud_hosting": false,
+     "units_per_active_user_month": "0",
+     "free_units_per_month": "0",
+     "first_year_units_per_user": "1",
+     "later_year_units_per_user": "0.2",
+     "count": "1",
+     "rate_period": "year"
+    },
+    {
+     "key": "maps",
+     "label": "Map loads",
+     "rate_key": "service.maps.thousand_loads",
+     "basis": "monthly",
+     "per_units": "1000",
+     "components": [
+      "maps_location"
+     ],
+     "segments": [],
+     "regions": [],
+     "min_users": 0,
+     "needs_cloud_hosting": false,
+     "units_per_active_user_month": "20",
+     "free_units_per_month": "70000",
+     "first_year_units_per_user": "0",
+     "later_year_units_per_user": "0",
+     "count": "1",
+     "rate_period": "year"
+    },
+    {
+     "key": "apple_developer",
+     "label": "Apple developer account",
+     "rate_key": "service.app_store.apple_year",
+     "basis": "fixed",
+     "per_units": "1",
+     "components": [
+      "custom_mobile_app"
+     ],
+     "segments": [],
+     "regions": [],
+     "min_users": 0,
+     "needs_cloud_hosting": false,
+     "units_per_active_user_month": "0",
+     "free_units_per_month": "0",
+     "first_year_units_per_user": "0",
+     "later_year_units_per_user": "0",
+     "count": "1",
+     "rate_period": "year"
+    },
+    {
+     "key": "google_play",
+     "label": "Google Play registration (one-off)",
+     "rate_key": "service.app_store.google_once",
+     "basis": "fixed",
+     "per_units": "1",
+     "components": [
+      "custom_mobile_app"
+     ],
+     "segments": [],
+     "regions": [],
+     "min_users": 0,
+     "needs_cloud_hosting": false,
+     "units_per_active_user_month": "0",
+     "free_units_per_month": "0",
+     "first_year_units_per_user": "0",
+     "later_year_units_per_user": "0",
+     "count": "1",
+     "rate_period": "one_off"
+    },
+    {
+     "key": "waf_base",
+     "label": "Web firewall and DDoS protection",
+     "rate_key": "security.waf.base_month",
+     "basis": "fixed",
+     "per_units": "1",
+     "components": [],
+     "segments": [],
+     "regions": [],
+     "min_users": 10000,
+     "needs_cloud_hosting": true,
+     "units_per_active_user_month": "0",
+     "free_units_per_month": "0",
+     "first_year_units_per_user": "0",
+     "later_year_units_per_user": "0",
+     "count": "1",
+     "rate_period": "month"
+    },
+    {
+     "key": "waf_requests",
+     "label": "Web firewall requests",
+     "rate_key": "security.waf.million_requests",
+     "basis": "monthly",
+     "per_units": "1000000",
+     "components": [],
+     "segments": [],
+     "regions": [],
+     "min_users": 10000,
+     "needs_cloud_hosting": true,
+     "units_per_active_user_month": "300",
+     "free_units_per_month": "0",
+     "first_year_units_per_user": "0",
+     "later_year_units_per_user": "0",
+     "count": "1",
+     "rate_period": "year"
+    }
+   ],
+   "ai_features": {
+    "components": [
+     "custom_ai_feature"
+    ],
+    "calls_per_active_user_month": "20",
+    "tokens_in_per_call": "2000",
+    "tokens_out_per_call": "500"
+   },
+   "dev_tools": {
+    "ai_coding_rate_key": "tools.ai_coding.seat_month",
+    "dev_suite_rate_key": "tools.dev_suite.seat_month"
+   },
+   "translation": {
+    "rate_key": "service.translation.word",
+    "words_per_component": "800",
+    "annual_update_share": "0.1"
+   },
+   "client_paid_notes": [
+    {
+     "key": "payment_gateway",
+     "label": "Online payment fees",
+     "components": [
+      "integration_payment_gateway",
+      "ecommerce_storefront"
+     ],
+     "rate_keys": [
+      "client.payment_gateway.fee"
+     ],
+     "text": "The payment company charges about {0} of each online payment (standard plan, plus GST). The client pays this directly; it is not in this price."
+    }
+   ]
+  },
+  "lean": {
+   "source": "placeholder",
+   "segments": [],
+   "sizes": [
+    "small",
+    "small_medium"
+   ],
+   "unless_governance": true,
+   "pm_share_of_build_pd": "0.12",
+   "hypercare_share_of_build_pd": "0.05",
+   "om_pm_share_of_build_pd": "0.02",
+   "environment_rate_key": "cloud.aws.app_server.month"
+  }
+ },
+ "monte_carlo_runs": 2000
+}

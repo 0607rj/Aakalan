@@ -68,7 +68,7 @@ def seed_reference(session: Session, data: ReferenceData) -> list[str]:
                         spec=spec,
                     )
                 )
-            elif row.spec != spec:
+            elif ref.CatalogComponent.model_validate(row.spec) != comp:  # values, not JSON
                 warnings.append(f"catalog {comp.key}@{catalog.version} differs; stored kept")
 
     for card in data.rate_cards:

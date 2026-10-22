@@ -3,6 +3,7 @@
 import argparse
 import json
 import sys
+from datetime import date
 from pathlib import Path
 
 from app.core.config import BACKEND_DIR, get_settings
@@ -53,10 +54,10 @@ BUYER_TITLES = {
 
 def cmd_backtest(args: argparse.Namespace) -> None:
     from app.services.calibration.backtest import (
-        SIZES,
         BacktestReport,
         backtest,
         fit_points_curve,
+        layer_shares,
         load_benchmarks,
         reference_for,
     )
@@ -102,12 +103,35 @@ def cmd_backtest(args: argparse.Namespace) -> None:
             sys.stdout.write(f"{size}: {st.model_dump()}\n")
         for buyer, r in fit.by_buyer.items():
             sys.stdout.write(f"{BUYER_TITLES.get(buyer, buyer)}: actual / ours {r}\n")
+    elif args.layers:
+        as_of = date.fromisoformat(args.as_of) if args.as_of else None
+        sys.stdout.write(
+            "\nShare of the planned cost by layer (median per hand-set size), priced as the app "
+            "prices. A diagnostic of how size changes the mix, not a fit.\n"
+        )
+        for size, layers in layer_shares(cfg, bench, reference, as_of=as_of).items():
+            parts = ", ".join(f"{k} {v:.0%}" for k, v in layers.items())
+            sys.stdout.write(f"  {size:14} {parts}\n")
     else:
-        show("ALL PROJECTS", backtest(cfg, bench, reference, effort, run))
-        for size in SIZES:
-            show(size.upper(), backtest(cfg, bench, reference, effort, run, size=size))
-        for buyer, title in BUYER_TITLES.items():
-            show(title, backtest(cfg, bench, reference, effort, run, segment=buyer))
+        as_of = date.fromisoformat(args.as_of) if args.as_of else None
+        report = backtest(cfg, bench, reference, effort, run, as_of=as_of)
+        show("ALL PROJECTS", report)
+        params = reference["parameters"]
+        sys.stdout.write(
+            f"\nparameter set {params.version}, catalog {reference['catalog'].version}. Published "
+            "prices are contract values, not effort: these numbers compare prices only. bias = "
+            "ours / published (median of logs); band hits count as exact and flatter the result.\n"
+        )
+        titles = {"all": "All", "size": "By size (set by hand)", "derived_size": "By size (app)"}
+        for key, segments in report.segments.items():
+            sys.stdout.write(f"\n{titles.get(key, 'By client type')}\n")
+            for m in segments:
+                sys.stdout.write(
+                    f"  {BUYER_TITLES.get(m.segment, m.segment):28} n={m.projects:3}  "
+                    f"median |error| {m.median_abs_error_percent:6.1f}%  bias x{m.bias:<6}  "
+                    f"within 25%: {m.within_25_percent:3}  in P10-P90: {m.inside_range:3}  "
+                    f"band hits: {m.band_hits}\n"
+                )
 
 
 def main(argv: list[str] | None = None) -> None:
@@ -127,6 +151,10 @@ def main(argv: list[str] | None = None) -> None:
         action="store_true",
         help="fit project-size and ready-made-product factors on all projects",
     )
+    p_bt.add_argument(
+        "--layers", action="store_true", help="show how the cost splits into layers, by size"
+    )
+    p_bt.add_argument("--as-of", help="price as of this date (YYYY-MM-DD) for a repeatable report")
     p_bt.set_defaults(func=cmd_backtest)
     args = parser.parse_args(argv)
     args.func(args)

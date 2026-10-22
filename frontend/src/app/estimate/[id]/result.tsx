@@ -18,7 +18,14 @@ import { useLoad } from "@/lib/use-load";
 
 import { BidResultCard } from "./bid-result";
 import { CompareOptions } from "./compare";
+import {
+  CostSummary,
+  Disclosure,
+  OngoingCosts,
+  WhatsIncluded,
+} from "./cost-summary";
 import { Downloads } from "./downloads";
+import { RealityCheck } from "./reality";
 
 function Fact({ label, value }: { label: string; value: string }) {
   return (
@@ -35,56 +42,44 @@ function Headline({ summary }: { summary: QuickSummary }) {
     formatRange(low, high, summary.currency);
   const approx = (paise: number | null) =>
     formatApprox(paise, summary.currency);
+  const risk = summary.risk_allowance_paise;
   return (
-    <section className="flex flex-col gap-6 rounded-2xl border bg-card px-6 py-8 shadow-sm sm:px-10">
+    <section
+      aria-labelledby="estimate-heading"
+      className="flex flex-col gap-6 rounded-2xl border bg-card px-6 py-8 shadow-sm sm:px-10"
+    >
       <div className="flex flex-col gap-1">
-        <span className="text-base text-muted-foreground">
+        <h2
+          id="estimate-heading"
+          className="text-base font-medium text-muted-foreground"
+        >
           {summary.mode === "client"
             ? "Fair budget range"
-            : summary.should_cost
-              ? "What it should cost"
-              : "Estimated total price"}
-        </span>
-        <span className="text-4xl font-semibold tracking-tight text-primary sm:text-5xl">
+            : "Your software cost estimate"}
+        </h2>
+        <span className="text-4xl font-semibold tracking-tight text-primary tabular-nums sm:text-5xl">
           {range(summary.low_paise, summary.high_paise)}
         </span>
-        <span className="text-base text-muted-foreground">
-          Most likely {approx(summary.likely_paise)}. This is an estimate before
-          the work starts, not a final bill.
+        <span className="text-lg font-medium">
+          Most likely: {approx(summary.likely_paise)}
         </span>
+        <p className="max-w-2xl text-sm text-muted-foreground">
+          An estimate before the work starts, not a final quotation. The range
+          is wide because scope, effort and other factors are still uncertain.{" "}
+          {years > 0
+            ? `It includes ${years} year${years === 1 ? "" : "s"} of support after launch, margin and tax.`
+            : "It covers building and launch only (no support after launch), with margin and tax."}
+        </p>
       </div>
 
-      <div className="grid gap-3 border-t pt-5 sm:grid-cols-2">
-        <div className="flex flex-col gap-1 rounded-xl border-2 border-primary/30 bg-primary/5 px-5 py-4">
-          <span className="text-sm font-medium">
-            Cost to build the software
-          </span>
-          <span className="text-2xl font-semibold tracking-tight tabular-nums">
-            {range(summary.build_only_low_paise, summary.build_only_high_paise)}
-          </span>
-          <span className="text-sm text-muted-foreground">
-            Most likely {approx(summary.build_only_paise)}. Before support,
-            margin and tax.
-          </span>
-        </div>
-        <div className="flex flex-col gap-1 rounded-xl border px-5 py-4">
-          <span className="text-sm font-medium">
-            {summary.mode === "client"
-              ? "Estimated cost to budget"
-              : "Full price you would quote"}
-          </span>
-          <span className="text-2xl font-semibold tracking-tight tabular-nums">
-            {range(summary.low_paise, summary.high_paise)}
-          </span>
-          <span className="text-sm text-muted-foreground">
-            {years > 0
-              ? `${years} year${years === 1 ? "" : "s"} of support, margin and tax included`
-              : "Build and launch only (no support after launch), margin and tax included"}
-          </span>
-        </div>
-      </div>
-
-      <div className="flex flex-wrap gap-x-10 gap-y-4">
+      <div className="flex flex-wrap gap-x-10 gap-y-4 border-t pt-5">
+        <Fact
+          label="Building and launch only"
+          value={range(
+            summary.build_only_low_paise,
+            summary.build_only_high_paise,
+          )}
+        />
         <Fact
           label="Time to build"
           value={`about ${formatDecimal(summary.build_months, 1)} months`}
@@ -108,36 +103,95 @@ function Headline({ summary }: { summary: QuickSummary }) {
           }
         />
       </div>
-      {summary.market ? (
-        <div className="flex flex-col gap-1 rounded-xl border border-dashed px-5 py-4">
-          <span className="text-sm font-medium">
-            What real {summary.market.project_size.toLowerCase()} projects were
-            bought for
-          </span>
-          <span className="text-xl font-semibold tracking-tight tabular-nums">
-            {range(summary.market.low_paise, summary.market.high_paise)}
-          </span>
-          <span className="text-sm text-muted-foreground">
-            {summary.market.projects > 0
-              ? `The middle half of ${summary.market.projects} real Indian projects of this size, scaled to this one. `
-              : "Between the two nearest sizes of real Indian projects, scaled to this one. "}
-            Our estimate is what the work should cost from its hours. Real
-            contracts also carry the vendor&apos;s pricing and work a feature
-            list does not show (years of operations, staff on site, hardware).
-          </span>
+
+      <details className="group text-sm">
+        <summary className="cursor-pointer rounded font-medium text-primary hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none">
+          How this estimate is calculated
+        </summary>
+        <div className="mt-3 flex max-w-3xl flex-col gap-2 text-muted-foreground">
+          <p>
+            The team&apos;s work for every feature is counted in hours, priced
+            at each role&apos;s rate, and support, hosting, services, margin and
+            tax are added. The project is then simulated thousands of times with
+            different amounts of work.
+          </p>
+          <ul className="list-disc pl-5">
+            <li>
+              <strong className="text-foreground">Low end</strong>{" "}
+              {approx(summary.low_paise)}: only 1 in 10 runs came out cheaper
+              (P10).
+            </li>
+            <li>
+              <strong className="text-foreground">Most likely</strong>{" "}
+              {approx(summary.likely_paise)}: half the runs came out cheaper,
+              half dearer (P50).
+            </li>
+            <li>
+              <strong className="text-foreground">High end</strong>{" "}
+              {approx(summary.high_paise)}: only 1 in 10 runs came out dearer
+              (P90).
+            </li>
+          </ul>
+          {risk !== null && risk > 0 ? (
+            <p>
+              Planned cost {approx(summary.planned_paise)} + allowance for risks{" "}
+              {approx(risk)} = most likely {approx(summary.likely_paise)}.
+              &quot;Building and launch only&quot; is the design, build, test
+              and launch work before project management, support, margin and
+              tax.
+            </p>
+          ) : null}
+          {summary.accuracy_note ? (
+            <p>
+              <strong className="text-foreground">How accurate is this?</strong>{" "}
+              {summary.accuracy_note}
+            </p>
+          ) : null}
         </div>
-      ) : null}
-      {summary.client_pays.length > 0 ? (
-        <p className="rounded-xl bg-muted/60 px-4 py-3 text-sm">
-          <strong>Not included:</strong>{" "}
-          {summary.client_pays_first_year_paise > 0
-            ? `${approx(summary.client_pays_first_year_paise)} in the first year that the client pays directly`
-            : "fees the client pays directly"}{" "}
-          ({summary.client_pays.map((c) => c.label.toLowerCase()).join(", ")}).
-          See &quot;Paid directly by the client&quot; below.
-        </p>
-      ) : null}
+      </details>
     </section>
+  );
+}
+
+/** What real projects of this size were bought for: an outside benchmark, not a check. */
+function MarketBox({ summary }: { summary: QuickSummary }) {
+  const market = summary.market;
+  if (!market) return null;
+  const range = (low: number | null, high: number | null) =>
+    formatRange(low, high, summary.currency);
+  const approx = (paise: number | null) =>
+    formatApprox(paise, summary.currency);
+  return (
+    <div className="flex flex-col gap-1 rounded-xl border border-dashed px-5 py-4">
+      <h3 className="text-sm font-medium">
+        What real {market.project_size.toLowerCase()} projects were bought for
+      </h3>
+      <span className="text-xl font-semibold tracking-tight tabular-nums">
+        {range(market.low_paise, market.high_paise)}
+      </span>
+      {market.basis === "published_prices" ? (
+        <span className="text-sm text-muted-foreground">
+          The middle half of the published prices of {market.projects} real
+          Indian {market.sizes.join(" and ").toLowerCase()} projects (
+          {market.first_year}&ndash;{market.last_year}, in today&apos;s money
+          with GST; median {approx(market.mid_paise)}), as published, not
+          adjusted to this project. Sources:{" "}
+          {market.sources.map((s) => `${s.label} (${s.projects})`).join(", ")}.
+          These are prices, not hours: they do not check this estimate. Real
+          contracts also carry the vendor&apos;s pricing and work a feature list
+          does not show (years of operations, staff on site, hardware).
+        </span>
+      ) : (
+        <span className="text-sm text-muted-foreground">
+          {market.projects > 0
+            ? `The middle half of ${market.projects} real Indian projects of this size, scaled to this one. `
+            : "Between the two nearest sizes of real Indian projects, scaled to this one. "}
+          Our estimate is what the work should cost from its hours. Real
+          contracts also carry the vendor&apos;s pricing and work a feature list
+          does not show (years of operations, staff on site, hardware).
+        </span>
+      )}
+    </div>
   );
 }
 
@@ -147,9 +201,12 @@ function AiComparison({ summary }: { summary: QuickSummary }) {
   if (traditional === null || likely === null) return null;
   const money = (paise: number | null) => formatApprox(paise, summary.currency);
   const saving = traditional - likely;
+  const era = summary.era_sensitivity;
   return (
-    <section className="flex flex-col gap-5 rounded-2xl border bg-card px-6 py-6 shadow-sm sm:px-8">
-      <h2 className="text-lg font-semibold">With AI vs the traditional way</h2>
+    <section className="flex flex-col gap-5">
+      <h3 className="text-base font-semibold">
+        With AI vs the traditional way
+      </h3>
       <div className="grid gap-3 sm:grid-cols-2">
         <div className="flex flex-col gap-1 rounded-xl border px-5 py-4">
           <span className="text-sm font-medium text-muted-foreground">
@@ -175,15 +232,34 @@ function AiComparison({ summary }: { summary: QuickSummary }) {
         </div>
       </div>
       {summary.ai_saving_percent !== null && saving > 0 ? (
-        <p className="rounded-xl bg-success/10 px-4 py-3 font-medium text-success">
-          AI tools cut this project&apos;s cost by about{" "}
-          {summary.ai_saving_percent}% ({money(saving)})
+        <p className="rounded-xl bg-success/10 px-4 py-3 text-sm font-medium text-success">
+          The same scope priced without AI tools comes to{" "}
+          {summary.ai_saving_percent >= 1
+            ? `about ${summary.ai_saving_percent}%`
+            : "less than 1%"}{" "}
+          ({money(saving)}) more. The price above already includes this; it is
+          not an extra discount or a guaranteed saving.
         </p>
+      ) : null}
+      {era ? (
+        <div className="flex flex-col gap-1 rounded-xl border border-dashed px-5 py-4">
+          <span className="text-sm font-medium">
+            If the effort data predates AI tools
+          </span>
+          <span className="text-xl font-semibold tracking-tight tabular-nums">
+            Most likely {money(era.pre_ai_likely_paise)}
+          </span>
+          <span className="text-sm text-muted-foreground">
+            {era.note} Range with this reading: {money(era.low_paise)} to{" "}
+            {money(era.high_paise)}. It is not taken off the price above.
+          </span>
+        </div>
       ) : null}
       <p className="text-sm text-muted-foreground">
         The traditional price is what this scope would cost if the team wrote
-        everything by hand, as most vendors priced work before AI tools. It
-        shows how much a fair AI-era quote should come down.
+        everything by hand, as most vendors priced work before AI tools. AI
+        tools save the team time (see the hours above); how much of that reaches
+        the final price depends on how the work goes.
       </p>
     </section>
   );
@@ -206,9 +282,9 @@ function HoursOfWork({ summary }: { summary: QuickSummary }) {
       ? Math.round((100 * (h.saved ?? 0)) / h.without_ai)
       : null;
   return (
-    <section className="flex flex-col gap-5 rounded-2xl border bg-card px-6 py-6 shadow-sm sm:px-8">
+    <section className="flex flex-col gap-5">
       <div>
-        <h2 className="text-lg font-semibold">Hours of work</h2>
+        <h3 className="text-base font-semibold">Hours of work</h3>
         <p className="text-sm text-muted-foreground">
           The team&apos;s work to build and launch it, counted in hours (
           {h.hours_per_day} hours a working day), priced at each role&apos;s
@@ -289,8 +365,7 @@ function HoursOfWork({ summary }: { summary: QuickSummary }) {
       <p className="text-sm text-muted-foreground">
         Hours are an estimate like the price: the real number depends on how
         deep each feature turns out to be. Servers, support after launch,
-        services paid to others and tax are added separately below. Set your own
-        rates in Settings.
+        services paid to others and tax are added separately below.
       </p>
     </section>
   );
@@ -316,9 +391,9 @@ function TeamNeeded({ summary }: { summary: QuickSummary }) {
   const pm = (value: string | number | null | undefined) =>
     `${formatDecimal(Number(value ?? 0), 1)} person-months`;
   return (
-    <section className="flex flex-col gap-4 rounded-2xl border bg-card px-6 py-6 shadow-sm sm:px-8">
+    <section className="flex flex-col gap-4">
       <div>
-        <h2 className="text-lg font-semibold">Team needed to build it</h2>
+        <h3 className="text-base font-semibold">Team needed to build it</h3>
         <p className="text-sm text-muted-foreground">
           About {Math.max(1, Math.round(total))} people working for{" "}
           {formatDecimal(months, 1)} months on average. Some roles are needed
@@ -390,9 +465,11 @@ function FeatureCosts({ summary }: { summary: QuickSummary }) {
     ? summary.feature_costs.reduce((s, f) => s + (f.traditional_paise ?? 0), 0)
     : null;
   return (
-    <section className="flex flex-col gap-4 rounded-2xl border bg-card px-6 py-6 shadow-sm sm:px-8">
+    <section className="flex flex-col gap-4">
       <div>
-        <h2 className="text-lg font-semibold">Building cost of each feature</h2>
+        <h3 className="text-base font-semibold">
+          Building cost of each feature
+        </h3>
         <p className="text-sm text-muted-foreground">
           The team&apos;s work on each feature (most likely). Launch, running,
           management, margin and tax are listed further down.
@@ -445,6 +522,30 @@ function FeatureCosts({ summary }: { summary: QuickSummary }) {
           </tfoot>
         </table>
       </div>
+      {(summary.scope_items ?? []).length > 0 ? (
+        <div className="flex flex-col gap-2">
+          <h3 className="font-medium">What else you asked for</h3>
+          <ul className="flex flex-col gap-2 text-sm">
+            {(summary.scope_items ?? []).map((item) => (
+              <li key={item.key} className="flex flex-col gap-0.5">
+                <span className="flex flex-wrap justify-between gap-x-4">
+                  <span>{item.label}</span>
+                  <span className="font-medium tabular-nums">
+                    {item.amount_paise > 0
+                      ? `+${money(item.amount_paise)}`
+                      : "Already included"}
+                  </span>
+                </span>
+                <span className="text-muted-foreground">
+                  {item.amount_paise > 0
+                    ? `${item.partly_priced ? "Partly priced. " : ""}${item.note}`
+                    : "Its building block was already part of this project, so nothing was added."}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      ) : null}
       <p className="text-sm text-muted-foreground">
         With AI tools the team writes code, tests and documents faster; the
         price already includes the extra time people spend checking what the AI
@@ -458,8 +559,8 @@ function MoneyBreakdown({ summary }: { summary: QuickSummary }) {
   const risk = summary.risk_allowance_paise;
   const money = (paise: number | null) => formatApprox(paise, summary.currency);
   return (
-    <section className="flex flex-col gap-5 rounded-2xl border bg-card px-6 py-6 shadow-sm sm:px-8">
-      <h2 className="text-lg font-semibold">Where the money goes</h2>
+    <section className="flex flex-col gap-5">
+      <h3 className="text-base font-semibold">Where the money goes</h3>
       <ul className="flex flex-col gap-4">
         {summary.parts.map((part) => (
           <li key={part.key} className="flex flex-col gap-1.5">
@@ -506,7 +607,6 @@ function MoneyBreakdown({ summary }: { summary: QuickSummary }) {
 }
 
 function CostItems({ summary }: { summary: QuickSummary }) {
-  const [open, setOpen] = React.useState(false);
   if (summary.cost_items.length === 0) return null;
   const range = (low: number, high: number) =>
     formatRange(low, high, summary.currency);
@@ -517,37 +617,28 @@ function CostItems({ summary }: { summary: QuickSummary }) {
     else groups.push({ label: item.group_label, items: [item] });
   }
   return (
-    <section className="flex flex-col gap-4 rounded-2xl border bg-card px-6 py-6 shadow-sm sm:px-8">
-      <div className="flex flex-wrap items-baseline justify-between gap-2">
+    <section className="flex flex-col gap-4">
+      <div>
         <div>
-          <h2 className="text-lg font-semibold">
-            What&apos;s inside the price
-          </h2>
+          <h3 className="text-base font-semibold">Every cost item</h3>
           <p className="text-sm text-muted-foreground">
             Every cost item: people&apos;s time, AI tools, licences, servers,
             services, margin and tax — and what each would cost if the team used
             no AI tools.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => setOpen((v) => !v)}
-          className="text-sm font-medium text-primary hover:underline"
-        >
-          {open ? "Hide items" : `Show all ${summary.cost_items.length} items`}
-        </button>
       </div>
-      {open ? (
+      {
         <div className="flex flex-col gap-5">
           {groups.map((group) => (
             <div key={group.label} className="flex flex-col">
-              <h3 className="border-b pb-1 text-sm font-semibold text-muted-foreground">
+              <h4 className="border-b pb-1 text-sm font-semibold text-muted-foreground">
                 {group.label} ·{" "}
                 {range(
                   group.items.reduce((s, i) => s + i.low_paise, 0),
                   group.items.reduce((s, i) => s + i.high_paise, 0),
                 )}
-              </h3>
+              </h4>
               <ul className="flex flex-col divide-y">
                 {group.items.map((item) => (
                   <li
@@ -591,7 +682,7 @@ function CostItems({ summary }: { summary: QuickSummary }) {
             turns out cheap or expensive at the same time.
           </p>
         </div>
-      ) : null}
+      }
     </section>
   );
 }
@@ -614,13 +705,13 @@ function ClientPays({ summary }: { summary: QuickSummary }) {
     formatRange(low, high, summary.currency);
   const years = summary.support_years;
   return (
-    <section className="flex flex-col gap-4 rounded-2xl border bg-card px-6 py-6 shadow-sm sm:px-8">
+    <section className="flex flex-col gap-4">
       <div>
-        <h2 className="text-lg font-semibold">
+        <h3 className="text-base font-semibold">
           {summary.mode === "client"
             ? "Also budget for (paid to other providers)"
             : "Paid directly by the client"}
-        </h2>
+        </h3>
         <p className="text-sm text-muted-foreground">
           Not in the price above. The client pays these to the providers
           themselves, so tell them to budget for it.
@@ -715,9 +806,9 @@ function BidCheckCard({ summary }: { summary: QuickSummary }) {
 function SimilarProjects({ summary }: { summary: QuickSummary }) {
   if (summary.similar_projects.length === 0) return null;
   return (
-    <section className="flex flex-col gap-4 rounded-2xl border bg-card px-6 py-6 shadow-sm sm:px-8">
+    <section className="flex flex-col gap-4">
       <div>
-        <h2 className="text-lg font-semibold">Similar real projects</h2>
+        <h3 className="text-base font-semibold">Similar real projects</h3>
         <p className="text-sm text-muted-foreground">
           What clients actually paid for comparable work (published prices, in
           today&apos;s money). Use them to sanity-check this estimate.
@@ -787,27 +878,51 @@ function SaveTemplate({ summary }: { summary: QuickSummary }) {
   );
 }
 
+/** One line for the collapsed team panel: hours, people, months and AI hours saved. */
+function effortHint(summary: QuickSummary): string {
+  const h = summary.hours;
+  const bits: string[] = [];
+  if (h && h.rows.length > 0)
+    bits.push(`${hoursText(h.with_ai)} hours of work`);
+  if (summary.team.length > 0)
+    bits.push(
+      `about ${Math.max(1, Math.round(Number(summary.team_people ?? 0)))} people for ${formatDecimal(Number(summary.build_months), 1)} months`,
+    );
+  if (h && (h.saved ?? 0) > 0)
+    bits.push(
+      `AI-assisted development: estimated ${hoursText(h.saved ?? 0)} hours saved`,
+    );
+  return bits.join(" · ");
+}
+
 function SummaryView({ summary }: { summary: QuickSummary }) {
+  const hasTeam =
+    (summary.hours?.rows.length ?? 0) > 0 ||
+    summary.team.length > 0 ||
+    (summary.traditional_paise !== null && summary.likely_paise !== null);
+  const hasMarket =
+    Boolean(summary.market) || summary.similar_projects.length > 0;
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <Link
-          href="/projects"
-          className="text-sm text-muted-foreground hover:text-foreground"
-        >
-          ← Your estimates
-        </Link>
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">
-          {summary.name}
-        </h1>
-        <p className="text-sm text-muted-foreground">
-          Estimated on {formatDate(summary.created_at)}
-        </p>
-      </div>
-
-      <div className="flex flex-wrap items-start gap-3">
-        <Downloads estimateId={summary.estimate_id} name={summary.name} />
-        <SaveTemplate summary={summary} />
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <Link
+            href="/projects"
+            className="text-sm text-muted-foreground hover:text-foreground"
+          >
+            ← Your estimates
+          </Link>
+          <h1 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">
+            {summary.name}
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Estimated on {formatDate(summary.created_at)}
+          </p>
+        </div>
+        <div className="flex flex-wrap items-start gap-3">
+          <Downloads estimateId={summary.estimate_id} name={summary.name} />
+          <SaveTemplate summary={summary} />
+        </div>
       </div>
 
       {summary.indicative ? (
@@ -817,56 +932,51 @@ function SummaryView({ summary }: { summary: QuickSummary }) {
         </p>
       ) : null}
 
-      {summary.accuracy_note ? (
-        <section className="rounded-xl border bg-muted/40 px-4 py-3 text-sm">
-          <h2 className="font-medium">How accurate is this?</h2>
-          <p className="mt-0.5 text-muted-foreground">
-            {summary.accuracy_note}
-          </p>
-        </section>
-      ) : null}
-
       {summary.feasible ? (
         <>
           <Headline summary={summary} />
-          {summary.not_sure.length > 0 ? (
-            <section className="rounded-xl border border-warning/30 bg-warning-muted px-4 py-3 text-sm text-warning">
-              <h2 className="font-medium">
-                The range is wider because you were not sure about:
-              </h2>
-              <ul className="mt-1 list-disc pl-5">
-                {summary.not_sure.map((q) => (
-                  <li key={q}>{q}</li>
-                ))}
-              </ul>
-              <p className="mt-1">
-                Find out these answers and calculate again to get a narrower
-                range.
-              </p>
-            </section>
-          ) : null}
-          <HoursOfWork summary={summary} />
-          <TeamNeeded summary={summary} />
+          <RealityCheck summary={summary} />
           <BidCheckCard summary={summary} />
-          <AiComparison summary={summary} />
-          <FeatureCosts summary={summary} />
-          <MoneyBreakdown summary={summary} />
-          <CostItems summary={summary} />
-          <ClientPays summary={summary} />
-          <SimilarProjects summary={summary} />
+          <CostSummary summary={summary} />
+          <WhatsIncluded summary={summary} />
+          <OngoingCosts summary={summary} />
+
+          {hasTeam ? (
+            <Disclosure
+              title="Team, effort and AI savings"
+              hint={effortHint(summary)}
+            >
+              <HoursOfWork summary={summary} />
+              <TeamNeeded summary={summary} />
+              <AiComparison summary={summary} />
+            </Disclosure>
+          ) : null}
+
+          <Disclosure
+            title="Detailed breakdown"
+            hint="Cost of each feature, where the money goes, every cost item and client-paid fees."
+          >
+            <FeatureCosts summary={summary} />
+            <MoneyBreakdown summary={summary} />
+            <CostItems summary={summary} />
+            <ClientPays summary={summary} />
+          </Disclosure>
+
+          {hasMarket ? (
+            <Disclosure
+              title="Market comparison"
+              hint="Published prices of real projects: an outside benchmark, not proof that this estimate is right."
+            >
+              <MarketBox summary={summary} />
+              <SimilarProjects summary={summary} />
+            </Disclosure>
+          ) : null}
+
           <CompareOptions
             estimateId={summary.estimate_id}
             currency={summary.currency}
             country={summary.country}
           />
-          {summary.biggest_uncertainty ? (
-            <section className="rounded-2xl border border-primary/20 bg-primary/5 px-6 py-5">
-              <h2 className="font-semibold">What could change the price</h2>
-              <p className="mt-1 text-muted-foreground">
-                {summary.biggest_uncertainty}
-              </p>
-            </section>
-          ) : null}
         </>
       ) : (
         <section className="flex flex-col items-start gap-4 rounded-2xl border bg-card px-6 py-8 shadow-sm sm:px-10">
@@ -887,18 +997,6 @@ function SummaryView({ summary }: { summary: QuickSummary }) {
         projectId={summary.project_id}
         currency={summary.currency}
       />
-
-      <section className="rounded-2xl border bg-card px-6 py-6 shadow-sm sm:px-8">
-        <h2 className="text-lg font-semibold">What you asked for</h2>
-        <ul className="mt-3 grid gap-2 sm:grid-cols-2">
-          {summary.features.map((feature) => (
-            <li key={feature} className="flex items-start gap-2">
-              <span className="text-primary">✓</span>
-              <span>{feature}</span>
-            </li>
-          ))}
-        </ul>
-      </section>
 
       <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
         <Link

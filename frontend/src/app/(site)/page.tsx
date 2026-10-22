@@ -212,11 +212,13 @@ export default function HomePage() {
             A range, because nobody knows the exact number yet.
           </h2>
           <p className="text-muted-foreground">
-            We priced 56 real projects with published prices, each one with
-            settings tuned only on the other 55. Small projects came within
-            about 21% of what was paid; across all sizes the typical miss was
-            about 43%. So Aakalan shows a range, says how sure it is, and widens
-            it when you answer &ldquo;not sure&rdquo;.
+            Aakalan prices the hours the work takes, not what vendors charged,
+            and shows what 56 real Indian projects of the same size were bought
+            for next to it, as published. Contract prices are not hours, so they
+            cannot prove the estimate, and the range has not yet been checked
+            against what finished projects really cost. So Aakalan shows a
+            range, says where it comes from, and widens it when you answer
+            &ldquo;not sure&rdquo;.
           </p>
           <Link
             href="/about"
