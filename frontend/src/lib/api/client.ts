@@ -48,6 +48,7 @@ export type QuickRequest = Schemas["QuickRequest"];
 export type Suggestion = Schemas["Suggestion"];
 export type ContactIn = Schemas["ContactIn"];
 export type QuickSummary = Schemas["QuickSummary"];
+export type SecondOpinionState = Schemas["SecondOpinionState"];
 export type PlainPart = Schemas["PlainPart"];
 export type TenderDocument = Schemas["DocumentOut"];
 export type TenderExtraction = Schemas["TenderExtraction"];
@@ -67,9 +68,6 @@ export type Outcome = Schemas["OutcomeOut"];
 export type BidResult = OutcomeIn["bid_result"];
 export type CalibrationReport = Schemas["CalibrationReport"];
 export type Country = Schemas["CountryOut"];
-export type CompanySettings = Schemas["CompanySettings-Output"];
-export type CompanySettingsIn = Schemas["CompanySettings-Input"];
-export type RoleRate = Schemas["RoleRate"];
 export type Template = Schemas["TemplateOut"];
 
 export class ApiError extends Error {
@@ -259,17 +257,17 @@ export const api = {
     request<Outcome | null>(`/projects/${projectId}/outcome`),
   recordOutcome: (projectId: string, body: OutcomeIn) =>
     send<Outcome>("POST", `/projects/${projectId}/outcome`, body),
+  getSecondOpinion: (estimateId: string) =>
+    request<SecondOpinionState>(`/estimates/${estimateId}/second-opinion`),
+  askSecondOpinion: (estimateId: string) =>
+    send<SecondOpinionState>("POST", `/estimates/${estimateId}/second-opinion`),
   calibration: () => request<CalibrationReport>("/calibration"),
 
-  getSettings: () => request<CompanySettings>("/settings"),
-  getRoleRates: () => request<RoleRate[]>("/settings/roles"),
   listTemplates: () => request<Template[]>("/templates"),
   getTemplate: (id: string) => request<Template>(`/templates/${id}`),
   createTemplate: (projectId: string, name: string) =>
     send<Template>("POST", "/templates", { project_id: projectId, name }),
   deleteTemplate: (id: string) => send<void>("DELETE", `/templates/${id}`),
-  putSettings: (body: CompanySettingsIn) =>
-    send<CompanySettings>("PUT", "/settings", body),
 };
 
 function filenameFrom(disposition: string | null, fallback: string): string {

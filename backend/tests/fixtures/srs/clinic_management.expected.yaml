@@ -1,0 +1,112 @@
+# Expected results for clinic_management.md, written from the document's meaning and the quick
+# config (features, scope items, not-priced topics), not from any extractor's output.
+# classification: explicit | inferred | excluded | future | background
+# pricing: adds_work | already_included | partly_priced | not_priced | standard | feature | unmapped
+document: clinic_management.md
+project: Clinic Management System
+features: [bookings, payments, dashboards]          # the current release asks for these
+not_features: [connect_existing, mobile_app, notifications]  # mentioned or absent, not asked for
+choices: {availability: normal}
+not_priced: [data_rules]
+not_listed: []                                       # topics that must not be listed
+requirements:
+  - id: CLN-1.3
+    text: The hospital group currently uses an ERP for accounting and pharmacy purchases.
+    classification: background
+    kind: feature
+    key: connect_existing
+    offered: false
+    affects_estimate_when_confirmed: false
+    pricing: unmapped
+    explanation: A description of the client's current system, not a request to connect it.
+  - id: CLN-1.4
+    text: Integration with that ERP is out of scope for this release.
+    classification: excluded
+    kind: feature
+    key: connect_existing
+    offered: false
+    affects_estimate_when_confirmed: false
+    pricing: unmapped
+    explanation: Ruled out; the hidden "connect existing software" feature must not be found.
+  - id: CLN-2.2
+    text: Each role shall see only its own screens (standard account behaviour).
+    classification: explicit
+    kind: standard
+    key: user_management_rbac
+    offered: false
+    affects_estimate_when_confirmed: true
+    pricing: standard
+    explanation: Roles and permissions are part of the user-accounts standard block.
+  - id: CLN-3.2
+    text: Each doctor profile shall show qualifications, timings and fees.
+    classification: explicit
+    kind: unmapped
+    key: null
+    offered: false
+    affects_estimate_when_confirmed: false
+    pricing: unmapped
+    explanation: No feature or scope item; priced only if the user adds it as their own feature.
+  - id: CLN-3.3
+    text: Patients shall book appointments with a chosen doctor and time slot.
+    classification: explicit
+    kind: feature
+    key: bookings
+    offered: true
+    affects_estimate_when_confirmed: true
+    pricing: feature
+    explanation: The bookings feature.
+  - id: CLN-3.4
+    text: The system shall send email reminders one day before each appointment.
+    classification: explicit
+    kind: scope
+    key: booking_reminders
+    offered: true
+    affects_estimate_when_confirmed: true
+    pricing: adds_work
+    explanation: "Adds the SMS / email gateway block. The three features make this a small-to-medium project, whose standard blocks already include notifications, so only the gateway is new."
+  - id: CLN-3.5
+    text: Patients shall pay online through a payment gateway when they book.
+    classification: explicit
+    kind: scope
+    key: booking_payment
+    offered: true
+    affects_estimate_when_confirmed: true
+    pricing: already_included
+    explanation: The payments feature already brings the payment gateway block.
+  - id: CLN-3.6
+    text: The administrator shall see a dashboard of appointments and collections.
+    classification: explicit
+    kind: feature
+    key: dashboards
+    offered: true
+    affects_estimate_when_confirmed: true
+    pricing: feature
+    explanation: The reports and dashboards feature.
+  - id: CLN-5.2
+    text: Multi-factor authentication is not required for the first release.
+    classification: excluded
+    kind: scope
+    key: two_step_sign_in
+    offered: false
+    affects_estimate_when_confirmed: false
+    pricing: unmapped
+    explanation: Ruled out; it must be set aside, never offered.
+  - id: CLN-5.3
+    text: Patient records shall be protected as the DPDP Act requires.
+    classification: explicit
+    kind: not_priced
+    key: data_rules
+    offered: false
+    affects_estimate_when_confirmed: false
+    pricing: not_priced
+    explanation: A rule to follow that the estimate lists as not priced.
+  - id: CLN-7.1
+    text: Phase 2 may add WhatsApp messages for appointment reminders.
+    classification: future
+    kind: scope
+    key: whatsapp
+    offered: false
+    affects_estimate_when_confirmed: false
+    pricing: unmapped
+    detect: optional   # its group needs the notifications feature, which is not asked for
+    explanation: A later phase; never offered for this release.

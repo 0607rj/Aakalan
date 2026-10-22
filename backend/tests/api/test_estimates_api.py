@@ -7,11 +7,12 @@ from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
 from app.core.security import hash_password
-from app.models import Organisation, Requirement, Role, User
+from app.models import Estimate, Organisation, Requirement, Role, User
 from app.services.seeding.database import seed_demo_project
 from app.services.seeding.golden import expected_path
 from app.services.seeding.reference import load_reference
@@ -109,6 +110,37 @@ def test_same_inputs_and_seed_give_identical_estimates(
     keys = ("likely_paise", "p10_paise", "p50_paise", "p90_paise")
     assert [a[k] for k in keys] == [b[k] for k in keys]
     assert [ln["likely_paise"] for ln in a["lines"]] == [ln["likely_paise"] for ln in b["lines"]]
+
+
+def test_saved_estimate_unchanged_when_catalog_v6_arrives(
+    client: TestClient, estimator_headers: H, db: Session
+) -> None:
+    """An estimate on catalog v5 keeps its AI savings on every block and never changes; the
+    next one uses catalog v6 (no saving on unknown-era data) with the pre-AI sensitivity run
+    stored beside it."""
+    project, _ = ready_project(client, estimator_headers)
+    old = estimate(client, estimator_headers, project["id"], catalog_version="v5")
+    labour = {ln["formula_id"] for ln in old["lines"] if ln["component_instance_id"]}
+    assert old["catalog_version"] == "v5" and labour == {"component_labour.v2"}
+    new = estimate(client, estimator_headers, project["id"])
+    labour = {ln["formula_id"] for ln in new["lines"] if ln["component_instance_id"]}
+    assert int(new["catalog_version"][1:]) >= 6 and labour == {"component_labour.v3"}
+    assert new["p50_paise"] > old["p50_paise"]  # no AI saving taken off unknown-era data
+
+    again = client.get(f"/estimates/{old['id']}", headers=estimator_headers).json()
+    keys = ("likely_paise", "p10_paise", "p50_paise", "p90_paise")
+    assert [again[k] for k in keys] == [old[k] for k in keys]
+    assert [ln["likely_paise"] for ln in again["lines"]] == [
+        ln["likely_paise"] for ln in old["lines"]
+    ]
+    rows = {
+        e.id: e for e in db.scalars(select(Estimate).where(Estimate.project_id == project["id"]))
+    }
+    assert rows[old["id"]].result["era_sensitivity"] is None  # v5 records no source eras
+    s = rows[new["id"]].result["era_sensitivity"]
+    assert s["p50_paise"] < new["p50_paise"]
+    assert s["range_low_paise"] == min(s["p10_paise"], new["p10_paise"])
+    assert s["range_high_paise"] == new["p90_paise"]
 
 
 def test_margin_redacted_for_estimator_visible_to_finance(

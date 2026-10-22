@@ -388,3 +388,133 @@ export function DetailsStep({
     </section>
   );
 }
+
+export type ScopeGroup = QuickOptions["scope"][number];
+
+/** Scope groups that apply: those every project has and those of the ticked features. */
+export function applicableScope(
+  options: QuickOptions,
+  features: string[],
+): ScopeGroup[] {
+  return options.scope.filter(
+    (g) => g.feature === null || features.includes(g.feature),
+  );
+}
+
+/** Only items of groups that still apply are sent (a feature may have been unticked). */
+export function chosenScope(groups: ScopeGroup[], chosen: string[]): string[] {
+  const keys = new Set(groups.flatMap((g) => g.items.map((i) => i.key)));
+  return chosen.filter((k) => keys.has(k));
+}
+
+/** What else the features need: each ticked item adds the work it takes; something already
+ * in the project is not counted again. Suggestions (from a document or the user's own words)
+ * are marked, never ticked for the user: nothing here is priced unless ticked. */
+export function ScopeStep({
+  groups,
+  chosen,
+  suggested = [],
+  notes = {},
+  source = "your description",
+  onToggle,
+  onTickSuggested,
+}: {
+  groups: ScopeGroup[];
+  chosen: string[];
+  suggested?: string[];
+  notes?: Record<string, React.ReactNode>;
+  source?: string;
+  onToggle: (key: string) => void;
+  onTickSuggested?: () => void;
+}) {
+  const offered = new Set(groups.flatMap((g) => g.items.map((i) => i.key)));
+  const waiting = suggested.filter(
+    (k) => offered.has(k) && !chosen.includes(k),
+  );
+  return (
+    <section className="flex flex-col gap-6">
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+          What else does it need? (optional)
+        </h1>
+        <p className="mt-1 max-w-3xl text-muted-foreground">
+          Tick only what the software really needs. Each item adds the work it
+          takes; anything already included is not counted twice. Nothing here is
+          priced unless you tick it.
+        </p>
+      </div>
+      {waiting.length > 0 ? (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-dashed px-4 py-3 text-sm">
+          <span>
+            {waiting.length} suggested from {source}, marked{" "}
+            <strong>Suggested</strong>. They are not included until you tick
+            them.
+          </span>
+          {onTickSuggested ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={onTickSuggested}
+            >
+              Tick the suggested ones
+            </Button>
+          ) : null}
+        </div>
+      ) : null}
+      <div className="flex flex-col gap-4">
+        {groups.map((group) => (
+          <fieldset
+            key={group.key}
+            className="flex flex-col gap-3 rounded-xl border bg-card p-4"
+          >
+            <legend className="sr-only">{group.label}</legend>
+            <span className="font-semibold">{group.label}</span>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {group.items.map((item) => {
+                const isSuggested = suggested.includes(item.key);
+                const checked = chosen.includes(item.key);
+                return (
+                  <label
+                    key={item.key}
+                    className={cn(
+                      "flex cursor-pointer items-start gap-2 rounded-lg p-2 hover:bg-muted/40",
+                      isSuggested &&
+                        !checked &&
+                        "border border-dashed border-primary/40",
+                    )}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={() => onToggle(item.key)}
+                      className="mt-1 size-4 accent-primary"
+                    />
+                    <span className="flex flex-col gap-1">
+                      <span>
+                        {item.label}
+                        {isSuggested ? " " : null}
+                        {isSuggested ? (
+                          <span className="ml-1 rounded bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary">
+                            Suggested
+                          </span>
+                        ) : null}
+                      </span>
+                      {item.note ? (
+                        <span className="text-sm text-muted-foreground">
+                          {item.partly_priced ? "Partly priced. " : ""}
+                          {item.note}
+                        </span>
+                      ) : null}
+                      {notes[item.key] ?? null}
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          </fieldset>
+        ))}
+      </div>
+    </section>
+  );
+}

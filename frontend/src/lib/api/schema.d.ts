@@ -488,6 +488,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/estimates/{estimate_id}/second-opinion": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Get Second Opinion */
+        get: operations["get_second_opinion_estimates__estimate_id__second_opinion_get"];
+        put?: never;
+        /**
+         * Ask Second Opinion
+         * @description The AI reviews the scope the price is built from (words only, never numbers).
+         */
+        post: operations["ask_second_opinion_estimates__estimate_id__second_opinion_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/quick-estimate/impact": {
         parameters: {
             query?: never;
@@ -737,6 +758,44 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/research-blocks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** List Blocks */
+        get: operations["list_blocks_research_blocks_get"];
+        put?: never;
+        /**
+         * Research
+         * @description Find the block for one feature now: the catalog, else research (with an AI key).
+         */
+        post: operations["research_research_blocks_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/research-blocks/{block_id}/retire": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Retire */
+        post: operations["retire_research_blocks__block_id__retire_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -764,6 +823,12 @@ export interface components {
             /** Overridden */
             overridden: boolean;
         };
+        /**
+         * BaselineEra
+         * @description Whether the effort data behind a component was measured with AI coding tools in use.
+         * @enum {string}
+         */
+        BaselineEra: "pre_ai" | "ai_assisted" | "unknown";
         /**
          * BidCheck
          * @description For a client planning a tender: the fair budget and where bids stop looking realistic.
@@ -802,6 +867,28 @@ export interface components {
             /** Placeholder Refs */
             placeholder_refs: string[];
             model_spread?: components["schemas"]["SpreadFactor"] | null;
+        };
+        /**
+         * CalibrationBasis
+         * @description What the effort level of these figures was calibrated against (documentation only: the
+         *     engine never reads it). Kept apart from the source era: a calibration against pre-AI data
+         *     does not make a component's own sources pre-AI.
+         */
+        CalibrationBasis: {
+            /** Parameter */
+            parameter: string;
+            /** Parameter Sets */
+            parameter_sets: string[];
+            /** Method */
+            method: string;
+            /** Data */
+            data: string;
+            /** Reproducible */
+            reproducible: boolean;
+            /** Limitations */
+            limitations: string[];
+            /** Source */
+            source: string;
         };
         /** CalibrationReport */
         CalibrationReport: {
@@ -857,6 +944,15 @@ export interface components {
             version: string;
             /** Components */
             components: components["schemas"]["CatalogComponent"][];
+            era_rules?: components["schemas"]["EraRules"] | null;
+            calibration_basis?: components["schemas"]["CalibrationBasis"] | null;
+            /**
+             * Sections
+             * @default {}
+             */
+            sections: {
+                [key: string]: string;
+            };
         };
         /** CatalogComponent */
         CatalogComponent: {
@@ -894,6 +990,21 @@ export interface components {
              */
             tags: ("integration" | "ai" | "data_migration")[];
             licence?: components["schemas"]["ComponentLicence"] | null;
+            /** Section */
+            section?: string | null;
+            source_era?: components["schemas"]["BaselineEra"] | null;
+            /**
+             * Era Reason
+             * @default
+             */
+            era_reason: string;
+            /** Confidence */
+            confidence?: ("low" | "low_medium" | "medium" | "high") | null;
+            /**
+             * Evidence
+             * @default []
+             */
+            evidence: components["schemas"]["EffortEvidence"][];
         };
         /** CatalogComponentOut */
         CatalogComponentOut: {
@@ -939,6 +1050,17 @@ export interface components {
             document: string;
             /** Kind */
             kind: string;
+        };
+        /** Check */
+        Check: {
+            /** Key */
+            key: string;
+            /** Ok */
+            ok: boolean;
+            /** Title */
+            title: string;
+            /** Detail */
+            detail: string;
         };
         /**
          * ClientPays
@@ -1211,6 +1333,8 @@ export interface components {
             size: components["schemas"]["Size"];
             /** Found Index */
             found_index?: number | null;
+            /** Catalog Key */
+            catalog_key?: string | null;
         };
         /** CustomTypeOut */
         CustomTypeOut: {
@@ -1273,6 +1397,73 @@ export interface components {
          * @enum {string}
          */
         Driver: "uptime_sla" | "security_level" | "languages" | "accessibility" | "concurrency";
+        /**
+         * EffortEvidence
+         * @description One cited source behind a component's effort figures (catalog v6+).
+         */
+        EffortEvidence: {
+            /** Id */
+            id: string;
+            /** Citation */
+            citation: string;
+            /**
+             * Source Type
+             * @enum {string}
+             */
+            source_type: "measured_projects" | "published_dataset" | "published_study" | "vendor_estimate" | "expert_judgement";
+            /** Published */
+            published?: number | null;
+            /** Url */
+            url?: string | null;
+            era: components["schemas"]["BaselineEra"];
+            era_basis: components["schemas"]["EraBasis"];
+            /** Ai Workflow */
+            ai_workflow?: string | null;
+            /** Sample Size */
+            sample_size?: number | null;
+            /**
+             * Quality
+             * @enum {string}
+             */
+            quality: "low" | "low_medium" | "medium" | "high";
+        };
+        /**
+         * EraBasis
+         * @description Why an evidence item has its era. A date is only a provisional heuristic; an explicit
+         *     statement or a documented workflow takes precedence.
+         * @enum {string}
+         */
+        EraBasis: "explicit_statement" | "documented_workflow" | "date_heuristic" | "not_established";
+        /**
+         * EraRules
+         * @description How evidence eras are set (catalog v6+). The cutoff is a provisional heuristic.
+         */
+        EraRules: {
+            /** Pre Ai Before Year */
+            pre_ai_before_year: number;
+            /** Source */
+            source: string;
+        };
+        /**
+         * EraSensitivityOut
+         * @description Building blocks whose effort data has unknown AI use get no AI saving in the price. This
+         *     is the same scope if that data predates AI tools (the team's AI savings applied to it):
+         *     shown beside the price, never taken off it (engine run, `era_sensitivity`).
+         */
+        EraSensitivityOut: {
+            /** Low Paise */
+            low_paise: number;
+            /** High Paise */
+            high_paise: number;
+            /** Pre Ai Likely Paise */
+            pre_ai_likely_paise: number;
+            /** Unknown Components */
+            unknown_components: number;
+            /** Components */
+            components: number;
+            /** Note */
+            note: string;
+        };
         /** EstimateCreate */
         EstimateCreate: {
             /** Seed */
@@ -1436,6 +1627,18 @@ export interface components {
              */
             hidden: boolean;
         };
+        /** Flag */
+        Flag: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "level_too_high" | "level_too_low" | "missing" | "not_needed" | "unclear" | "other";
+            /** Feature */
+            feature?: string | null;
+            /** Message */
+            message: string;
+        };
         /** FoundFeature */
         FoundFeature: {
             /** Key */
@@ -1500,6 +1703,29 @@ export interface components {
         FoundPaymentTerms: {
             /** Payments */
             payments: components["schemas"]["FoundPayment"][];
+            /** Evidence */
+            evidence: components["schemas"]["VerifiedEvidence"][];
+        };
+        /**
+         * FoundScope
+         * @description A scope item the document mentions (quick config `scope`), with its quotes.
+         */
+        FoundScope: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /**
+             * Status
+             * @default explicit
+             * @enum {string}
+             */
+            status: "explicit" | "inferred" | "excluded" | "future" | "background";
+            /**
+             * Note
+             * @default
+             */
+            note: string;
             /** Evidence */
             evidence: components["schemas"]["VerifiedEvidence"][];
         };
@@ -1640,7 +1866,11 @@ export interface components {
         };
         /**
          * MarketOut
-         * @description What real contracts of this size cost, next to the should-cost estimate (engine).
+         * @description What real projects were bought for, next to the should-cost estimate. basis
+         *     "published_prices": the published prices of real projects the app gives the same size, in
+         *     today's money with GST (P25 / median / P75), as published, not scaled to this estimate.
+         *     "scaled_to_estimate" (parameter sets v14-v15 without benchmark data): P50 × a size band.
+         *     Either way an observed price, not a check of the hours.
          */
         MarketOut: {
             /** Project Size */
@@ -1653,6 +1883,33 @@ export interface components {
             mid_paise: number;
             /** High Paise */
             high_paise: number;
+            /**
+             * Basis
+             * @default scaled_to_estimate
+             * @enum {string}
+             */
+            basis: "published_prices" | "scaled_to_estimate";
+            /**
+             * Sizes
+             * @default []
+             */
+            sizes: string[];
+            /**
+             * Sources
+             * @default []
+             */
+            sources: components["schemas"]["MarketSource"][];
+            /** First Year */
+            first_year?: number | null;
+            /** Last Year */
+            last_year?: number | null;
+        };
+        /** MarketSource */
+        MarketSource: {
+            /** Label */
+            label: string;
+            /** Projects */
+            projects: number;
         };
         /** OptionOut */
         OptionOut: {
@@ -1999,6 +2256,11 @@ export interface components {
             questions: components["schemas"]["QuestionOut"][];
             /** Custom Feature Types */
             custom_feature_types: components["schemas"]["CustomTypeOut"][];
+            /**
+             * Scope
+             * @default []
+             */
+            scope: components["schemas"]["ScopeGroupOut"][];
         };
         /** QuickRequest */
         QuickRequest: {
@@ -2048,6 +2310,11 @@ export interface components {
             };
             /** Payment Schedule */
             payment_schedule?: components["schemas"]["PaymentMilestone"][] | null;
+            /**
+             * Scope
+             * @default []
+             */
+            scope: string[];
             /**
              * Mode
              * @default vendor
@@ -2108,6 +2375,16 @@ export interface components {
             biggest_uncertainty: string | null;
             /** Features */
             features: string[];
+            /**
+             * Scope
+             * @default []
+             */
+            scope: string[];
+            /**
+             * Scope Items
+             * @default []
+             */
+            scope_items: components["schemas"]["ScopeCost"][];
             /** Indicative */
             indicative: boolean;
             /** Accuracy Note */
@@ -2164,6 +2441,7 @@ export interface components {
              */
             should_cost: boolean;
             market?: components["schemas"]["MarketOut"] | null;
+            era_sensitivity?: components["schemas"]["EraSensitivityOut"] | null;
             /**
              * Not Sure
              * @default []
@@ -2179,6 +2457,12 @@ export interface components {
              */
             mode: string;
             bid_check?: components["schemas"]["BidCheck"] | null;
+            /**
+             * Researched
+             * @default []
+             */
+            researched: components["schemas"]["ResearchedFeature"][];
+            reality?: components["schemas"]["RealityOut"] | null;
         };
         /** RangeDriver */
         RangeDriver: {
@@ -2311,6 +2595,16 @@ export interface components {
          * @enum {string}
          */
         RateKind: "role" | "cloud_sku" | "llm_token" | "gpu_hour" | "licence" | "audit_fee" | "bank_charge" | "other";
+        /** RealityOut */
+        RealityOut: {
+            /**
+             * Verdict
+             * @enum {string}
+             */
+            verdict: "realistic" | "check";
+            /** Checks */
+            checks: components["schemas"]["Check"][];
+        };
         /** RequirementCreate */
         RequirementCreate: {
             /** Code */
@@ -2364,6 +2658,87 @@ export interface components {
             source_refs?: components["schemas"]["SourceRef"][] | null;
             /** Status */
             status?: ("confirmed" | "rejected") | null;
+        };
+        /** ResearchIn */
+        ResearchIn: {
+            /** Name */
+            name: string;
+            /** Category */
+            category: string;
+        };
+        /** ResearchOut */
+        ResearchOut: {
+            /** Ai Available */
+            ai_available: boolean;
+            /** Catalog Key */
+            catalog_key: string | null;
+            block: components["schemas"]["ResearchedBlockOut"] | null;
+        };
+        /** ResearchSource */
+        ResearchSource: {
+            /** Label */
+            label: string;
+            /** Url */
+            url?: string | null;
+        };
+        /** ResearchedBlockOut */
+        ResearchedBlockOut: {
+            /** Id */
+            id: string;
+            /** Key */
+            key: string;
+            /** Name */
+            name: string;
+            /** Section */
+            section: string;
+            /** Base Type */
+            base_type: string;
+            /** Status */
+            status: string;
+            /** Note */
+            note: string;
+            /** Base Effort Pd */
+            base_effort_pd: {
+                [key: string]: string;
+            } | null;
+            /** Source */
+            source: string | null;
+            /** Sources */
+            sources: {
+                [key: string]: unknown;
+            }[];
+            /** Model */
+            model: string;
+            /** Input Tokens */
+            input_tokens: number;
+            /** Output Tokens */
+            output_tokens: number;
+            /**
+             * Created At
+             * Format: date-time
+             */
+            created_at: string;
+        };
+        /**
+         * ResearchedFeature
+         * @description A feature priced by a block researched for it (services/research): from published hours
+         *     found on the web and checked on the page ("web"), or from the AI's analysis of it as catalog
+         *     blocks ("analysis"). Low confidence either way.
+         */
+        ResearchedFeature: {
+            /** Name */
+            name: string;
+            /**
+             * Method
+             * @enum {string}
+             */
+            method: "web" | "analysis";
+            /** Section */
+            section: string | null;
+            /** Summary */
+            summary: string;
+            /** Sources */
+            sources: components["schemas"]["ResearchSource"][];
         };
         /**
          * Role
@@ -2431,6 +2806,77 @@ export interface components {
         ScenariosRequest: {
             /** Scenarios */
             scenarios: components["schemas"]["Scenario"][];
+        };
+        /**
+         * ScopeCost
+         * @description A chosen scope item and the building cost of the blocks only it asked for (most likely,
+         *     split evenly when two items need the same new block). 0 = already in the project (a
+         *     feature's or a standard block), so nothing was added.
+         */
+        ScopeCost: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Amount Paise */
+            amount_paise: number;
+            /** Note */
+            note: string;
+            /**
+             * Partly Priced
+             * @default false
+             */
+            partly_priced: boolean;
+        };
+        /** ScopeGroupOut */
+        ScopeGroupOut: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Feature */
+            feature: string | null;
+            /** Items */
+            items: components["schemas"]["ScopeItemOut"][];
+        };
+        /** ScopeItemOut */
+        ScopeItemOut: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /**
+             * Note
+             * @default
+             */
+            note: string;
+            /**
+             * Partly Priced
+             * @default false
+             */
+            partly_priced: boolean;
+        };
+        /** SecondOpinionOut */
+        SecondOpinionOut: {
+            /**
+             * Verdict
+             * @enum {string}
+             */
+            verdict: "looks_right" | "check";
+            /** Summary */
+            summary: string;
+            /** Flags */
+            flags: components["schemas"]["Flag"][];
+            /** Created At */
+            created_at: string;
+            /** Model */
+            model: string;
+        };
+        /** SecondOpinionState */
+        SecondOpinionState: {
+            /** Ai Available */
+            ai_available: boolean;
+            opinion: components["schemas"]["SecondOpinionOut"] | null;
         };
         /**
          * SimilarProject
@@ -2502,6 +2948,17 @@ export interface components {
             /** Quote */
             quote: string;
         };
+        /** SuggestedScope */
+        SuggestedScope: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Quote */
+            quote: string;
+            /** Status */
+            status: string;
+        };
         /** Suggestion */
         Suggestion: {
             /** Reader */
@@ -2514,6 +2971,16 @@ export interface components {
             choices: {
                 [key: string]: string | number;
             };
+            /**
+             * Scope
+             * @default []
+             */
+            scope: components["schemas"]["SuggestedScope"][];
+            /**
+             * Not Priced
+             * @default []
+             */
+            not_priced: string[];
             /** Note */
             note: string | null;
         };
@@ -2603,6 +3070,16 @@ export interface components {
              */
             not_priced: components["schemas"]["FoundNotPriced"][];
             payment_terms?: components["schemas"]["FoundPaymentTerms"] | null;
+            /**
+             * Scope
+             * @default []
+             */
+            scope: components["schemas"]["FoundScope"][];
+            /**
+             * Scope Set Aside
+             * @default []
+             */
+            scope_set_aside: components["schemas"]["FoundScope"][];
         };
         /** Timeline */
         Timeline: {
@@ -3933,6 +4410,68 @@ export interface operations {
             };
         };
     };
+    get_second_opinion_estimates__estimate_id__second_opinion_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                estimate_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecondOpinionState"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    ask_second_opinion_estimates__estimate_id__second_opinion_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                estimate_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SecondOpinionState"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     impact_quick_estimate_impact_post: {
         parameters: {
             query?: never;
@@ -4417,6 +4956,90 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ContactOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    list_blocks_research_blocks_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResearchedBlockOut"][];
+                };
+            };
+        };
+    };
+    research_research_blocks_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResearchIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResearchOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    retire_research_blocks__block_id__retire_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                block_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResearchedBlockOut"];
                 };
             };
             /** @description Validation Error */

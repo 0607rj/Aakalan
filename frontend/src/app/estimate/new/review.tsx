@@ -43,6 +43,9 @@ import {
   featuresWithLevels,
   type Level,
   LevelsStep,
+  ScopeStep,
+  applicableScope,
+  chosenScope,
   pickedLevels,
   presetFromFeatures,
   Progress,
@@ -89,6 +92,7 @@ const FACTS: Fact[] = [
   { key: "chatbot_queries_per_day", label: "Chatbot questions per day", unit: "count", min: 0, integer: true, needsFeature: "ai_chatbot" },
   { key: "documents_per_month", label: "Documents uploaded per month", unit: "count", min: 0, integer: true, onlyIfFound: true },
   { key: "onsite_staff", label: "Staff at your office during support", unit: "count", min: 0, max: 50, integer: true, onlyIfFound: true },
+  { key: "onsite_days", label: "Days they are needed in all (empty = every support year)", unit: "count", min: 1, max: 2000, integer: true, onlyIfFound: true },
   { key: "emd_paise", label: "EMD amount", unit: "rupees", min: 0, integer: false, indiaTerm: true },
   { key: "pbg_percent", label: "Performance guarantee (%)", unit: "percent", min: 0, max: 100, integer: false, indiaTerm: true },
 ];
@@ -186,12 +190,20 @@ export function ReviewForm({
   const customFeatures = toCustomFeatures(customItems);
   const anyFeature = features.length > 0 || customFeatures.length > 0;
   const [levels, setLevels] = React.useState<Record<string, Level>>({});
+  // scope items the document mentions are suggested with their quotes, never ticked for
+  // the user: only what the user ticks is priced
+  const foundScope = React.useMemo(
+    () => new Map((extraction.scope ?? []).map((s) => [s.key, s])),
+    [extraction.scope],
+  );
+  const [scope, setScope] = React.useState<string[]>([]);
   const terms = extraction.payment_terms ?? null;
   const [useTerms, setUseTerms] = React.useState(terms !== null);
   const [customizing, setCustomizing] = React.useState(false);
   const everything = allFeatures(options, features, choices);
   const leveled = featuresWithLevels(options, everything);
   const effective = effectiveLevels(options, everything, choices, levels);
+  const scopeGroups = applicableScope(options, everything);
   const [changing, setChanging] = React.useState<Record<string, boolean>>({});
   const [submitting, setSubmitting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -243,6 +255,7 @@ export function ReviewForm({
     feature_levels: featureLevels,
     custom_features: customFeatures,
     choices,
+    scope: chosenScope(scopeGroups, scope),
     overrides,
     payment_schedule:
       terms && useTerms
@@ -256,6 +269,7 @@ export function ReviewForm({
   const [first, ...rest] = openQuestions.map((q) => `q:${q.key}`);
   const steps = useSteps([
     "found",
+    ...(scopeGroups.length > 0 ? ["scope"] : []),
     ...(first ? [first] : []),
     ...(customizing && leveled.length > 0 ? ["levels"] : []),
     ...(visibleFacts.length > 0 || terms ? ["facts"] : []),
@@ -416,6 +430,63 @@ export function ReviewForm({
                   : `${features.length + customFeatures.length} selected`
             }
           />
+        </>
+      ) : steps.current === "scope" ? (
+        <>
+          <ScopeStep
+            groups={scopeGroups}
+            chosen={scope}
+            suggested={[...foundScope.keys()]}
+            source="the document"
+            onTickSuggested={() =>
+              setScope((now) => [...new Set([...now, ...foundScope.keys()])])
+            }
+            notes={Object.fromEntries(
+              [...foundScope.values()].map((s) => [
+                s.key,
+                <span key={s.key} className="flex flex-col gap-1">
+                  <span className="text-sm text-muted-foreground">
+                    {s.status === "explicit"
+                      ? "The document asks for this."
+                      : `The document suggests it may be needed${s.note ? `: ${s.note}` : ""}. Please check.`}
+                  </span>
+                  <Citation evidence={s.evidence} approximatePages={approx} />
+                </span>,
+              ]),
+            )}
+            onToggle={(key) =>
+              setScope((now) =>
+                now.includes(key)
+                  ? now.filter((k) => k !== key)
+                  : [...now, key],
+              )
+            }
+          />
+          {(extraction.scope_set_aside ?? []).length > 0 ? (
+            <div className="flex flex-col gap-2 rounded-xl bg-muted/60 px-4 py-3 text-sm">
+              <span className="font-medium">
+                Mentioned in the document, but not asked for now (not priced)
+              </span>
+              <ul className="flex flex-col gap-1">
+                {(extraction.scope_set_aside ?? []).map((s) => (
+                  <li key={s.key}>
+                    {s.label}:{" "}
+                    {s.status === "excluded"
+                      ? "ruled out"
+                      : s.status === "future"
+                        ? "for a later phase or optional"
+                        : "only mentioned"}
+                    {" — "}
+                    <Citation evidence={s.evidence} approximatePages={approx} />
+                  </li>
+                ))}
+              </ul>
+              <span className="text-muted-foreground">
+                Tick it above if it should be built now.
+              </span>
+            </div>
+          ) : null}
+          <StepButtons onBack={steps.prev} onNext={steps.next} />
         </>
       ) : steps.current === "levels" ? (
         <>

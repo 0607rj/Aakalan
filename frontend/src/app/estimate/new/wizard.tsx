@@ -44,6 +44,9 @@ import {
   featuresWithLevels,
   type Level,
   LevelsStep,
+  ScopeStep,
+  applicableScope,
+  chosenScope,
   pickedLevels,
   presetFromFeatures,
   Progress,
@@ -101,6 +104,11 @@ function ManualForm({
   const [customItems, setCustomItems] = React.useState<CustomItem[]>(() =>
     itemsFromTemplate(saved?.custom_features ?? []),
   );
+  const [scope, setScope] = React.useState<string[]>(() => saved?.scope ?? []);
+  // scope items suggested from the user's own description: key -> the words that asked for it
+  const [scopeReasons, setScopeReasons] = React.useState<
+    Record<string, string>
+  >({});
   const customFeatures = toCustomFeatures(customItems);
   const [choices, setChoices] = React.useState<Record<string, Choice>>(() =>
     initialChoices(options.questions, {
@@ -136,6 +144,7 @@ function ManualForm({
   const moreShown = tickable.filter((f) => !firstShown.includes(f));
   const everything = allFeatures(options, features, choices);
   const leveled = featuresWithLevels(options, everything);
+  const scopeGroups = applicableScope(options, everything);
   const effective = effectiveLevels(options, everything, choices, levels);
   const relevant = relevantQuestions(
     options.questions,
@@ -146,6 +155,8 @@ function ManualForm({
   const questions = relevant.filter((q) => q.group === "main");
   const details = relevant.filter((q) => q.group === "detail");
   const [first, ...rest] = questions.map((q) => `q:${q.key}`);
+  // Like public cost calculators: what it is, one feature tick list, a few questions and the
+  // deadline; the extras ("What else does it need?") and details come last and are optional.
   const stepKeys = [
     "type",
     "features",
@@ -153,6 +164,7 @@ function ManualForm({
     ...(customizing && leveled.length > 0 ? ["levels"] : []),
     ...rest,
     "deadline",
+    ...(scopeGroups.length > 0 ? ["scope"] : []),
     ...(details.length > 0 ? ["details"] : []),
     "check",
   ];
@@ -173,6 +185,7 @@ function ManualForm({
     feature_levels: featureLevels,
     custom_features: customFeatures,
     choices,
+    scope: chosenScope(scopeGroups, scope),
     deadline_months: deadlineValid ? deadlineMonths : null,
     document_id: documentId,
     overrides,
@@ -216,7 +229,9 @@ function ManualForm({
   const question = current.startsWith("q:")
     ? questions.find((q) => `q:${q.key}` === current)
     : undefined;
-  const phase = ["type", "features", "levels"].includes(current) ? 1 : 2;
+  const phase = ["type", "features", "scope", "levels"].includes(current)
+    ? 1
+    : 2;
 
   return (
     <div className="flex flex-col gap-8">
@@ -325,6 +340,17 @@ function ManualForm({
               };
               for (const key of Object.keys(implied)) answered.current.add(key);
               setChoices((now) => ({ ...now, ...implied }));
+              const items = s.scope ?? [];
+              setScopeReasons(
+                Object.fromEntries(
+                  items.map((i) => [
+                    i.key,
+                    i.status === "explicit"
+                      ? i.quote
+                      : `${i.quote} (may be needed: please check)`,
+                  ]),
+                ),
+              );
               if (keys.some((k) => moreShown.some((f) => f.key === k))) {
                 setShowAll(true);
               }
@@ -406,6 +432,33 @@ function ManualForm({
             }
           />
         </section>
+      ) : current === "scope" ? (
+        <>
+          <ScopeStep
+            groups={scopeGroups}
+            chosen={scope}
+            suggested={Object.keys(scopeReasons)}
+            onTickSuggested={() =>
+              setScope((now) => [
+                ...new Set([...now, ...Object.keys(scopeReasons)]),
+              ])
+            }
+            notes={Object.fromEntries(
+              Object.entries(scopeReasons).map(([k, quote]) => [
+                k,
+                <SuggestedBecause key={k} quote={quote} />,
+              ]),
+            )}
+            onToggle={(key) =>
+              setScope((now) =>
+                now.includes(key)
+                  ? now.filter((k) => k !== key)
+                  : [...now, key],
+              )
+            }
+          />
+          <StepButtons onBack={steps.prev} onNext={steps.next} />
+        </>
       ) : current === "levels" ? (
         <>
           <LevelsStep

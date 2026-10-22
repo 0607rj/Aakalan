@@ -11,6 +11,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, date, datetime
 from decimal import Decimal
 from functools import lru_cache
+from statistics import median, quantiles
 from typing import Any, Literal
 
 from fastapi import HTTPException, status
@@ -41,13 +42,23 @@ from app.services.engine.inputs import (
 from app.services.engine.reference import Complexity, Size
 from app.services.estimates import service as estimates
 from app.services.estimates.reference_store import (
-    get_catalog,
+    catalog_for,
     get_parameter_set,
     get_rate_card,
     get_taxonomy,
 )
 from app.services.extraction.merge import project_extraction
-from app.services.quick.config import CostItemRule, Feature, LevelKey, QuickConfig, SizeTier
+from app.services.quick.config import (
+    CostItemRule,
+    Feature,
+    LevelKey,
+    QuickConfig,
+    SizeTier,
+    quick_config,
+)
+from app.services.quick.reality import FeatureShare, RealityOut, reality_check
+from app.services.research.service import PREFIX as RESEARCH_PREFIX
+from app.services.research.service import resolve_features
 from app.services.settings import (
     CompanySettings,
     apply_company_rates,
@@ -56,7 +67,10 @@ from app.services.settings import (
 )
 
 FORM_DOCUMENT = "Quick estimate form"
+SCOPE = "scope"  # requirement category of a chosen scope item
 ONSITE_STAFF = "onsite_staff"
+ONSITE_DAYS = "onsite_days"
+ONSITE_PERIOD = "onsite_period"
 FEW_BENCHMARKS = 5
 ONE = Decimal(1)
 
@@ -101,6 +115,7 @@ OVERRIDABLE = frozenset(
         "emd_paise",
         "pbg_percent",
         "onsite_staff",  # people at the client's office during support (onsite_role)
+        "onsite_days",  # only for these days in all (e.g. an event), not every support year
     }
 )
 
@@ -112,6 +127,9 @@ class CustomFeature(BaseModel):
     category: str
     size: Size
     found_index: int | None = None  # index into the document's other_features (for citations)
+    # The catalog block that prices it (a published or researched block, services/research);
+    # None = the generic block of its type. Set when the estimate is made, kept for re-runs.
+    catalog_key: str | None = Field(default=None, max_length=100)
 
 
 class QuickRequest(BaseModel):
@@ -128,6 +146,9 @@ class QuickRequest(BaseModel):
     overrides: dict[str, int | float] = {}
     # When the vendor is paid, as read from the document (shares add up to 1).
     payment_schedule: list[PaymentMilestone] | None = None
+    # What else the features need (keys of the quick config's scope items); not chosen = not
+    # priced. Items of a feature need that feature ticked.
+    scope: list[str] = []
     # vendor: pricing our own bid; client: a department or company planning its budget
     # (tender estimate) - priced at market rates, with a bid check.
     mode: Literal["vendor", "client"] = "vendor"
@@ -192,14 +213,41 @@ class HoursSummary(BaseModel):
     rows: list[HoursRow]
 
 
+class MarketSource(BaseModel):
+    label: str
+    projects: int
+
+
 class MarketOut(BaseModel):
-    """What real contracts of this size cost, next to the should-cost estimate (engine)."""
+    """What real projects were bought for, next to the should-cost estimate. basis
+    "published_prices": the published prices of real projects the app gives the same size, in
+    today's money with GST (P25 / median / P75), as published, not scaled to this estimate.
+    "scaled_to_estimate" (parameter sets v14-v15 without benchmark data): P50 × a size band.
+    Either way an observed price, not a check of the hours."""
 
     project_size: str  # Small / ... / Large
-    projects: int  # real projects behind the band (0 = between two sizes)
+    projects: int  # real projects behind the figures (0 = between two sizes)
     low_paise: int  # middle half of real contracts
     mid_paise: int
     high_paise: int
+    basis: Literal["published_prices", "scaled_to_estimate"] = "scaled_to_estimate"
+    sizes: list[str] = []  # size groups the projects come from (neighbours added when few)
+    sources: list[MarketSource] = []
+    first_year: int | None = None  # award years of the projects
+    last_year: int | None = None
+
+
+class EraSensitivityOut(BaseModel):
+    """Building blocks whose effort data has unknown AI use get no AI saving in the price. This
+    is the same scope if that data predates AI tools (the team's AI savings applied to it):
+    shown beside the price, never taken off it (engine run, `era_sensitivity`)."""
+
+    low_paise: int  # the lower P10 of the two runs
+    high_paise: int  # the estimate's own P90
+    pre_ai_likely_paise: int  # most likely price if the data predates AI tools
+    unknown_components: int
+    components: int
+    note: str
 
 
 class FeatureCost(BaseModel):
@@ -210,6 +258,18 @@ class FeatureCost(BaseModel):
     level: str | None  # Basic / Standard / Advanced; None for the standard building blocks
     amount_paise: int
     traditional_paise: int | None
+
+
+class ScopeCost(BaseModel):
+    """A chosen scope item and the building cost of the blocks only it asked for (most likely,
+    split evenly when two items need the same new block). 0 = already in the project (a
+    feature's or a standard block), so nothing was added."""
+
+    key: str
+    label: str  # "group: item"
+    amount_paise: int
+    note: str  # what is and is not priced
+    partly_priced: bool = False  # part of the work is not priced (no evidence)
 
 
 class SimilarProject(BaseModel):
@@ -234,6 +294,23 @@ class BidCheck(BaseModel):
     too_low_below_paise: int  # bids under this are probably unrealistic: ask for justification
     too_high_above_paise: int  # bids over this are probably overpriced
     note: str
+
+
+class ResearchSource(BaseModel):
+    label: str  # the publisher's own wording, or the catalog block an analysis used
+    url: str | None = None
+
+
+class ResearchedFeature(BaseModel):
+    """A feature priced by a block researched for it (services/research): from published hours
+    found on the web and checked on the page ("web"), or from the AI's analysis of it as catalog
+    blocks ("analysis"). Low confidence either way."""
+
+    name: str
+    method: Literal["web", "analysis"]
+    section: str | None
+    summary: str  # how its hours were found, in plain words
+    sources: list[ResearchSource]
 
 
 class ClientPays(BaseModel):
@@ -272,6 +349,8 @@ class QuickSummary(BaseModel):
     parts: list[PlainPart]
     biggest_uncertainty: str | None
     features: list[str]
+    scope: list[str] = []  # scope items priced ("group: item"), see QuickRequest.scope
+    scope_items: list[ScopeCost] = []  # each chosen item with what it added
     indicative: bool
     accuracy_note: str | None  # how this pricing performed on real published contracts
     traditional_paise: int | None  # same scope priced without AI tools (most likely)
@@ -289,11 +368,14 @@ class QuickSummary(BaseModel):
     hours: HoursSummary | None = None  # the build in hours, with and without AI tools
     should_cost: bool = False  # priced from effort, not tuned to market prices
     market: MarketOut | None = None  # real contracts of this size, for comparison
+    era_sensitivity: EraSensitivityOut | None = None  # if the unknown-era data predates AI
     not_sure: list[str] = []  # questions answered "Not sure" (they widen the range)
     project_size: str | None = None  # Small / ... / Large, from what is built
     size_points: int | None = None
     mode: str = "vendor"  # vendor / client
     bid_check: BidCheck | None = None  # client mode only
+    researched: list[ResearchedFeature] = []  # features priced by researched blocks
+    reality: RealityOut | None = None  # "does this price look real?" checks
 
 
 def _default(cfg: QuickConfig, req: QuickRequest, key: str) -> str | int:
@@ -372,6 +454,7 @@ class QuickPlan:
     clarity: int = 3  # requirement clarity (1-5); lower with "Not sure" answers
     levels: dict[str, str] = field(default_factory=dict)  # feature key -> level
     unsure: list[str] = field(default_factory=list)  # questions answered "Not sure"
+    scope: list[str] = field(default_factory=list)  # scope items priced, in order
 
 
 def _unprocessable(message: str) -> HTTPException:
@@ -409,6 +492,20 @@ def plan_quick(
     stray = set(req.feature_levels) - {f.key for f in features}
     if stray:
         raise _unprocessable(f"Levels given for features not ticked: {sorted(stray)}")
+    try:
+        chosen_scope = [cfg.scope_item(k) for k in dict.fromkeys(req.scope)]
+    except ValueError as exc:
+        raise _unprocessable(str(exc)) from exc
+    # in the config's order, so the order they were ticked never changes component ids (and
+    # with them the simulation's draws)
+    rank = {i.key: n for n, (_, i) in enumerate((g, i) for g in cfg.scope for i in g.items)}
+    chosen_scope.sort(key=lambda gi: rank[gi[1].key])
+    ticked = {f.key for f in features}
+    stray_scope = [
+        i.key for g, i in chosen_scope if g.feature is not None and g.feature not in ticked
+    ]
+    if stray_scope:
+        raise _unprocessable(f"Scope given for features not ticked: {stray_scope}")
     if len(req.custom_features) > cfg.max_custom_features:
         raise _unprocessable(f"At most {cfg.max_custom_features} extra features.")
     bad_types = {c.category for c in req.custom_features} - set(cfg.custom_feature_types)
@@ -467,16 +564,52 @@ def plan_quick(
         for key in f.components:
             component_reqs.setdefault(key, []).append(feature_req[f.key])
             component_level[key] = _larger(cfg, component_level.get(key), levels[f.key])
+    # Scope items: each adds catalog blocks at its level. A block already in the project is
+    # not added again (the larger level wins); a standard block keeps at least its project size.
+    found_scope = {s["key"]: s for s in extraction.get("scope", [])}
+    scope_level: dict[str, LevelKey] = {}  # standard blocks a scope item asks more of
+    scope_label: dict[str, str] = {}  # blocks only scope items asked for -> first item's label
+    # a general block (the custom-feature types') stands for the item's own system, so two
+    # items needing one (an API and an e-signature service) are two blocks, not one
+    generic = {t.component for t in cfg.custom_feature_types.values()}
+    own_blocks: list[PlannedComponent] = []
+    for group, item in chosen_scope:
+        found = found_scope.get(item.key)
+        refs = _evidence_refs(found, filename) or [
+            {"clause_ref": f"Scope: {item.label}", "document": FORM_DOCUMENT}
+        ]
+        code = requirement(f"{group.label}: {item.label}.{_quote(found)}", SCOPE, refs)
+        for key, wanted in item.adds.items():
+            if key in generic:
+                lv = cfg.sizing.levels[wanted]
+                own_blocks.append(
+                    PlannedComponent(key, lv.component_size, lv.complexity, [code], item.label)
+                )
+                continue
+            if key in standard:
+                scope_level[key] = _larger(cfg, scope_level.get(key), wanted)
+            elif key not in component_reqs:
+                scope_label[key] = item.label
+            if key not in standard:
+                component_level[key] = _larger(cfg, component_level.get(key), wanted)
+            component_reqs.setdefault(key, []).append(code)
+        plan.scope.append(item.key)
     complexity = {k: c for o in options.values() for k, c in o.component_complexity.items()}
     for key, reqs in component_reqs.items():
         if key in standard:  # a standard building block: sized by the project
             cx = complexity.get(key, Complexity.MEDIUM)  # e.g. a design that is ready
-            plan.components.append(PlannedComponent(key, tier.base_size, cx, reqs))
+            size = tier.base_size
+            if key in scope_level:
+                size = _bigger(size, cfg.sizing.levels[scope_level[key]].component_size)
+            plan.components.append(PlannedComponent(key, size, cx, reqs))
         else:
             level = cfg.sizing.levels[component_level[key]]
             plan.components.append(
-                PlannedComponent(key, level.component_size, level.complexity, reqs)
+                PlannedComponent(
+                    key, level.component_size, level.complexity, reqs, scope_label.get(key)
+                )
             )
+    plan.components.extend(own_blocks)
 
     found_others: list[dict[str, Any]] = extraction.get("other_features", [])
     for custom in req.custom_features:
@@ -488,7 +621,7 @@ def plan_quick(
         ]
         detail = f" {found['description']}" if found and found.get("description") else ""
         code = requirement(f"{custom.name}.{detail}{_quote(found)}", "functional", refs)
-        component = cfg.custom_feature_types[custom.category].component
+        component = custom.catalog_key or cfg.custom_feature_types[custom.category].component
         level = cfg.sizing.levels[cfg.sizing.custom_size_level[custom.size]]
         plan.components.append(
             PlannedComponent(component, custom.size, level.complexity, [code], custom.name)
@@ -520,6 +653,9 @@ def plan_quick(
     overrides: dict[str, Any] = dict(req.overrides)
     if req.deadline_months is not None:
         overrides.setdefault("deadline_months", req.deadline_months)
+    onsite_days = overrides.pop(ONSITE_DAYS, None)  # only with onsite_staff
+    if onsite_days is None and req.choices.get(ONSITE_PERIOD) == "event" and cfg.onsite_event_days:
+        onsite_days = str(cfg.onsite_event_days.days)  # an event, no days stated: the default
     for k, v in overrides.items():
         found = found_numbers.get(k)
         kept = found is not None and found["value"] == v
@@ -527,7 +663,12 @@ def plan_quick(
         if k == ONSITE_STAFF:
             if cfg.onsite_role is None:
                 raise _unprocessable("Staff at the client's office cannot be priced.")
-            staff = [{"role": cfg.onsite_role, "count": v}] if v > 0 else []
+            limit = {"days": onsite_days} if onsite_days else {}
+            if limit:
+                days_found = found_numbers.get(ONSITE_DAYS)
+                if days_found is not None and days_found["value"] == onsite_days:
+                    reqs = [*reqs, *cited(days_found, "Onsite days")]
+            staff = [{"role": cfg.onsite_role, "count": v, **limit}] if v > 0 else []
             plan.answers["onsite_resources"] = (staff, reqs)
         else:
             plan.answers[k] = (v, reqs)
@@ -577,6 +718,13 @@ def _standard_components(tier: SizeTier, options: dict[str, Any]) -> list[str]:
     return list(dict.fromkeys(keys))
 
 
+SIZE_RANK = {Size.S: 0, Size.M: 1, Size.L: 2}
+
+
+def _bigger(a: Size, b: Size) -> Size:
+    return a if SIZE_RANK[a] >= SIZE_RANK[b] else b
+
+
 def _larger(cfg: QuickConfig, a: LevelKey | None, b: LevelKey) -> LevelKey:
     """A component shared by two features is built to the larger of their levels."""
     if a is None:
@@ -611,8 +759,36 @@ def with_company_defaults(db: Session, user: User, req: QuickRequest) -> QuickRe
     return req.model_copy(update={"choices": {**req.choices, AI_USE: level}})
 
 
+def with_catalog_blocks(
+    db: Session, user: User, cfg: QuickConfig, req: QuickRequest, research: bool
+) -> QuickRequest:
+    """Each custom feature priced by its catalog block when there is one: a close published
+    or researched block, else (research=True, with an AI key) a block researched now and
+    saved for the organisation; otherwise the generic block of its type."""
+    keys = {c.key for c in catalog_for(db, user.org_id).components}
+    given = [c.catalog_key for c in req.custom_features if c.catalog_key]
+    unknown = [k for k in given if k not in keys]
+    if unknown:
+        raise _unprocessable(f"Unknown catalog blocks: {unknown}")
+    open_ = [c for c in req.custom_features if not c.catalog_key]
+    if not open_:
+        return req
+    research_cfg = cfg if research else cfg.model_copy(update={"research": None})
+    found = resolve_features(db, user, research_cfg, [(c.name, c.category) for c in open_])
+    by_id = {id(c): k for c, k in zip(open_, found, strict=True)}
+    return req.model_copy(
+        update={
+            "custom_features": [
+                c.model_copy(update={"catalog_key": by_id.get(id(c)) or c.catalog_key})
+                for c in req.custom_features
+            ]
+        }
+    )
+
+
 def create_quick_estimate(db: Session, user: User, cfg: QuickConfig, req: QuickRequest) -> Estimate:
     req = with_company_defaults(db, user, req)
+    req = with_catalog_blocks(db, user, cfg, req, research=True)
     doc, extraction, filename = _document_context(db, user, req.document_id)
     plan = plan_quick(cfg, req, extraction, filename)
     now = datetime.now(UTC)
@@ -752,13 +928,14 @@ def question_impact(
     """Re-price the form once per option of every question and rank questions by how much the
     most-likely total moves (brief: ask the questions that change the price most, first)."""
     req = with_company_defaults(db, user, req)
+    req = with_catalog_blocks(db, user, cfg, req, research=False)
     _, extraction, filename = _document_context(db, user, req.document_id)
     today = datetime.now(UTC).date()
     # a client planning a budget sees market prices, not this company's own settings
     settings = CompanySettings() if req.mode == "client" else company_settings(db, user.org_id)
     reference = {
         "taxonomy": get_taxonomy(db),
-        "catalog": get_catalog(db),
+        "catalog": catalog_for(db, user.org_id),
         "rate_card": apply_company_rates(get_rate_card(db, None, today, req.country), settings),
         "parameters": apply_company_settings(
             get_parameter_set(db, None, today, req.country), settings
@@ -767,7 +944,7 @@ def question_impact(
     }
     out = []
     for key, question in cfg.questions.items():
-        if question.group == "hidden":
+        if question.group in ("hidden", "document"):  # never asked on the form
             continue
         if key == "support_years" and "om_years" in req.overrides:
             continue
@@ -833,7 +1010,7 @@ def summarise(
         biggest = f"The biggest unknown is {phrase}."
     infeasible = result.get("infeasibility")
     timeline = result["timeline"]
-    return QuickSummary(
+    summary = QuickSummary(
         project_id=project.id,
         estimate_id=estimate.id,
         name=project.name,
@@ -859,6 +1036,11 @@ def summarise(
             for r in project.requirements
             if r.category == "functional"
         ],
+        scope=[
+            r.text_normalised.split(". ", 1)[0].rstrip(".")
+            for r in project.requirements
+            if r.category == SCOPE
+        ],
         indicative=estimate.calibration_status == "uncalibrated",
         accuracy_note=_accuracy_note(estimate),
         traditional_paise=traditional.get("p50_paise"),
@@ -867,21 +1049,59 @@ def summarise(
         client_pays=client_pays,
         client_pays_first_year_paise=sum(c.first_year_paise or 0 for c in client_pays),
         cost_items=cost_items(cfg, estimate, years, margin_visible),
-        similar_projects=similar_projects(cfg, estimate, project),
-        feature_costs=feature_costs(cfg, estimate, project),
+        similar_projects=similar_projects(cfg, estimate, project) if cfg.show_market_prices else [],
+        feature_costs=(costs := feature_costs(cfg, estimate, project)),
+        scope_items=scope_costs(cfg, project, costs),
         team=(build_team := team_by_role(cfg, result, 0)),
         team_people=sum((r.people for r in build_team), Decimal(0)) if build_team else None,
         traditional_build_months=traditional.get("delivery_months"),
         support_team=team_by_role(cfg, result, 1),
         hours=hours_summary(cfg, estimate),
         should_cost=bool(_calibration_of(estimate).get("should_cost")),
-        market=_market(cfg, result),
+        market=(_published_prices(cfg, estimate, project) or _market(cfg, result))
+        if cfg.show_market_prices
+        else None,
+        era_sensitivity=_era_sensitivity(result),
         not_sure=_not_sure(cfg, project),
         project_size=_size_label(cfg, estimate),
         size_points=_size_points(cfg, project),
         mode="client" if project.mode == BUYER_MODE else "vendor",
         bid_check=_bid_check(cfg, estimate) if project.mode == BUYER_MODE else None,
+        researched=researched_features(estimate),
     )
+    emd = next(
+        (a["value"] for a in estimate.inputs_snapshot.get("answers", []) if a["key"] == "emd_paise"),
+        None,
+    )
+    return with_reality(cfg, summary, emd if isinstance(emd, int) else None)
+
+
+def with_reality(
+    cfg: QuickConfig, summary: QuickSummary, emd_paise: int | None = None
+) -> QuickSummary:
+    """The summary with its "does this price look real?" checks (when configured)."""
+    rules = cfg.reality_check
+    if rules is None or not summary.feasible:
+        return summary
+    shares = [
+        FeatureShare(
+            label=f.label, amount_paise=f.amount_paise, standard=f.label == STANDARD_BLOCKS
+        )
+        for f in summary.feature_costs
+    ]
+    reality = reality_check(
+        rules,
+        shares,
+        summary.build_only_paise,
+        {p.key: p.amount_paise for p in summary.parts},
+        summary.support_years,
+        summary.team_people,
+        [r.name for r in summary.researched],
+        len(summary.not_sure),
+        price_paise=summary.likely_paise,
+        emd_paise=emd_paise,
+    )
+    return summary.model_copy(update={"reality": reality})
 
 
 HOSTING_BUCKETS = ("run.hosting", "run.backups", "run.dr", "go_live.infrastructure_procurement")
@@ -893,6 +1113,28 @@ YEAR_SUFFIX = re.compile(r" \(year \d+\)$")
 SAME_ITEM = {"waf_requests": "waf_base"}  # shown as one "web firewall" item
 PLAIN_LABELS = {"llm_api": "AI chatbot usage", "gpu": "AI chatbot servers (GPU)"}
 NO_SUPPORT = "No support after launch (handed over to the client)"
+
+
+def researched_features(estimate: Estimate) -> list[ResearchedFeature]:
+    """Researched blocks this estimate used, from its own snapshot (never today's data)."""
+    snap = estimate.inputs_snapshot
+    used = {c["catalog_key"] for c in snap.get("components", [])}
+    out = []
+    for c in snap.get("catalog", {}).get("components", []):
+        if c["key"] not in used or not c["key"].startswith(RESEARCH_PREFIX):
+            continue
+        evidence = c.get("evidence") or []
+        web = any(e.get("url") for e in evidence)
+        out.append(
+            ResearchedFeature(
+                name=c["name"],
+                method="web" if web else "analysis",
+                section=c.get("section"),
+                summary=c.get("source", ""),
+                sources=[ResearchSource(label=e["citation"], url=e.get("url")) for e in evidence],
+            )
+        )
+    return out
 
 
 def _client_pays(result: dict[str, Any]) -> list[ClientPays]:
@@ -1016,6 +1258,74 @@ def similar_projects(
             )
         )
     return out
+
+
+@lru_cache(maxsize=4)
+def _benchmark_sizes(country: str) -> dict[str, str]:
+    """The size the app gives each benchmark's scope (from its feature points), by id."""
+    from app.services.calibration.backtest import derived_size  # avoid an import cycle
+
+    cfg = quick_config()
+    sizes = {}
+    for b in _benchmarks(country):
+        try:
+            sizes[b.id] = derived_size(cfg, b, country)
+        except HTTPException:  # scope too thin to model
+            continue
+    return sizes
+
+
+def _published_prices(cfg: QuickConfig, estimate: Estimate, project: Project) -> MarketOut | None:
+    """Published prices of real projects the app gives this estimate's size (neighbouring sizes
+    added below `min_projects`): today's money (× (1 + escalation)^years), GST added where a
+    price excludes it, a price band at its middle; P25 / median / P75. Never scaled to the
+    estimate."""
+    rules = cfg.market_comparison
+    snapshot = estimate.inputs_snapshot
+    answers = {a["key"]: a["value"] for a in snapshot.get("answers", [])}
+    size = answers.get("project_size")
+    if rules is None or size not in SIZE_ORDER:
+        return None
+    benchmarks = {b.id: b for b in _benchmarks(project.country)}
+    sizes = _benchmark_sizes(project.country)
+    groups = [size]
+    chosen = [benchmarks[i] for i, s in sizes.items() if s == size]
+    if len(chosen) < rules.min_projects:
+        groups = [s for s in SIZE_ORDER if s == size or _neighbours(size, s)]
+        chosen = [benchmarks[i] for i, s in sizes.items() if s in groups]
+    if len(chosen) < 2:
+        return None
+    escalation = Decimal(str(snapshot["parameters"]["escalation"]["labour"]))
+    gst = Decimal(str(snapshot["parameters"]["commercial"]["gst_percent"]))
+    this_year = estimate.created_at.year
+    prices = []
+    sources: dict[str, int] = {}
+    for b in chosen:
+        low = b.value_minor if b.value_minor > MIN_PUBLISHED else 0
+        value = Decimal(low + b.value_high_minor) / 2 if b.value_high_minor else b.value_minor
+        if b.value_includes_tax is False:
+            value *= 1 + gst
+        prices.append(_today(int(value), b.award_year, this_year, escalation))
+        host = b.source_url.split("/")[2].removeprefix("www.")
+        label = rules.sources.get(host, rules.other_source)
+        sources[label] = sources.get(label, 0) + 1
+    q = quantiles(prices, n=4, method="inclusive")
+    labels = [cfg.sizing.tier_for(g).label for g in groups]
+    return MarketOut(
+        project_size=cfg.sizing.tier_for(size).label,
+        projects=len(chosen),
+        low_paise=round(q[0]),
+        mid_paise=round(median(prices)),
+        high_paise=round(q[2]),
+        basis="published_prices",
+        sizes=labels,
+        sources=[
+            MarketSource(label=k, projects=v)
+            for k, v in sorted(sources.items(), key=lambda kv: -kv[1])
+        ],
+        first_year=min(b.award_year for b in chosen),
+        last_year=max(b.award_year for b in chosen),
+    )
 
 
 def _neighbours(a: str | None, b: str | None) -> bool:
@@ -1217,18 +1527,26 @@ STANDARD_BLOCKS = "Standard building blocks (screens design, login and roles, te
 
 def feature_costs(cfg: QuickConfig, estimate: Estimate, project: Project) -> list[FeatureCost]:
     """The team's building cost per feature: each component line goes to the features that
-    asked for it (split evenly when shared, remainder to the first); lines of components no
-    feature asked for are the standard building blocks. Sums to the component lines."""
+    asked for it (split evenly when shared, remainder to the first); a block only scope items
+    added goes to those items (e.g. "Sign-in and user accounts: Two-step sign-in (MFA)"); lines
+    of components no feature asked for are the standard building blocks (also when a scope item
+    made one bigger). Sums to the component lines."""
     snapshot = estimate.inputs_snapshot
-    features = {
-        r["id"]: r["text"].split(". ", 1)[0].rstrip(".")
-        for r in snapshot.get("requirements", [])
-        if r["category"] == "functional"
-    }
-    owners = {
-        c["id"]: [features[r] for r in c.get("requirement_ids", []) if r in features]
-        for c in snapshot.get("components", [])
-    }
+
+    def labels_of(category: str) -> dict[str, str]:
+        return {
+            r["id"]: r["text"].split(". ", 1)[0].rstrip(".")
+            for r in snapshot.get("requirements", [])
+            if r["category"] == category
+        }
+
+    features, scope = labels_of("functional"), labels_of(SCOPE)
+    owners = {}
+    for c in snapshot.get("components", []):
+        reqs = c.get("requirement_ids", [])
+        owners[c["id"]] = [features[r] for r in reqs if r in features] or (
+            [scope[r] for r in reqs if r in scope] if c.get("label") else []
+        )
     traditional = _traditional_lines(estimate)
     acc: dict[str, list[int]] = {}  # label -> [with AI, without AI]
     for ln in sorted(estimate.lines, key=lambda x: x.sort_order):
@@ -1268,6 +1586,33 @@ def feature_costs(cfg: QuickConfig, estimate: Estimate, project: Project) -> lis
                 level=None,
                 amount_paise=amount,
                 traditional_paise=old if traditional is not None else None,
+            )
+        )
+    return out
+
+
+def scope_costs(cfg: QuickConfig, project: Project, costs: list[FeatureCost]) -> list[ScopeCost]:
+    """The chosen scope items with the building cost of what each added (`feature_costs` rows
+    of blocks only scope items asked for); an item whose blocks were already there adds 0."""
+    try:
+        keys = QuickRequest.model_validate(project.quick_request or {"name": "x"}).scope
+    except ValueError:  # saved with an older form
+        return []
+    by_label = {c.label: c.amount_paise for c in costs}
+    out = []
+    for key in dict.fromkeys(keys):
+        try:
+            group, item = cfg.scope_item(key)
+        except ValueError:  # an item no longer offered
+            continue
+        label = f"{group.label}: {item.label}"
+        out.append(
+            ScopeCost(
+                key=key,
+                label=label,
+                amount_paise=by_label.get(label, 0),
+                note=item.note,
+                partly_priced=item.partly_priced,
             )
         )
     return out
@@ -1393,17 +1738,52 @@ def _market(cfg: QuickConfig, result: dict[str, Any]) -> MarketOut | None:
     )
 
 
+ERA_NOTE = (
+    "{unknown} of {total} building blocks are priced from effort data that does not show "
+    "whether AI tools were used, so no AI saving is taken off them. If that data predates AI "
+    "tools, your team's AI tools would save more: the range then starts lower."
+)
+
+
+def _era_sensitivity(result: dict[str, Any]) -> EraSensitivityOut | None:
+    s = result.get("era_sensitivity")
+    if not s:
+        return None
+    return EraSensitivityOut(
+        low_paise=s["range_low_paise"],
+        high_paise=s["range_high_paise"],
+        pre_ai_likely_paise=s["p50_paise"],
+        unknown_components=s["unknown_components"],
+        components=s["components"],
+        note=ERA_NOTE.format(unknown=s["unknown_components"], total=s["components"]),
+    )
+
+
 SHOULD_COST_NOTE = (
     "Priced from the hours each feature takes (published effort data) and the rates, not "
-    "from what vendors charged. Different teams take about 0.7x to 1.6x these hours for the "
-    "same scope, which is the range shown."
+    "from what vendors charged."
 )
+RANGE_NOTE = (
+    " The range runs from about {below}% below to {above}% above the middle price: how much "
+    "different teams' hours differ for the same scope (ISBSG; Anda et al. 2009) and the unknowns "
+    "in each item. It has not yet been checked against what finished projects really cost."
+)
+
+
+def _should_cost_note(estimate: Estimate) -> str:
+    """The note plus the estimate's own range, in % of P50 (from P10 and P90)."""
+    p10, p50, p90 = estimate.p10_paise, estimate.p50_paise, estimate.p90_paise
+    if not (p10 and p50 and p90):
+        return SHOULD_COST_NOTE
+    below = round(100 * (p50 - p10) / p50)
+    above = round(100 * (p90 - p50) / p50)
+    return SHOULD_COST_NOTE + RANGE_NOTE.format(below=below, above=above)
 
 
 def _accuracy_note(estimate: Estimate) -> str | None:
     cal = _calibration_of(estimate)
     if cal.get("should_cost"):
-        return SHOULD_COST_NOTE
+        return _should_cost_note(estimate)
     n, err = cal.get("backtest_projects", 0), cal.get("median_abs_error_percent")
     if not n or err is None:
         return None

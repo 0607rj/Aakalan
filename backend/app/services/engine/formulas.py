@@ -3,6 +3,12 @@ shows the expression. Change a formula -> bump its version suffix so old traces 
 
 FORMULAS: dict[str, str] = {
     # components (brief 7.1)
+    "component_labour.v3": (
+        "Σ_task base_effort_pd[size] × effort_multiplier × quantity × task_share × M_complexity"
+        " × M_nfr × licence_effort_factor × (1 − s_task) × M_compression × rate_role(task);"
+        " s_task = min(max_saving, ai_saving_task × maturity_scale) when the effort data is"
+        " pre_ai (or unknown, in the pre-AI sensitivity run only), else 0"
+    ),
     "component_labour.v2": (
         "Σ_task base_effort_pd[size] × effort_multiplier × quantity × task_share × M_complexity"
         " × M_nfr × licence_effort_factor × (1 − min(max_saving, ai_saving_task × maturity_scale))"
@@ -128,6 +134,7 @@ FORMULAS: dict[str, str] = {
     "maintenance.upgrades.v1": "build_pd × upgrade_share × rate × (1 + escalation_labour)^year",
     "maintenance.change_requests.v1": "cr_pd_per_year × rate × (1 + escalation_labour)^year",
     "maintenance.onsite.v1": "count × pd_per_year × rate(role) × (1 + escalation_labour)^year",
+    "maintenance.onsite_days.v1": "count × days × rate(role) × (1 + escalation_labour), year 1 only",
     "maintenance.annual_audit.v1": "annual_audit_fee[size_band] × (1 + escalation_prices)^year",
     "maintenance.ssl_domain.v1": "(ssl_rate + domain_rate) × (1 + escalation_prices)^year",
     "run.licence.v1": "licence_rate_per_year × (1 + escalation_prices)^year",

@@ -1,0 +1,83 @@
+# Expected results for ai_saas_platform.md (see clinic_management.expected.yaml for the fields).
+document: ai_saas_platform.md
+project: AI Document Processing SaaS
+features: [documents, payments, billing]
+not_features: [ai_chatbot, notifications]
+choices: {availability: high}
+not_priced: [multi_tenancy, data_rules]
+not_listed: []
+requirements:
+  - id: SAS-1.2
+    text: Each customer organisation shall have its own isolated workspace (multi-tenant).
+    classification: explicit
+    kind: not_priced
+    key: multi_tenancy
+    offered: false
+    affects_estimate_when_confirmed: false
+    pricing: not_priced
+    explanation: "No catalog block or effort source: listed, never guessed."
+  - id: SAS-3.2
+    text: The system shall extract fields using an external AI provider's language model.
+    classification: explicit
+    kind: unmapped
+    key: null
+    offered: false
+    affects_estimate_when_confirmed: false
+    pricing: unmapped
+    explanation: Priced only as the user's own AI feature (generic block); keywords cannot size it.
+  - id: SAS-3.3
+    text: Each plan shall have a monthly limit on pages processed.
+    classification: explicit
+    kind: unmapped
+    key: null
+    offered: false
+    affects_estimate_when_confirmed: false
+    pricing: unmapped
+    explanation: Usage limits have no item; the user's own feature if needed.
+  - id: SAS-3.4
+    text: Customers shall pay a monthly subscription with recurring billing.
+    classification: explicit
+    kind: scope
+    key: subscriptions
+    offered: true
+    affects_estimate_when_confirmed: true
+    pricing: already_included
+    explanation: The billing feature (emailed invoices) already brings the billing block.
+  - id: SAS-3.6
+    text: Customers shall receive extraction results through webhooks.
+    classification: explicit
+    kind: scope
+    key: public_api
+    offered: true
+    affects_estimate_when_confirmed: true
+    pricing: adds_work
+    partly_priced: true
+    explanation: Adds one general integration block; a large API would cost more (partly priced).
+  - id: SAS-3.7
+    text: Two-factor authentication shall be available for workspace owners.
+    classification: explicit
+    kind: scope
+    key: two_step_sign_in
+    offered: true
+    affects_estimate_when_confirmed: true
+    pricing: adds_work
+    partly_priced: true
+    explanation: Adds the SMS / email gateway (no notifications feature here); the extra sign-in step is not priced.
+  - id: SAS-4.1
+    text: The AI provider's account and API key are supplied and paid for by DocuSense.
+    classification: explicit
+    kind: unmapped
+    key: null
+    offered: false
+    affects_estimate_when_confirmed: false
+    pricing: unmapped
+    explanation: A client-paid dependency; the estimate never assumes the external calls work.
+  - id: SAS-7.2
+    text: A chatbot that answers questions about documents is a future enhancement.
+    classification: future
+    kind: feature
+    key: ai_chatbot
+    offered: false
+    affects_estimate_when_confirmed: false
+    pricing: unmapped
+    explanation: A later phase; the chatbot feature must not be found.

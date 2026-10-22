@@ -1652,6 +1652,99 @@
         }
       }
     },
+    "/estimates/{estimate_id}/second-opinion": {
+      "get": {
+        "tags": [
+          "quick estimate"
+        ],
+        "summary": "Get Second Opinion",
+        "operationId": "get_second_opinion_estimates__estimate_id__second_opinion_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "estimate_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Estimate Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SecondOpinionState"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "quick estimate"
+        ],
+        "summary": "Ask Second Opinion",
+        "description": "The AI reviews the scope the price is built from (words only, never numbers).",
+        "operationId": "ask_second_opinion_estimates__estimate_id__second_opinion_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "estimate_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Estimate Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SecondOpinionState"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/quick-estimate/impact": {
       "post": {
         "tags": [
@@ -2381,6 +2474,128 @@
           }
         }
       }
+    },
+    "/research-blocks": {
+      "get": {
+        "tags": [
+          "research"
+        ],
+        "summary": "List Blocks",
+        "operationId": "list_blocks_research_blocks_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/ResearchedBlockOut"
+                  },
+                  "type": "array",
+                  "title": "Response List Blocks Research Blocks Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "research"
+        ],
+        "summary": "Research",
+        "description": "Find the block for one feature now: the catalog, else research (with an AI key).",
+        "operationId": "research_research_blocks_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResearchIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResearchOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/research-blocks/{block_id}/retire": {
+      "post": {
+        "tags": [
+          "research"
+        ],
+        "summary": "Retire",
+        "operationId": "retire_research_blocks__block_id__retire_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "block_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Block Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResearchedBlockOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -2436,6 +2651,16 @@
           "overridden"
         ],
         "title": "AssumptionOut"
+      },
+      "BaselineEra": {
+        "type": "string",
+        "enum": [
+          "pre_ai",
+          "ai_assisted",
+          "unknown"
+        ],
+        "title": "BaselineEra",
+        "description": "Whether the effort data behind a component was measured with AI coding tools in use."
       },
       "BidCheck": {
         "properties": {
@@ -2536,6 +2761,58 @@
           "placeholder_refs"
         ],
         "title": "Calibration"
+      },
+      "CalibrationBasis": {
+        "properties": {
+          "parameter": {
+            "type": "string",
+            "title": "Parameter"
+          },
+          "parameter_sets": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Parameter Sets"
+          },
+          "method": {
+            "type": "string",
+            "title": "Method"
+          },
+          "data": {
+            "type": "string",
+            "title": "Data"
+          },
+          "reproducible": {
+            "type": "boolean",
+            "title": "Reproducible"
+          },
+          "limitations": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Limitations"
+          },
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Source"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "parameter",
+          "parameter_sets",
+          "method",
+          "data",
+          "reproducible",
+          "limitations",
+          "source"
+        ],
+        "title": "CalibrationBasis",
+        "description": "What the effort level of these figures was calibrated against (documentation only: the\nengine never reads it). Kept apart from the source era: a calibration against pre-AI data\ndoes not make a component's own sources pre-AI."
       },
       "CalibrationReport": {
         "properties": {
@@ -2764,6 +3041,34 @@
             },
             "type": "array",
             "title": "Components"
+          },
+          "era_rules": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EraRules"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "calibration_basis": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CalibrationBasis"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "sections": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Sections",
+            "default": {}
           }
         },
         "additionalProperties": false,
@@ -2852,6 +3157,57 @@
                 "type": "null"
               }
             ]
+          },
+          "section": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Section"
+          },
+          "source_era": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/BaselineEra"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "era_reason": {
+            "type": "string",
+            "title": "Era Reason",
+            "default": ""
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "low",
+                  "low_medium",
+                  "medium",
+                  "high"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/EffortEvidence"
+            },
+            "type": "array",
+            "title": "Evidence",
+            "default": []
           }
         },
         "additionalProperties": false,
@@ -2985,6 +3341,34 @@
           "kind"
         ],
         "title": "Change"
+      },
+      "Check": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "ok": {
+            "type": "boolean",
+            "title": "Ok"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "detail": {
+            "type": "string",
+            "title": "Detail"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "ok",
+          "title",
+          "detail"
+        ],
+        "title": "Check"
       },
       "ClientPays": {
         "properties": {
@@ -3776,6 +4160,18 @@
               }
             ],
             "title": "Found Index"
+          },
+          "catalog_key": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 100
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Catalog Key"
           }
         },
         "type": "object",
@@ -3969,6 +4365,174 @@
         ],
         "title": "Driver",
         "description": "NFR drivers a catalog component can be sensitive to."
+      },
+      "EffortEvidence": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "citation": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Citation"
+          },
+          "source_type": {
+            "type": "string",
+            "enum": [
+              "measured_projects",
+              "published_dataset",
+              "published_study",
+              "vendor_estimate",
+              "expert_judgement"
+            ],
+            "title": "Source Type"
+          },
+          "published": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Published"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          },
+          "era": {
+            "$ref": "#/components/schemas/BaselineEra"
+          },
+          "era_basis": {
+            "$ref": "#/components/schemas/EraBasis"
+          },
+          "ai_workflow": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Workflow"
+          },
+          "sample_size": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Sample Size"
+          },
+          "quality": {
+            "type": "string",
+            "enum": [
+              "low",
+              "low_medium",
+              "medium",
+              "high"
+            ],
+            "title": "Quality"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "citation",
+          "source_type",
+          "era",
+          "era_basis",
+          "quality"
+        ],
+        "title": "EffortEvidence",
+        "description": "One cited source behind a component's effort figures (catalog v6+)."
+      },
+      "EraBasis": {
+        "type": "string",
+        "enum": [
+          "explicit_statement",
+          "documented_workflow",
+          "date_heuristic",
+          "not_established"
+        ],
+        "title": "EraBasis",
+        "description": "Why an evidence item has its era. A date is only a provisional heuristic; an explicit\nstatement or a documented workflow takes precedence."
+      },
+      "EraRules": {
+        "properties": {
+          "pre_ai_before_year": {
+            "type": "integer",
+            "title": "Pre Ai Before Year"
+          },
+          "source": {
+            "type": "string",
+            "minLength": 1,
+            "title": "Source"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "pre_ai_before_year",
+          "source"
+        ],
+        "title": "EraRules",
+        "description": "How evidence eras are set (catalog v6+). The cutoff is a provisional heuristic."
+      },
+      "EraSensitivityOut": {
+        "properties": {
+          "low_paise": {
+            "type": "integer",
+            "title": "Low Paise"
+          },
+          "high_paise": {
+            "type": "integer",
+            "title": "High Paise"
+          },
+          "pre_ai_likely_paise": {
+            "type": "integer",
+            "title": "Pre Ai Likely Paise"
+          },
+          "unknown_components": {
+            "type": "integer",
+            "title": "Unknown Components"
+          },
+          "components": {
+            "type": "integer",
+            "title": "Components"
+          },
+          "note": {
+            "type": "string",
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "low_paise",
+          "high_paise",
+          "pre_ai_likely_paise",
+          "unknown_components",
+          "components",
+          "note"
+        ],
+        "title": "EraSensitivityOut",
+        "description": "Building blocks whose effort data has unknown AI use get no AI saving in the price. This\nis the same scope if that data predates AI tools (the team's AI savings applied to it):\nshown beside the price, never taken off it (engine run, `era_sensitivity`)."
       },
       "EstimateCreate": {
         "properties": {
@@ -4507,6 +5071,45 @@
         ],
         "title": "FeatureOut"
       },
+      "Flag": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "level_too_high",
+              "level_too_low",
+              "missing",
+              "not_needed",
+              "unclear",
+              "other"
+            ],
+            "title": "Kind"
+          },
+          "feature": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Feature"
+          },
+          "message": {
+            "type": "string",
+            "maxLength": 400,
+            "title": "Message"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "message"
+        ],
+        "title": "Flag"
+      },
       "FoundFeature": {
         "properties": {
           "key": {
@@ -4662,6 +5265,50 @@
           "evidence"
         ],
         "title": "FoundPaymentTerms"
+      },
+      "FoundScope": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "explicit",
+              "inferred",
+              "excluded",
+              "future",
+              "background"
+            ],
+            "title": "Status",
+            "default": "explicit"
+          },
+          "note": {
+            "type": "string",
+            "title": "Note",
+            "default": ""
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/VerifiedEvidence"
+            },
+            "type": "array",
+            "title": "Evidence"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "label",
+          "evidence"
+        ],
+        "title": "FoundScope",
+        "description": "A scope item the document mentions (quick config `scope`), with its quotes."
       },
       "FoundValue": {
         "properties": {
@@ -5072,6 +5719,53 @@
           "high_paise": {
             "type": "integer",
             "title": "High Paise"
+          },
+          "basis": {
+            "type": "string",
+            "enum": [
+              "published_prices",
+              "scaled_to_estimate"
+            ],
+            "title": "Basis",
+            "default": "scaled_to_estimate"
+          },
+          "sizes": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Sizes",
+            "default": []
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/MarketSource"
+            },
+            "type": "array",
+            "title": "Sources",
+            "default": []
+          },
+          "first_year": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "First Year"
+          },
+          "last_year": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Year"
           }
         },
         "type": "object",
@@ -5083,7 +5777,25 @@
           "high_paise"
         ],
         "title": "MarketOut",
-        "description": "What real contracts of this size cost, next to the should-cost estimate (engine)."
+        "description": "What real projects were bought for, next to the should-cost estimate. basis\n\"published_prices\": the published prices of real projects the app gives the same size, in\ntoday's money with GST (P25 / median / P75), as published, not scaled to this estimate.\n\"scaled_to_estimate\" (parameter sets v14-v15 without benchmark data): P50 \u00d7 a size band.\nEither way an observed price, not a check of the hours."
+      },
+      "MarketSource": {
+        "properties": {
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "projects": {
+            "type": "integer",
+            "title": "Projects"
+          }
+        },
+        "type": "object",
+        "required": [
+          "label",
+          "projects"
+        ],
+        "title": "MarketSource"
       },
       "OptionOut": {
         "properties": {
@@ -6046,6 +6758,14 @@
             },
             "type": "array",
             "title": "Custom Feature Types"
+          },
+          "scope": {
+            "items": {
+              "$ref": "#/components/schemas/ScopeGroupOut"
+            },
+            "type": "array",
+            "title": "Scope",
+            "default": []
           }
         },
         "type": "object",
@@ -6180,6 +6900,14 @@
               }
             ],
             "title": "Payment Schedule"
+          },
+          "scope": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Scope",
+            "default": []
           },
           "mode": {
             "type": "string",
@@ -6334,6 +7062,22 @@
             "type": "array",
             "title": "Features"
           },
+          "scope": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Scope",
+            "default": []
+          },
+          "scope_items": {
+            "items": {
+              "$ref": "#/components/schemas/ScopeCost"
+            },
+            "type": "array",
+            "title": "Scope Items",
+            "default": []
+          },
           "indicative": {
             "type": "boolean",
             "title": "Indicative"
@@ -6482,6 +7226,16 @@
               }
             ]
           },
+          "era_sensitivity": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EraSensitivityOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "not_sure": {
             "items": {
               "type": "string"
@@ -6521,6 +7275,24 @@
             "anyOf": [
               {
                 "$ref": "#/components/schemas/BidCheck"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "researched": {
+            "items": {
+              "$ref": "#/components/schemas/ResearchedFeature"
+            },
+            "type": "array",
+            "title": "Researched",
+            "default": []
+          },
+          "reality": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RealityOut"
               },
               {
                 "type": "null"
@@ -6871,6 +7643,31 @@
         ],
         "title": "RateKind"
       },
+      "RealityOut": {
+        "properties": {
+          "verdict": {
+            "type": "string",
+            "enum": [
+              "realistic",
+              "check"
+            ],
+            "title": "Verdict"
+          },
+          "checks": {
+            "items": {
+              "$ref": "#/components/schemas/Check"
+            },
+            "type": "array",
+            "title": "Checks"
+          }
+        },
+        "type": "object",
+        "required": [
+          "verdict",
+          "checks"
+        ],
+        "title": "RealityOut"
+      },
       "RequirementCreate": {
         "properties": {
           "code": {
@@ -7071,6 +7868,234 @@
         "type": "object",
         "title": "RequirementUpdate"
       },
+      "ResearchIn": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 2,
+            "title": "Name"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "category"
+        ],
+        "title": "ResearchIn"
+      },
+      "ResearchOut": {
+        "properties": {
+          "ai_available": {
+            "type": "boolean",
+            "title": "Ai Available"
+          },
+          "catalog_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Catalog Key"
+          },
+          "block": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ResearchedBlockOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "ai_available",
+          "catalog_key",
+          "block"
+        ],
+        "title": "ResearchOut"
+      },
+      "ResearchSource": {
+        "properties": {
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          }
+        },
+        "type": "object",
+        "required": [
+          "label"
+        ],
+        "title": "ResearchSource"
+      },
+      "ResearchedBlockOut": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "section": {
+            "type": "string",
+            "title": "Section"
+          },
+          "base_type": {
+            "type": "string",
+            "title": "Base Type"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "note": {
+            "type": "string",
+            "title": "Note"
+          },
+          "base_effort_pd": {
+            "anyOf": [
+              {
+                "additionalProperties": {
+                  "type": "string"
+                },
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Base Effort Pd"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
+          },
+          "sources": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "type": "array",
+            "title": "Sources"
+          },
+          "model": {
+            "type": "string",
+            "title": "Model"
+          },
+          "input_tokens": {
+            "type": "integer",
+            "title": "Input Tokens"
+          },
+          "output_tokens": {
+            "type": "integer",
+            "title": "Output Tokens"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "key",
+          "name",
+          "section",
+          "base_type",
+          "status",
+          "note",
+          "base_effort_pd",
+          "source",
+          "sources",
+          "model",
+          "input_tokens",
+          "output_tokens",
+          "created_at"
+        ],
+        "title": "ResearchedBlockOut"
+      },
+      "ResearchedFeature": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "web",
+              "analysis"
+            ],
+            "title": "Method"
+          },
+          "section": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Section"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/ResearchSource"
+            },
+            "type": "array",
+            "title": "Sources"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "method",
+          "section",
+          "summary",
+          "sources"
+        ],
+        "title": "ResearchedFeature",
+        "description": "A feature priced by a block researched for it (services/research): from published hours\nfound on the web and checked on the page (\"web\"), or from the AI's analysis of it as catalog\nblocks (\"analysis\"). Low confidence either way."
+      },
       "Role": {
         "type": "string",
         "enum": [
@@ -7259,6 +8284,170 @@
           "scenarios"
         ],
         "title": "ScenariosRequest"
+      },
+      "ScopeCost": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "amount_paise": {
+            "type": "integer",
+            "title": "Amount Paise"
+          },
+          "note": {
+            "type": "string",
+            "title": "Note"
+          },
+          "partly_priced": {
+            "type": "boolean",
+            "title": "Partly Priced",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "label",
+          "amount_paise",
+          "note"
+        ],
+        "title": "ScopeCost",
+        "description": "A chosen scope item and the building cost of the blocks only it asked for (most likely,\nsplit evenly when two items need the same new block). 0 = already in the project (a\nfeature's or a standard block), so nothing was added."
+      },
+      "ScopeGroupOut": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "feature": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Feature"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ScopeItemOut"
+            },
+            "type": "array",
+            "title": "Items"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "label",
+          "feature",
+          "items"
+        ],
+        "title": "ScopeGroupOut"
+      },
+      "ScopeItemOut": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "note": {
+            "type": "string",
+            "title": "Note",
+            "default": ""
+          },
+          "partly_priced": {
+            "type": "boolean",
+            "title": "Partly Priced",
+            "default": false
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "label"
+        ],
+        "title": "ScopeItemOut"
+      },
+      "SecondOpinionOut": {
+        "properties": {
+          "verdict": {
+            "type": "string",
+            "enum": [
+              "looks_right",
+              "check"
+            ],
+            "title": "Verdict"
+          },
+          "summary": {
+            "type": "string",
+            "title": "Summary"
+          },
+          "flags": {
+            "items": {
+              "$ref": "#/components/schemas/Flag"
+            },
+            "type": "array",
+            "title": "Flags"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          },
+          "model": {
+            "type": "string",
+            "title": "Model"
+          }
+        },
+        "type": "object",
+        "required": [
+          "verdict",
+          "summary",
+          "flags",
+          "created_at",
+          "model"
+        ],
+        "title": "SecondOpinionOut"
+      },
+      "SecondOpinionState": {
+        "properties": {
+          "ai_available": {
+            "type": "boolean",
+            "title": "Ai Available"
+          },
+          "opinion": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SecondOpinionOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "type": "object",
+        "required": [
+          "ai_available",
+          "opinion"
+        ],
+        "title": "SecondOpinionState"
       },
       "SimilarProject": {
         "properties": {
@@ -7452,6 +8641,34 @@
         ],
         "title": "SuggestedFeature"
       },
+      "SuggestedScope": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "quote": {
+            "type": "string",
+            "title": "Quote"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "label",
+          "quote",
+          "status"
+        ],
+        "title": "SuggestedScope"
+      },
       "Suggestion": {
         "properties": {
           "reader": {
@@ -7485,6 +8702,22 @@
             },
             "type": "object",
             "title": "Choices"
+          },
+          "scope": {
+            "items": {
+              "$ref": "#/components/schemas/SuggestedScope"
+            },
+            "type": "array",
+            "title": "Scope",
+            "default": []
+          },
+          "not_priced": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Not Priced",
+            "default": []
           },
           "note": {
             "anyOf": [
@@ -7717,6 +8950,22 @@
                 "type": "null"
               }
             ]
+          },
+          "scope": {
+            "items": {
+              "$ref": "#/components/schemas/FoundScope"
+            },
+            "type": "array",
+            "title": "Scope",
+            "default": []
+          },
+          "scope_set_aside": {
+            "items": {
+              "$ref": "#/components/schemas/FoundScope"
+            },
+            "type": "array",
+            "title": "Scope Set Aside",
+            "default": []
           }
         },
         "type": "object",

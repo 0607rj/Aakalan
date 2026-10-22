@@ -10,7 +10,6 @@ import { clearToken } from "@/lib/api/client";
 
 const APP_LINKS = [
   { href: "/projects", label: "Your estimates" },
-  { href: "/settings", label: "Settings" },
   { href: "/how-it-works", label: "How it works" },
 ];
 

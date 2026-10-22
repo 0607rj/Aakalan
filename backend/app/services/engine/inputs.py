@@ -53,6 +53,9 @@ class ComponentInstanceIn(Strict):
 class OnsiteResource(Strict):
     role: str = Field(pattern=r"^role\.[a-z_]+$")  # rate key, e.g. "role.developer"
     count: Decimal = Field(gt=0)
+    # person-days each in all, when the document limits onsite work (e.g. during an event);
+    # None = all year, every support year
+    days: Decimal | None = Field(default=None, gt=0)
 
 
 class PaymentMilestone(Strict):
@@ -166,6 +169,9 @@ class EstimateInput(Strict):
     rate_card: RateCard
     parameters: ParameterSet
     monte_carlo_runs: int | None = Field(default=None, ge=100)
+    # "pre_ai_sensitivity" prices unknown-era components as if their effort data were pre-AI
+    # (AI savings applied): a second, labelled run beside the estimate, never the estimate.
+    era_scenario: Literal["estimate", "pre_ai_sensitivity"] = "estimate"
 
     @model_validator(mode="after")
     def _refs(self) -> "EstimateInput":

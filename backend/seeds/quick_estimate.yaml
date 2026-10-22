@@ -8,6 +8,10 @@ version: v3
 source: placeholder
 # A ticked feature says *what* is needed but not how much, so clarity is neutral (1-5 scale).
 requirement_clarity: 3
+# Market prices (published contract values) are not shown or used to check an estimate: the
+# same scope sells for up to 5x more or less (user's decision 2026-10-21, OPEN_QUESTIONS 127).
+# true brings back the market box and similar real projects on the results page and report.
+show_market_prices: false
 
 # Every quick estimate starts from these answers; sizes, questions and features add to them.
 # No client-type extras by default: audits, reports and meetings, accessibility, languages and
@@ -32,22 +36,22 @@ project_types:
   - key: business
     label: Software for your staff
     hint: "Stock, billing, customers, approvals and reports - e.g. an office or ERP system"
-    features: [inventory, billing, crm, approval_workflow, documents, dashboards, staff_login, notifications, search]
+    features: [inventory, billing, crm, approval_workflow, documents, dashboards, staff_login, notifications, search, ai_documents, ai_forecast]
     suggested: [dashboards]
   - key: store
     label: An online store or marketplace
     hint: "Sell products online with a cart, payments and order tracking"
-    features: [online_store, payments, search, notifications, inventory, billing, crm, maps]
+    features: [online_store, marketplace, payments, search, notifications, inventory, billing, crm, maps, chat, ai_recommend]
     suggested: [online_store, payments]
   - key: booking
     label: A booking or service app
     hint: "Appointments, home services, rentals, clinics or classes"
-    features: [bookings, payments, maps, notifications, crm, billing, online_forms, grievances]
+    features: [bookings, payments, maps, notifications, crm, billing, online_forms, grievances, chat, offline_app]
     suggested: [bookings, notifications]
   - key: ai
-    label: An AI chatbot or assistant
-    hint: "Answers questions from your documents, rules or FAQs"
-    features: [ai_chatbot, documents, search, languages, dashboards, notifications]
+    label: An AI chatbot, assistant or AI feature
+    hint: "Answers questions, reads documents, recommends, predicts or completes tasks"
+    features: [ai_chatbot, ai_documents, ai_agent, ai_voice, ai_text_sorting, ai_recommend, ai_forecast, ai_images, ai_training, documents, search, languages, dashboards, notifications]
     suggested: [ai_chatbot]
   - key: other
     label: Something else
@@ -212,6 +216,70 @@ features:
     label: Search
     hint: Find records, products or documents quickly with filters.
     components: [search_module]
+  - key: marketplace
+    label: Marketplace with many sellers
+    hint: Sellers join, list products and get paid; the platform keeps a commission.
+    components: [marketplace_multivendor]
+    levels:
+      basic: "Sellers sign up and list products; payouts done by hand"
+      standard: "Seller dashboard, commission and automatic split payouts"
+      advanced: "Seller KYC, ratings, disputes and listing approval at scale"
+  - key: chat
+    label: Chat between users or with support
+    hint: People message each other or the support team inside the website or app.
+    components: [in_app_chat]
+    levels:
+      basic: "Simple one-to-one messages"
+      standard: "Chat history, unread counts, notifications and attachments"
+      advanced: "A full messenger: groups, media, delivery receipts at scale"
+  - key: offline_app
+    label: Works without internet
+    hint: The app keeps working offline and syncs when the connection returns.
+    components: [mobile_offline_sync]
+  - key: app_purchases
+    label: In-app purchases or subscriptions
+    hint: Users buy or subscribe through the App Store or Google Play.
+    components: [mobile_in_app_purchases]
+  - key: scanning
+    label: Camera, QR code or barcode scanning
+    hint: Take photos or scan codes inside the app.
+    components: [mobile_camera_scanning]
+  - key: ai_documents
+    label: AI reads documents (OCR)
+    hint: Pulls names, numbers and fields out of scanned forms, invoices or IDs.
+    components: [ai_document_extraction]
+  - key: ai_recommend
+    label: Recommendations
+    hint: Suggests products or content each user is likely to want.
+    components: [ai_recommendations]
+    levels:
+      basic: "Simple rules (popular, recently viewed, bought together)"
+      standard: "Personal suggestions from each user's activity"
+      advanced: "A trained recommendation model with testing and tuning"
+  - key: ai_voice
+    label: Voice input or spoken answers
+    hint: Users speak to the app or hear its answers (speech-to-text, text-to-speech).
+    components: [ai_speech]
+  - key: ai_text_sorting
+    label: AI sorts messages or complaints
+    hint: Puts text into categories or reads its sentiment automatically.
+    components: [ai_text_classification]
+  - key: ai_forecast
+    label: Predictions and forecasts
+    hint: Forecasts demand, risk or numbers from past data.
+    components: [ai_forecasting]
+  - key: ai_images
+    label: AI recognises photos
+    hint: Recognises or sorts images, e.g. product, damage or document type.
+    components: [ai_image_recognition]
+  - key: ai_agent
+    label: AI agent that completes tasks
+    hint: An AI assistant that carries out steps in the system for the user, with approval.
+    components: [ai_agents]
+  - key: ai_training
+    label: Train our own AI model
+    hint: Fine-tuning or training a model on your data, with a pipeline to retrain it.
+    components: [mlops_pipeline]
   - key: old_data
     hidden: true   # asked as its own question, not ticked
     label: Move data from the old system
@@ -269,9 +337,10 @@ sizing:
       base_components: [discovery_requirement_study, solution_architecture, ui_ux_design, user_management_rbac, responsive_frontend, audit_trail_logging, security_hardening, notifications, integration_sms_email_gateway, functional_testing_uat_support, documentation_manuals, devops_cicd_setup]
       answers: {training_sessions: 4, hypercare_weeks: 4}
 
-# The questions. `group: main` = one per screen, in this order (about ten in all, with the
-# features); `detail` = the optional "a few more details" screen (skipped = the usual answer);
-# `hidden` = not asked (set by Settings or the back-test). Options marked `unsure: true` are
+# The questions. `group: main` = one per screen, in this order (three: version, platforms, scale; with the
+# features and the deadline about eight screens); `detail` = the optional "a few more details" screen (skipped = the usual answer);
+# `document` = not asked on the form, but read from an uploaded document; `hidden` = never asked
+# nor read (set by the back-test). Options marked `unsure: true` are
 # "Not sure": they price the usual answer and widen the range (see `not_sure`).
 questions:
   version:
@@ -285,8 +354,9 @@ questions:
     label: Where should people use it?
     default: web
     options:
-      - {value: web, label: Website only, hint: "Works in the browser on phones and computers", answers: {}}
-      - {value: web_mobile, label: Website and a mobile app, hint: "Plus an app for Android and iPhone", add_features: {mobile_app: null}, answers: {}}
+      - {value: web, label: Website, hint: "Works in the browser on phones and computers", answers: {}}
+      - {value: web_mobile, label: Website and app, hint: "A website and an app for Android and iPhone", add_features: {mobile_app: null}, answers: {}}
+      - {value: app, label: Mobile app only, hint: "An app for Android and iPhone, with a simple web admin panel to manage it", add_features: {mobile_app: null}, answers: {}}
   scale:
     label: How many people will use it?
     default: up_to_10k
@@ -300,6 +370,7 @@ questions:
       - {value: not_sure, label: Not sure, hint: "We assume 1,000 – 10,000 and show a wider range", unsure: true, answers: {users_total: 10000, peak_concurrent_users: 200, documents_per_month: 1000, chatbot_queries_per_day: 500}}
   integrations:
     label: Does it need to connect to other software you already use?
+    group: detail  # optional: skipped = the usual answer, which is priced
     default: none
     options:
       - {value: none, label: "No", hint: "It works on its own", answers: {}}
@@ -308,6 +379,7 @@ questions:
       - {value: not_sure, label: Not sure, hint: "We assume one or two and show a wider range", add_features: {connect_existing: standard}, unsure: true, answers: {}}
   old_data:
     label: Do you need to bring in data from an old system?
+    group: detail  # optional: skipped = the usual answer, which is priced
     default: "no"
     options:
       - {value: "no", label: "No", hint: "Starting fresh", answers: {}}
@@ -316,6 +388,7 @@ questions:
       - {value: not_sure, label: Not sure, hint: "We assume a few tables and show a wider range", add_features: {old_data: standard}, unsure: true, answers: {}}
   build_type:
     label: Should it be built from scratch, or set up on a ready-made product?
+    group: document   # not asked on the form; read from an uploaded document, else the usual answer
     default: custom
     options:
       - {value: custom, label: Built from scratch, hint: "Written for you by a development team", answers: {build_type: custom}}
@@ -323,6 +396,7 @@ questions:
       - {value: not_sure, label: Not sure, hint: "We price building from scratch and show a wider range", unsure: true, answers: {build_type: custom}}
   hosting:
     label: Where will it run?
+    group: detail  # optional: skipped = the usual answer, which is priced
     default: aws
     options:
       - {value: aws, label: "Public cloud (Amazon, Microsoft or Google)", hint: "Rented servers in an Indian data centre; the monthly cloud bill is part of the cost", answers: {hosting_provider: aws, hosting_in_scope: true}}
@@ -332,6 +406,7 @@ questions:
       - {value: not_sure, label: Not sure, hint: "We price a public cloud and show a wider range", unsure: true, answers: {hosting_provider: aws, hosting_in_scope: true}}
   support_years:
     label: For how many years should it be looked after once it is live?
+    group: detail  # optional: skipped = the usual answer, which is priced
     default: 3
     options:
       - {value: 0, label: "Not needed", hint: "Handed over after launch; you run and maintain it", answers: {om_years: 0}}
@@ -341,6 +416,7 @@ questions:
       - {value: 5, label: 5 years, answers: {om_years: 5}}
   helpdesk_scope:
     label: Do you need a helpdesk team to answer users?
+    group: document   # not asked on the form; read from an uploaded document, else the usual answer
     default: "no"
     hide_when: {support_years: [0]}
     options:
@@ -348,6 +424,7 @@ questions:
       - {value: "yes", label: "Yes", hint: "A separate helpdesk team answers users", answers: {helpdesk_in_scope: true}}
   support_hours:
     label: When should the helpdesk be available?
+    group: document   # not asked on the form; read from an uploaded document, else the usual answer
     default: office
     hide_when: {helpdesk_scope: ["no"], support_years: [0]}
     options:
@@ -356,7 +433,7 @@ questions:
   # --- optional details --------------------------------------------------------------------
   availability:
     label: If it stops working for an hour, how bad is that?
-    group: detail
+    group: document   # not asked on the form; read from an uploaded document, else the usual answer
     default: normal
     options:
       - {value: basic, label: Not a problem, hint: "Short breaks are fine (one server)", answers: {uptime_sla: "99.0"}}
@@ -365,21 +442,21 @@ questions:
       - {value: critical, label: It must never stop, hint: "With a backup site for disasters (99.95%)", answers: {uptime_sla: "99.95"}}
   security_audit:
     label: Do you need an independent security check before launch?
-    group: detail
+    group: document   # not asked on the form; read from an uploaded document, else the usual answer
     default: "no"
     options:
       - {value: "no", label: "No", hint: "The team's own security testing only", answers: {cert_in_audit: false}}
       - {value: "yes", label: "Yes", hint: "A certified outside auditor (CERT-In empanelled) tests it before launch and once a year, and the team fixes what it finds; usual for government sites and apps with payments or personal data", answers: {cert_in_audit: true}, extra_components: [vapt_remediation]}
   reporting:
     label: Do you want monthly progress reports and review meetings?
-    group: detail
+    group: document   # not asked on the form; read from an uploaded document, else the usual answer
     default: "no"
     options:
       - {value: "no", label: "No", hint: "Normal updates from the project manager", answers: {governance_overheads: false}}
       - {value: "yes", label: "Yes", hint: "Written monthly reports, review meetings and visits; usual for government and large companies", answers: {governance_overheads: true}}
   design:
     label: Do you already have a design for the screens?
-    group: detail
+    group: detail  # optional: skipped = the usual answer, which is priced
     default: some
     options:
       - {value: ready, label: "Yes, the design is ready", hint: "Screens already designed (e.g. in Figma), or a brand guide to follow closely", component_complexity: {ui_ux_design: low}, answers: {}}
@@ -396,7 +473,7 @@ questions:
       - {value: advanced, label: Complex questions, hint: "Reasoning over many documents and multi-step help (a larger AI model, costs more per question)", answers: {ai_model_tier: advanced}}
   chatbot_volume:
     label: About how many questions will the chatbot answer each day?
-    group: detail
+    group: document   # not asked on the form; read from an uploaded document, else the usual answer
     default: by_users
     only_with_features: [ai_chatbot]
     only_with_custom_types: [ai]
@@ -407,12 +484,19 @@ questions:
       - {value: "10000", label: "About 10,000", answers: {chatbot_queries_per_day: 10000}}
   launch_help:
     label: How much help do your users need at launch?
-    group: detail
+    group: document   # not asked on the form; read from an uploaded document, else the usual answer
     default: usual
     options:
       - {value: none, label: None, hint: "Users learn it themselves; normal support starts at launch", answers: {training_sessions: 0, training_outstation_sessions: 0, hypercare_weeks: 0}}
       - {value: usual, label: The usual, hint: "Training sessions and a few weeks of extra support, by project size", answers: {}}
       - {value: extra, label: A lot, hint: "8 training sessions and 8 weeks of extra support, for many offices or user groups", answers: {training_sessions: 8, hypercare_weeks: 8}}
+  onsite_period:
+    label: How long are staff needed at the client's office?
+    group: document   # not asked on the form; read from an uploaded document, else the usual answer
+    default: support
+    options:
+      - {value: support, label: Throughout support, hint: "Every year of support after launch", answers: {}}
+      - {value: event, label: Only during an event or the launch, hint: "A few days (onsite_event_days), priced once", answers: {}}
   # --- not asked ---------------------------------------------------------------------------
   ai_use:
     label: How much will the development team use AI tools (like Claude or Copilot)?
@@ -448,6 +532,231 @@ countries:
 # Features the requirement document asks for that are not in the list above. The AI (or the
 # user) gives each one a type and a size; the type picks a generic catalog component (catalog
 # v2) and the size picks its S/M/L effort. Labels are what the user sees.
+# What else a feature needs beyond its baseline (and sign-in, which every project has). Each
+# item adds catalog building blocks at a level; their hours come from the catalog (with its
+# sources), never from here. A block already in the project (a feature's, a standard block or
+# another item's) is not added again: the larger level wins. Items not chosen are not priced;
+# they do not change the project size (feature points). An item never makes a standard
+# building block bigger (it may only ask for one at basic): a whole size step (e.g. user accounts
+# S 76 h -> M 252 h) is a larger module, not the increment one item adds, and no source here
+# prices such increments. `note` says what is and is not priced, in plain words.
+scope_source: "Reasoned mapping of each item onto existing catalog blocks (catalog v6; v7 adds new blocks); placeholder until project hours are recorded"
+scope:
+  - key: sign_in
+    label: Sign-in and user accounts
+    feature: null   # every project: user accounts are a standard building block
+    items:
+      - key: otp_codes
+        label: One-time codes by SMS or email (sign-in or password reset)
+        adds: {integration_sms_email_gateway: basic}
+        note: Priced as connecting an SMS / email service.
+        keywords: [otp, one time password, one-time password]
+      # roles and permissions are part of the user-accounts block at every size (its catalog
+      # description), so they are not a separate item.
+      - key: social_login
+        label: Sign in with Google or Microsoft accounts
+        adds: {integration_sso_identity: basic}
+        note: Priced as a basic single sign-on connection.
+        keywords: [social login, sign in with google, login with google, oauth]
+      - key: two_step_sign_in
+        label: Two-step sign-in (MFA)
+        adds: {integration_sms_email_gateway: basic}
+        note: Priced as connecting an SMS / email service for the codes. The extra sign-in step itself is part of the user-accounts block; no source here prices it separately.
+        partly_priced: true
+        keywords: [multi-factor, multi factor, two-factor, two factor, 2fa, mfa]
+      - key: enterprise_sso
+        label: Single sign-on with the organisation's own login (SAML / OIDC, Active Directory)
+        adds: {integration_sso_identity: standard}   # ~127 h; the catalog's sources: 80-150 h
+        note: Priced as a standard single sign-on connection.
+        keywords: [single sign-on, single sign on, saml, active directory, ldap]
+      - key: audit_log
+        label: A record of who did what (audit log)
+        adds: {audit_trail_logging: basic}
+        keywords: [audit trail, audit log, audit logs]
+      - key: privacy_rights
+        label: "Privacy rights: consent, delete my account, download my data (DPDP Act)"
+        adds: {privacy_consent_dpdp: basic}
+        keywords: [right to erasure, account deletion, delete account, delete their account, download my data, download their data, data portability, consent management]
+  - key: connections
+    label: Connections with other systems
+    feature: null
+    items:
+      - key: public_api
+        label: An API or webhooks so other systems can use it
+        adds: {custom_integration: basic}
+        note: Priced as one basic connection to another system (the catalog's general integration block, reasoned); a large public API with many endpoints costs more.
+        partly_priced: true
+        keywords: [webhook, webhooks, public api, open api, apis for third-party, api for third-party, third-party api access]
+      - key: data_import
+        label: Regular data import or sync from another system
+        adds: {custom_integration: basic}
+        note: Priced as one basic connection of its own (the catalog's general integration block, reasoned), separate from any other system connected.
+        keywords: [data import, scheduled import, etl, data sync, data synchronisation, data synchronization]
+  - key: payments_scope
+    label: Payments
+    feature: payments
+    items:
+      - key: subscriptions
+        label: Subscriptions and recurring billing
+        adds: {billing_invoicing: basic}
+        note: Priced as a basic billing block (plans, repeat charges and invoices).
+        keywords: [subscription, subscriptions, recurring payment, recurring payments, recurring billing, auto-debit, autopay, e-mandate]
+  - key: notifications_scope
+    label: Notifications
+    feature: notifications
+    items:
+      - key: whatsapp
+        label: Messages on WhatsApp
+        adds: {integration_sms_email_gateway: basic}
+        note: Priced as connecting a messaging service (the same block as SMS and email).
+        keywords: [whatsapp]
+      - key: push
+        label: Push notifications on phones and browsers
+        adds: {push_notifications: basic}
+        keywords: [push notification, push notifications, fcm, firebase cloud messaging, apns]
+  - key: forms_scope
+    label: Online forms
+    feature: online_forms
+    items:
+      - key: forms_ekyc
+        label: Check the applicant's identity with Aadhaar e-KYC
+        adds: {integration_aadhaar_ekyc: basic}
+        keywords: [e-kyc, ekyc, aadhaar authentication]
+      - key: forms_digilocker
+        label: Fetch certificates from DigiLocker
+        adds: {integration_digilocker: basic}
+        keywords: [digilocker]
+      - key: forms_fee
+        label: Collect an application fee online
+        adds: {integration_payment_gateway: basic}
+        keywords: [application fee, processing fee, registration fee]
+  - key: workflow_scope
+    label: Approvals
+    feature: approval_workflow
+    items:
+      - key: workflow_audit
+        label: Record every decision and who made it (audit trail)
+        adds: {audit_trail_logging: basic}
+        keywords: [audit trail, audit log]
+      - key: workflow_reports
+        label: Reports on pending files and delays
+        adds: {dashboard_mis_reports: basic}
+        keywords: [pendency, mis report, mis reports]
+      - key: workflow_alerts
+        label: SMS or email alerts at each step
+        adds: {notifications: basic, integration_sms_email_gateway: basic}
+        keywords: [sms alert, sms alerts, email alert, email alerts]
+  - key: documents_scope
+    label: Documents
+    feature: documents
+    items:
+      - key: documents_audit
+        label: Record who opened or changed each file
+        adds: {audit_trail_logging: basic}
+        keywords: [audit trail, audit log]
+      - key: documents_esign
+        label: Digital signatures (eSign or DSC)
+        adds: {custom_integration: basic}
+        note: Priced as one basic connection to a signing service (the catalog's general integration block, reasoned).
+        partly_priced: true
+        keywords: [esign, e-sign, digital signature, digital signatures, dsc]
+  - key: chatbot_scope
+    label: AI chatbot
+    feature: ai_chatbot
+    items:
+      - key: chatbot_indian_languages
+        label: Answers in Indian languages (Bhashini translation)
+        adds: {integration_bhashini_translation: basic}
+        keywords: [bhashini, indian languages, regional languages]
+      - key: chatbot_records
+        label: Looks up the user's own records in your systems
+        adds: {integration_erp_legacy: basic}
+        keywords: [application status, status of application]
+  - key: bookings_scope
+    label: Bookings
+    feature: bookings
+    items:
+      - key: booking_payment
+        label: Pay online when booking
+        adds: {integration_payment_gateway: basic}
+        keywords: [advance payment, booking fee, pay online]
+      - key: booking_reminders
+        label: Reminders by SMS or email
+        adds: {notifications: basic, integration_sms_email_gateway: basic}
+        keywords: [reminder, reminders]
+      - key: booking_nearby
+        label: Find the nearest centre on a map
+        adds: {maps_location: basic}
+        keywords: [nearest centre, nearest center, nearby]
+  - key: store_scope
+    label: Online store
+    feature: online_store
+    items:
+      - key: store_stock
+        label: Stock tracking
+        adds: {inventory_management: basic}
+        keywords: [stock, inventory]
+      - key: store_invoices
+        label: GST invoices
+        adds: {billing_invoicing: basic}
+        keywords: [gst invoice, tax invoice, invoices]
+      - key: store_reviews
+        label: Ratings and reviews
+        adds: {reviews_ratings: basic}
+        keywords: [ratings and reviews, product reviews, customer reviews, star rating, star ratings]
+      - key: store_coupons
+        label: Coupons and discounts
+        adds: {coupons_promotions: basic}
+        keywords: [coupon, coupons, promo code, promo codes, discount code, discount codes]
+      - key: store_shipping
+        label: Courier connection (rates, labels, tracking)
+        adds: {shipping_integration: basic}
+        keywords: [shipping, courier, shiprocket, delhivery, shipment tracking, shipping labels]
+      - key: store_returns
+        label: Returns and refunds
+        adds: {returns_refunds: basic}
+        keywords: [refund, refunds, returns and refunds, return request, return requests]
+      - key: store_loyalty
+        label: Loyalty points
+        adds: {loyalty_rewards: basic}
+        keywords: [loyalty points, reward points, loyalty programme, loyalty program]
+  - key: website_scope
+    label: Public website
+    feature: public_website
+    items:
+      - key: seo
+        label: Search engine set-up (SEO)
+        adds: {seo_setup: basic}
+        keywords: [seo, search engine optimisation, search engine optimization, sitemap, meta tags]
+  - key: security_scope
+    label: Security, compliance and monitoring
+    feature: null
+    items:
+      - key: monitoring
+        label: Monitoring, logs and alerts
+        adds: {monitoring_observability: basic}
+        keywords: [application monitoring, uptime monitoring, monitoring and alerting, observability]
+      - key: siem
+        label: Security monitoring (SIEM)
+        adds: {security_monitoring_siem: basic}
+        keywords: [siem, security monitoring, security operations centre, security operations center]
+      - key: security_scans
+        label: Automatic security scans of the code
+        adds: {security_scanning_ci: basic}
+        keywords: [sast, dast, dependency scanning, static code analysis]
+      - key: data_masking
+        label: Masking personal data
+        adds: {pii_masking: basic}
+        keywords: [data masking, masking of personal data, tokenisation, tokenization]
+      - key: secrets
+        label: Keys and secrets kept in a vault (KMS)
+        adds: {secrets_management: basic}
+        keywords: [key management, kms, hashicorp vault, secrets management, hsm]
+      - key: compliance
+        label: Compliance controls (ISO 27001, SOC 2)
+        adds: {compliance_controls: basic}
+        keywords: [soc 2, soc2, compliance controls]
+
 custom_feature_types:
   module: {label: "Screens / module", component: custom_module}
   integration: {label: "Connection to another system", component: custom_integration}
@@ -459,6 +768,70 @@ max_custom_features: 50
 # Working hours in one person-day, to show the work (and enter rates) in hours. An 8-hour
 # working day (Factories Act / Shops and Establishments norm); the engine itself counts days.
 hours_per_person_day: 8
+
+# "Does this price look real?" (services/quick/reality.py, shown at the top of the results). Each
+# check compares parts of the finished estimate with each other, never with market prices, and
+# never changes the price. The optional AI second opinion reads the features, levels and the
+# hours per feature and names concerns (wrong level, missing or unneeded feature); it gives no
+# numbers. Thresholds are reasoned placeholders.
+reality_check:
+  source: "placeholder, reasoned: set-up work (design, login, testing, deployment) above 60% of the building means the features are a small part of the price; one feature above half of the feature work in a list of 3 or more usually means a level set too high; a year of running above the whole build is unusual for a portal; over 15 people on average is a large programme; researched blocks are low confidence (OPEN_QUESTIONS 125, 126)"
+  setup_share_max: 0.6
+  feature_share_max: 0.5
+  feature_share_min_features: 3
+  run_per_year_max_of_build: 1.0
+  max_average_team: 15
+  researched_share_max: 0.3
+  not_sure_max: 3
+  second_opinion_prompt: second_opinion_v1
+  second_opinion_max_flags: 6
+  # EMD check (fix 2026-10-22): GFR 2017 Rule 170(i) sets bid security at 2-5% of the
+  # estimated value (https://doe.gov.in/files/circulars_document/FInal_GFR_upto_31_07_2024.pdf);
+  # a price more than 3x outside that band is flagged (the 3x is a reasoned placeholder)
+  emd_share_min: 0.02
+  emd_share_max: 0.05
+  emd_band_factor: 3
+
+# Work every estimate already prices: the size tiers' base blocks and the run costs (backups,
+# hosting, SSL). The document reader links a requirement that is only a part of one of these
+# to its key, and it is not priced again as an extra (services/extraction/tender.py).
+always_included:
+  source: "reasoned from sizing.tiers base_components and the run-cost lines (2026-10-22)"
+  items:
+    - {key: accounts, label: "User accounts, login, logout, password reset, user roles and role-based permissions, user management, profile screens"}
+    - {key: screens, label: "Responsive screens, menus and navigation, page and menu management in the admin, form validation, error messages, captcha"}
+    - {key: design, label: "Screen and UI/UX design, look and feel, branding, style guide"}
+    - {key: testing, label: "Testing, test cases, user acceptance testing, bug fixing before launch"}
+    - {key: deployment, label: "Deployment, server and environment set-up, staging, CI/CD"}
+    - {key: running, label: "Hosting, backups and restore, SSL certificate, domain, basic uptime monitoring"}
+    - {key: manuals, label: "User manuals, admin guides, technical documentation, training of users"}
+
+# Research for a feature the catalog lacks (services/research; prompts in app/llm/prompts).
+# Only with an AI key; without one the custom feature type prices it, as before. Order: a
+# catalog block with a close name; else published hours from the web (the AI searches with the
+# feature's name only, never tender text; the code opens each page and keeps a figure only if it
+# is on the page near the feature's words; hours = lowest / median / highest kept figure x
+# feature_level_factor / hours per day) when at least min_verified_sources check out; else the AI
+# analysis: the feature as catalog blocks at a level, hours from those blocks (the AI gives no
+# number). The block is saved for the organisation automatically (low confidence) and reused.
+research:
+  source: "placeholder, reasoned: limits keep a search cheap (a few searches and pages) and slow pages from blocking an estimate; feature_level_factor is the catalog v5 method; match_threshold and quote_window_chars were chosen on the catalog's own names and a few vendor pages (2026-10-19)"
+  prompt: research_feature_v1
+  analyse_prompt: analyse_feature_v1
+  web_search: true
+  min_verified_sources: 1
+  max_sources: 5
+  max_searches: 5
+  max_per_estimate: 5
+  concurrency: 3
+  feature_level_factor: 0.9
+  match_threshold: 0.6
+  retry_no_evidence_days: 30
+  fetch_timeout_seconds: 15
+  fetch_max_bytes: 3000000
+  quote_window_chars: 300
+  min_hours: 2
+  max_hours: 5000
 
 # Plain names of the people who do the work (rate-card role keys), for "Team needed".
 role_labels:
@@ -548,6 +921,16 @@ client_mode:
 
 # "Similar real projects" shown with every estimate (from seeds/benchmarks): score = features
 # shared (Jaccard) x weight + same size (or a neighbouring size) + same build type.
+# Next to the estimate: the published prices of real projects the app gives the same size (in
+# today's money, with GST), as published, not scaled to the estimate and not a check of its hours.
+# Fewer than min_projects of that size (placeholder, reasoned): the neighbouring sizes are added.
+market_comparison:
+  min_projects: 5
+  sources:
+    bidplus.gem.gov.in: "Government e-Marketplace awards (lowest winning bids)"
+    clutch.co: "Prices reported by clients on Clutch (often a price band)"
+  other_source: "Contract announcements and company filings"
+
 similar_projects:
   count: 5
   min_score: 0.35
@@ -585,6 +968,59 @@ keywords:
     notifications: [sms, push notification, push notifications, email alerts, sms alerts, otp, reminders by sms]
     maps: [maps, map view, gis, geo-tagging, geotagging, geolocation, location tracking, gps tracking, google maps, nearby search]
     search: [search functionality, advanced search, search facility, full-text search]
+    marketplace: [multi-vendor, multi vendor, multivendor, marketplace, seller onboarding, seller dashboard, vendor payout, vendor payouts, seller payout, seller payouts, split payment, split payments, settlement to sellers]
+    chat: [live chat, in-app chat, chat with support, instant messaging, one-to-one chat, messaging between users]
+    offline_app: [offline mode, works offline, offline access, without internet, offline sync]
+    app_purchases: [in-app purchase, in-app purchases, in-app subscription, google play billing, app store billing]
+    scanning: [qr code, qr codes, barcode scanning, scan barcodes, scan qr, camera capture]
+    ai_documents: [ocr, optical character recognition, intelligent document processing, extract data from documents, invoice scanning]
+    ai_recommend: [recommendation engine, personalised recommendations, personalized recommendations, recommended products, product recommendations]
+    ai_voice: [speech to text, speech-to-text, text to speech, text-to-speech, voice assistant, voice commands]
+    ai_text_sorting: [sentiment analysis, text classification, classify complaints, auto-categorisation, auto-categorization]
+    ai_forecast: [demand forecasting, forecasting model, predictive analytics, predict demand]
+    ai_images: [image recognition, image classification, computer vision, object detection]
+    ai_agent: [ai agent, ai agents, agentic, autonomous agent]
+    ai_training: [fine-tuning, fine tuning, model training, mlops, train a model]
+  # Everyday words in a short description typed on the form (services/extraction/describe.py),
+  # added to the lists above only there, never for tender documents. Exact phrases, so plurals
+  # are listed; "not needed" / "later" in the sentence still keeps a feature out.
+  description_features:
+    online_forms: [registration, register online, apply online, admission form, admissions, enrolment, enrollment, sign-up form, signup form, survey form, fill a form, fill forms]
+    approval_workflow: [approval, approvals, approve, approves, approved by, leave request, leave requests, sanction, verified by]
+    documents: [upload documents, upload files, file upload, documents, lab reports, certificates, attachments, store files]
+    dashboards: [reports, dashboard, charts, progress charts, analytics, statistics, exam results, sales report, sales reports]
+    ai_chatbot: [ai chat, faq bot, answer questions automatically, answers questions automatically, bot]
+    payments: [pay online, payment, payments, fee collection, collect fees, fees, subscription, subscriptions, checkout, upi, razorpay, paytm, card payment, card payments, wallet]
+    staff_login: [employee login, staff login]
+    connect_existing: [tally, existing software, integrate with, integration with, connect with our]
+    languages: [multiple languages, regional language, regional languages, in hindi]
+    public_website: [company website, landing page, blog, information pages, about us page]
+    grievances: [complaint, complaints, support tickets, raise a ticket, raise tickets]
+    old_data: [old data, existing data, excel data, import from excel, move our data]
+    inventory: [stock, pharmacy stock, warehouse, purchase orders, raw material, raw materials]
+    billing: [bill, bills, invoice, invoices, receipt, receipts, gst invoice]
+    bookings: [book, booking, appointment, appointments, slot, slots, reservation, schedule, timetable, class schedule]
+    online_store: [order, orders, place an order, order food, buy, shop, shopping, cart, products, menu, catalogue, catalog, sell online]
+    crm: [customer records, leads, follow up, follow-ups, sales team, clients list]
+    mobile_app: [mobile app, android, iphone, ios, play store, app store, parent app, rider app, driver app, delivery app]
+    notifications: [notification, notifications, alert, alerts, sms, email, emails, reminder, reminders, whatsapp]
+    maps: [map, track, tracking, location, nearby, gps, live location, route, routes]
+    search: [search, filter, filters, filter by, find nearby]
+    marketplace: [restaurants, sellers, vendors, multiple sellers, merchants, service providers]
+    chat: [chat, message, messages, messaging, talk to, chat with]
+    offline_app: [offline, without internet, no internet]
+    app_purchases: [in-app purchase, premium plan, premium plans, in-app subscription]
+    scanning: [scan, scanner, qr, barcode, barcodes]
+    ai_documents: [read documents, read invoices, scan invoices, extract from documents]
+    ai_recommend: [recommend, recommends, recommendations, suggest products, personalised, personalized, you may also like]
+    ai_voice: [voice, speech, speak to, voice commands]
+    ai_text_sorting: [sentiment, classify, sort complaints, categorise automatically, categorize automatically]
+    ai_forecast: [forecast, forecasts, predict, predicts, prediction, predictions]
+    ai_images: [detect objects, identify from a photo, photo recognition, face recognition]
+    ai_agent: [ai agent, ai agents, automate tasks with ai]
+    ai_training: [train our own model, custom model, machine learning model]
+    accessibility: [accessible, disabled users, screen reader]
+    aadhaar_digilocker: [kyc]
   choices:
     # A first version / pilot named in the document (strong phrases only: "phase 1" alone is
     # usually just the first stage of a full project).
@@ -614,10 +1050,19 @@ not_priced_topics:
   technology: {label: Required technology or software, words: [technology stack, tech stack, oracle, microsoft sql server, sap hana]}
   team_qualifications: {label: "Required team qualifications or CVs", words: [curriculum vitae, cv of, cvs of, minimum experience, years of experience, key personnel]}
   source_code: {label: "Source code and ownership handover", words: [source code, intellectual property, ipr]}
+  # Capabilities with no catalog block and no effort source yet: listed, never guessed.
+  multi_tenancy: {label: "Several client organisations on one system (multi-tenant)", words: [multi-tenant, multi tenant, multitenant, multi-tenancy, tenant isolation, white-label, white label]}
+  realtime_media: {label: "Video calls or live chat between users", words: [video call, video calls, video consultation, video consultations, teleconsultation, teleconsultations, tele-consultation, real-time chat, real time chat, live chat with]}
+  health_standards: {label: "Health-record standards (HL7, FHIR, ABDM)", words: [hl7, fhir, abdm, abha]}
 
 # Staff the vendor must keep at the client's office, as stated in a document, are priced at
 # this role's day rate during support (the engine's onsite_resources).
 onsite_role: role.developer
+# Onsite staff needed only during an event or the launch (question onsite_period) when the
+# document gives no number of days: priced for this many working days each, once.
+onsite_event_days:
+  days: 5
+  source: "placeholder, reasoned: a convention or launch event of about 3 days plus set-up and wind-down (2026-10-22)"
 
 # Payment terms read by the AI reader: when each payment falls, as a point in the build
 # (0 = the order, 1 = go-live) and months after it. "after_go_live" uses the months the

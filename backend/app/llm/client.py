@@ -2,12 +2,14 @@
 change). LLMs only read and suggest — nothing here ever computes a cost (rule 1)."""
 
 import base64
+import json
+import re
 from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Protocol, cast
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 from app.core.config import Settings, get_settings
 
@@ -45,10 +47,28 @@ class LLMClient(Protocol):
         """Same, reading a PDF directly (scanned documents)."""
         ...
 
+    def search_web[T: BaseModel](
+        self, *, system: str, user: str, schema: type[T], max_searches: int
+    ) -> LLMResult[T]:
+        """A call that may search the web (provider-side) and answers with JSON for `schema`.
+        Only generic search terms may go in `user`, never document text (rule 8)."""
+        ...
+
 
 def load_prompt(name: str) -> str:
     """Prompts are versioned files under app/llm/prompts/ (brief Section 9)."""
     return (PROMPTS_DIR / name).read_text(encoding="utf-8")
+
+
+JSON_RETRIES = 2  # invalid JSON is asked for again this many times
+
+
+def json_object(text: str) -> object:
+    """The JSON object in a reply (fences and text around it ignored)."""
+    match = re.search(r"\{.*\}", text, re.DOTALL)
+    if match is None:
+        raise ValueError("no JSON object in the reply")
+    return json.loads(match.group(0))
 
 
 class AnthropicClient:
@@ -78,30 +98,92 @@ class AnthropicClient:
         }
         return self._call(system, [document, {"type": "text", "text": instruction}], schema)
 
+    def search_web[T: BaseModel](
+        self, *, system: str, user: str, schema: type[T], max_searches: int
+    ) -> LLMResult[T]:
+        tool = {"type": self._settings.llm_web_search_tool, "name": "web_search"}
+        tool["max_uses"] = max_searches  # type: ignore[assignment]
+        messages: list[dict[str, Any]] = [{"role": "user", "content": user}]
+        used_in = used_out = 0
+        error = ""
+        for _ in range(1 + JSON_RETRIES):
+            response = self._client.messages.create(
+                model=self._settings.llm_model,
+                max_tokens=self._settings.llm_max_output_tokens,
+                system=system,
+                messages=messages,  # type: ignore[arg-type]
+                tools=[tool],  # type: ignore[list-item]
+            )
+            used_in += response.usage.input_tokens
+            used_out += response.usage.output_tokens
+            if response.stop_reason == "refusal":
+                raise LLMRefusedError("The AI declined the search.")
+            text = "".join(getattr(b, "text", "") for b in response.content if b.type == "text")
+            try:
+                output = schema.model_validate(json_object(text))
+            except (ValueError, ValidationError) as exc:
+                error = str(exc)[:500]
+                messages = [
+                    *messages,
+                    {"role": "assistant", "content": response.content},
+                    {
+                        "role": "user",
+                        "content": f"That was not valid JSON for the schema ({error}). "
+                        "Reply with the JSON object only.",
+                    },
+                ]
+                continue
+            return LLMResult(
+                output=output, model=response.model, input_tokens=used_in, output_tokens=used_out
+            )
+        raise LLMRefusedError(f"The AI returned no usable result after retries ({error}).")
+
     def _call[T: BaseModel](
         self, system: str, content: list[dict[str, Any]], schema: type[T]
     ) -> LLMResult[T]:
-        response = self._client.beta.messages.parse(
-            model=self._settings.llm_model,
-            max_tokens=self._settings.llm_max_output_tokens,
-            system=system,
-            messages=[{"role": "user", "content": content}],  # type: ignore[typeddict-item]
-            output_format=schema,
-            output_config=cast("BetaOutputConfigParam", {"effort": self._settings.llm_effort}),
-            betas=[FALLBACK_BETA],
-            fallbacks="default",
+        """The reply is plain JSON checked against `schema` here (not the provider's strict
+        structured output, whose grammar is too large for the tender schema); invalid JSON
+        is asked for again, like `search_web`."""
+        system = (
+            f"{system}\n\nReply with one JSON object only, valid for this JSON Schema, "
+            f"with no text around it:\n{json.dumps(schema.model_json_schema())}"
         )
-        if response.stop_reason == "refusal":
-            raise LLMRefusedError("The AI declined to read this document.")
-        parsed = response.parsed_output
-        if parsed is None:
-            raise LLMRefusedError(f"The AI returned no usable result ({response.stop_reason}).")
-        return LLMResult(
-            output=parsed,
-            model=response.model,
-            input_tokens=response.usage.input_tokens,
-            output_tokens=response.usage.output_tokens,
-        )
+        messages: list[dict[str, Any]] = [{"role": "user", "content": content}]
+        used_in = used_out = 0
+        error = ""
+        for _ in range(1 + JSON_RETRIES):
+            response = self._client.beta.messages.create(
+                model=self._settings.llm_model,
+                max_tokens=self._settings.llm_max_output_tokens,
+                system=system,
+                messages=messages,  # type: ignore[arg-type]
+                output_config=cast("BetaOutputConfigParam", {"effort": self._settings.llm_effort}),
+                betas=[FALLBACK_BETA],
+                fallbacks="default",
+            )
+            used_in += response.usage.input_tokens
+            used_out += response.usage.output_tokens
+            if response.stop_reason == "refusal":
+                raise LLMRefusedError("The AI declined to read this document.")
+            text = "".join(getattr(b, "text", "") for b in response.content if b.type == "text")
+            try:
+                output = schema.model_validate(json_object(text))
+            except (ValueError, ValidationError) as exc:
+                error = str(exc)[:500]
+                messages = [
+                    *messages,
+                    {"role": "assistant", "content": text or "{}"},
+                    {
+                        "role": "user",
+                        "content": f"That was not valid JSON for the schema ({error}). "
+                        "Reply with the JSON object only.",
+                    },
+                ]
+                continue
+            return LLMResult(
+                output=output, model=response.model, input_tokens=used_in, output_tokens=used_out
+            )
+        raise LLMRefusedError(f"The AI returned no usable result after retries ({error}).")
 
 
 class FakeClient:
@@ -119,6 +201,11 @@ class FakeClient:
         self, *, system: str, pdf: bytes, instruction: str, schema: type[T]
     ) -> LLMResult[T]:
         user = f"[PDF {len(pdf)} bytes] {instruction}"
+        return self.extract(system=system, user=user, schema=schema)
+
+    def search_web[T: BaseModel](
+        self, *, system: str, user: str, schema: type[T], max_searches: int
+    ) -> LLMResult[T]:
         return self.extract(system=system, user=user, schema=schema)
 
 

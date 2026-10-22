@@ -37,7 +37,7 @@ const FEATURES: Feature[] = [
     points: [
       "Every cost line shown with AI tools and without them",
       "Saving by task: most on documents and forms, least on design decisions, connecting systems and checking",
-      "Uses your company's own AI level, set once in Settings",
+      "Saving shown per cost line, with the review time added back",
     ],
     art: <TeamMockup />,
   },

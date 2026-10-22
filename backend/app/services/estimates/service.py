@@ -20,9 +20,10 @@ from app.services.engine.inputs import (
     SourceRef,
 )
 from app.services.engine.outputs import EstimateResult
+from app.services.engine.reference import BaselineEra
 from app.services.engine.scenarios import Scenario, ScenarioResult, run_scenarios, with_overrides
 from app.services.estimates.reference_store import (
-    get_catalog,
+    catalog_for,
     get_parameter_set,
     get_rate_card,
     get_taxonomy,
@@ -65,7 +66,7 @@ def build_input(
 
     reqs = [r for r in project.requirements if r.status in PRICED_STATUSES]
     priced_ids = {r.id for r in reqs}
-    catalog = get_catalog(db, catalog_version)
+    catalog = catalog_for(db, project.org_id, catalog_version)
     return EstimateInput(
         project=ProjectInfo(
             name=project.name, buyer_type=project.buyer_type, domain=project.domain
@@ -137,6 +138,7 @@ def persist(
     ) + 1
     summary = result.model_dump(mode="json", exclude={"lines"})
     summary["traditional"] = traditional_price(inp, result)
+    summary["era_sensitivity"] = era_sensitivity(inp, result)
     totals = result.totals
     estimate = Estimate(
         org_id=project.org_id,
@@ -238,6 +240,39 @@ def traditional_price(inp: EstimateInput, result: EstimateResult) -> dict[str, A
     }
 
 
+def era_sensitivity(inp: EstimateInput, result: EstimateResult) -> dict[str, Any] | None:
+    """The same scope with the unknown-era components priced as if their effort data were
+    pre-AI (the team's AI savings and the review of AI-written code applied): a second,
+    labelled run beside the estimate, never the estimate. Same seed, same reference data.
+
+      range = min(P10_estimate, P10_pre_ai) .. P90_estimate   (the likely price stays P50_estimate)
+
+    None when nothing is unknown-era or there are no AI savings to apply (no AI tools)."""
+    answers = {a.key: a.value for a in inp.answers}
+    unknown = [
+        c
+        for c in inp.components
+        if inp.catalog.get(c.catalog_key).source_era is BaselineEra.UNKNOWN
+    ]
+    if not unknown or result.totals is None or inp.era_scenario != "estimate":
+        return None
+    if answers.get("team_ai_maturity") == NO_AI:
+        return None
+    alt = calculate(inp.model_copy(update={"era_scenario": "pre_ai_sensitivity"}))
+    if alt.totals is None:
+        return None
+    est, pre_ai = result.totals, alt.totals
+    return {
+        "p10_paise": pre_ai.p10_paise,
+        "p50_paise": pre_ai.p50_paise,
+        "p90_paise": pre_ai.p90_paise,
+        "range_low_paise": min(est.p10_paise, pre_ai.p10_paise),
+        "range_high_paise": est.p90_paise,
+        "unknown_components": len(unknown),
+        "components": len(inp.components),
+    }
+
+
 def create_estimate(db: Session, project: Project, user: User, inp: EstimateInput) -> Estimate:
     return persist(db, project, inp, priced(inp), user)
 
@@ -250,7 +285,7 @@ def reprice(db: Session, project: Project, estimate: Estimate, user: User, as_of
     """Same confirmed scope, answers and seed; current rate card, parameters and catalog.
     Creates a new version — the old estimate never changes (rule 4)."""
     old = snapshot(estimate)
-    catalog = get_catalog(db)
+    catalog = catalog_for(db, project.org_id)
     missing = [
         c.catalog_key
         for c in old.components

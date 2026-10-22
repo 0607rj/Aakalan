@@ -1,0 +1,113 @@
+# Expected results for enterprise_erp.md (see clinic_management.expected.yaml for the fields).
+document: enterprise_erp.md
+project: Enterprise ERP
+features: [approval_workflow, inventory, billing, documents, dashboards, staff_login, connect_existing]
+not_features: [online_store, mobile_app]
+choices: {availability: critical, support_hours: always, hosting: indian_cloud}
+not_priced: [multi_tenancy, source_code]
+not_listed: []
+min_unclear_points: 2   # "to be decided", "as per requirement"
+corrigendum: enterprise_erp_corrigendum.md
+corrigendum_removes: [documents_esign]
+requirements:
+  - id: ERP-1.2
+    text: Group companies shall share one installation as a multi-tenant system.
+    classification: explicit
+    kind: not_priced
+    key: multi_tenancy
+    offered: false
+    affects_estimate_when_confirmed: false
+    pricing: not_priced
+    explanation: "No catalog block or effort source: listed, never guessed."
+  - id: ERP-3.5
+    text: Purchase orders above the approval limit shall carry a digital signature.
+    classification: explicit
+    kind: scope
+    key: documents_esign
+    offered: true
+    affects_estimate_when_confirmed: true
+    pricing: adds_work
+    partly_priced: true
+    explanation: Its own general integration block (a signing service).
+  - id: ERP-3.6
+    text: The system shall keep an audit trail of every approval and change.
+    classification: explicit
+    kind: scope
+    key: workflow_audit
+    offered: true
+    affects_estimate_when_confirmed: true
+    pricing: already_included
+    explanation: The audit log is a standard block of a project this size.
+  - id: ERP-3.6b
+    text: The system shall keep an audit trail (sign-in group).
+    classification: explicit
+    kind: scope
+    key: audit_log
+    offered: true
+    affects_estimate_when_confirmed: true
+    pricing: already_included
+    explanation: Same block as above; never charged twice.
+  - id: ERP-3.6c
+    text: The audit trail also covers the document repository (documents group).
+    classification: explicit
+    kind: scope
+    key: documents_audit
+    offered: true
+    affects_estimate_when_confirmed: true
+    pricing: already_included
+    explanation: Same block again.
+  - id: ERP-3.7
+    text: Management shall see MIS reports and pendency reports.
+    classification: explicit
+    kind: scope
+    key: workflow_reports
+    offered: true
+    affects_estimate_when_confirmed: true
+    pricing: already_included
+    explanation: The dashboards feature already brings the reports block.
+  - id: ERP-3.8
+    text: Vendors shall receive approved purchase orders through webhooks.
+    classification: explicit
+    kind: scope
+    key: public_api
+    offered: true
+    affects_estimate_when_confirmed: true
+    pricing: adds_work
+    partly_priced: true
+    explanation: Its own general integration block, separate from the signing service.
+  - id: ERP-3.9
+    text: Bank statements shall be loaded every night through a scheduled import.
+    classification: explicit
+    kind: scope
+    key: data_import
+    offered: true
+    affects_estimate_when_confirmed: true
+    pricing: adds_work
+    explanation: A connection to the bank, a different system from the legacy payroll one.
+  - id: ERP-3.10
+    text: The legacy payroll system shall be connected.
+    classification: explicit
+    kind: feature
+    key: connect_existing
+    offered: true
+    affects_estimate_when_confirmed: true
+    pricing: feature
+    explanation: The connect-existing-software feature (asked as a question).
+  - id: ERP-4.1
+    text: Employees shall sign in through single sign-on with Active Directory.
+    classification: explicit
+    kind: scope
+    key: enterprise_sso
+    offered: true
+    affects_estimate_when_confirmed: true
+    pricing: already_included
+    explanation: The staff-login feature already brings the single sign-on block at standard.
+  - id: ERP-7.1
+    text: The source code and intellectual property shall be handed over.
+    classification: explicit
+    kind: not_priced
+    key: source_code
+    offered: false
+    affects_estimate_when_confirmed: false
+    pricing: not_priced
+    explanation: Listed as not priced.

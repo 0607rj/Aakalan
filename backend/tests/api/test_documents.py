@@ -225,6 +225,108 @@ def test_estimate_from_document_traces_to_pages(
     )
 
 
+def test_document_and_manual_flows_price_alike(
+    client: TestClient, admin_headers: H, no_override: None
+) -> None:
+    """The same confirmed form priced from an uploaded document and typed in by hand: same
+    components, same reference versions, the same price on every line. Only the citations
+    differ (the document flow traces each requirement to its page)."""
+    doc = upload(client, admin_headers, "tender.pdf", make_pdf(TENDER_PAGES)).json()
+    ex = doc["extraction"]
+    form = {
+        "features": [f["key"] for f in ex["features"]],
+        "choices": {k: v["value"] for k, v in ex["choices"].items()},
+        "overrides": {k: v["value"] for k, v in ex["numbers"].items()},
+    }
+    runs = []
+    for extra in ({"document_id": doc["id"]}, {}):
+        s = client.post(
+            "/quick-estimates", json={"name": "Portal", **form, **extra}, headers=admin_headers
+        )
+        assert s.status_code == 201, s.text
+        detail = client.get(f"/estimates/{s.json()['estimate_id']}", headers=admin_headers).json()
+        runs.append((s.json(), detail))
+    (from_doc, doc_detail), (manual, manual_detail) = runs
+    assert from_doc["project_id"] == doc["project_id"] != manual["project_id"]
+    for key in ("catalog_version", "rate_card_version", "parameter_set_version"):
+        assert doc_detail[key] == manual_detail[key]
+    # component line keys carry each project's own component ids: compare what each line is
+    lines = [
+        sorted((ln["bucket"], ln["label"], ln["year"], ln["likely_paise"]) for ln in d["lines"])
+        for _, d in runs
+    ]
+    assert lines[0] == lines[1]
+    assert from_doc["planned_paise"] == manual["planned_paise"]
+    assert from_doc["build_only_paise"] == manual["build_only_paise"]
+    pages = {
+        r.get("page")
+        for ln in doc_detail["lines"]
+        if ln["bucket"] == "build.integrations"
+        for r in client.get(
+            f"/estimates/{from_doc['estimate_id']}/lines/{ln['id']}/trace", headers=admin_headers
+        ).json()["trace"]["requirements"]
+    }
+    assert 2 in pages  # cited from the document's page 2
+
+
+SCOPE_PAGES = [
+    *TENDER_PAGES,
+    [
+        "6.1 All officials shall sign in through two-factor authentication.",
+        "6.2 The system shall keep an audit trail of every approval decision.",
+    ],
+]
+
+
+def test_document_scope_is_suggested_and_priced_like_the_manual_form(
+    client: TestClient, admin_headers: H, no_override: None
+) -> None:
+    """The document's own words suggest scope items (with their page); kept ticked, they are
+    priced exactly as the same items chosen by hand."""
+    doc = upload(client, admin_headers, "tender.pdf", make_pdf(SCOPE_PAGES)).json()
+    ex = doc["extraction"]
+    found = {s["key"]: s for s in ex["scope"]}
+    assert {"two_step_sign_in", "workflow_audit"} <= set(found)
+    assert found["two_step_sign_in"]["evidence"][0]["page"] == 3
+    form = {
+        "features": [f["key"] for f in ex["features"]],
+        "choices": {k: v["value"] for k, v in ex["choices"].items()},
+        "overrides": {k: v["value"] for k, v in ex["numbers"].items()},
+        "scope": sorted(found),
+    }
+    runs = []
+    for extra in ({"document_id": doc["id"]}, {}):
+        s = client.post(
+            "/quick-estimates", json={"name": "Portal", **form, **extra}, headers=admin_headers
+        )
+        assert s.status_code == 201, s.text
+        detail = client.get(f"/estimates/{s.json()['estimate_id']}", headers=admin_headers).json()
+        runs.append(
+            sorted(
+                (ln["bucket"], ln["label"], ln["year"], ln["likely_paise"])
+                for ln in detail["lines"]
+            )
+        )
+    assert runs[0] == runs[1]
+    # found in the document but not kept: priced exactly like the form without them
+    priced = []
+    for extra in ({"document_id": doc["id"]}, {}):
+        s = client.post(
+            "/quick-estimates",
+            json={"name": "Portal", **form, "scope": [], **extra},
+            headers=admin_headers,
+        ).json()
+        assert s["scope"] == [] and s["scope_items"] == []
+        detail = client.get(f"/estimates/{s['estimate_id']}", headers=admin_headers).json()
+        priced.append(
+            sorted(
+                (ln["bucket"], ln["label"], ln["year"], ln["likely_paise"])
+                for ln in detail["lines"]
+            )
+        )
+    assert priced[0] == priced[1] != runs[0]
+
+
 def test_prebid_queries(client: TestClient, admin_headers: H, no_override: None) -> None:
     doc = upload(client, admin_headers, "tender.pdf", make_pdf(TENDER_PAGES)).json()
     r = client.get(f"/documents/{doc['id']}/prebid-queries", headers=admin_headers)

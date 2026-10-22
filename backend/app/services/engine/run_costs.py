@@ -160,17 +160,26 @@ def maintenance_lines(
             lines.append(labour(t, cr, t.param("maintenance", "change_request_role"), year))
 
         for i, res in enumerate(ctx.q.onsite_resources):
+            if res.days is not None and year > 1:
+                continue  # limited onsite days are priced once, in the first support year
             t = _run(
                 ctx,
                 f"onsite{i}",
                 "run.onsite_resources",
                 year,
                 f"Onsite {res.role.removeprefix('role.')}",
-                "maintenance.onsite.v1",
+                "maintenance.onsite.v1" if res.days is None else "maintenance.onsite_days.v1",
             )
             t.driver("onsite_resources")
-            t.param("calendar", "pd_per_year")
-            pd = t.step("onsite person-days", f"{res.count} × {pd_year}", res.count * pd_year)
+            if res.days is None:
+                t.param("calendar", "pd_per_year")
+                pd = t.step(
+                    "onsite person-days", f"{res.count} × {pd_year}", res.count * pd_year
+                )
+            else:
+                pd = t.step(
+                    "onsite person-days", f"{res.count} × {res.days}", res.count * res.days
+                )
             lines.append(labour(t, pd, res.role, year, scaled=False))
 
         t = _run(

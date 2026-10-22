@@ -1,0 +1,81 @@
+# Expected results for job_portal.md (see clinic_management.expected.yaml for the fields).
+document: job_portal.md
+project: Job Portal
+features: [online_forms, documents, search, approval_workflow, notifications, dashboards]
+not_features: [connect_existing, staff_login]
+choices: {availability: normal, hosting: aws}
+not_priced: []
+not_listed: []
+requirements:
+  - id: JOB-2.1
+    text: Every user has one role (candidate, recruiter or administrator).
+    classification: explicit
+    kind: standard
+    key: user_management_rbac
+    offered: false
+    affects_estimate_when_confirmed: true
+    pricing: standard
+    explanation: Standard account functionality, inside the user-accounts block.
+  - id: JOB-2.2
+    text: Advanced permissions (recruiter teams with custom permission sets) are not required.
+    classification: excluded
+    kind: unmapped
+    key: null
+    offered: false
+    affects_estimate_when_confirmed: false
+    pricing: unmapped
+    explanation: Ruled out; there is no separate item for advanced permissions.
+  - id: JOB-3.5
+    text: Recruiters shall move each application through a workflow.
+    classification: explicit
+    kind: feature
+    key: approval_workflow
+    offered: true
+    affects_estimate_when_confirmed: true
+    pricing: feature
+    explanation: The approvals feature.
+  - id: JOB-3.6
+    text: The system shall send email alerts to candidates when their application status changes.
+    classification: explicit
+    kind: scope
+    key: workflow_alerts
+    offered: true
+    affects_estimate_when_confirmed: true
+    pricing: already_included
+    explanation: The notifications feature already brings the notifications and gateway blocks.
+  - id: JOB-3.7
+    text: Recruiters shall see MIS reports of applications per job and per stage.
+    classification: explicit
+    kind: scope
+    key: workflow_reports
+    offered: true
+    affects_estimate_when_confirmed: true
+    pricing: already_included
+    explanation: The dashboards feature already brings the reports block.
+  - id: JOB-3.8
+    text: Candidates shall verify their phone number with an OTP.
+    classification: explicit
+    kind: scope
+    key: otp_codes
+    offered: true
+    affects_estimate_when_confirmed: true
+    pricing: already_included
+    explanation: The notifications feature already brings the SMS / email gateway.
+  - id: JOB-3.9
+    text: Candidates shall be able to sign in with Google.
+    classification: explicit
+    kind: scope
+    key: social_login
+    offered: true
+    affects_estimate_when_confirmed: true
+    pricing: adds_work
+    explanation: Adds the basic single sign-on block, not otherwise in the project.
+  - id: JOB-6.2
+    text: Integration with LinkedIn is planned for a later phase.
+    classification: future
+    kind: unmapped
+    key: null
+    offered: false
+    affects_estimate_when_confirmed: false
+    pricing: unmapped
+    explanation: A later phase; no item.

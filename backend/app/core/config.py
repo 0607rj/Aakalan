@@ -35,10 +35,12 @@ class Settings(BaseSettings):
     seed_user_password: str = "admin123"
 
     llm_provider: str = "anthropic"  # "anthropic" or "fake" (tests / offline demos)
-    llm_model: str = "claude-opus-5-5"
+    llm_model: str = "claude-sonnet-5-5"
     llm_effort: str = "medium"
     llm_max_output_tokens: int = 16000
     anthropic_api_key: str = ""
+    # Server-side web search tool for researching missing features (services/research).
+    llm_web_search_tool: str = "web_search_20250305"
 
     upload_max_mb: int = 25
     document_max_chars: int = 2_500_000  # ~600k tokens; larger documents are refused, not cut
