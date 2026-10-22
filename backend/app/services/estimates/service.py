@@ -256,6 +256,8 @@ def era_sensitivity(inp: EstimateInput, result: EstimateResult) -> dict[str, Any
     ]
     if not unknown or result.totals is None or inp.era_scenario != "estimate":
         return None
+    if inp.parameters.ai_productivity.unknown_era_is_pre_ai:
+        return None  # v18+: the estimate itself already prices unknown-era data as pre-AI
     if answers.get("team_ai_maturity") == NO_AI:
         return None
     alt = calculate(inp.model_copy(update={"era_scenario": "pre_ai_sensitivity"}))

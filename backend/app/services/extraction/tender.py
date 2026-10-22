@@ -8,6 +8,7 @@ stated quantities, which the user then confirms.
 """
 
 import re
+from collections.abc import Callable
 from decimal import Decimal
 from typing import Any, Literal
 
@@ -15,10 +16,10 @@ from pydantic import BaseModel
 
 from app.llm.client import LLMClient, LLMResult, load_prompt
 from app.services.documents.parsing import ParsedDocument, normalise
-from app.services.quick.config import QuickConfig
+from app.services.quick.config import LevelKey, QuickConfig
 
-PROMPT_FILE = "extract_tender_v6.md"
-PROMPT_VERSION = "extract_tender_v6"
+PROMPT_FILE = "extract_tender_v8.md"
+PROMPT_VERSION = "extract_tender_v8"
 SIZES = frozenset({"S", "M", "L"})
 BASIC_READER_VERSION = "basic_reader_v1"
 PAGE_TOLERANCE = 1  # a quote may straddle into the neighbouring page
@@ -53,6 +54,11 @@ class Evidence(BaseModel):
 class FeatureFinding(BaseModel):
     key: str
     evidence: list[Evidence]
+    # the user stories the document asks for under this feature, one short line each; their
+    # count sets the feature's level (quick config sizing.stories), never the reader
+    stories: list[str] = []
+    # an app only (e.g. mobile_app): the listed features the document says it must offer
+    covers: list[str] = []
     mentions: int = 1  # how many places mention it
     suggested: bool = True  # tick it on the review screen (False: only offered)
 
@@ -68,6 +74,7 @@ class OtherFeatureFinding(BaseModel):
     # a listed feature key or an always-included key this is only a part of ("" = new work);
     # such parts are already priced there, so they are not priced again
     part_of: str = ""
+    stories: list[str] = []  # as for features; their count sets the size
 
 
 class ChoiceFinding(BaseModel):
@@ -168,6 +175,9 @@ class FoundFeature(BaseModel):
     evidence: list[VerifiedEvidence]
     mentions: int = 1
     suggested: bool = True  # False: mentioned only in passing in a long document
+    stories: list[str] = []  # user stories the document asks for under it
+    story_level: LevelKey | None = None  # the level their count gives (None: no stories)
+    covers: list[str] = []  # an app: the features it offers, whose stories size it
 
 
 class FoundScope(BaseModel):
@@ -184,8 +194,9 @@ class FoundOtherFeature(BaseModel):
     name: str
     description: str
     category: str  # key of custom_feature_types
-    size: str  # S / M / L
+    size: str  # S / M / L (from its user stories when it has any)
     evidence: list[VerifiedEvidence]
+    stories: list[str] = []
 
 
 class FoundValue(BaseModel):
@@ -345,7 +356,7 @@ def _number(field: str, value: float) -> Any:
     return round(value)
 
 
-GAP_PROMPT_FILE = "gap_check_v1.md"
+GAP_PROMPT_FILE = "gap_check_v3.md"
 
 
 class GapOutput(BaseModel):
@@ -416,6 +427,52 @@ def ai_read(
     return gap_check(llm, cfg, doc, first)
 
 
+def _stories(have: list[str], more: list[str]) -> list[str]:
+    """User stories without repeats (same words, any case or spacing)."""
+    seen = {" ".join(s.lower().split()) for s in have}
+    out = list(have)
+    for s in more:
+        text = " ".join(s.split())[:300]
+        norm = text.lower()
+        if text and norm not in seen:
+            seen.add(norm)
+            out.append(text)
+    return out
+
+
+def _size_by_stories(
+    cfg: QuickConfig, features: dict[str, "FoundFeature"], others: dict[str, "FoundOtherFeature"]
+) -> None:
+    """Each feature's level, and each extra's S / M / L, from its count of user stories."""
+    rule = cfg.sizing.stories
+    if rule is None:
+        return
+    size_of = {level: size for size, level in cfg.sizing.custom_size_level.items()}
+    for f in features.values():
+        if f.stories:
+            f.story_level = rule.level(len(f.stories))
+    by_key = {f.key: f for f in cfg.features}
+    for f in features.values():  # an app: its own stories plus those of what it offers
+        if not by_key[f.key].sized_by_features:
+            continue
+        offered = [
+            k
+            for k in (f.covers or list(features))  # not stated: the website's features
+            if k in features
+            and k != f.key
+            and by_key[k].has_screens
+            and not by_key[k].hidden
+            and not by_key[k].sized_by_features
+        ]
+        f.covers = offered
+        total = len(f.stories) + sum(max(1, len(features[k].stories)) for k in offered)
+        if total:
+            f.story_level = rule.level(total)
+    for o in others.values():
+        if o.stories:
+            o.size = str(size_of[rule.level(len(o.stories))].value)
+
+
 def verify_findings(
     cfg: QuickConfig,
     doc: ParsedDocument,
@@ -439,6 +496,8 @@ def verify_findings(
             features[f.key].evidence.extend(ev)
             features[f.key].mentions += f.mentions
             features[f.key].suggested = features[f.key].suggested or f.suggested
+            features[f.key].stories = _stories(features[f.key].stories, f.stories)
+            features[f.key].covers = list(dict.fromkeys([*features[f.key].covers, *f.covers]))
         else:
             features[f.key] = FoundFeature(
                 key=f.key,
@@ -446,6 +505,8 @@ def verify_findings(
                 evidence=ev,
                 mentions=f.mentions,
                 suggested=f.suggested,
+                stories=_stories([], f.stories),
+                covers=list(dict.fromkeys(f.covers)),
             )
 
     others: dict[str, FoundOtherFeature] = {}
@@ -455,11 +516,15 @@ def verify_findings(
         if part in included_keys(cfg):
             continue  # already in every project's price (e.g. login and roles, captcha)
         if part in labels and ev:  # a piece of a listed feature: priced by that feature
+            stories = o.stories or [o.name]  # a piece is at least one story of that feature
             if part in features:
                 features[part].evidence.extend(ev)
                 features[part].mentions += 1
+                features[part].stories = _stories(features[part].stories, stories)
             else:
-                features[part] = FoundFeature(key=part, label=labels[part], evidence=ev)
+                features[part] = FoundFeature(
+                    key=part, label=labels[part], evidence=ev, stories=_stories([], stories)
+                )
             continue
         name = o.name.strip()[:200]
         size = o.size.strip().upper()[:1]
@@ -469,6 +534,7 @@ def verify_findings(
         key = name.lower()
         if key in others:
             others[key].evidence.extend(ev)
+            others[key].stories = _stories(others[key].stories, o.stories)
         elif len(others) < cfg.max_custom_features:
             others[key] = FoundOtherFeature(
                 name=name,
@@ -476,7 +542,9 @@ def verify_findings(
                 category=o.category,
                 size=size,
                 evidence=ev,
+                stories=_stories([], o.stories),
             )
+    _size_by_stories(cfg, features, others)
 
     choices: dict[str, FoundValue] = {}
     for c in raw.choices:
@@ -545,6 +613,7 @@ def verify_findings(
         )
     for key in scope:  # asked for in one place, ruled out for a part elsewhere: still offered
         set_aside.pop(key, None)
+    _drop_repeats(cfg, features, others, scope)
 
     return TenderExtraction(
         reader=reader,
@@ -562,6 +631,38 @@ def verify_findings(
         scope=list(scope.values()),
         scope_set_aside=list(set_aside.values()),
     )
+
+
+def _quote_key(quote: str) -> str:
+    return re.sub(r"\W+", " ", quote.lower()).strip()
+
+
+def _drop_repeats(
+    cfg: QuickConfig,
+    features: dict[str, FoundFeature],
+    others: dict[str, FoundOtherFeature],
+    scope: dict[str, FoundScope],
+) -> None:
+    """One sentence of the document is priced once. A scope item whose every quote is the
+    evidence of a listed feature it does not belong to repeats that feature; an extra whose
+    every quote is the evidence of a feature or a scope item repeats it. Both are dropped. A
+    scope item of the feature it quotes stays: it adds to that feature."""
+    owner = {i.key: g.feature for g in cfg.scope for i in g.items}
+    by_feature: dict[str, set[str]] = {}
+    for f in features.values():
+        for e in f.evidence:
+            by_feature.setdefault(_quote_key(e.quote), set()).add(f.key)
+
+    def repeats(evidence: list[VerifiedEvidence], claimed: Callable[[str], bool]) -> bool:
+        return bool(evidence) and all(claimed(_quote_key(e.quote)) for e in evidence)
+
+    for key, item in list(scope.items()):
+        if repeats(item.evidence, lambda q: bool(by_feature.get(q, set()) - {owner.get(key)})):
+            del scope[key]
+    scoped = {_quote_key(e.quote) for item in scope.values() for e in item.evidence}
+    for name, extra in list(others.items()):
+        if repeats(extra.evidence, lambda q: q in by_feature or q in scoped):
+            del others[name]
 
 
 def _payment_terms(

@@ -6,6 +6,8 @@ confirmed by the same user. All numbers still come from the deterministic engine
 only regroups and adds integer paise that the engine produced.
 """
 
+import hashlib
+import json
 import re
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime
@@ -74,6 +76,7 @@ ONSITE_PERIOD = "onsite_period"
 FEW_BENCHMARKS = 5
 ONE = Decimal(1)
 
+TAX_BUCKET = "commercial.gst"
 # Display grouping of taxonomy stages into plain-language parts of the total.
 # Parts shown on their own, split out of their stage group: third-party and AI usage follow
 # usage, not effort, so they are not mixed with development or support. "{years}" is filled in.
@@ -341,6 +344,7 @@ class QuickSummary(BaseModel):
     currency: str  # all *_paise amounts are minor units of this currency (paise / cents)
     planned_paise: int
     risk_allowance_paise: int | None
+    likely_without_tax_paise: int | None = None  # the likely price without GST
     build_only_paise: int  # building only: before support, margin, buffer and tax
     build_only_low_paise: int = 0
     build_only_high_paise: int = 0
@@ -861,8 +865,16 @@ def create_quick_estimate(db: Session, user: User, cfg: QuickConfig, req: QuickR
         )
     db.flush()
     db.refresh(project)
-    inp = estimates.build_input(db, project, as_of=now.date())
+    inp = estimates.build_input(db, project, as_of=now.date(), seed=request_seed(req, doc))
     return estimates.create_estimate(db, project, user, inp)
+
+
+def request_seed(req: QuickRequest, doc: Document | None) -> int:
+    """The simulation seed follows what was asked (answers, features, the file's contents), not
+    the upload or the estimate's name: the same file and answers give the same range."""
+    asked = req.model_dump(mode="json", exclude={"document_id", "name"})
+    key = json.dumps([asked, doc.sha256 if doc else None], sort_keys=True)
+    return int(hashlib.sha256(key.encode("utf-8")).hexdigest(), 16) % (2**estimates.SEED_BITS)
 
 
 # --- price impact of the open questions ----------------------------------------------------
@@ -1024,6 +1036,7 @@ def summarise(
         currency=estimate.inputs_snapshot["rate_card"].get("currency", "INR"),
         planned_paise=planned,
         risk_allowance_paise=(estimate.p50_paise - planned) if estimate.p50_paise else None,
+        likely_without_tax_paise=_without_tax(result, estimate.p50_paise, planned),
         build_only_paise=sum(stage_likely.get(s, 0) for s in BUILD_ONLY_STAGES),
         build_only_low_paise=sum(stage_low.get(s, 0) for s in BUILD_ONLY_STAGES),
         build_only_high_paise=sum(stage_high.get(s, 0) for s in BUILD_ONLY_STAGES),
@@ -1076,6 +1089,15 @@ def summarise(
     return with_reality(cfg, summary, emd if isinstance(emd, int) else None)
 
 
+def _without_tax(result: dict[str, Any], likely: int | None, planned: int) -> int | None:
+    """The likely price without GST: GST is a fixed share of every line, so the likely price
+    loses the same share as the planned cost."""
+    if not likely or not planned:
+        return None
+    tax = sum(b["likely_paise"] for b in result["by_bucket"] if b["key"] == TAX_BUCKET)
+    return round(Decimal(likely) * (planned - tax) / planned)
+
+
 def with_reality(
     cfg: QuickConfig, summary: QuickSummary, emd_paise: int | None = None
 ) -> QuickSummary:
@@ -1098,7 +1120,7 @@ def with_reality(
         summary.team_people,
         [r.name for r in summary.researched],
         len(summary.not_sure),
-        price_paise=summary.likely_paise,
+        price_paise=summary.likely_without_tax_paise or summary.likely_paise,
         emd_paise=emd_paise,
     )
     return summary.model_copy(update={"reality": reality})

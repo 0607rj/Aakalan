@@ -5136,6 +5136,38 @@
             "type": "boolean",
             "title": "Suggested",
             "default": true
+          },
+          "stories": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Stories",
+            "default": []
+          },
+          "story_level": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "basic",
+                  "standard",
+                  "advanced"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Story Level"
+          },
+          "covers": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Covers",
+            "default": []
           }
         },
         "type": "object",
@@ -5201,6 +5233,14 @@
             },
             "type": "array",
             "title": "Evidence"
+          },
+          "stories": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Stories",
+            "default": []
           }
         },
         "type": "object",
@@ -5822,6 +5862,17 @@
             "type": "boolean",
             "title": "Unsure",
             "default": false
+          },
+          "max_users": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Users"
           },
           "add_features": {
             "additionalProperties": {
@@ -6612,6 +6663,22 @@
             "type": "object",
             "title": "Default By",
             "default": {}
+          },
+          "on_upload": {
+            "type": "string",
+            "title": "On Upload",
+            "default": "ask"
+          },
+          "answered_by_number": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Answered By Number"
           }
         },
         "type": "object",
@@ -7014,6 +7081,17 @@
               }
             ],
             "title": "Risk Allowance Paise"
+          },
+          "likely_without_tax_paise": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Likely Without Tax Paise"
           },
           "build_only_paise": {
             "type": "integer",

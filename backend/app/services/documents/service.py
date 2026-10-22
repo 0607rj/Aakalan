@@ -4,13 +4,14 @@ cited findings for the quick-estimate form. Each upload starts a draft project."
 import hashlib
 import logging
 import re
+from typing import Any
 from pathlib import Path
 
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
-from app.core.tenancy import get_owned
+from app.core.tenancy import get_owned, scoped
 from app.llm.client import LLMClient, LLMNotConfiguredError, LLMRefusedError, get_llm_client
 from app.models import Document, Project, User
 from app.services.documents.parsing import SCANNED_NEEDS_AI, DocumentError, parse_document
@@ -110,6 +111,19 @@ def upload_document(
     doc.storage_path = str(path)
 
     cfg = quick_config()
+    earlier = _earlier_reading(db, user.org_id, doc.sha256, settings.llm_model)
+    if llm is not None and earlier is not None:
+        # The same file read before by the same reader and model: reuse that reading, so one
+        # file always gives the same findings (and the same price), and nothing is paid twice.
+        doc.extraction = _renamed(earlier.extraction, earlier.filename, safe)
+        doc.llm_model = earlier.llm_model
+        doc.llm_input_tokens = doc.llm_output_tokens = 0
+        doc.parse_status = "extracted"
+        if first_document:
+            project.name = doc.extraction.get("project_name") or project.name
+        db.commit()
+        db.refresh(doc)
+        return doc
     try:
         if llm is None:
             raise LLMNotConfiguredError("no AI key")
@@ -140,3 +154,34 @@ def upload_document(
     db.commit()
     db.refresh(doc)
     return doc
+
+
+def _earlier_reading(db: Session, org_id: str, sha256: str, model: str) -> Document | None:
+    """The newest AI reading of the same file in this organisation, by the current prompt
+    version and model; None if there is none (then the file is read fresh)."""
+    rows = db.scalars(
+        scoped(Document, org_id)
+        .where(
+            Document.sha256 == sha256,
+            Document.parse_status == "extracted",
+            Document.llm_model == model,
+        )
+        .order_by(Document.created_at.desc())
+    )
+    for row in rows:
+        ex = row.extraction or {}
+        if ex.get("reader") == "ai" and ex.get("prompt_version") == PROMPT_VERSION:
+            return row
+    return None
+
+
+def _renamed(value: Any, old: str, new: str) -> Any:
+    """A stored reading with its quotes pointing at the new upload's file name."""
+    if isinstance(value, dict):
+        return {
+            k: (new if k == "document" and v == old else _renamed(v, old, new))
+            for k, v in value.items()
+        }
+    if isinstance(value, list):
+        return [_renamed(v, old, new) for v in value]
+    return value

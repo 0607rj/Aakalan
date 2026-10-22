@@ -138,8 +138,14 @@ def build_pdf(data: ReportData) -> bytes:
             Spacer(1, 2 * mm),
             _p(f"Estimated total: {span(s.low_paise, s.high_paise)}", BIG),
             _p(
-                f"Most likely {about(s.likely_paise)}. This is an estimate before the work "
-                "starts, not a final bill. "
+                f"Likely price {about(s.likely_paise)} with GST"
+                + (
+                    f" ({about(s.likely_without_tax_paise)} without GST)"
+                    if s.likely_without_tax_paise
+                    else ""
+                )
+                + ": the planned cost plus an allowance for risks. This is an estimate before "
+                "the work starts, not a final bill. "
                 f"Time to build: about {s.build_months} months. Support included: "
                 + (
                     f"{s.support_years} years. "
@@ -152,6 +158,22 @@ def build_pdf(data: ReportData) -> bytes:
                 BODY,
             ),
         ]
+        if s.traditional_paise and s.likely_paise and s.traditional_paise > s.likely_paise:
+            months = (
+                f", about {s.traditional_build_months} months to build"
+                if s.traditional_build_months
+                else ""
+            )
+            story.append(
+                _p(
+                    f"Without AI tools: {about(s.traditional_paise)}{months}. AI tools save "
+                    f"about {about(s.traditional_paise - s.likely_paise)}"
+                    + (f" ({s.ai_saving_percent}%)" if s.ai_saving_percent else "")
+                    + ", already in the price above after the cost of the AI tools and of "
+                    "checking what the AI wrote.",
+                    BODY,
+                )
+            )
         if s.biggest_uncertainty:
             story.append(_p(s.biggest_uncertainty, BODY))
         story += [
@@ -162,7 +184,15 @@ def build_pdf(data: ReportData) -> bytes:
                     [pt.label, span(pt.low_paise, pt.high_paise), f"{pt.share_percent}%"]
                     for pt in s.parts
                 ]
-                + [["Planned cost (most likely)", about(s.planned_paise), ""]],
+                + [["Planned cost (before the risk allowance)", about(s.planned_paise), ""]]
+                + (
+                    [
+                        ["Allowance for risks", about(s.risk_allowance_paise), ""],
+                        ["Likely price (with GST)", about(s.likely_paise), ""],
+                    ]
+                    if s.risk_allowance_paise and s.risk_allowance_paise > 0
+                    else []
+                ),
                 [width * 0.6, width * 0.25, width * 0.15],
                 {1, 2},
             ),
@@ -249,7 +279,7 @@ def build_pdf(data: ReportData) -> bytes:
             story += [
                 _p(title, H2),
                 _table(
-                    ["Item", "Low", "Likely", "High"],
+                    ["Item", "Low", "Planned", "High"],
                     [
                         [
                             g["name"],
@@ -268,7 +298,7 @@ def build_pdf(data: ReportData) -> bytes:
             PageBreak(),
             _p("Cost lines", H2),
             _table(
-                ["#", "Item", "Year", "Low", "Likely", "High"],
+                ["#", "Item", "Year", "Low", "Planned", "High"],
                 [
                     [ln.number, f"{ln.bucket_name}: {ln.label}" + (" (restricted)" if ln.redacted else ""),
                      ln.year, money(ln.low_paise), money(ln.likely_paise), money(ln.high_paise)]

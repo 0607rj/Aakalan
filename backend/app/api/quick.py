@@ -33,6 +33,7 @@ class OptionOut(BaseModel):
     label: str
     hint: str
     unsure: bool = False  # "Not sure": the usual answer, with a wider range
+    max_users: int | None = None  # scale options: the most users it covers (None = no limit)
     add_features: dict[str, str | None] = {}  # features this answer adds (and their level)
     feature_level: str | None = None  # default level of every feature (MVP / full product)
 
@@ -47,6 +48,8 @@ class QuestionOut(BaseModel):
     only_with_custom_types: list[str] = []  # ... or a custom feature of one of these types
     hide_when: dict[str, list[str | int]] = {}  # hidden when another answer is one of these
     default_by: dict[str, dict[str, str | int]] = {}  # default that follows another answer
+    on_upload: str = "ask"  # document = on file upload, the document decides; never asked
+    answered_by_number: str | None = None  # not asked when this number is known
 
 
 class LevelOut(BaseModel):
@@ -174,6 +177,7 @@ def options(db: DbSession, user: CurrentUser, country: str = "india") -> QuickOp
                         unsure=o.unsure,
                         add_features=dict(o.add_features),
                         feature_level=o.feature_level,
+                        max_users=o.max_users,
                     )
                     for o in q.options
                     if key != "hosting" or o.answers.get("hosting_provider") in allowed
@@ -183,6 +187,8 @@ def options(db: DbSession, user: CurrentUser, country: str = "india") -> QuickOp
                 hide_when=q.hide_when,
                 default_by=q.default_by,
                 group=q.group,
+                on_upload=q.on_upload,
+                answered_by_number=q.answered_by_number,
             )
             for key, q in cfg.questions.items()
             if q.group != "hidden"
