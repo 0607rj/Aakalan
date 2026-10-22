@@ -76,8 +76,8 @@ backend/
                           #   (every value has a `source`; `placeholder` = uncalibrated)
                           #   prices follow what is built (feature levels), never the client type
                           #   catalog v6+: each component's effort `evidence` and `source_era`;
-                          #   AI savings only on pre_ai data (never ai_assisted; unknown only
-                          #   in the labelled pre-AI sensitivity run)
+                          #   AI savings on pre_ai data (never ai_assisted); unknown counts as
+                          #   pre_ai from parameters v18 (hours calibrated on pre-AI projects)
                           #   catalog v7+: a tech-stack `section` per component (core, web,
                           #   mobile, ecommerce, ai_ml, security, ...) and a `url` per source
   migrations/             # Alembic

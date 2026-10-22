@@ -62,6 +62,10 @@ def build_timeline(ctx: PricingContext, efforts: Sequence[ComponentEffort]) -> T
             status = "compressed"
             multiplier = compression_multiplier(ctx, ratio)
             delivery = deadline
+            if ctx.p.timeline.programme_follows_deadline:
+                # v17+: the squeeze is paid once, in the build effort; the programme then
+                # runs over the same shorter period.
+                programme = deadline
         elif ratio > ONE:
             status = "extended"
             delivery = programme = deadline

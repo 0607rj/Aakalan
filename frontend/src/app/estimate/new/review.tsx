@@ -97,6 +97,36 @@ const FACTS: Fact[] = [
   { key: "pbg_percent", label: "Performance guarantee (%)", unit: "percent", min: 0, max: 100, integer: false, indiaTerm: true },
 ];
 
+const LEVEL_LABEL: Record<Level, string> = {
+  basic: "Basic",
+  standard: "Standard",
+  advanced: "Advanced",
+};
+
+/** The user stories the document asks for under a feature, and the level their count gives. */
+function Stories({
+  stories,
+  level,
+}: {
+  stories: string[];
+  level: Level | null;
+}) {
+  if (stories.length === 0) return null;
+  return (
+    <details className="text-sm">
+      <summary className="cursor-pointer text-muted-foreground">
+        {stories.length} user {stories.length === 1 ? "story" : "stories"}
+        {level ? ` · sized ${LEVEL_LABEL[level]}` : ""}
+      </summary>
+      <ul className="mt-2 list-disc space-y-1 pl-5">
+        {stories.map((s) => (
+          <li key={s}>{s}</li>
+        ))}
+      </ul>
+    </details>
+  );
+}
+
 function toDisplay(fact: Fact, value: unknown): string {
   const n = typeof value === "number" ? value : Number(value);
   if (!Number.isFinite(n)) return "";
@@ -189,14 +219,25 @@ export function ReviewForm({
   );
   const customFeatures = toCustomFeatures(customItems);
   const anyFeature = features.length > 0 || customFeatures.length > 0;
-  const [levels, setLevels] = React.useState<Record<string, Level>>({});
-  // scope items the document mentions are suggested with their quotes, never ticked for
-  // the user: only what the user ticks is priced
+  // each found feature starts at the level its user stories give; the user can still change it
+  const [levels, setLevels] = React.useState<Record<string, Level>>(() =>
+    Object.fromEntries(
+      extraction.features.flatMap((f) =>
+        f.story_level ? [[f.key, f.story_level]] : [],
+      ),
+    ),
+  );
+  // scope items the document mentions come with their quotes; only what is ticked is priced
   const foundScope = React.useMemo(
     () => new Map((extraction.scope ?? []).map((s) => [s.key, s])),
     [extraction.scope],
   );
-  const [scope, setScope] = React.useState<string[]>([]);
+  const [scope, setScope] = React.useState<string[]>(() =>
+    // what the document asks for is ticked; what it only implies waits for the user
+    (extraction.scope ?? [])
+      .filter((s) => s.status === "explicit")
+      .map((s) => s.key),
+  );
   const terms = extraction.payment_terms ?? null;
   const [useTerms, setUseTerms] = React.useState(terms !== null);
   const [customizing, setCustomizing] = React.useState(false);
@@ -221,22 +262,6 @@ export function ReviewForm({
     visibleFacts.map((f) => [f.key, factError(f, facts[f.key] ?? "")]),
   );
   const hasErrors = Object.values(errors).some(Boolean);
-  const omYearsGiven = (facts.om_years ?? "").trim() !== "";
-  const questions = relevantQuestions(
-    options.questions,
-    choices,
-    everything,
-    customFeatures.map((c) => c.category),
-  ).filter((q) => !(q.key === "support_years" && omYearsGiven));
-  const isOpen = (q: (typeof questions)[number]) =>
-    extraction.choices[q.key] === undefined;
-  const openQuestions = questions.filter(
-    (q) => q.group === "main" && isOpen(q),
-  );
-  const details = questions.filter((q) => q.group === "detail" && isOpen(q));
-  const foundQuestions = questions.filter((q) => !isOpen(q));
-  const canSubmit = name.trim().length > 0 && anyFeature && !hasErrors;
-
   const overrides: Record<string, number> = {};
   for (const fact of visibleFacts) {
     const text = (facts[fact.key] ?? "").trim();
@@ -244,6 +269,44 @@ export function ReviewForm({
       overrides[fact.key] = toApi(fact, Number(text));
     }
   }
+  // a stated number answers its question (e.g. the registered users pick the scale)
+  const byNumber = answersFromNumbers(options.questions, overrides);
+  const omYearsGiven = (facts.om_years ?? "").trim() !== "";
+  const questions = relevantQuestions(
+    options.questions,
+    choices,
+    everything,
+    customFeatures.map((c) => c.category),
+  ).filter(
+    (q) =>
+      !(q.key === "support_years" && omYearsGiven) &&
+      // the document decides these (what is built), and a stated number answers its question
+      q.on_upload !== "document" &&
+      byNumber[q.key] === undefined,
+  );
+  const isOpen = (q: (typeof questions)[number]) =>
+    extraction.choices[q.key] === undefined;
+  const openQuestions = questions.filter(
+    (q) => q.group === "main" && isOpen(q),
+  );
+  const details = questions.filter((q) => q.group === "detail" && isOpen(q));
+  const foundQuestions = questions.filter((q) => !isOpen(q));
+  // what the document does not state and is priced at the usual answer (a weak document
+  // leaves many of these; each is worth confirming with the department before bidding)
+  const assumed = relevantQuestions(
+    options.questions,
+    choices,
+    everything,
+    customFeatures.map((c) => c.category),
+  ).filter(
+    (q) =>
+      isOpen(q) &&
+      byNumber[q.key] === undefined &&
+      !(q.key === "support_years" && omYearsGiven) &&
+      String(choices[q.key] ?? q.default) === String(q.default),
+  );
+  const canSubmit = name.trim().length > 0 && anyFeature && !hasErrors;
+
   // Only levels picked by hand are sent; the rest follow the answers.
   const featureLevels = pickedLevels(options, everything, levels);
   const request: QuickRequest = {
@@ -254,7 +317,7 @@ export function ReviewForm({
     features,
     feature_levels: featureLevels,
     custom_features: customFeatures,
-    choices,
+    choices: { ...choices, ...byNumber },
     scope: chosenScope(scopeGroups, scope),
     overrides,
     payment_schedule:
@@ -402,6 +465,12 @@ export function ReviewForm({
                         <Citation
                           evidence={found.evidence}
                           approximatePages={approx}
+                        />
+                      ) : null}
+                      {found ? (
+                        <Stories
+                          stories={found.stories}
+                          level={found.story_level ?? null}
                         />
                       ) : null}
                     </FeatureCard>
@@ -737,6 +806,32 @@ export function ReviewForm({
             ]}
             onChange={steps.goTo}
           >
+            {assumed.length > 0 ? (
+              <section className="flex flex-col gap-3 rounded-2xl border px-6 py-5">
+                <div>
+                  <h2 className="text-lg font-semibold">
+                    Not in the document: we assumed
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    The document does not say these, so the usual answer is
+                    priced. Confirm them with the department before you bid.
+                  </p>
+                </div>
+                <ul className="flex flex-col gap-2 text-sm">
+                  {assumed.map((q) => (
+                    <li
+                      key={q.key}
+                      className="flex flex-wrap justify-between gap-x-4"
+                    >
+                      <span className="text-muted-foreground">{q.label}</span>
+                      <span className="font-medium">
+                        {answerLabel(q, choices[q.key] ?? q.default)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ) : null}
             {(extraction.not_priced ?? []).length > 0 ? (
               <section className="flex flex-col gap-3 rounded-2xl border border-warning/30 bg-warning-muted px-6 py-5">
                 <div>
@@ -792,4 +887,30 @@ export function ReviewForm({
       )}
     </div>
   );
+}
+
+/** Answers that follow from a stated number: e.g. 50,000 registered users pick the smallest
+ * scale option whose max_users covers them (an option with no limit covers everything). */
+function answersFromNumbers(
+  questions: {
+    key: string;
+    answered_by_number?: string | null;
+    options: { value: Choice; unsure?: boolean; max_users?: number | null }[];
+  }[],
+  numbers: Record<string, number>,
+): Record<string, Choice> {
+  const answers: Record<string, Choice> = {};
+  for (const q of questions) {
+    const n = q.answered_by_number ? numbers[q.answered_by_number] : undefined;
+    if (n === undefined) continue;
+    const fits = q.options
+      .filter((o) => !o.unsure && (o.max_users == null || o.max_users >= n))
+      .sort(
+        (a, b) =>
+          (a.max_users ?? Number.POSITIVE_INFINITY) -
+          (b.max_users ?? Number.POSITIVE_INFINITY),
+      );
+    if (fits[0]) answers[q.key] = fits[0].value;
+  }
+  return answers;
 }

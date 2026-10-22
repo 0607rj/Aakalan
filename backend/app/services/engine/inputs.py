@@ -122,6 +122,9 @@ class Questionnaire(Strict):
     # Custom software, or a ready-made product (SaaS, WordPress, Shopify, a chatbot platform)
     # set up for the client: far less build work for the same features.
     build_type: Literal["custom", "ready_product"] = "custom"
+    # A standby site in another place for disasters (recovery time / data-loss limits). High
+    # uptime alone does not ask for one (parameter sets v17+).
+    disaster_recovery: bool = False
     # How big and deep the work is, independent of the feature list: the same features cost
     # far less as a simple website than as a state-wide system. None = no size factor.
     project_size: Literal["small", "small_medium", "medium", "medium_large", "large"] | None = None

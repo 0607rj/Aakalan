@@ -157,8 +157,9 @@ def _inr(paise: Decimal) -> str:
 
 def _emd_check(rules: RealityCheck, price_paise: int | None, emd_paise: int | None) -> Check | None:
     """The tender's own EMD implies its estimated value: value = EMD ÷ share, share in
-    [emd_share_min, emd_share_max]. The price is flagged when it is more than emd_band_factor
-    below the lowest or above the highest implied value."""
+    [emd_share_min, emd_share_max]. The price (without GST: estimated values are quoted without
+    it) is flagged when it is more than emd_band_factor below the lowest or above the highest
+    implied value (factor 1: anywhere outside the range)."""
     if (
         not price_paise
         or not emd_paise
@@ -167,24 +168,24 @@ def _emd_check(rules: RealityCheck, price_paise: int | None, emd_paise: int | No
         or rules.emd_band_factor is None
     ):
         return None
-    emd = Decimal(emd_paise)
+    emd, price = Decimal(emd_paise), Decimal(price_paise)
     low, high = emd / rules.emd_share_max, emd / rules.emd_share_min
     factor = rules.emd_band_factor
-    ok = low / factor <= price_paise <= high * factor
-    above = price_paise > high * factor
+    ok = low / factor <= price <= high * factor
+    above = price > high * factor
+    times = (price / high if above else low / price).quantize(Decimal("0.1"), ROUND_HALF_UP)
     return Check(
         key="emd_band",
         ok=ok,
         title=f"The EMD of {_inr(emd)} suggests a project value of about "
         f"{_inr(low)} to {_inr(high)}",
-        detail="The price fits the size the buyer expects."
+        detail="The price without GST fits the size the buyer expects."
         if ok
-        else f"The price is more than {factor}x "
-        + ("above" if above else "below")
-        + " what the EMD suggests. "
+        else f"The price without GST ({_inr(price)}) is {times}x "
+        + ("the top of that range. " if above else "below the bottom of that range. ")
         + (
-            "Check for features counted twice, staff priced for too long, or work the buyer "
-            "expects a ready-made product to cover."
+            "Check for features counted twice, stock tender text priced as work, staff priced "
+            "for too long, or work the buyer expects a ready-made product to cover."
             if above
             else "Check whether scope is missing."
         ),

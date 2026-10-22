@@ -30,9 +30,17 @@ def nfr_multiplier(t: LineBuilder, catalog: CatalogComponent) -> Decimal:
     """M_nfr = Π over the component's applicable drivers of the driver's multiplier.
 
     languages: min(cap, 1 + per_additional_language × (languages − 1)).
+    accessibility: 1 when the project has a component that builds accessibility as its own work
+    (nfr.accessibility_components, v17+), so the same work is not priced twice.
     """
     m = ONE
-    for drv in catalog.applicable_drivers:
+    dedicated = set(t.ctx.p.nfr.accessibility_components)
+    has_dedicated = any(c.catalog_key in dedicated for c in t.ctx.inp.components)
+    drivers = list(catalog.applicable_drivers)
+    if has_dedicated and Driver.ACCESSIBILITY in drivers:
+        t.param("nfr", "accessibility_components")
+        drivers.remove(Driver.ACCESSIBILITY)
+    for drv in drivers:
         if drv is Driver.UPTIME_SLA:
             factor: Decimal = t.param("nfr", "uptime_sla", t.driver("uptime_sla"))
         elif drv is Driver.SECURITY_LEVEL:
@@ -48,7 +56,7 @@ def nfr_multiplier(t: LineBuilder, catalog: CatalogComponent) -> Decimal:
             idx = concurrency_band_index(t.ctx, t.driver("peak_concurrent_users"))
             factor = t.param("nfr", "concurrency_bands", idx, "multiplier")
         m *= factor
-    return t.step("M_nfr", " × ".join(d.value for d in catalog.applicable_drivers) or "1", m)
+    return t.step("M_nfr", " × ".join(d.value for d in drivers) or "1", m)
 
 
 def _uses_licence(ctx: PricingContext, catalog: CatalogComponent) -> bool:
@@ -62,15 +70,19 @@ def ai_saving_applies(ctx: PricingContext, catalog: CatalogComponent) -> bool:
       no era recorded (catalogs v1-v5) → yes, as before
       pre_ai                           → yes
       ai_assisted                      → never (the observed hours already include AI tools)
-      unknown                          → no in the estimate; yes only in the pre-AI
-                                         sensitivity run (EstimateInput.era_scenario)
+      unknown                          → yes when ai_productivity.unknown_era_is_pre_ai
+                                         (v18+: the hours are calibrated against pre-AI
+                                         projects); else only in the pre-AI sensitivity run
+                                         (EstimateInput.era_scenario)
     """
     era = catalog.source_era
     if era is None or era is BaselineEra.PRE_AI:
         return True
     if era is BaselineEra.AI_ASSISTED:
         return False
-    return ctx.inp.era_scenario == "pre_ai_sensitivity"
+    return ctx.p.ai_productivity.unknown_era_is_pre_ai or (
+        ctx.inp.era_scenario == "pre_ai_sensitivity"
+    )
 
 
 def base_effort(ctx: PricingContext, ci: ComponentInstanceIn) -> ComponentEffort:
@@ -105,6 +117,9 @@ def _task_efforts(
         t.driver("licensing")
         lic = catalog.licence.effort_factor
     applies = ai_saving_applies(t.ctx, catalog)
+    if applies and catalog.source_era is BaselineEra.UNKNOWN:
+        if t.ctx.p.ai_productivity.unknown_era_is_pre_ai:
+            t.param("ai_productivity", "unknown_era_is_pre_ai")
     if applies:
         maturity = t.driver("team_ai_maturity")
         scale: Decimal = t.param("ai_productivity", "maturity_scale", maturity)

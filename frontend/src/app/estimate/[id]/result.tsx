@@ -62,6 +62,14 @@ function Headline({ summary }: { summary: QuickSummary }) {
         </span>
         <span className="text-lg font-medium">
           Most likely: {approx(summary.likely_paise)}
+          {summary.currency === "INR" ? " with GST" : " with tax"}
+          {summary.likely_without_tax_paise ? (
+            <span className="text-muted-foreground">
+              {" "}
+              ({approx(summary.likely_without_tax_paise)} without{" "}
+              {summary.currency === "INR" ? "GST" : "tax"})
+            </span>
+          ) : null}
         </span>
         <p className="max-w-2xl text-sm text-muted-foreground">
           An estimate before the work starts, not a final quotation. The range
@@ -103,6 +111,8 @@ function Headline({ summary }: { summary: QuickSummary }) {
           }
         />
       </div>
+
+      <AiSaving summary={summary} />
 
       <details className="group text-sm">
         <summary className="cursor-pointer rounded font-medium text-primary hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none">
@@ -195,73 +205,42 @@ function MarketBox({ summary }: { summary: QuickSummary }) {
   );
 }
 
-function AiComparison({ summary }: { summary: QuickSummary }) {
-  const traditional = summary.traditional_paise;
-  const likely = summary.likely_paise;
-  if (traditional === null || likely === null) return null;
+/** The whole project with the team's AI tools and without them: price, build time, saving. */
+function AiSaving({ summary }: { summary: QuickSummary }) {
+  const withAi = summary.likely_paise;
+  const withoutAi = summary.traditional_paise;
+  if (withAi === null || withoutAi === null || withoutAi <= withAi) return null;
   const money = (paise: number | null) => formatApprox(paise, summary.currency);
-  const saving = traditional - likely;
-  const era = summary.era_sensitivity;
+  const months = Number(summary.build_months);
+  const oldMonths = summary.traditional_build_months
+    ? Number(summary.traditional_build_months)
+    : null;
+  const monthsSaved = oldMonths !== null ? oldMonths - months : 0;
+  const monthsText = (m: number) => `about ${formatDecimal(m, 1)} months`;
   return (
-    <section className="flex flex-col gap-5">
-      <h3 className="text-base font-semibold">
-        With AI vs the traditional way
-      </h3>
-      <div className="grid gap-3 sm:grid-cols-2">
-        <div className="flex flex-col gap-1 rounded-xl border px-5 py-4">
-          <span className="text-sm font-medium text-muted-foreground">
-            Traditional price (team without AI tools)
+    <div className="flex flex-col gap-2 rounded-xl border-2 border-primary/30 bg-primary/5 px-5 py-4">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
+        <span className="font-semibold">
+          With AI tools: {money(withAi)} · {monthsText(months)}
+        </span>
+        <span className="text-muted-foreground">
+          Without AI tools:{" "}
+          <span className="line-through">
+            {money(withoutAi)}
+            {oldMonths !== null ? ` · ${monthsText(oldMonths)}` : ""}
           </span>
-          <span className="text-2xl font-semibold tracking-tight text-muted-foreground tabular-nums">
-            {money(traditional)}
-          </span>
-          <span className="text-sm text-muted-foreground">
-            Build only: {money(summary.traditional_build_only_paise)}
-          </span>
-        </div>
-        <div className="flex flex-col gap-1 rounded-xl border-2 border-primary/30 bg-primary/5 px-5 py-4">
-          <span className="text-sm font-medium">
-            AI-era price (this estimate)
-          </span>
-          <span className="text-2xl font-semibold tracking-tight text-primary tabular-nums">
-            {money(likely)}
-          </span>
-          <span className="text-sm text-muted-foreground">
-            Build only: {money(summary.build_only_paise)}
-          </span>
-        </div>
+        </span>
       </div>
-      {summary.ai_saving_percent !== null && saving > 0 ? (
-        <p className="rounded-xl bg-success/10 px-4 py-3 text-sm font-medium text-success">
-          The same scope priced without AI tools comes to{" "}
-          {summary.ai_saving_percent >= 1
-            ? `about ${summary.ai_saving_percent}%`
-            : "less than 1%"}{" "}
-          ({money(saving)}) more. The price above already includes this; it is
-          not an extra discount or a guaranteed saving.
-        </p>
-      ) : null}
-      {era ? (
-        <div className="flex flex-col gap-1 rounded-xl border border-dashed px-5 py-4">
-          <span className="text-sm font-medium">
-            If the effort data predates AI tools
-          </span>
-          <span className="text-xl font-semibold tracking-tight tabular-nums">
-            Most likely {money(era.pre_ai_likely_paise)}
-          </span>
-          <span className="text-sm text-muted-foreground">
-            {era.note} Range with this reading: {money(era.low_paise)} to{" "}
-            {money(era.high_paise)}. It is not taken off the price above.
-          </span>
-        </div>
-      ) : null}
-      <p className="text-sm text-muted-foreground">
-        The traditional price is what this scope would cost if the team wrote
-        everything by hand, as most vendors priced work before AI tools. AI
-        tools save the team time (see the hours above); how much of that reaches
-        the final price depends on how the work goes.
-      </p>
-    </section>
+      <span className="text-sm font-medium text-success">
+        AI tools save about {money(withoutAi - withAi)}
+        {summary.ai_saving_percent ? ` (${summary.ai_saving_percent}%)` : ""}
+        {monthsSaved >= 0.1 ? ` and ${monthsText(monthsSaved)}` : ""}.
+      </span>
+      <span className="text-xs text-muted-foreground">
+        Already in the price above, after the cost of the AI tools and of
+        checking what the AI wrote. Not a guaranteed saving.
+      </span>
+    </div>
   );
 }
 
@@ -456,14 +435,17 @@ function TeamNeeded({ summary }: { summary: QuickSummary }) {
 
 /** Building cost of each feature, with the team's AI tools and the traditional way. */
 function FeatureCosts({ summary }: { summary: QuickSummary }) {
+  const [showOld, setShowOld] = React.useState(false);
   if (summary.feature_costs.length === 0) return null;
   const money = (paise: number | null) => formatApprox(paise, summary.currency);
   const withAi = summary.feature_costs.reduce((s, f) => s + f.amount_paise, 0);
-  const withoutAi = summary.feature_costs.every(
+  const oldTotal = summary.feature_costs.every(
     (f) => f.traditional_paise !== null,
   )
     ? summary.feature_costs.reduce((s, f) => s + (f.traditional_paise ?? 0), 0)
     : null;
+  const canCompare = oldTotal !== null && oldTotal !== withAi;
+  const withoutAi = canCompare && showOld ? oldTotal : null;
   return (
     <section className="flex flex-col gap-4">
       <div>
@@ -471,9 +453,18 @@ function FeatureCosts({ summary }: { summary: QuickSummary }) {
           Building cost of each feature
         </h3>
         <p className="text-sm text-muted-foreground">
-          The team&apos;s work on each feature (most likely). Launch, running,
-          management, margin and tax are listed further down.
+          The team&apos;s work on each feature with AI tools (most likely).
+          Launch, running, management, margin and tax are listed further down.
         </p>
+        {canCompare ? (
+          <button
+            type="button"
+            className="mt-1 rounded text-sm font-medium text-primary hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            onClick={() => setShowOld((now) => !now)}
+          >
+            {showOld ? "Hide without AI" : "Show without AI"}
+          </button>
+        ) : null}
       </div>
       <div className="overflow-x-auto">
         <table className="w-full min-w-[32rem] text-sm">
@@ -497,7 +488,7 @@ function FeatureCosts({ summary }: { summary: QuickSummary }) {
                   {f.level ?? "—"}
                 </td>
                 {withoutAi !== null ? (
-                  <td className="py-2 pr-4 text-right text-muted-foreground tabular-nums">
+                  <td className="py-2 pr-4 text-right text-muted-foreground tabular-nums line-through">
                     {money(f.traditional_paise)}
                   </td>
                 ) : null}
@@ -948,7 +939,6 @@ function SummaryView({ summary }: { summary: QuickSummary }) {
             >
               <HoursOfWork summary={summary} />
               <TeamNeeded summary={summary} />
-              <AiComparison summary={summary} />
             </Disclosure>
           ) : null}
 

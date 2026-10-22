@@ -192,6 +192,7 @@ features:
       advanced: "Teams, targets, campaigns and automation"
   - key: mobile_app
     hidden: true   # asked as its own question, not ticked
+    sized_by_features: true   # sized by the stories of the features the app offers
     label: Mobile app (Android / iOS)
     hint: A phone app for customers or staff, in addition to the website.
     components: [custom_mobile_app]
@@ -305,6 +306,13 @@ sizing:
     standard: {label: Standard, hint: "The usual version most projects need", component_size: M, complexity: medium, points: 2}
     advanced: {label: Advanced, hint: "A large, detailed version: many screens, rules, roles or records", component_size: L, complexity: medium, points: 4}
   custom_size_level: {S: basic, M: standard, L: advanced}
+  # A feature found in a document is sized by its user stories (one per distinct thing a user
+  # can do, as the document asks for it): 1-3 = basic, 4-8 = standard, 9+ = advanced. An extra
+  # feature's S / M / L follows the same count. A level picked by hand still wins.
+  stories:
+    source: "placeholder, reasoned: the catalog sizes S = a few screens, M = a full module with workflow, L = a large sub-system; about 1-3, 4-8 and 9+ user stories (2026-10-22); calibrate on recorded projects"
+    basic_max: 3
+    standard_max: 8
   tiers:
     - max_points: 4
       project_size: small
@@ -346,6 +354,7 @@ questions:
   version:
     label: Do you want a first simple version, or the full product?
     default: full
+    on_upload: document   # a requirement document sets the scope; its user stories set the sizes
     options:
       - {value: mvp, label: A first simple version (MVP), hint: "Only the main features, kept simple, to launch quickly and learn", feature_level: basic, answers: {}}
       - {value: full, label: The full product, hint: "Everything done properly, ready for many users", feature_level: standard, answers: {}}
@@ -353,6 +362,7 @@ questions:
   platforms:
     label: Where should people use it?
     default: web
+    on_upload: document   # an app is priced when the document asks for one
     options:
       - {value: web, label: Website, hint: "Works in the browser on phones and computers", answers: {}}
       - {value: web_mobile, label: Website and app, hint: "A website and an app for Android and iPhone", add_features: {mobile_app: null}, answers: {}}
@@ -360,6 +370,7 @@ questions:
   scale:
     label: How many people will use it?
     default: up_to_10k
+    answered_by_number: users_total   # a stated user count picks the option
     options:
       - {value: up_to_100, max_users: 100, label: Up to 100, hint: "A team or a small office", answers: {users_total: 100, peak_concurrent_users: 10, documents_per_month: 50, chatbot_queries_per_day: 20}}
       - {value: up_to_1k, max_users: 1000, label: "100 – 1,000", hint: "A company or a few branches", answers: {users_total: 1000, peak_concurrent_users: 50, documents_per_month: 200, chatbot_queries_per_day: 100}}
@@ -439,7 +450,14 @@ questions:
       - {value: basic, label: Not a problem, hint: "Short breaks are fine (one server)", answers: {uptime_sla: "99.0"}}
       - {value: normal, label: Some trouble, hint: "It should rarely stop (99.5% of the time up)", answers: {uptime_sla: "99.5"}}
       - {value: high, label: Work stops, hint: "Almost never down (99.9%)", answers: {uptime_sla: "99.9"}}
-      - {value: critical, label: It must never stop, hint: "With a backup site for disasters (99.95%)", answers: {uptime_sla: "99.95"}}
+      - {value: critical, label: It must never stop, hint: "Two of everything, up 99.95% of the time or more", answers: {uptime_sla: "99.95"}}
+  disaster_site:
+    label: Does it need a backup site for disasters?
+    group: document   # not asked on the form; read from an uploaded document, else the usual answer
+    default: "no"
+    options:
+      - {value: "no", label: "No", hint: "Backups are enough", answers: {disaster_recovery: false}}
+      - {value: "yes", label: "Yes", hint: "A standby copy in another place, ready to take over (disaster recovery)", answers: {disaster_recovery: true}}
   security_audit:
     label: Do you need an independent security check before launch?
     group: document   # not asked on the form; read from an uploaded document, else the usual answer
@@ -787,10 +805,10 @@ reality_check:
   second_opinion_max_flags: 6
   # EMD check (fix 2026-10-22): GFR 2017 Rule 170(i) sets bid security at 2-5% of the
   # estimated value (https://doe.gov.in/files/circulars_document/FInal_GFR_upto_31_07_2024.pdf);
-  # a price more than 3x outside that band is flagged (the 3x is a reasoned placeholder)
+  # a price (without GST) outside that band is flagged
   emd_share_min: 0.02
   emd_share_max: 0.05
-  emd_band_factor: 3
+  emd_band_factor: 1   # any price outside the EMD range is flagged (the review of the PBD estimate, OPEN_QUESTIONS 135)
 
 # Work every estimate already prices: the size tiers' base blocks and the run costs (backups,
 # hosting, SSL). The document reader links a requirement that is only a part of one of these
@@ -1027,7 +1045,9 @@ keywords:
     version:
       mvp: [minimum viable product, mvp, pilot project, pilot phase, pilot implementation, proof of concept]
     availability:
-      critical: ["99.95%", "99.99%", disaster recovery, dr site]
+      critical: ["99.95%", "99.99%"]
+    disaster_site:
+      "yes": [disaster recovery, dr site, recovery point objective, recovery time objective]
       high: ["99.9%"]
       normal: ["99.5%"]
     hosting:

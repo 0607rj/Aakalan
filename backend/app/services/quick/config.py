@@ -27,6 +27,10 @@ class Feature(Frozen):
     # What Basic / Standard / Advanced mean for this feature (plain words; optional).
     levels: dict[str, str] = {}
     hidden: bool = False  # not in the tick list: a question's answer adds it (add_features)
+    # an app on top of the website: its level follows the user stories of the features it
+    # offers (from a document), not only its own (services/extraction/tender.py)
+    sized_by_features: bool = False
+    has_screens: bool = True  # False: back-office work an app never shows (e.g. data import)
 
 
 LevelKey = Literal["basic", "standard", "advanced"]
@@ -59,6 +63,12 @@ class Question(Frozen):
     hide_when: dict[str, list[str | int]] = {}
     # Default that follows another answer, e.g. {support_years: {"0": none}}.
     default_by: dict[str, dict[str, str | int]] = {}
+    # File upload: "document" = the document decides what is built (read from it, else the
+    # default), never asked; "ask" = asked when the document does not say.
+    on_upload: Literal["ask", "document"] = "ask"
+    # Not asked when this number is known (e.g. users_total): the answer is the option whose
+    # max_users covers it.
+    answered_by_number: str | None = None
 
     @model_validator(mode="after")
     def _default_exists(self) -> "Question":
@@ -124,12 +134,28 @@ class SizeTier(Frozen):
     answers: dict[str, Any] = {}
 
 
+class StorySizing(Frozen):
+    """A feature found in a document takes its level from how many user stories the document
+    asks for under it: up to basic_max stories = basic, up to standard_max = standard, more =
+    advanced (services/extraction/tender.py). The reader lists stories; it never sizes."""
+
+    source: str
+    basic_max: int = Field(ge=1)
+    standard_max: int = Field(ge=2)
+
+    def level(self, stories: int) -> LevelKey:
+        if stories <= self.basic_max:
+            return "basic"
+        return "standard" if stories <= self.standard_max else "advanced"
+
+
 class Sizing(Frozen):
     source: str
     default_level: LevelKey
     levels: dict[LevelKey, Level]
     custom_size_level: dict[Size, LevelKey]  # a custom feature's S/M/L as a level
     tiers: list[SizeTier]
+    stories: StorySizing | None = None  # levels from a document's user stories
 
     @model_validator(mode="after")
     def _open_tier(self) -> "Sizing":
@@ -317,7 +343,7 @@ class RealityCheck(Frozen):
     # against value = EMD ÷ share, and flagged when more than emd_band_factor outside it
     emd_share_min: Decimal | None = Field(default=None, gt=0, le=1)
     emd_share_max: Decimal | None = Field(default=None, gt=0, le=1)
-    emd_band_factor: Decimal | None = Field(default=None, gt=1)
+    emd_band_factor: Decimal | None = Field(default=None, ge=1)  # 1: anywhere outside the range
 
 
 class OnsiteEventDays(Frozen):

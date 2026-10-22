@@ -1657,6 +1657,18 @@ export interface components {
              * @default true
              */
             suggested: boolean;
+            /**
+             * Stories
+             * @default []
+             */
+            stories: string[];
+            /** Story Level */
+            story_level?: ("basic" | "standard" | "advanced") | null;
+            /**
+             * Covers
+             * @default []
+             */
+            covers: string[];
         };
         /** FoundNotPriced */
         FoundNotPriced: {
@@ -1684,6 +1696,11 @@ export interface components {
             size: string;
             /** Evidence */
             evidence: components["schemas"]["VerifiedEvidence"][];
+            /**
+             * Stories
+             * @default []
+             */
+            stories: string[];
         };
         /**
          * FoundPayment
@@ -1924,6 +1941,8 @@ export interface components {
              * @default false
              */
             unsure: boolean;
+            /** Max Users */
+            max_users?: number | null;
             /**
              * Add Features
              * @default {}
@@ -2200,6 +2219,13 @@ export interface components {
                     [key: string]: string | number;
                 };
             };
+            /**
+             * On Upload
+             * @default ask
+             */
+            on_upload: string;
+            /** Answered By Number */
+            answered_by_number?: string | null;
         };
         /** QuestionnaireField */
         QuestionnaireField: {
@@ -2353,6 +2379,8 @@ export interface components {
             planned_paise: number;
             /** Risk Allowance Paise */
             risk_allowance_paise: number | null;
+            /** Likely Without Tax Paise */
+            likely_without_tax_paise?: number | null;
             /** Build Only Paise */
             build_only_paise: number;
             /**

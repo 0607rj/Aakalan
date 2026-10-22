@@ -359,6 +359,9 @@ class NfrMultipliers(Sourced):
     languages_cap: Decimal
     accessibility: dict[str, Decimal]  # "true"/"false"
     concurrency_bands: list[ConcurrencyBand]
+    # v17+: components that build accessibility as their own work; when the project has one,
+    # the accessibility factor is not applied to the other components as well.
+    accessibility_components: list[str] = []
 
 
 class AiProductivity(Sourced):
@@ -368,6 +371,9 @@ class AiProductivity(Sourced):
     # v12+: extra review of AI-written code, as a share of the effort AI saves, by this role.
     review_share_of_saved: Decimal | None = Field(default=None, ge=0, le=1)
     review_role: str | None = None
+    # v18+: effort data of unknown era counts as pre-AI (the hours are calibrated against
+    # finished pre-AI projects), so the team's AI savings apply to it in the estimate itself.
+    unknown_era_is_pre_ai: bool = False
 
 
 class Timeline(Sourced):
@@ -377,6 +383,9 @@ class Timeline(Sourced):
     compression_curve: list[Point]  # x = deadline/natural ratio, y = cost multiplier
     infeasible_below_ratio: Decimal
     duration_quantum_months: Decimal
+    # v17+: a squeezed build also runs its programme (management, test servers) over the
+    # deadline, not the natural duration it was squeezed from.
+    programme_follows_deadline: bool = False
 
 
 class Programme(Sourced):
@@ -389,6 +398,8 @@ class Programme(Sourced):
     travel_rate_key: str
     non_prod_environments: Decimal
     environment_rate_key: str
+    # v17+: test servers priced on the same provider as production, by hosting provider.
+    environment_rate_key_by_provider: dict[str, str] = {}
 
 
 class OnPrem(Sourced):

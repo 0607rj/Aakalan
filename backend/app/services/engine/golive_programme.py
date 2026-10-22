@@ -131,7 +131,9 @@ def golive_lines(ctx: PricingContext, timeline: Timeline) -> list[CostLineOut]:
 
 def programme_lines(ctx: PricingContext, timeline: Timeline) -> list[CostLineOut]:
     """Programme costs over max(deadline, natural duration) — compression does not shorten
-    the management load; an extended deadline adds months of overhead."""
+    the management load; an extended deadline adds months of overhead. With
+    timeline.programme_follows_deadline (v17+), a squeezed build runs its programme over the
+    deadline instead, since the squeeze is already paid in the build effort."""
     lines: list[CostLineOut] = []
     overall = ctx.overall_clarity()
     months = timeline.programme_duration_months
@@ -147,9 +149,12 @@ def programme_lines(ctx: PricingContext, timeline: Timeline) -> list[CostLineOut
             uncertainty_group="programme",
         )
         t.driver("deadline_months")
+        squeezed = timeline.status == "compressed" and ctx.p.timeline.programme_follows_deadline
         t.step(
             "programme months",
-            f"max(deadline, natural {timeline.natural_duration_months})",
+            "deadline (the build is squeezed into it)"
+            if squeezed
+            else f"max(deadline, natural {timeline.natural_duration_months})",
             months,
         )
         t.add_input(programme_months=str(months))
@@ -205,7 +210,14 @@ def programme_lines(ctx: PricingContext, timeline: Timeline) -> list[CostLineOut
         t.driver("non_prod_environments")
         envs = Decimal(ctx.q.non_prod_environments)
     lean_key = ctx.p.lean.environment_rate_key if ctx.p.lean else None
-    if lean_key and t.lean():
+    by_provider = ctx.p.programme.environment_rate_key_by_provider
+    if ctx.q.hosting_provider in by_provider:
+        # v17+: test servers on the same provider as production
+        t.driver("hosting_provider")
+        env_rate = t.rate_local(
+            t.param("programme", "environment_rate_key_by_provider", ctx.q.hosting_provider)
+        )
+    elif lean_key and t.lean():
         env_rate = t.rate_local(t.param("lean", "environment_rate_key"))
     else:
         env_rate = t.rate_local(t.param("programme", "environment_rate_key"))

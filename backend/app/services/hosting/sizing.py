@@ -27,7 +27,7 @@ class HostingPlan:
 
 
 def size(t: LineBuilder) -> HostingPlan:
-    """pattern = pattern_by_sla[sla]
+    """pattern = pattern_by_sla[sla], or ha_dr when a disaster-recovery site is asked for
     app_servers = max(min_servers[pattern], ceil(ceil(peak / users_per_vcpu) / vcpu_per_server))
     server rate = small server when ceil(peak / users_per_vcpu) ≤ small_app_server_max_vcpus
                   and the rate card prices one (parameter sets v12+), else the standard server
@@ -36,6 +36,11 @@ def size(t: LineBuilder) -> HostingPlan:
     """
     sla = t.driver("uptime_sla")
     pattern: str = t.param("hosting", "pattern_by_sla", sla)
+    if t.ctx.q.disaster_recovery and pattern != "ha_dr":
+        # a standby site is its own requirement, not implied by high uptime (v17+ maps no
+        # uptime level to ha_dr)
+        t.driver("disaster_recovery")
+        pattern = "ha_dr"
     peak: int = t.driver("peak_concurrent_users")
     per_vcpu: Decimal = t.param("hosting", "concurrent_users_per_vcpu")
     per_server: Decimal = t.param("hosting", "vcpu_per_app_server")
