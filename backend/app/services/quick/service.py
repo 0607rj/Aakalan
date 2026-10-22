@@ -50,15 +50,18 @@ from app.services.estimates.reference_store import (
     get_taxonomy,
 )
 from app.services.extraction.merge import project_extraction
+from app.services.extraction.tender import FoundInventory
+from app.services.quick.anchor import CheckLine, IndependentCheckOut, independent_check
 from app.services.quick.config import (
     CostItemRule,
     Feature,
     LevelKey,
+    Option,
     QuickConfig,
     SizeTier,
     quick_config,
 )
-from app.services.quick.reality import FeatureShare, RealityOut, reality_check
+from app.services.quick.reality import FeatureShare, RealityOut, SupportRule, reality_check
 from app.services.research.service import PREFIX as RESEARCH_PREFIX
 from app.services.research.service import resolve_features
 from app.services.settings import (
@@ -380,6 +383,10 @@ class QuickSummary(BaseModel):
     bid_check: BidCheck | None = None  # client mode only
     researched: list[ResearchedFeature] = []  # features priced by researched blocks
     reality: RealityOut | None = None  # "does this price look real?" checks
+    # no support term chosen: the price holds one year of support, quoted as a yearly price
+    support_term_open: bool = False
+    # a second estimate counted from the document (uploads only); None for the form
+    independent_check: IndependentCheckOut | None = None
 
 
 def _default(cfg: QuickConfig, req: QuickRequest, key: str) -> str | int:
@@ -443,6 +450,7 @@ class PlannedComponent:
     complexity: Complexity
     requirements: list[str]
     label: str | None = None
+    hard_problem: bool = False  # a feature the document's hard problems belong to
 
 
 @dataclass
@@ -459,6 +467,8 @@ class QuickPlan:
     levels: dict[str, str] = field(default_factory=dict)  # feature key -> level
     unsure: list[str] = field(default_factory=list)  # questions answered "Not sure"
     scope: list[str] = field(default_factory=list)  # scope items priced, in order
+    # after an upload: questions the document does not answer, priced at the usual answer
+    assumed: list[str] = field(default_factory=list)
 
 
 def _unprocessable(message: str) -> HTTPException:
@@ -540,12 +550,18 @@ def plan_quick(
     found_numbers: dict[str, Any] = extraction.get("numbers", {})
 
     unsure = [key for key, o in options.items() if o.unsure]
+    assumed = (
+        _assumed(cfg, req, options, {f.key for f in features}, found_choices, found_numbers)
+        if extraction
+        else []
+    )
     plan = QuickPlan(
         size_points=points,
         project_size=tier.project_size,
-        clarity=_clarity(cfg, len(unsure)),
+        clarity=_clarity(cfg, len(unsure), len(assumed)),
         unsure=unsure,
         levels=dict(levels),
+        assumed=assumed,
     )
 
     def requirement(text: str, category: str, refs: list[dict[str, Any]]) -> str:
@@ -614,6 +630,12 @@ def plan_quick(
                 )
             )
     plan.components.extend(own_blocks)
+    # the document's hard problems (independent check reading) widen their features' range
+    inventory = extraction.get("inventory") or {}
+    hard = {h.get("feature") for h in inventory.get("hard_problems", []) if h.get("feature")}
+    hard_keys = {k for f in features if f.key in hard for k in f.components}
+    for c in plan.components:
+        c.hard_problem = c.key in hard_keys
 
     found_others: list[dict[str, Any]] = extraction.get("other_features", [])
     for custom in req.custom_features:
@@ -704,13 +726,48 @@ def request_features(cfg: QuickConfig, req: QuickRequest) -> list[str]:
     return list(dict.fromkeys([*req.features, *added_features(options)]))
 
 
-def _clarity(cfg: QuickConfig, unsure: int) -> int:
-    """requirement clarity, lowered one step per `answers_per_step` "Not sure" answers."""
+def _clarity(cfg: QuickConfig, unsure: int, assumed: int = 0) -> int:
+    """requirement clarity, lowered one step per `answers_per_step` "Not sure" answers, and
+    one step per `assumed_per_step` answers a document left open (at most assumed_max_steps)."""
     rules = cfg.not_sure
-    if rules is None or unsure == 0:
+    if rules is None or (unsure == 0 and assumed == 0):
         return cfg.requirement_clarity
     steps = -(-unsure // rules.answers_per_step)  # ceil
+    if rules.assumed_per_step is not None and assumed:
+        steps += min(rules.assumed_max_steps, -(-assumed // rules.assumed_per_step))
     return max(rules.min_clarity, cfg.requirement_clarity - steps)
+
+
+def _assumed(
+    cfg: QuickConfig,
+    req: QuickRequest,
+    options: dict[str, Option],
+    features: set[str],
+    found_choices: dict[str, Any],
+    found_numbers: dict[str, Any],
+) -> list[str]:
+    """After an upload: questions that apply, the document does not answer (no choice, no
+    number that answers them, no stated support term) and that are priced at their usual
+    answer. "Not sure" answers are counted on their own."""
+    custom_types = {c.category for c in req.custom_features}
+    out = []
+    for key, q in cfg.questions.items():
+        if q.group == "hidden" or key in found_choices or options[key].unsure:
+            continue
+        limited = q.only_with_features or q.only_with_custom_types
+        if limited and not (
+            features & set(q.only_with_features) or custom_types & set(q.only_with_custom_types)
+        ):
+            continue
+        if any(str(_choice(cfg, req, k).value) in map(str, v) for k, v in q.hide_when.items()):
+            continue
+        if q.answered_by_number and q.answered_by_number in {*req.overrides, *found_numbers}:
+            continue
+        if key == SUPPORT_YEARS and "om_years" in {*req.overrides, *found_numbers}:
+            continue
+        if str(options[key].value) == str(_default(cfg, req, key)):
+            out.append(key)
+    return out
 
 
 def _standard_components(tier: SizeTier, options: dict[str, Any]) -> list[str]:
@@ -845,7 +902,7 @@ def create_quick_estimate(db: Session, user: User, cfg: QuickConfig, req: QuickR
                 size=c.size.value,
                 complexity=c.complexity.value,
                 quantity=1,
-                driver_values={},
+                driver_values={"hard_problem": True} if c.hard_problem else {},
                 requirement_ids=[ids[r] for r in c.requirements],
                 status="confirmed",
                 confirmed_by=user.id,
@@ -874,7 +931,7 @@ def request_seed(req: QuickRequest, doc: Document | None) -> int:
     the upload or the estimate's name: the same file and answers give the same range."""
     asked = req.model_dump(mode="json", exclude={"document_id", "name"})
     key = json.dumps([asked, doc.sha256 if doc else None], sort_keys=True)
-    return int(hashlib.sha256(key.encode("utf-8")).hexdigest(), 16) % (2**estimates.SEED_BITS)
+    return int(hashlib.sha256(key.encode("utf-8")).hexdigest(), 16) % (1 << estimates.SEED_BITS)
 
 
 # --- price impact of the open questions ----------------------------------------------------
@@ -920,6 +977,7 @@ def plan_to_input(
                 size=c.size,
                 complexity=c.complexity,
                 requirement_ids=c.requirements,
+                hard_problem=c.hard_problem,
             )
             for i, c in enumerate(plan.components, start=1)
         ],
@@ -988,9 +1046,134 @@ def question_impact(
     return out
 
 
-def summarise(
-    estimate: Estimate, project: Project, cfg: QuickConfig, *, margin_visible: bool = True
+class OptionChange(BaseModel):
+    value: str | int
+    label: str
+    change_paise: (
+        int | None
+    )  # likely price with this answer minus the estimate's (None: infeasible)
+
+
+class PricedOption(BaseModel):
+    """A question left open (not in the document, or answered "Not sure"): priced at its usual
+    answer, with what each other answer would change. Fast fixed-seed re-pricing (quick config
+    `impact`) of the estimate's own snapshot, so the changes use its pinned rates."""
+
+    key: str
+    question: str
+    priced_as: str  # the answer in the price
+    why: Literal["not_in_document", "not_sure"]
+    low_change_paise: int | None  # smallest and largest change over the other answers
+    high_change_paise: int | None
+    options: list[OptionChange]
+
+
+def priced_options(
+    db: Session, cfg: QuickConfig, estimate: Estimate, project: Project
+) -> list[PricedOption]:
+    """Every open question with the price change of each other answer, largest first."""
+    if not project.quick_request:
+        return []
+    req = QuickRequest.model_validate(project.quick_request)
+    merged = project_extraction(db, project)
+    extraction = merged.extraction.model_dump(mode="json") if merged.extraction else None
+    filename = merged.documents[0].filename if merged.documents else FORM_DOCUMENT
+    snap = EstimateInput.model_validate(estimate.inputs_snapshot)
+    reference = {
+        "taxonomy": snap.taxonomy,
+        "catalog": snap.catalog,
+        "rate_card": snap.rate_card,
+        "parameters": snap.parameters,
+    }
+    today = estimate.as_of_date
+
+    def likely(r: QuickRequest) -> int | None:
+        plan = plan_quick(cfg, r, extraction, filename)
+        inp = plan_to_input(
+            plan, req.name, reference, today, cfg.impact.seed, cfg.impact.monte_carlo_runs
+        )
+        totals = calculate(inp).totals
+        return totals.p50_paise if totals else None
+
+    base_plan = plan_quick(cfg, req, extraction, filename)
+    base = likely(req)
+    if base is None:
+        return []
+    open_keys: list[tuple[str, Literal["not_in_document", "not_sure"]]] = [
+        (k, "not_in_document") for k in base_plan.assumed
+    ]
+    open_keys += [(k, "not_sure") for k in base_plan.unsure if k not in base_plan.assumed]
+    out = []
+    for key, why in open_keys:
+        question = cfg.questions[key]
+        current = _choice(cfg, req, key)
+        changes = []
+        for option in question.options:
+            if option.unsure or option.value == current.value:
+                continue
+            variant = req.model_copy(update={"choices": {**req.choices, key: option.value}})
+            try:
+                price = likely(variant)
+            except HTTPException:  # an answer this form cannot take (e.g. hosting by country)
+                continue
+            changes.append(
+                OptionChange(
+                    value=option.value,
+                    label=option.label,
+                    change_paise=None if price is None else price - base,
+                )
+            )
+        known = [c.change_paise for c in changes if c.change_paise is not None]
+        if not changes:
+            continue
+        out.append(
+            PricedOption(
+                key=key,
+                question=question.label,
+                priced_as=current.label,
+                why=why,
+                low_change_paise=min(known) if known else None,
+                high_change_paise=max(known) if known else None,
+                options=changes,
+            )
+        )
+    out.sort(key=lambda o: -max((abs(c.change_paise or 0) for c in o.options), default=0))
+    return out
+
+
+def confirm_check(db: Session, user: User, estimate: Estimate) -> None:
+    """A person has looked at the gap the independent check found; export is allowed."""
+    estimate.check_confirmed_at = datetime.now(UTC)
+    estimate.check_confirmed_by = user.id
+    db.commit()
+
+
+def summary_for(
+    db: Session, estimate: Estimate, project: Project, cfg: QuickConfig, *, margin_visible: bool
 ) -> QuickSummary:
+    """The summary with the independent check of the project's documents (when it has any)."""
+    merged = project_extraction(db, project).extraction
+    return summarise(
+        estimate,
+        project,
+        cfg,
+        margin_visible=margin_visible,
+        document=merged is not None,
+        inventory=merged.inventory if merged else None,
+    )
+
+
+def summarise(
+    estimate: Estimate,
+    project: Project,
+    cfg: QuickConfig,
+    *,
+    margin_visible: bool = True,
+    document: bool = False,
+    inventory: FoundInventory | None = None,
+) -> QuickSummary:
+    """`document`: the project was priced from an uploaded document, so the independent check
+    is made (from `inventory`, the document's count of what the system contains)."""
     result: dict[str, Any] = estimate.result
     stage_likely = {g["key"]: g["likely_paise"] for g in result["by_stage"]}
     stage_low = {g["key"]: g["low_paise"] for g in result["by_stage"]}
@@ -1081,12 +1264,67 @@ def summarise(
         mode="client" if project.mode == BUYER_MODE else "vendor",
         bid_check=_bid_check(cfg, estimate) if project.mode == BUYER_MODE else None,
         researched=researched_features(estimate),
+        support_term_open=_support_term_open(cfg, project),
     )
     emd = next(
-        (a["value"] for a in estimate.inputs_snapshot.get("answers", []) if a["key"] == "emd_paise"),
+        (
+            a["value"]
+            for a in estimate.inputs_snapshot.get("answers", [])
+            if a["key"] == "emd_paise"
+        ),
         None,
     )
-    return with_reality(cfg, summary, emd if isinstance(emd, int) else None)
+    emd_paise = emd if isinstance(emd, int) else None
+    if document and cfg.independent_check is not None and estimate.feasible:
+        summary.independent_check = independent_check(
+            cfg.independent_check,
+            inventory,
+            priced_pd=Decimal(str(timeline["build_effort_pd"])),
+            pd_per_month=Decimal(
+                str(estimate.inputs_snapshot["parameters"]["calendar"]["pd_per_month"])
+            ),
+            project_size=summary_size(estimate),
+            top_lines=_top_build_lines(estimate),
+            price_without_tax_paise=summary.likely_without_tax_paise or summary.likely_paise,
+            emd_paise=emd_paise,
+            emd_rules=cfg.reality_check,
+            confirmed_at=estimate.check_confirmed_at,
+        )
+    return with_reality(cfg, summary, emd_paise, result.get("sanity_checks", []))
+
+
+TOP_LINES = 3
+BUILD_STAGES = ("pre_build", "build")
+
+
+def _top_build_lines(estimate: Estimate) -> list[CheckLine]:
+    """The largest building lines (most likely), where a gap with the check usually sits."""
+    build = [
+        ln for ln in estimate.lines if ln.stage in BUILD_STAGES and not ln.derived and ln.year == 0
+    ]
+    build.sort(key=lambda ln: -ln.likely_paise)
+    return [CheckLine(label=ln.label, amount_paise=ln.likely_paise) for ln in build[:TOP_LINES]]
+
+
+def summary_size(estimate: Estimate) -> str | None:
+    """The project size the estimate was priced at (quick answers), e.g. "medium"."""
+    for a in estimate.inputs_snapshot.get("answers", []):
+        if a["key"] == "project_size":
+            return str(a["value"]) if a["value"] else None
+    return None
+
+
+SUPPORT_YEARS = "support_years"
+PER_YEAR = "per_year"
+
+
+def _support_term_open(cfg: QuickConfig, project: Project) -> bool:
+    """No support term chosen or read from the document: one year is priced as a yearly rate."""
+    req = project.quick_request or {}
+    if "om_years" in (req.get("overrides") or {}) or SUPPORT_YEARS not in cfg.questions:
+        return False
+    chosen = (req.get("choices") or {}).get(SUPPORT_YEARS, cfg.questions[SUPPORT_YEARS].default)
+    return str(chosen) == PER_YEAR
 
 
 def _without_tax(result: dict[str, Any], likely: int | None, planned: int) -> int | None:
@@ -1094,14 +1332,19 @@ def _without_tax(result: dict[str, Any], likely: int | None, planned: int) -> in
     loses the same share as the planned cost."""
     if not likely or not planned:
         return None
-    tax = sum(b["likely_paise"] for b in result["by_bucket"] if b["key"] == TAX_BUCKET)
+    tax: int = sum(b["likely_paise"] for b in result["by_bucket"] if b["key"] == TAX_BUCKET)
     return round(Decimal(likely) * (planned - tax) / planned)
 
 
 def with_reality(
-    cfg: QuickConfig, summary: QuickSummary, emd_paise: int | None = None
+    cfg: QuickConfig,
+    summary: QuickSummary,
+    emd_paise: int | None = None,
+    sanity_checks: list[dict[str, Any]] | None = None,
 ) -> QuickSummary:
-    """The summary with its "does this price look real?" checks (when configured)."""
+    """The summary with its "does this price look real?" checks (when configured). The engine's
+    support rule of thumb is explained with the independent check's direction: support looks
+    low beside a build that is itself priced high."""
     rules = cfg.reality_check
     if rules is None or not summary.feasible:
         return summary
@@ -1122,8 +1365,40 @@ def with_reality(
         len(summary.not_sure),
         price_paise=summary.likely_without_tax_paise or summary.likely_paise,
         emd_paise=emd_paise,
+        support_rule=_support_rule(sanity_checks or []),
+        build_looks=_build_looks(summary.independent_check),
     )
     return summary.model_copy(update={"reality": reality})
+
+
+SUPPORT_RULE = "maintenance_rule_of_thumb"
+
+
+def _support_rule(sanity_checks: list[dict[str, Any]]) -> SupportRule | None:
+    """The engine's year-1 support share and the rule of thumb it was compared with."""
+    for c in sanity_checks:
+        if c.get("key") != SUPPORT_RULE:
+            continue
+        message = str(c.get("message", ""))
+        m = SUPPORT_SHARES.search(message)
+        below = m is not None and Decimal(m.group(1)) < Decimal(m.group(2))
+        return SupportRule(ok=c.get("status") == "ok", message=message, below=below)
+    return None
+
+
+# engine/core.py: "Year-1 maintenance is 14.2% of build cost; the industry rule of thumb is 15–25%."
+SUPPORT_SHARES = re.compile(r"is ([\d.]+)% of build cost; .*? is (\d+)\D")
+
+
+def _build_looks(check: IndependentCheckOut | None) -> Literal["high", "low"] | None:
+    """Whether the independent check finds the build high or low (ratio, else its band)."""
+    if check is None or not check.available:
+        return None
+    if check.direction is not None:
+        return check.direction
+    if check.band is not None and check.band.position != "inside":
+        return "high" if check.band.position == "above" else "low"
+    return None
 
 
 HOSTING_BUCKETS = ("run.hosting", "run.backups", "run.dr", "go_live.infrastructure_procurement")

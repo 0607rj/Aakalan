@@ -173,13 +173,9 @@ def maintenance_lines(
             t.driver("onsite_resources")
             if res.days is None:
                 t.param("calendar", "pd_per_year")
-                pd = t.step(
-                    "onsite person-days", f"{res.count} × {pd_year}", res.count * pd_year
-                )
+                pd = t.step("onsite person-days", f"{res.count} × {pd_year}", res.count * pd_year)
             else:
-                pd = t.step(
-                    "onsite person-days", f"{res.count} × {res.days}", res.count * res.days
-                )
+                pd = t.step("onsite person-days", f"{res.count} × {res.days}", res.count * res.days)
             lines.append(labour(t, pd, res.role, year, scaled=False))
 
         t = _run(
@@ -202,9 +198,13 @@ def maintenance_lines(
             "SSL certificate and domain",
             "maintenance.ssl_domain.v1",
         )
-        amount = t.rate_local(t.param("maintenance", "ssl_rate_key")) + t.rate_local(
-            t.param("maintenance", "domain_rate_key")
+        ssl = t.rate_local(t.param("maintenance", "ssl_rate_key"))
+        domain_key: str = (
+            t.param("maintenance", "domain_rate_key_by_type", t.driver("web_domain"))
+            if ctx.p.maintenance.domain_rate_key_by_type
+            else t.param("maintenance", "domain_rate_key")
         )
+        amount = ssl + t.rate_local(domain_key)
         lines.append(price(t, amount, year))
 
         if ctx.q.licensing == "licensed":

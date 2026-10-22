@@ -4,8 +4,8 @@ cited findings for the quick-estimate form. Each upload starts a draft project."
 import hashlib
 import logging
 import re
-from typing import Any
 from pathlib import Path
+from typing import Any
 
 from fastapi import HTTPException, status
 from sqlalchemy.orm import Session
@@ -14,15 +14,21 @@ from app.core.config import get_settings
 from app.core.tenancy import get_owned, scoped
 from app.llm.client import LLMClient, LLMNotConfiguredError, LLMRefusedError, get_llm_client
 from app.models import Document, Project, User
-from app.services.documents.parsing import SCANNED_NEEDS_AI, DocumentError, parse_document
+from app.services.documents.parsing import (
+    SCANNED_NEEDS_AI,
+    DocumentError,
+    ParsedDocument,
+    parse_document,
+)
 from app.services.extraction.basic_reader import basic_read
+from app.services.extraction.inventory import count_system
 from app.services.extraction.tender import (
     BASIC_READER_VERSION,
     PROMPT_VERSION,
     ai_read,
     verify_findings,
 )
-from app.services.quick.config import quick_config
+from app.services.quick.config import QuickConfig, quick_config
 
 log = logging.getLogger(__name__)
 BYTES_PER_MB = 1024 * 1024
@@ -119,6 +125,8 @@ def upload_document(
         doc.llm_model = earlier.llm_model
         doc.llm_input_tokens = doc.llm_output_tokens = 0
         doc.parse_status = "extracted"
+        if not (doc.extraction or {}).get("inventory"):  # read before the independent check
+            _add_inventory(doc, llm, cfg, parsed, data, safe)
         if first_document:
             project.name = doc.extraction.get("project_name") or project.name
         db.commit()
@@ -151,9 +159,31 @@ def upload_document(
         doc.parse_status = "extracted"
         if first_document:
             project.name = extraction.project_name
+        if reader == "ai" and llm is not None:
+            _add_inventory(doc, llm, cfg, parsed, data, safe)
     db.commit()
     db.refresh(doc)
     return doc
+
+
+def _add_inventory(
+    doc: Document, llm: LLMClient, cfg: QuickConfig, parsed: ParsedDocument, data: bytes, name: str
+) -> None:
+    """What the system must contain, for the independent check (one more AI call). A failure
+    keeps the reading: the check then says it could not be made."""
+    try:
+        counted = count_system(
+            llm, cfg, parsed, pdf=data if parsed.scanned else None, document=name
+        )
+    except Exception:  # network / API / schema errors: the estimate works without the check
+        log.exception("counting what the system must contain failed")
+        return
+    if counted is None:
+        return
+    inventory, result = counted
+    doc.extraction = {**(doc.extraction or {}), "inventory": inventory.model_dump(mode="json")}
+    doc.llm_input_tokens = (doc.llm_input_tokens or 0) + result.input_tokens
+    doc.llm_output_tokens = (doc.llm_output_tokens or 0) + result.output_tokens
 
 
 def _earlier_reading(db: Session, org_id: str, sha256: str, model: str) -> Document | None:

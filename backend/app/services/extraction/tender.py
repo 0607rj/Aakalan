@@ -226,6 +226,37 @@ class FoundPaymentTerms(BaseModel):
     evidence: list[VerifiedEvidence]
 
 
+class FoundItem(BaseModel):
+    """One thing the finished system must contain (services/extraction/inventory.py)."""
+
+    name: str
+    evidence: list[VerifiedEvidence]
+    kind: str = ""  # screens: single / list_detail_edit
+    provider_selected: bool = False  # integrations: the document names the provider
+    problem: str = ""  # hard problems: key of quick config independent_check.hard_problems
+    feature: str = ""  # hard problems: the listed feature it belongs to ("" = none)
+
+
+class FoundInventory(BaseModel):
+    """What the system must contain, for the independent check. The AI lists named items with
+    quotes; only items whose quotes are found on the page are kept, and the code counts them.
+    A classification the config does not know is stored as ""."""
+
+    prompt_version: str
+    entities: list[FoundItem] = []
+    roles: list[FoundItem] = []
+    screens: list[FoundItem] = []
+    integrations: list[FoundItem] = []
+    hard_problems: list[FoundItem] = []
+    system_class: str = ""
+    quality: str = ""
+    ai_fit: str = ""
+    clarity: str = ""
+    tenancy: str = "single"
+    tenancy_evidence: list[VerifiedEvidence] = []
+    dropped: int = 0  # items left out because their quote was not found
+
+
 class TenderExtraction(BaseModel):
     reader: str  # "ai" | "basic"
     prompt_version: str
@@ -241,6 +272,7 @@ class TenderExtraction(BaseModel):
     payment_terms: FoundPaymentTerms | None = None
     scope: list[FoundScope] = []  # asked for or probably needed: offered, never pre-ticked
     scope_set_aside: list[FoundScope] = []  # ruled out, later phase / optional, or a mention
+    inventory: FoundInventory | None = None  # for the independent check (AI reader only)
 
 
 def _fence(doc: ParsedDocument) -> str:
@@ -657,7 +689,12 @@ def _drop_repeats(
         return bool(evidence) and all(claimed(_quote_key(e.quote)) for e in evidence)
 
     for key, item in list(scope.items()):
-        if repeats(item.evidence, lambda q: bool(by_feature.get(q, set()) - {owner.get(key)})):
+        own = owner.get(key)
+
+        def elsewhere(q: str, own: str | None = own) -> bool:
+            return bool(by_feature.get(q, set()) - {own})
+
+        if repeats(item.evidence, elsewhere):
             del scope[key]
     scoped = {_quote_key(e.quote) for item in scope.values() for e in item.evidence}
     for name, extra in list(others.items()):

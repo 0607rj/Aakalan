@@ -29,10 +29,28 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     access_token_minutes: int = 480
 
+    # Sign-up and emailed one-time codes (services/auth.py). Email goes out by SMTP when
+    # smtp_host is set; otherwise (not in production) it is written to the server log.
+    signup_enabled: bool = True
+    otp_minutes: int = 10  # a code's lifetime
+    otp_max_attempts: int = 5  # wrong tries before a code stops working
+    otp_resend_seconds: int = 60  # wait before another code
+    otp_max_per_hour: int = 5  # codes per user and purpose in an hour
+    password_min_length: int = 8
+    smtp_host: str = ""
+    smtp_port: int = 587
+    smtp_username: str = ""
+    smtp_password: str = ""
+    smtp_from: str = "Aakalan <no-reply@aakalan.local>"
+    smtp_starttls: bool = True
+
     cors_origins: list[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
 
     seeds_dir: Path = BACKEND_DIR / "seeds"
     seed_user_password: str = "admin123"
+    # The shared library of researched features (services/research/library.py); empty = the
+    # file under seeds_dir. Tests point it at a temporary file.
+    research_library_path: Path | None = None
 
     llm_provider: str = "anthropic"  # "anthropic" or "fake" (tests / offline demos)
     llm_model: str = "claude-sonnet-5-5"
@@ -50,6 +68,10 @@ class Settings(BaseSettings):
         if self.environment == "production" and self.jwt_secret.startswith("dev-only"):
             raise ValueError("JWT_SECRET must be set in production")
         return self
+
+    @property
+    def resolved_research_library(self) -> Path:
+        return self.research_library_path or self.seeds_dir / "research" / "library.yaml"
 
     @property
     def resolved_database_url(self) -> str:

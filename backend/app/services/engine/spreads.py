@@ -27,6 +27,15 @@ def tags(t: LineBuilder, tag_names: list[str]) -> None:
         t.spread(f"{tag} unknowns", ZERO, extra)
 
 
+def hard_problem(t: LineBuilder) -> None:
+    """A component holding a hard problem (v19+): extra down and up spread, so the range widens
+    while the planned cost stays the same."""
+    s = t.ctx.p.uncertainty.hard_problem_extra
+    if s is not None:
+        t.param("uncertainty", "hard_problem_extra")
+        t.spread("hard problem", s.down, s.up)
+
+
 def compression(t: LineBuilder, multiplier: Decimal) -> None:
     if multiplier > ONE:
         per_unit: Decimal = t.param("uncertainty", "compression_extra_up_per_unit")

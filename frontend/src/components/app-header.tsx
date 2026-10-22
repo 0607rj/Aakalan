@@ -11,6 +11,7 @@ import { clearToken } from "@/lib/api/client";
 const APP_LINKS = [
   { href: "/projects", label: "Your estimates" },
   { href: "/how-it-works", label: "How it works" },
+  { href: "/account", label: "Account" },
 ];
 
 /** The signed-in bar: the same bar as the public pages, with the app's own links. */

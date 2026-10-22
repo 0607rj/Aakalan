@@ -13,6 +13,7 @@ from sqlalchemy.orm import Session
 from app.core.config import get_settings
 from app.core.security import hash_password
 from app.models import Estimate, Organisation, Requirement, Role, User
+from app.models.base import utcnow
 from app.services.seeding.database import seed_demo_project
 from app.services.seeding.golden import expected_path
 from app.services.seeding.reference import load_reference
@@ -116,16 +117,16 @@ def test_saved_estimate_unchanged_when_catalog_v6_arrives(
     client: TestClient, estimator_headers: H, db: Session
 ) -> None:
     """An estimate on catalog v5 keeps its AI savings on every block and never changes; the
-    next one uses catalog v6 (no saving on unknown-era data) with the pre-AI sensitivity run
-    stored beside it."""
+    next one uses the newest catalog (source eras; from parameters v18 unknown-era data counts
+    as pre-AI, so the saving is taken off it as before)."""
     project, _ = ready_project(client, estimator_headers)
     old = estimate(client, estimator_headers, project["id"], catalog_version="v5")
     labour = {ln["formula_id"] for ln in old["lines"] if ln["component_instance_id"]}
     assert old["catalog_version"] == "v5" and labour == {"component_labour.v2"}
     new = estimate(client, estimator_headers, project["id"])
     labour = {ln["formula_id"] for ln in new["lines"] if ln["component_instance_id"]}
-    assert int(new["catalog_version"][1:]) >= 6 and labour == {"component_labour.v3"}
-    assert new["p50_paise"] > old["p50_paise"]  # no AI saving taken off unknown-era data
+    # v3: source eras (catalog v6); v4 adds the reuse factor (parameters v19)
+    assert int(new["catalog_version"][1:]) >= 6 and labour == {"component_labour.v4"}
 
     again = client.get(f"/estimates/{old['id']}", headers=estimator_headers).json()
     keys = ("likely_paise", "p10_paise", "p50_paise", "p90_paise")
@@ -137,10 +138,8 @@ def test_saved_estimate_unchanged_when_catalog_v6_arrives(
         e.id: e for e in db.scalars(select(Estimate).where(Estimate.project_id == project["id"]))
     }
     assert rows[old["id"]].result["era_sensitivity"] is None  # v5 records no source eras
-    s = rows[new["id"]].result["era_sensitivity"]
-    assert s["p50_paise"] < new["p50_paise"]
-    assert s["range_low_paise"] == min(s["p10_paise"], new["p10_paise"])
-    assert s["range_high_paise"] == new["p90_paise"]
+    # parameters v18: unknown era is already priced as pre-AI, so there is no other reading
+    assert rows[new["id"]].result["era_sensitivity"] is None
 
 
 def test_margin_redacted_for_estimator_visible_to_finance(
@@ -314,7 +313,8 @@ def test_org_isolation(client: TestClient, estimator_headers: H, db: Session) ->
     db.add(other)
     db.flush()
     db.add(User(org_id=other.id, email="spy@other.local", full_name="Spy", role=Role.ADMIN,
-                password_hash=hash_password(TEST_PASSWORD)))  # fmt: skip
+                password_hash=hash_password(TEST_PASSWORD),
+                email_verified_at=utcnow()))  # fmt: skip
     db.commit()
     spy = login(client, "spy@other.local")
     assert client.get(f"/projects/{project['id']}", headers=spy).status_code == 404

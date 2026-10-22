@@ -14,6 +14,7 @@ from sqlalchemy.orm import Session
 from app.core.security import hash_password
 from app.llm.client import FakeClient, set_llm_client
 from app.models import Organisation, Role, User
+from app.models.base import utcnow
 from tests.conftest import TEST_PASSWORD, login
 
 H = dict[str, str]
@@ -370,6 +371,7 @@ def test_upload_is_org_scoped(
             full_name="Spy",
             role=Role.ADMIN,
             password_hash=hash_password(TEST_PASSWORD),
+            email_verified_at=utcnow(),
         )
     )
     db.commit()
@@ -539,6 +541,10 @@ def test_ai_reader_payment_terms_are_priced(client: TestClient, admin_headers: H
     quote = "30% on signing of the agreement, 50% on go-live and 20% after"
 
     def responder(system: str, user: str) -> object:
+        if "<already_found>" in user:  # the second pass: nothing more
+            return {"other_features": []}
+        if "independent check" in system:  # the count for the independent check: none
+            return {}
         assert "penalties:" in system and "payment_terms" in system
         return {
             "project_name": "Grievance portal",

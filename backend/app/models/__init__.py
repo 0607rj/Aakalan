@@ -2,7 +2,7 @@
 
 from app.models.base import Base
 from app.models.contact import ContactMessage
-from app.models.org import Organisation, OrgSettings, Role, User
+from app.models.org import OneTimeCode, Organisation, OrgSettings, Role, User
 from app.models.project import (
     Assumption,
     ComponentInstance,
@@ -22,7 +22,7 @@ from app.models.reference import (
     RateItem,
     TaxonomyVersion,
 )
-from app.models.research import ResearchedComponent
+from app.models.research import ResearchedComponent, SharedResearchedComponent
 from app.models.review import SecondOpinion
 
 __all__ = [
@@ -34,6 +34,7 @@ __all__ = [
     "CostLine",
     "Document",
     "Estimate",
+    "OneTimeCode",
     "OrgSettings",
     "Organisation",
     "Outcome",
@@ -46,6 +47,7 @@ __all__ = [
     "ResearchedComponent",
     "Role",
     "SecondOpinion",
+    "SharedResearchedComponent",
     "TaxonomyVersion",
     "Template",
     "User",

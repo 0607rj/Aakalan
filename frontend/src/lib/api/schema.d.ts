@@ -38,6 +38,126 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/signup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Signup
+         * @description A new company with you as its admin; sign in after confirming the emailed code.
+         */
+        post: operations["signup_auth_signup_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/verify-email": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Verify Email
+         * @description Confirm the address with the emailed code; signs you in.
+         */
+        post: operations["verify_email_auth_verify_email_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/verify-email/resend": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Resend Verification
+         * @description A new code for an account not yet verified (the same answer for any other address).
+         */
+        post: operations["resend_verification_auth_verify_email_resend_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/password/forgot": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Forgot Password
+         * @description Email a reset code. The answer is the same whether or not the account exists.
+         */
+        post: operations["forgot_password_auth_password_forgot_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/password/reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Reset Password
+         * @description New password with the emailed code; signs you in and signs out every other session.
+         */
+        post: operations["reset_password_auth_password_reset_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/password/change": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Change Password
+         * @description New password while signed in; other sessions are signed out, this one gets a new token.
+         */
+        post: operations["change_password_auth_password_change_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/me": {
         parameters: {
             query?: never;
@@ -488,6 +608,47 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/estimates/{estimate_id}/check/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Confirm Independent Check
+         * @description The user has looked at the gap the independent check found; export is then allowed.
+         */
+        post: operations["confirm_independent_check_estimates__estimate_id__check_confirm_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/estimates/{estimate_id}/options": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Open Options
+         * @description Questions left open (not in the document, or "Not sure"), each with what the other
+         *     answers would change in the likely price (nothing is saved).
+         */
+        get: operations["open_options_estimates__estimate_id__options_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/estimates/{estimate_id}/second-opinion": {
         parameters: {
             query?: never;
@@ -823,6 +984,22 @@ export interface components {
             /** Overridden */
             overridden: boolean;
         };
+        /** Band */
+        Band: {
+            /** System Class */
+            system_class: string;
+            /** Size */
+            size: string;
+            /** Low Months */
+            low_months: string;
+            /** High Months */
+            high_months: string;
+            /**
+             * Position
+             * @enum {string}
+             */
+            position: "below" | "inside" | "above";
+        };
         /**
          * BaselineEra
          * @description Whether the effort data behind a component was measured with AI coding tools in use.
@@ -1051,6 +1228,13 @@ export interface components {
             /** Kind */
             kind: string;
         };
+        /** ChangePasswordRequest */
+        ChangePasswordRequest: {
+            /** Current Password */
+            current_password: string;
+            /** New Password */
+            new_password: string;
+        };
         /** Check */
         Check: {
             /** Key */
@@ -1061,6 +1245,13 @@ export interface components {
             title: string;
             /** Detail */
             detail: string;
+        };
+        /** CheckLine */
+        CheckLine: {
+            /** Label */
+            label: string;
+            /** Amount Paise */
+            amount_paise: number;
         };
         /**
          * ClientPays
@@ -1085,6 +1276,16 @@ export interface components {
             total_high_paise?: number | null;
             /** Note */
             note: string | null;
+        };
+        /**
+         * CodeSent
+         * @description A code was emailed (or, for a reset, would be if the account exists).
+         */
+        CodeSent: {
+            /** Email */
+            email: string;
+            /** Message */
+            message: string;
         };
         /** CompanySettings */
         "CompanySettings-Input": {
@@ -1312,6 +1513,21 @@ export interface components {
              */
             redacted: boolean;
         };
+        /** CountLine */
+        CountLine: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Count */
+            count: string;
+            /** Pd Each */
+            pd_each: string;
+            /** Person Days */
+            person_days: string;
+            /** Items */
+            items: string[];
+        };
         /** CountryOut */
         CountryOut: {
             /** Key */
@@ -1426,6 +1642,11 @@ export interface components {
              * @enum {string}
              */
             quality: "low" | "low_medium" | "medium" | "high";
+        };
+        /** EmailRequest */
+        EmailRequest: {
+            /** Email */
+            email: string;
         };
         /**
          * EraBasis
@@ -1593,6 +1814,13 @@ export interface components {
             /** Parent Estimate Id */
             parent_estimate_id: string | null;
         };
+        /** Factor */
+        Factor: {
+            /** Label */
+            label: string;
+            /** Value */
+            value: string;
+        };
         /**
          * FeatureCost
          * @description Building one feature: the team's work on its building blocks (most likely), with the
@@ -1669,6 +1897,106 @@ export interface components {
              * @default []
              */
             covers: string[];
+        };
+        /**
+         * FoundInventory
+         * @description What the system must contain, for the independent check. The AI lists named items with
+         *     quotes; only items whose quotes are found on the page are kept, and the code counts them.
+         *     A classification the config does not know is stored as "".
+         */
+        FoundInventory: {
+            /** Prompt Version */
+            prompt_version: string;
+            /**
+             * Entities
+             * @default []
+             */
+            entities: components["schemas"]["FoundItem"][];
+            /**
+             * Roles
+             * @default []
+             */
+            roles: components["schemas"]["FoundItem"][];
+            /**
+             * Screens
+             * @default []
+             */
+            screens: components["schemas"]["FoundItem"][];
+            /**
+             * Integrations
+             * @default []
+             */
+            integrations: components["schemas"]["FoundItem"][];
+            /**
+             * Hard Problems
+             * @default []
+             */
+            hard_problems: components["schemas"]["FoundItem"][];
+            /**
+             * System Class
+             * @default
+             */
+            system_class: string;
+            /**
+             * Quality
+             * @default
+             */
+            quality: string;
+            /**
+             * Ai Fit
+             * @default
+             */
+            ai_fit: string;
+            /**
+             * Clarity
+             * @default
+             */
+            clarity: string;
+            /**
+             * Tenancy
+             * @default single
+             */
+            tenancy: string;
+            /**
+             * Tenancy Evidence
+             * @default []
+             */
+            tenancy_evidence: components["schemas"]["VerifiedEvidence"][];
+            /**
+             * Dropped
+             * @default 0
+             */
+            dropped: number;
+        };
+        /**
+         * FoundItem
+         * @description One thing the finished system must contain (services/extraction/inventory.py).
+         */
+        FoundItem: {
+            /** Name */
+            name: string;
+            /** Evidence */
+            evidence: components["schemas"]["VerifiedEvidence"][];
+            /**
+             * Kind
+             * @default
+             */
+            kind: string;
+            /**
+             * Provider Selected
+             * @default false
+             */
+            provider_selected: boolean;
+            /**
+             * Problem
+             * @default
+             */
+            problem: string;
+            /**
+             * Feature
+             * @default
+             */
+            feature: string;
         };
         /** FoundNotPriced */
         FoundNotPriced: {
@@ -1818,6 +2146,76 @@ export interface components {
             /** Rows */
             rows: components["schemas"]["HoursRow"][];
         };
+        /** IndependentCheckOut */
+        IndependentCheckOut: {
+            /** Available */
+            available: boolean;
+            /** Reason */
+            reason?: string | null;
+            /**
+             * Counts
+             * @default []
+             */
+            counts: components["schemas"]["CountLine"][];
+            /**
+             * Hard Problems
+             * @default []
+             */
+            hard_problems: string[];
+            /**
+             * Integrations Not Selected
+             * @default []
+             */
+            integrations_not_selected: string[];
+            /**
+             * Factors
+             * @default []
+             */
+            factors: components["schemas"]["Factor"][];
+            /** Anchor Months */
+            anchor_months?: string | null;
+            /** Priced Months */
+            priced_months?: string | null;
+            /** Ratio */
+            ratio?: string | null;
+            band?: components["schemas"]["Band"] | null;
+            /**
+             * Flagged
+             * @default false
+             */
+            flagged: boolean;
+            /** Direction */
+            direction?: ("high" | "low") | null;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            /**
+             * Top Lines
+             * @default []
+             */
+            top_lines: components["schemas"]["CheckLine"][];
+            /**
+             * Emd Flagged
+             * @default false
+             */
+            emd_flagged: boolean;
+            /** Emd Message */
+            emd_message?: string | null;
+            /**
+             * Needs Confirmation
+             * @default false
+             */
+            needs_confirmation: boolean;
+            /** Confirmed At */
+            confirmed_at?: string | null;
+            /**
+             * Note
+             * @default
+             */
+            note: string;
+        };
         /** Infeasibility */
         Infeasibility: {
             /** Message */
@@ -1927,6 +2325,15 @@ export interface components {
             label: string;
             /** Projects */
             projects: number;
+        };
+        /** OptionChange */
+        OptionChange: {
+            /** Value */
+            value: string | number;
+            /** Label */
+            label: string;
+            /** Change Paise */
+            change_paise: number | null;
         };
         /** OptionOut */
         OptionOut: {
@@ -2089,6 +2496,31 @@ export interface components {
             quote: string;
             /** Query */
             query: string;
+        };
+        /**
+         * PricedOption
+         * @description A question left open (not in the document, or answered "Not sure"): priced at its usual
+         *     answer, with what each other answer would change. Fast fixed-seed re-pricing (quick config
+         *     `impact`) of the estimate's own snapshot, so the changes use its pinned rates.
+         */
+        PricedOption: {
+            /** Key */
+            key: string;
+            /** Question */
+            question: string;
+            /** Priced As */
+            priced_as: string;
+            /**
+             * Why
+             * @enum {string}
+             */
+            why: "not_in_document" | "not_sure";
+            /** Low Change Paise */
+            low_change_paise: number | null;
+            /** High Change Paise */
+            high_change_paise: number | null;
+            /** Options */
+            options: components["schemas"]["OptionChange"][];
         };
         /** ProjectCreate */
         ProjectCreate: {
@@ -2287,6 +2719,11 @@ export interface components {
              * @default []
              */
             scope: components["schemas"]["ScopeGroupOut"][];
+            /**
+             * Researched
+             * @default []
+             */
+            researched: components["schemas"]["ResearchedOut"][];
         };
         /** QuickRequest */
         QuickRequest: {
@@ -2491,6 +2928,12 @@ export interface components {
              */
             researched: components["schemas"]["ResearchedFeature"][];
             reality?: components["schemas"]["RealityOut"] | null;
+            /**
+             * Support Term Open
+             * @default false
+             */
+            support_term_open: boolean;
+            independent_check?: components["schemas"]["IndependentCheckOut"] | null;
         };
         /** RangeDriver */
         RangeDriver: {
@@ -2769,6 +3212,33 @@ export interface components {
             sources: components["schemas"]["ResearchSource"][];
         };
         /**
+         * ResearchedOut
+         * @description A feature researched before, by this company or shared by the library (services/
+         *     research): ticked, it is sent as a custom feature with this catalog key, so it is priced
+         *     by the saved block, not searched again.
+         */
+        ResearchedOut: {
+            /** Catalog Key */
+            catalog_key: string;
+            /** Name */
+            name: string;
+            /** Category */
+            category: string;
+            /** Section */
+            section: string;
+            /** Section Label */
+            section_label: string;
+        };
+        /** ResetPasswordRequest */
+        ResetPasswordRequest: {
+            /** Email */
+            email: string;
+            /** Code */
+            code: string;
+            /** New Password */
+            new_password: string;
+        };
+        /**
          * Role
          * @enum {string}
          */
@@ -2905,6 +3375,17 @@ export interface components {
             /** Ai Available */
             ai_available: boolean;
             opinion: components["schemas"]["SecondOpinionOut"] | null;
+        };
+        /** SignupRequest */
+        SignupRequest: {
+            /** Full Name */
+            full_name: string;
+            /** Company */
+            company: string;
+            /** Email */
+            email: string;
+            /** Password */
+            password: string;
         };
         /**
          * SimilarProject
@@ -3108,6 +3589,7 @@ export interface components {
              * @default []
              */
             scope_set_aside: components["schemas"]["FoundScope"][];
+            inventory?: components["schemas"]["FoundInventory"] | null;
         };
         /** Timeline */
         Timeline: {
@@ -3333,6 +3815,13 @@ export interface components {
              */
             checked: boolean;
         };
+        /** VerifyEmailRequest */
+        VerifyEmailRequest: {
+            /** Email */
+            email: string;
+            /** Code */
+            code: string;
+        };
     };
     responses: never;
     parameters: never;
@@ -3372,6 +3861,204 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["LoginRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TokenResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    signup_auth_signup_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SignupRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CodeSent"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    verify_email_auth_verify_email_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["VerifyEmailRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TokenResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    resend_verification_auth_verify_email_resend_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EmailRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CodeSent"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    forgot_password_auth_password_forgot_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["EmailRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CodeSent"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    reset_password_auth_password_reset_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResetPasswordRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TokenResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    change_password_auth_password_change_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ChangePasswordRequest"];
             };
         };
         responses: {
@@ -4425,6 +5112,68 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["QuickSummary"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    confirm_independent_check_estimates__estimate_id__check_confirm_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                estimate_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuickSummary"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    open_options_estimates__estimate_id__options_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                estimate_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PricedOption"][];
                 };
             };
             /** @description Validation Error */

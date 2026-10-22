@@ -48,6 +48,9 @@ class ComponentInstanceIn(Strict):
     complexity: Complexity = Complexity.MEDIUM
     quantity: int = Field(default=1, ge=1)
     requirement_ids: list[str] = []
+    # Holds a hard problem the document describes (concurrency, money movement, legacy data,
+    # ...): a wider range (uncertainty.hard_problem_extra) and no reuse discount (v19+).
+    hard_problem: bool = False
 
 
 class OnsiteResource(Strict):
@@ -120,11 +123,20 @@ class Questionnaire(Strict):
     # cheap model (used when the parameter set prices one).
     ai_model_tier: Literal["advanced", "simple"] = "advanced"
     # Custom software, or a ready-made product (SaaS, WordPress, Shopify, a chatbot platform)
-    # set up for the client: far less build work for the same features.
-    build_type: Literal["custom", "ready_product"] = "custom"
+    # set up for the client: far less build work for the same features. cms / framework
+    # (parameter sets v19+): custom work on a CMS (Drupal, WordPress) or on a framework that
+    # generates the admin screens; only the screen and record-keeping work is smaller.
+    build_type: Literal["custom", "framework", "cms", "ready_product"] = "custom"
     # A standby site in another place for disasters (recovery time / data-loss limits). High
     # uptime alone does not ask for one (parameter sets v17+).
     disaster_recovery: bool = False
+    # Whether the contract has penalties for delay or downtime (a liquidated-damages or
+    # service-level clause): with commercial.penalty_needs_clause (v19+) the penalty reserve is
+    # priced only then.
+    penalty_clause: bool = True
+    # The web address: a .gov.in / .nic.in one (free from NIC) or a commercial one, priced by
+    # maintenance.domain_rate_key_by_type (v19+).
+    web_domain: Literal["gov_in", "commercial"] = "gov_in"
     # How big and deep the work is, independent of the feature list: the same features cost
     # far less as a simple website than as a state-wide system. None = no size factor.
     project_size: Literal["small", "small_medium", "medium", "medium_large", "large"] | None = None

@@ -7,22 +7,27 @@ from pydantic import BaseModel, Field
 from app.api.deps import CurrentUser, DbSession, EditorUser, can_see_margin
 from app.core.tenancy import get_owned, scoped
 from app.llm.client import LLMNotConfiguredError, LLMRefusedError
-from app.models import Estimate, Project
+from app.models import Estimate, Project, ResearchedComponent, SharedResearchedComponent
 from app.services.extraction.describe import Suggestion, suggest_features
 from app.services.quick import second_opinion
 from app.services.quick.config import quick_config
 from app.services.quick.second_opinion import SecondOpinionOut
 from app.services.quick.service import (
     AI_USE,
+    PricedOption,
     QuestionImpact,
     QuickRequest,
     QuickSummary,
+    confirm_check,
     create_quick_estimate,
     feature_level_options,
+    priced_options,
     question_impact,
     summarise,
+    summary_for,
 )
-from app.services.research.service import ai_available
+from app.services.research.library import shared_blocks
+from app.services.research.service import ai_available, catalog_sections, research_rows
 from app.services.settings import company_settings
 
 router = APIRouter(tags=["quick estimate"])
@@ -99,6 +104,18 @@ class ScopeGroupOut(BaseModel):
     items: list[ScopeItemOut]
 
 
+class ResearchedOut(BaseModel):
+    """A feature researched before, by this company or shared by the library (services/
+    research): ticked, it is sent as a custom feature with this catalog key, so it is priced
+    by the saved block, not searched again."""
+
+    catalog_key: str
+    name: str
+    category: str  # custom feature type it was built from
+    section: str  # catalog section key (web, mobile, ...)
+    section_label: str
+
+
 class QuickOptions(BaseModel):
     country: str
     countries: list[CountryOut]
@@ -108,6 +125,36 @@ class QuickOptions(BaseModel):
     questions: list[QuestionOut]
     custom_feature_types: list[CustomTypeOut]
     scope: list[ScopeGroupOut] = []  # what else a feature may need (QuickRequest.scope)
+    researched: list[ResearchedOut] = []  # the company's researched features, by section
+
+
+def researched_options(db: DbSession, org_id: str, types: set[str]) -> list[ResearchedOut]:
+    """Researched features to offer: the organisation's active ones and the shared library's
+    (each key once, none the organisation retired), in catalog section order, then by name."""
+    sections = catalog_sections()
+    order = {k: i for i, k in enumerate(sections)}
+    own = research_rows(db, org_id)
+    seen = {r.key for r in own if r.status != "active"}
+    rows: list[ResearchedComponent | SharedResearchedComponent] = []
+    candidates: list[ResearchedComponent | SharedResearchedComponent] = [
+        *(r for r in own if r.status == "active" and r.spec),
+        *shared_blocks(db),
+    ]
+    for r in candidates:
+        if r.key not in seen and r.base_type in types:
+            rows.append(r)
+            seen.add(r.key)
+    rows.sort(key=lambda r: (order.get(r.section, len(order)), r.name.lower()))
+    return [
+        ResearchedOut(
+            catalog_key=r.key,
+            name=r.name,
+            category=r.base_type,
+            section=r.section,
+            section_label=sections.get(r.section, r.section).split(":", 1)[0],
+        )
+        for r in rows
+    ]
 
 
 @router.get("/quick-estimate/options", response_model=QuickOptions)
@@ -196,6 +243,7 @@ def options(db: DbSession, user: CurrentUser, country: str = "india") -> QuickOp
         custom_feature_types=[
             CustomTypeOut(key=k, label=t.label) for k, t in cfg.custom_feature_types.items()
         ],
+        researched=researched_options(db, user.org_id, set(cfg.custom_feature_types)),
     )
 
 
@@ -203,7 +251,7 @@ def options(db: DbSession, user: CurrentUser, country: str = "india") -> QuickOp
 def create(body: QuickRequest, db: DbSession, user: EditorUser) -> QuickSummary:
     estimate = create_quick_estimate(db, user, quick_config(), body)
     project = get_owned(db, Project, estimate.project_id, user.org_id)
-    return summarise(estimate, project, quick_config(), margin_visible=can_see_margin(user))
+    return summary_for(db, estimate, project, quick_config(), margin_visible=can_see_margin(user))
 
 
 @router.get("/quick-estimates", response_model=list[QuickSummary])
@@ -223,7 +271,25 @@ def list_summaries(db: DbSession, user: CurrentUser) -> list[QuickSummary]:
 def summary(estimate_id: str, db: DbSession, user: CurrentUser) -> QuickSummary:
     estimate = get_owned(db, Estimate, estimate_id, user.org_id)
     project = get_owned(db, Project, estimate.project_id, user.org_id)
-    return summarise(estimate, project, quick_config(), margin_visible=can_see_margin(user))
+    return summary_for(db, estimate, project, quick_config(), margin_visible=can_see_margin(user))
+
+
+@router.post("/estimates/{estimate_id}/check/confirm", response_model=QuickSummary)
+def confirm_independent_check(estimate_id: str, db: DbSession, user: EditorUser) -> QuickSummary:
+    """The user has looked at the gap the independent check found; export is then allowed."""
+    estimate = get_owned(db, Estimate, estimate_id, user.org_id)
+    project = get_owned(db, Project, estimate.project_id, user.org_id)
+    confirm_check(db, user, estimate)
+    return summary_for(db, estimate, project, quick_config(), margin_visible=can_see_margin(user))
+
+
+@router.get("/estimates/{estimate_id}/options", response_model=list[PricedOption])
+def open_options(estimate_id: str, db: DbSession, user: CurrentUser) -> list[PricedOption]:
+    """Questions left open (not in the document, or "Not sure"), each with what the other
+    answers would change in the likely price (nothing is saved)."""
+    estimate = get_owned(db, Estimate, estimate_id, user.org_id)
+    project = get_owned(db, Project, estimate.project_id, user.org_id)
+    return priced_options(db, quick_config(), estimate, project)
 
 
 class SecondOpinionState(BaseModel):

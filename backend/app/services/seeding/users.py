@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.core.security import hash_password
 from app.models import Organisation, Role, User
+from app.models.base import utcnow
 
 DEMO_ORG_NAME = "Demo Systems Integrator"
 DEMO_EMAIL = "admin@gmail.com"
@@ -30,6 +31,7 @@ def seed_demo_users(
                     full_name=full_name,
                     role=role,
                     password_hash=hash_password(password),
+                    email_verified_at=utcnow(),
                 )
             )
     session.flush()

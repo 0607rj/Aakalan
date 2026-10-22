@@ -1,19 +1,18 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-import { Button } from "@/components/ui/button";
 import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { ApiError, api, setToken } from "@/lib/api/client";
+  AuthCard,
+  FormError,
+  TextField,
+  VerifyEmailStep,
+  failure,
+} from "@/components/auth-forms";
+import { Button } from "@/components/ui/button";
+import { ApiError, api, setToken, type TokenResponse } from "@/lib/api/client";
 
 export function LoginForm() {
   const router = useRouter();
@@ -21,75 +20,95 @@ export function LoginForm() {
   const [password, setPassword] = React.useState("");
   const [error, setError] = React.useState<string | null>(null);
   const [submitting, setSubmitting] = React.useState(false);
+  const [verifying, setVerifying] = React.useState(false);
+
+  function signedIn(response: TokenResponse) {
+    setToken(response.access_token);
+    router.replace("/projects");
+  }
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
     setSubmitting(true);
     try {
-      const response = await api.login({ email, password });
-      setToken(response.access_token);
-      router.replace("/projects");
+      signedIn(await api.login({ email, password }));
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
         setError("Incorrect email or password.");
-      } else if (err instanceof ApiError) {
-        setError(err.message);
+      } else if (err instanceof ApiError && err.status === 403) {
+        // the password is right but the address is not confirmed yet: send a code
+        await api.resendCode(email).catch(() => undefined);
+        setVerifying(true);
       } else {
-        setError("Could not reach the server. Is the backend running?");
+        setError(failure(err));
       }
       setSubmitting(false);
     }
   }
 
+  if (verifying) {
+    return (
+      <VerifyEmailStep
+        email={email}
+        onSignedIn={signedIn}
+        onBack={() => setVerifying(false)}
+      />
+    );
+  }
+
   return (
-    <Card className="w-full max-w-sm rounded-[22px] shadow-[0_24px_60px_-28px_rgb(23_32_58/0.35)]">
-      <CardHeader>
-        <CardTitle className="text-2xl">Sign in</CardTitle>
-        <CardDescription>
-          See your estimates and start new ones.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              type="email"
-              autoComplete="username"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              aria-invalid={error ? true : undefined}
-            />
-          </div>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              type="password"
-              autoComplete="current-password"
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              aria-invalid={error ? true : undefined}
-            />
-          </div>
-          {error ? (
-            <p role="alert" className="text-sm text-destructive">
-              {error}
-            </p>
-          ) : null}
-          <Button
-            type="submit"
-            disabled={submitting || !email || !password}
-            className="w-full"
+    <AuthCard
+      title="Sign in"
+      description="See your estimates and start new ones."
+      footer={
+        <>
+          <span>
+            New here?{" "}
+            <Link
+              href="/signup"
+              className="font-medium text-primary hover:underline"
+            >
+              Create an account
+            </Link>
+          </span>
+        </>
+      }
+    >
+      <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
+        <TextField
+          id="email"
+          label="Email"
+          type="email"
+          autoComplete="username"
+          value={email}
+          onChange={setEmail}
+        />
+        <div className="flex flex-col gap-1">
+          <TextField
+            id="password"
+            label="Password"
+            type="password"
+            autoComplete="current-password"
+            value={password}
+            onChange={setPassword}
+          />
+          <Link
+            href="/forgot-password"
+            className="w-fit self-end text-sm text-primary hover:underline"
           >
-            {submitting ? "Signing in…" : "Sign in"}
-          </Button>
-        </form>
-      </CardContent>
-    </Card>
+            Forgot password?
+          </Link>
+        </div>
+        <FormError message={error} />
+        <Button
+          type="submit"
+          disabled={submitting || !email || !password}
+          className="w-full"
+        >
+          {submitting ? "Signing in…" : "Sign in"}
+        </Button>
+      </form>
+    </AuthCard>
   );
 }

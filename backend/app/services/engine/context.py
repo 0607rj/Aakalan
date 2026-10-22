@@ -105,11 +105,21 @@ class PricingContext:
             return self.overall_clarity()
         return dsum(scores) / Decimal(len(scores))
 
+    def _in_play(self, key: str) -> bool:
+        """Whether a defaulted answer is worth a note. Answers added after estimates were
+        saved, whose default keeps the earlier behaviour, are noted only when the parameter set
+        uses them, so an older snapshot reprices to the identical result (rule 3)."""
+        return {
+            "disaster_recovery": False,  # default: no DR site, as before the answer existed
+            "penalty_clause": self.p.commercial.penalty_needs_clause,
+            "web_domain": bool(self.p.maintenance.domain_rate_key_by_type),
+        }.get(key, True)
+
     def assumptions(self) -> list[AssumptionOut]:
         out = []
         for key in QUESTIONNAIRE_KEYS:
             ans = self.answers[key]
-            if ans.source == "default":
+            if ans.source == "default" and self._in_play(key):
                 out.append(
                     AssumptionOut(
                         key=key,

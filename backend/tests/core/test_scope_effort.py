@@ -164,20 +164,21 @@ def test_same_scope_reproduces_exactly() -> None:
 
 
 def test_scope_is_work_not_an_ai_discount() -> None:
-    """Scope adds the blocks' work; the team's AI tools are applied afterwards by the existing
-    era rules (catalog v6: no saving on unknown-era data), the same with or without scope."""
+    """Scope adds the blocks' work; the team's AI tools are applied afterwards by the same era
+    rules as every block (parameters v18: unknown-era data counts as pre-AI, so the saving
+    applies to the scope block too)."""
     for level in ("none", "medium"):
         without = effort(plan(SMALL, choices={"ai_use": level}))
         with_sso = effort(plan(SMALL, ["enterprise_sso"], choices={"ai_use": level}))
         if level == "none":
             delta_none = with_sso - without
         else:
-            assert with_sso - without == delta_none  # the SSO block is unknown-era in v6
+            assert 0 < with_sso - without < delta_none  # AI tools save on the SSO work
     line = next(
         ln for ln in price(plan(SMALL, ["enterprise_sso"])).lines
         if ln.trace.component and ln.trace.component.catalog_key == "integration_sso_identity"
     )  # fmt: skip
-    assert line.inputs["source_era"] == "unknown" and line.inputs["ai_saving"] == "not applied"
+    assert line.inputs["source_era"] == "unknown" and line.inputs["ai_saving"] != "not applied"
 
 
 def test_simple_projects_get_only_what_they_ask_for() -> None:

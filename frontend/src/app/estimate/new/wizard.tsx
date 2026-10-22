@@ -58,6 +58,7 @@ import {
   CustomFeaturesSection,
   type CustomItem,
   itemsFromTemplate,
+  ResearchedFeatures,
   toCustomFeatures,
 } from "./custom-features";
 import { ReviewForm } from "./review";
@@ -416,6 +417,11 @@ function ManualForm({
               ) : null}
             </div>
           ) : null}
+          <ResearchedFeatures
+            researched={options.researched ?? []}
+            items={customItems}
+            onChange={setCustomItems}
+          />
           <CustomFeaturesSection
             items={customItems}
             onChange={setCustomItems}

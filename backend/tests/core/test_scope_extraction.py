@@ -87,6 +87,8 @@ def test_ai_reader_scope_is_checked_and_sorted() -> None:
     ]
 
     def responder(system: str, user: str) -> object:
+        if "<already_found>" in user:  # the second pass (what the first reading missed)
+            return {"other_features": []}
         assert "two_step_sign_in" in system and "excluded:" in system  # the v5 rules
         assert "Never estimate" in system
         return {

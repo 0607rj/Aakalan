@@ -31,15 +31,20 @@ def nfr_multiplier(t: LineBuilder, catalog: CatalogComponent) -> Decimal:
 
     languages: min(cap, 1 + per_additional_language × (languages − 1)).
     accessibility: 1 when the project has a component that builds accessibility as its own work
-    (nfr.accessibility_components, v17+), so the same work is not priced twice.
+    (nfr.accessibility_components, v17+), so the same work is not priced twice; languages: the
+    same with nfr.languages_components (v19+).
     """
     m = ONE
-    dedicated = set(t.ctx.p.nfr.accessibility_components)
-    has_dedicated = any(c.catalog_key in dedicated for c in t.ctx.inp.components)
+    in_project = {c.catalog_key for c in t.ctx.inp.components}
     drivers = list(catalog.applicable_drivers)
-    if has_dedicated and Driver.ACCESSIBILITY in drivers:
-        t.param("nfr", "accessibility_components")
-        drivers.remove(Driver.ACCESSIBILITY)
+    for driver, field in (
+        (Driver.ACCESSIBILITY, "accessibility_components"),
+        (Driver.LANGUAGES, "languages_components"),
+    ):
+        dedicated: list[str] = getattr(t.ctx.p.nfr, field)
+        if driver in drivers and in_project & set(dedicated):
+            t.param("nfr", field)
+            drivers.remove(driver)
     for drv in drivers:
         if drv is Driver.UPTIME_SLA:
             factor: Decimal = t.param("nfr", "uptime_sla", t.driver("uptime_sla"))
@@ -85,11 +90,31 @@ def ai_saving_applies(ctx: PricingContext, catalog: CatalogComponent) -> bool:
     )
 
 
+def reuse_multiplier(t: LineBuilder, ci: ComponentInstanceIn) -> tuple[set[TaskType], Decimal]:
+    """(task types it applies to, M_reuse) for what the build reuses (parameter sets v19+):
+
+      M_reuse = reuse.factor_by_build_type[build_type] on the reuse.tasks shares only
+
+    No reuse factors in the set, none for this build type (custom, ready_product), or a
+    component that holds a hard problem (a CMS does not solve it): 1.
+    """
+    reuse = t.ctx.p.reuse
+    if reuse is None or ci.hard_problem:
+        return set(), ONE
+    build: str = t.driver("build_type")
+    if build not in reuse.factor_by_build_type:
+        return set(), ONE
+    tasks: list[TaskType] = t.param("reuse", "tasks")
+    factor: Decimal = t.param("reuse", "factor_by_build_type", build)
+    names = ", ".join(task.value for task in tasks)
+    return set(tasks), t.step("M_reuse", f"{build} build, on {names}", factor)
+
+
 def base_effort(ctx: PricingContext, ci: ComponentInstanceIn) -> ComponentEffort:
     """Effort in person-days before compression (used to size the timeline).
 
     effort = Σ_task base_pd[size] × quantity × share × M_complexity × M_nfr × licence_factor
-             × (1 − min(max_saving, saving_task × maturity_scale))
+             × M_reuse(task) × (1 − min(max_saving, saving_task × maturity_scale))
     """
     catalog = ctx.inp.catalog.get(ci.catalog_key)
     scratch = ctx.builder(
@@ -117,17 +142,20 @@ def _task_efforts(
         t.driver("licensing")
         lic = catalog.licence.effort_factor
     applies = ai_saving_applies(t.ctx, catalog)
-    if applies and catalog.source_era is BaselineEra.UNKNOWN:
-        if t.ctx.p.ai_productivity.unknown_era_is_pre_ai:
-            t.param("ai_productivity", "unknown_era_is_pre_ai")
+    unknown = applies and catalog.source_era is BaselineEra.UNKNOWN
+    if unknown and t.ctx.p.ai_productivity.unknown_era_is_pre_ai:
+        t.param("ai_productivity", "unknown_era_is_pre_ai")
     if applies:
         maturity = t.driver("team_ai_maturity")
         scale: Decimal = t.param("ai_productivity", "maturity_scale", maturity)
         cap: Decimal = t.param("ai_productivity", "max_saving")
+    reused, m_reuse = reuse_multiplier(t, ci)
     efforts: dict[TaskType, Decimal] = {}
     saved: dict[TaskType, Decimal] = {}
     for task, share in catalog.task_mix.items():
         without_ai = base * ci.quantity * share * m_cx * m_nfr * lic
+        if task in reused:
+            without_ai *= m_reuse
         effective_saving = ZERO
         if applies:
             saving: Decimal = t.param("ai_productivity", "task_savings", task.value)
@@ -142,16 +170,21 @@ def component_line(
 ) -> CostLineOut:
     """Price one component instance; the line carries per-task steps and role person-days.
     Catalog v6+ components also record where their effort data comes from and whether the AI
-    saving was applied (formula component_labour.v3)."""
+    saving was applied (formula component_labour.v3); with a parameter set that prices reuse
+    (v19+), the formula is component_labour.v4."""
     ci, catalog = effort.instance, effort.catalog
     stage = catalog.bucket.split(".", 1)[0]
+    if catalog.source_era is None:
+        formula_id = "component_labour.v2"
+    else:
+        formula_id = "component_labour.v3" if ctx.p.reuse is None else "component_labour.v4"
     t = ctx.builder(
         line_key=f"{catalog.bucket}/{ci.id}",
         stage=stage,
         bucket=catalog.bucket,
         year=0,
         label=ci.label or catalog.name,
-        formula_id="component_labour.v2" if catalog.source_era is None else "component_labour.v3",
+        formula_id=formula_id,
         uncertainty_group=f"{catalog.bucket}|{ci.id}",
     )
     t.link_component(ci, catalog)
@@ -172,22 +205,36 @@ def component_line(
     efforts, _ = _task_efforts(t, ci, catalog)
     total = ZERO
     for task, pd in efforts.items():
-        role_key: str = t.param("task_roles", "roles", task.value)
-        rate = t.rate_local(role_key)
-        pd_c = pd * compression
-        cost = t.step(
-            f"{task.value} → {role_key}",
-            f"{pd:.4f} pd × compression {compression:.4f} × ₹{rate}/pd",
-            pd_c * rate,
-        )
-        t.add_role_pd(role_key, pd_c)
-        total += cost
+        for role_key, share in task_role_shares(t, task):
+            rate = t.rate_local(role_key)
+            pd_c = pd * share * compression
+            of = "" if share == ONE else f" × share {share}"
+            cost = t.step(
+                f"{task.value} → {role_key}",
+                f"{pd:.4f} pd{of} × compression {compression:.4f} × ₹{rate}/pd",
+                pd_c * rate,
+            )
+            t.add_role_pd(role_key, pd_c)
+            total += cost
     t.add_input(effort_pd=str(dsum(efforts.values()) * compression))
     spreads.clarity(t, ctx.component_clarity(ci))
     spreads.template_match(t)
     spreads.tags(t, list(catalog.tags))
     spreads.compression(t, compression)
+    if ci.hard_problem:
+        spreads.hard_problem(t)
     return t.finish(total)
+
+
+def task_role_shares(t: LineBuilder, task: TaskType) -> list[tuple[str, Decimal]]:
+    """Who does a task: [(role, share)]. task_roles.split (v19+) shares a task between roles,
+    e.g. review = 0.7 developer (peer review) + 0.3 senior developer (sign-off); otherwise the
+    task's one role does all of it."""
+    if task in t.ctx.p.task_roles.split:
+        shares: dict[str, Decimal] = t.param("task_roles", "split", task.value)
+        return list(shares.items())
+    role_key: str = t.param("task_roles", "roles", task.value)
+    return [(role_key, ONE)]
 
 
 AI_REVIEW_KEY = "build.testing/ai_code_review"

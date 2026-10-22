@@ -124,7 +124,10 @@ def test_basic_reader_offers_only_what_is_asked_for(name: str) -> None:
     offered = {s.key: s.status for s in ex.scope}
     aside = {s.key: s.status for s in ex.scope_set_aside}
     for r in scope_reqs(m):
-        if r["offered"]:
+        if r["offered"] and r.get("pricing") == "already_included" and r["key"] not in offered:
+            # its sentence already prices a ticked feature: not offered again (no double count)
+            assert r["key"] not in aside, r["id"]
+        elif r["offered"]:
             assert offered.get(r["key"]) == r["classification"], r["id"]
         else:
             assert r["key"] not in offered, r["id"]
@@ -225,6 +228,9 @@ def test_suggested_but_unticked_scope_never_changes_the_price(name: str) -> None
     ex = basic(m["document"]).model_dump(mode="json")
     from_document, by_hand = plan(m, [], ex), plan(m, [])
     assert blocks(from_document) == blocks(by_hand)
+    # answers the document left open widen the range (OPEN_QUESTIONS 139): a separate effect
+    assert from_document.clarity <= by_hand.clarity
+    from_document.clarity = by_hand.clarity
     a = calculate(plan_to_input(from_document, "x", REF, date(2026, 10, 19), 3, 300))
     b = calculate(plan_to_input(by_hand, "x", REF, date(2026, 10, 19), 3, 300))
     assert a.totals == b.totals

@@ -155,18 +155,14 @@ def test_options_list_custom_feature_types(client: TestClient, admin_headers: H)
 
 
 def test_traditional_vs_ai_era_price(client: TestClient, admin_headers: H) -> None:
-    """Every estimate also prices the same scope as if built without AI tools. Catalog v6:
-    most blocks' effort data has unknown AI use, so the estimate takes no AI saving off them
-    and is about the traditional price; the pre-AI reading shows what the saving could be."""
+    """Every estimate also prices the same scope as if built without AI tools. Parameters v18:
+    effort data of unknown era counts as pre-AI (the hours were calibrated on pre-AI
+    projects), so the AI saving is taken off it and the estimate is below the traditional
+    price."""
     s = quick(client, admin_headers, features=["online_forms", "approval_workflow"]).json()
     assert s["traditional_paise"] > 0 and s["traditional_build_only_paise"] > 0
-    assert abs(s["ai_saving_percent"]) <= 1  # no saving claimed on unknown-era data
-    era = s["era_sensitivity"]
-    assert 0 < era["unknown_components"] <= era["components"]
-    assert era["pre_ai_likely_paise"] < s["likely_paise"]  # shown beside the price, not in it
-    assert era["pre_ai_likely_paise"] < s["traditional_paise"]
-    assert era["low_paise"] <= s["low_paise"] and era["high_paise"] == s["high_paise"]
-    assert "AI tools" in era["note"]
+    assert s["ai_saving_percent"] > 1  # unknown era counts as pre-AI (v18)
+    assert s["era_sensitivity"] is None  # nothing left to show: unknown is priced as pre-AI
 
 
 def test_client_paid_costs_listed_separately(client: TestClient, admin_headers: H) -> None:
@@ -370,8 +366,8 @@ def test_cost_by_feature_with_and_without_ai(client: TestClient, admin_headers: 
     costs = {c["label"]: c for c in s["feature_costs"]}
     forms = costs["Online application or registration forms"]
     assert forms["level"] == "Advanced"
-    # unknown-era effort data (catalog v6): no AI saving taken off the feature itself
-    assert forms["traditional_paise"] == forms["amount_paise"] > 0
+    # unknown-era effort data counts as pre-AI (parameters v18): the AI saving is taken off
+    assert forms["traditional_paise"] > forms["amount_paise"] > 0
     assert costs["Search"]["level"] is None  # one size only
     assert list(costs)[-1].startswith("Standard building blocks")
     detail = client.get(f"/estimates/{s['estimate_id']}", headers=admin_headers).json()
@@ -520,7 +516,7 @@ def test_not_sure_prices_the_usual_answer_with_a_wider_range(
     assert width(unsure) > 0.95 * width(sure)
     assert unsure["not_sure"] == [
         "How many people will use it?",
-        "Should it be built from scratch, or set up on a ready-made product?",
+        "How will it be built?",
         "Where will it run?",
     ]
     assert sure["not_sure"] == []

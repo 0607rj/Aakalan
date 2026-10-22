@@ -25,6 +25,14 @@ class RealityOut(BaseModel):
     checks: list[Check]
 
 
+class SupportRule(BaseModel):
+    """The engine's check of year-1 support against the share-of-build rule of thumb."""
+
+    ok: bool
+    message: str
+    below: bool  # support is under the rule of thumb (else above it)
+
+
 class FeatureShare(BaseModel):
     label: str
     amount_paise: int
@@ -46,8 +54,12 @@ def reality_check(
     not_sure: int,
     price_paise: int | None = None,
     emd_paise: int | None = None,
+    support_rule: SupportRule | None = None,
+    build_looks: Literal["high", "low"] | None = None,
 ) -> RealityOut:
-    """Each check: ok, or a plain reason to look again. Verdict "check" if any is not ok."""
+    """Each check: ok, or a plain reason to look again. Verdict "check" if any is not ok.
+    `build_looks`: what the independent check says of the build, so a support share outside
+    the rule of thumb points at the side that is probably wrong."""
     checks: list[Check] = []
     work = sum(f.amount_paise for f in features)
     setup = sum(f.amount_paise for f in features if f.standard)
@@ -138,11 +150,33 @@ def reality_check(
                 else "Many open answers make the range wide. Answering them narrows it.",
             )
         )
+    if support_rule is not None and not support_rule.ok:
+        checks.append(_support_share(support_rule, build_looks))
     emd_check = _emd_check(rules, price_paise, emd_paise)
     if emd_check is not None:
         checks.append(emd_check)
     verdict: Literal["realistic", "check"] = "realistic" if all(c.ok for c in checks) else "check"
     return RealityOut(verdict=verdict, checks=checks)
+
+
+def _support_share(rule: SupportRule, build_looks: Literal["high", "low"] | None) -> Check:
+    """Support outside its usual share of the build: a share is only as right as the build it
+    is a share of, so the independent check's view of the build decides what to look at."""
+    first = rule.message.split(";", 1)[0].rstrip(".") + "."
+    usual = rule.message.split(";", 1)[-1].split(".", 1)[0].strip()
+    if rule.below and build_looks == "high":
+        detail = (
+            f"{usual.capitalize()}. The independent check finds the build priced high, so "
+            "support only looks small next to it: check the build first."
+        )
+    elif not rule.below and build_looks == "low":
+        detail = (
+            f"{usual.capitalize()}. The independent check finds the build priced low, so "
+            "support only looks large next to it: check the build first."
+        )
+    else:
+        detail = f"{usual.capitalize()}. Check the support hours, users and support level."
+    return Check(key="support_share", ok=False, title=first, detail=detail)
 
 
 PAISE_PER_CRORE = 10**9

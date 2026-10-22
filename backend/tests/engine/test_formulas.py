@@ -13,7 +13,7 @@ from app.services.engine.context import PricingContext
 from app.services.engine.core import calculate
 from app.services.engine.inputs import EstimateInput
 from app.services.engine.money import interpolate, to_paise
-from app.services.engine.reference import Point
+from app.services.engine.reference import ClaritySpread, Point, Reuse, TaskType
 from app.services.engine.simulation import group_quantiles, triangular_inverse
 from app.services.engine.timeline import compression_multiplier, natural_duration
 from app.services.hosting.sizing import size
@@ -113,6 +113,118 @@ def test_nfr_multiplier_languages_capped(small: EstimateInput) -> None:
         formula_id="component_labour.v1",
     )
     assert nfr_multiplier(t, many.inp.catalog.get("documentation_manuals")) == D("1.4")
+
+
+def test_reuse_shrinks_only_its_task_shares(small: EstimateInput) -> None:
+    """registration_empanelment S as in the hand-computed test: crud 18 pd and ui 2.1 pd shrink
+    by M_reuse 0.5; tests 7.2, docs 1.2 and review 5.7 do not: 34.2 − 10.05 = 24.15 pd."""
+    comp = [{"id": "c", "catalog_key": "registration_empanelment", "size": "S"}]
+    nfr = {"languages": 1, "gigw_accessibility": False, "peak_concurrent_users": 100}
+    reuse = Reuse(
+        source="test",
+        tasks=[TaskType.CRUD, TaskType.UI_DESIGN],
+        factor_by_build_type={"cms": D("0.5")},
+    )
+    priced = minimal(small, comp, **nfr)
+    priced = priced.model_copy(
+        update={"parameters": priced.parameters.model_copy(update={"reuse": reuse})}
+    )
+    custom = base_effort(PricingContext(priced), priced.components[0]).effort_pd
+    assert custom == D("34.2")  # no factor for custom
+    cms = answer(priced, "build_type", "cms")
+    ctx = PricingContext(cms)
+    assert base_effort(ctx, cms.components[0]).effort_pd == D("24.15")
+    line = component_line(ctx, base_effort(ctx, cms.components[0]), D(1))
+    assert any(s.label == "M_reuse" and s.value == D("0.5") for s in line.trace.steps)
+
+
+def with_params(inp: EstimateInput, **groups: object) -> EstimateInput:
+    """The input with parameter groups changed, e.g. commercial={"penalty_needs_clause": True}."""
+    p = inp.parameters
+    update = {k: getattr(p, k).model_copy(update=v) for k, v in groups.items()}
+    return inp.model_copy(update={"parameters": p.model_copy(update=update)})
+
+
+REG_S = [{"id": "c", "catalog_key": "registration_empanelment", "size": "S"}]
+PLAIN_NFR = {"languages": 1, "gigw_accessibility": False, "peak_concurrent_users": 100}
+
+
+def test_review_split_between_roles(small: EstimateInput) -> None:
+    """Hand-computed line ₹2,51,700 with review 5.7 pd all at ₹10,000 (senior); split 0.7 at
+    ₹7,000 + 0.3 at ₹10,000 = ₹7,900/pd: 2,51,700 − 57,000 + 45,030 = ₹2,39,730."""
+    inp = with_params(
+        minimal(small, REG_S, **PLAIN_NFR),
+        task_roles={
+            "split": {
+                TaskType.REVIEW_UAT: {"role.developer": D("0.7"), "role.senior_developer": D("0.3")}
+            }
+        },
+    )
+    ctx = PricingContext(inp)
+    line = component_line(ctx, base_effort(ctx, inp.components[0]), D(1))
+    assert line.likely_paise == 239_730_00
+    assert line.role_pd["role.senior_developer"] == D("5.7") * D("0.3")
+
+
+def test_hard_problem_widens_the_range_and_gets_no_reuse(small: EstimateInput) -> None:
+    reuse = Reuse(source="test", tasks=[TaskType.CRUD], factor_by_build_type={"cms": D("0.5")})
+    inp = answer(minimal(small, REG_S, **PLAIN_NFR), "build_type", "cms")
+    inp = inp.model_copy(update={"parameters": inp.parameters.model_copy(update={"reuse": reuse})})
+    inp = with_params(
+        inp, uncertainty={"hard_problem_extra": ClaritySpread(down=D("0.1"), up=D("0.85"))}
+    )
+    hard = inp.model_copy(
+        update={"components": [inp.components[0].model_copy(update={"hard_problem": True})]}
+    )
+    plain_line = component_line(
+        PricingContext(inp), base_effort(PricingContext(inp), inp.components[0]), D(1)
+    )
+    ctx = PricingContext(hard)
+    hard_line = component_line(ctx, base_effort(ctx, hard.components[0]), D(1))
+    assert base_effort(ctx, hard.components[0]).effort_pd == D("34.2")  # no CMS discount
+    assert (
+        hard_line.high_paise / hard_line.likely_paise
+        > plain_line.high_paise / plain_line.likely_paise
+    )
+    assert (
+        hard_line.low_paise / hard_line.likely_paise
+        < plain_line.low_paise / plain_line.likely_paise
+    )
+
+
+def test_penalty_reserve_needs_a_clause(small: EstimateInput) -> None:
+    def reserve(inp: EstimateInput) -> int:
+        lines = calculate(inp).lines
+        return sum(ln.likely_paise for ln in lines if ln.bucket == "commercial.penalty_reserve")
+
+    strict = with_params(small, commercial={"penalty_needs_clause": True})
+    assert reserve(small) > 0
+    assert reserve(answer(strict, "penalty_clause", True)) == reserve(small)
+    assert reserve(answer(strict, "penalty_clause", False)) == 0
+
+
+def test_domain_follows_the_named_address(small: EstimateInput) -> None:
+    def ssl_domain(inp: EstimateInput) -> int:
+        lines = calculate(inp).lines
+        return next(ln.likely_paise for ln in lines if ln.bucket == "run.ssl_domain")
+
+    by_type = {"gov_in": "licence.domain.year", "commercial": "licence.ssl_certificate.year"}
+    typed = with_params(small, maintenance={"domain_rate_key_by_type": by_type})
+    assert ssl_domain(answer(typed, "web_domain", "gov_in")) == ssl_domain(small)
+    assert ssl_domain(answer(typed, "web_domain", "commercial")) != ssl_domain(small)
+
+
+def test_languages_not_counted_again_with_a_multilingual_component(small: EstimateInput) -> None:
+    comp = [{"id": "c", "catalog_key": "documentation_manuals", "size": "S"}]
+    inp = with_params(
+        minimal(small, comp, languages=3), nfr={"languages_components": ["documentation_manuals"]}
+    )
+    ctx = PricingContext(inp)
+    t = ctx.builder(
+        line_key="x", stage="build", bucket="build.documentation", year=0, label="",
+        formula_id="component_labour.v1",
+    )  # fmt: skip
+    assert nfr_multiplier(t, ctx.inp.catalog.get("documentation_manuals")) == D(1)
 
 
 def test_ai_maturity_scales_savings(small: EstimateInput) -> None:
