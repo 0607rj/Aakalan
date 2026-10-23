@@ -1,34 +1,41 @@
 @import "tailwindcss";
 
+/* `dark:` classes follow the class on <html> (the app is dark only). */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /*
- * Aakalan's look: a measuring tape on clean paper. Navy ink for words and actions, tape
- * yellow only where something is measured (cost ranges, the logo), green only for what AI
- * tools save. Light theme only.
+ * Aakalan's look: a night sky of possible costs. Near-black panels with hairline borders,
+ * white type, one warm signal colour (coral) for what is measured and for the main action,
+ * green only for what AI tools save. Dark theme only.
  */
 :root {
-  --background: #f7f8f5; /* paper */
-  --foreground: #17203a; /* navy ink */
-  --card: #ffffff;
-  --card-foreground: #17203a;
-  --muted: #eef0ec;
-  --muted-foreground: #5b6478;
-  --border: #dfe3e6;
-  --input: #c9cfd6;
-  --ring: #17203a;
-  --primary: #17203a;
-  --primary-foreground: #ffffff;
-  --secondary: #e6e9ee;
-  --secondary-foreground: #17203a;
-  --destructive: #b42318;
+  color-scheme: dark;
+  --background: #07080a;
+  --foreground: #f4f4f5;
+  --card: #0e0f12;
+  --card-foreground: #f4f4f5;
+  --muted: #16171b;
+  --muted-foreground: #9b9ca5;
+  --border: rgb(255 255 255 / 0.1);
+  --input: rgb(255 255 255 / 0.17);
+  --ring: #ff6b6b;
+  --primary: #ff6b6b;
+  --primary-foreground: #240707;
+  --secondary: #1a1b1f;
+  --secondary-foreground: #f4f4f5;
+  --destructive: #e5484d;
   --destructive-foreground: #ffffff;
-  --success: #1f8f6a;
-  --warning: #9a5b00;
-  --warning-muted: #fff4d6;
-  --tape: #f5c518; /* measuring-tape yellow */
-  --tape-soft: #fdf1c4;
-  --ai: #1f8f6a; /* what AI tools save */
-  --ai-soft: #dff2ea;
+  --success: #4cc38a;
+  --warning: #f5b454;
+  --warning-muted: #1c160b;
+  --tape: #ff6b6b; /* the signal: ranges, the logo, the main action */
+  --tape-2: #ff8787;
+  --tape-soft: #23100f;
+  --ai: #4cc38a; /* what AI tools save */
+  --ai-soft: #0d231a;
+  --panel-2: #131418;
   --radius: 0.75rem;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 @theme inline {
@@ -51,20 +58,20 @@
   --color-warning: var(--warning);
   --color-warning-muted: var(--warning-muted);
   --color-tape: var(--tape);
+  --color-tape-2: var(--tape-2);
   --color-tape-soft: var(--tape-soft);
   --color-ai: var(--ai);
   --color-ai-soft: var(--ai-soft);
+  --color-panel-2: var(--panel-2);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: var(--radius);
   --radius-lg: calc(var(--radius) + 4px);
   --font-sans:
-    var(--font-public-sans), ui-sans-serif, system-ui, -apple-system,
-    "Segoe UI", Roboto, "Noto Sans", Arial, sans-serif;
-  --font-display:
-    var(--font-archivo), var(--font-public-sans), ui-sans-serif, system-ui,
-    sans-serif;
+    var(--font-inter), "Segoe UI", ui-sans-serif, system-ui, -apple-system,
+    Arial, sans-serif;
+  --font-serif: var(--font-instrument-serif), "Times New Roman", serif;
   --font-mono:
-    ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    var(--font-geist-mono), ui-monospace, "Cascadia Mono", Consolas, monospace;
 }
 
 @layer base {
@@ -75,31 +82,50 @@
   body {
     background: var(--background);
     color: var(--foreground);
-    font-family: var(--font-public-sans), ui-sans-serif, system-ui, sans-serif;
-    font-feature-settings: "tnum" 0;
+    font-family: var(--font-sans);
+    font-feature-settings: "cv11", "ss01";
+    caret-color: var(--tape);
+    line-height: 1.6;
   }
 
   h1,
   h2,
   h3 {
-    font-family: var(--font-archivo), var(--font-public-sans), sans-serif;
-    font-stretch: 100%;
     text-wrap: balance;
-    letter-spacing: -0.01em;
+    letter-spacing: -0.025em;
+    line-height: 1.15;
+  }
+
+  ::selection {
+    background: rgb(255 107 107 / 0.3);
   }
 
   :focus-visible {
-    outline: 2px solid var(--foreground);
+    outline: 2px solid var(--ring);
     outline-offset: 2px;
   }
 }
 
 @layer utilities {
-  /* Display type for big headlines (Archivo at normal width). */
+  /* Section headlines: Inter, tight. */
   .font-wide {
-    font-family: var(--font-archivo), var(--font-public-sans), sans-serif;
-    font-stretch: 100%;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.035em;
+  }
+
+  /* The few big statements: Instrument Serif, never bold. */
+  .font-display {
+    font-family: var(--font-serif);
+    font-weight: 400;
+    letter-spacing: -0.015em;
+  }
+
+  /* Small labels above things, in mono capitals. */
+  .eyebrow {
+    font-family: var(--font-mono);
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted-foreground);
   }
 
   /* Money and measurements line up. */
@@ -107,17 +133,231 @@
     font-variant-numeric: tabular-nums;
   }
 
+  /* A raised dark panel: hairline edge, light top edge, deep shadow. */
+  .panel {
+    background: var(--card);
+    border: 1px solid var(--border);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.05),
+      0 30px 80px -30px rgb(0 0 0 / 0.75);
+  }
+
+  /* The lit (coral) button face. */
+  .lit {
+    background: linear-gradient(180deg, var(--tape-2), var(--tape));
+    color: var(--primary-foreground);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.45),
+      inset 0 -2px 0 rgb(0 0 0 / 0.15),
+      0 0 0 1px rgb(255 107 107 / 0.55),
+      0 10px 30px -10px rgb(255 107 107 / 0.55);
+  }
+
   /* Tick marks of a measuring tape (small every 4px, tall every 20px). */
   .tape-ticks {
     background-image:
-      linear-gradient(90deg, rgb(23 32 58 / 0.55) 1px, transparent 1px),
-      linear-gradient(90deg, rgb(23 32 58 / 0.3) 1px, transparent 1px);
+      linear-gradient(90deg, rgb(36 7 7 / 0.6) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(36 7 7 / 0.35) 1px, transparent 1px);
     background-size:
       20px 100%,
       4px 45%;
     background-repeat: repeat-x;
     background-position: 0 0;
   }
+
+  /* A soft coral glow behind a section. */
+  .glow {
+    background:
+      radial-gradient(
+        60% 50% at 50% 0%,
+        rgb(255 107 107 / 0.1),
+        transparent 70%
+      ),
+      var(--background);
+  }
+}
+
+/* ---- motion ------------------------------------------------------------------------- */
+
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    filter: blur(8px);
+    transform: translateY(18px);
+  }
+}
+
+.rise-in {
+  animation: rise-in 1.1s var(--ease) both;
+  animation-delay: calc(var(--rd, 0) * 0.12s);
+}
+
+/* Scroll reveal: only once the script is running (.rv on <html>), so nothing hides without it. */
+[data-reveal] {
+  transition:
+    opacity 0.9s var(--ease),
+    transform 0.9s var(--ease),
+    filter 0.9s var(--ease);
+  transition-delay: calc(var(--rd, 0) * 0.11s);
+}
+
+.rv [data-reveal]:not(.is-in) {
+  opacity: 0;
+  filter: blur(10px);
+  transform: translateY(30px);
+}
+
+/* The hero sky drifts very slowly. */
+@keyframes sky-drift {
+  from {
+    transform: translate(-2%, 1.2%) scale(1);
+  }
+  to {
+    transform: translate(2%, -1.2%) scale(1.05);
+  }
+}
+
+.cost-sky {
+  opacity: 0;
+  transition: opacity 1.2s var(--ease);
+  animation: sky-drift 40s ease-in-out infinite alternate;
+}
+
+.cost-sky[data-ready="yes"] {
+  opacity: 1;
+}
+
+@keyframes pulse-dot {
+  0% {
+    box-shadow: 0 0 0 0 rgb(255 107 107 / 0.55);
+  }
+  70% {
+    box-shadow: 0 0 0 7px rgb(255 107 107 / 0);
+  }
+  to {
+    box-shadow: 0 0 0 0 rgb(255 107 107 / 0);
+  }
+}
+
+.pulse-dot {
+  animation: pulse-dot 2.2s ease-out infinite;
+}
+
+/* Figures play once when they are revealed (.is-in), each piece after --d steps. */
+.fig-step {
+  transition:
+    opacity 0.6s var(--ease),
+    transform 0.6s var(--ease);
+  transition-delay: calc(0.5s + var(--d, 0) * 0.18s);
+}
+
+.rv [data-reveal]:not(.is-in) .fig-step {
+  opacity: 0;
+  transform: translateY(8px);
+}
+
+/* A clause being marked, left to right. */
+.fig-mark {
+  background-image: linear-gradient(
+    rgb(255 107 107 / 0.16),
+    rgb(255 107 107 / 0.16)
+  );
+  background-repeat: no-repeat;
+  background-size: 100% 100%;
+  transition: background-size 1.1s var(--ease) 0.45s;
+}
+
+.rv [data-reveal]:not(.is-in) .fig-mark {
+  background-size: 0% 100%;
+}
+
+/* A bar growing from the left. */
+.fig-bar {
+  transform-origin: left center;
+  transition: transform 1s var(--ease);
+  transition-delay: calc(0.4s + var(--d, 0) * 0.12s);
+}
+
+.rv [data-reveal]:not(.is-in) .fig-bar {
+  transform: scaleX(0);
+}
+
+/* A line drawn from the top down. */
+.fig-drop {
+  transform-origin: center top;
+  transition: transform 1.3s var(--ease) 0.5s;
+}
+
+.rv [data-reveal]:not(.is-in) .fig-drop {
+  transform: scaleY(0);
+}
+
+/* The range that widens when answers are "not sure". */
+.fig-range {
+  transition:
+    left 1.2s var(--ease) 1.4s,
+    width 1.2s var(--ease) 1.4s;
+}
+
+.fig-swap-old {
+  transition: opacity 0.4s var(--ease) 1.4s;
+}
+
+.fig-swap-new {
+  opacity: 0;
+  transition: opacity 0.5s var(--ease) 1.9s;
+}
+
+[data-reveal].is-in .fig-swap-old {
+  opacity: 0;
+}
+
+[data-reveal].is-in .fig-swap-new {
+  opacity: 1;
+}
+
+/* The closing keypad: the sums people used to type press themselves, then "Estimate" lights. */
+@keyframes key-press {
+  45% {
+    color: var(--tape);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.04),
+      inset 0 -1px 0 rgb(0 0 0 / 0.45),
+      0 0 0 1px rgb(255 107 107 / 0.55),
+      0 4px 12px rgb(255 107 107 / 0.25);
+    transform: translateY(2px);
+  }
+}
+
+@keyframes board-dim {
+  to {
+    opacity: 0.5;
+  }
+}
+
+@keyframes auto-lit {
+  to {
+    background: linear-gradient(180deg, var(--tape-2), var(--tape));
+    color: var(--primary-foreground);
+    box-shadow:
+      inset 0 1px 0 rgb(255 255 255 / 0.45),
+      inset 0 -3px 0 rgb(0 0 0 / 0.2),
+      0 0 0 1px rgb(255 107 107 / 0.6),
+      0 0 70px rgb(255 107 107 / 0.4);
+  }
+}
+
+.keypad.is-in .key.sum {
+  animation: key-press 0.5s var(--ease) both;
+  animation-delay: calc(0.3s + var(--d, 0) * 0.22s);
+}
+
+.keypad.is-in .keypad-board {
+  animation: board-dim 0.8s var(--ease) 2.1s both;
+}
+
+.keypad.is-in .keypad-auto {
+  animation: auto-lit 0.9s var(--ease) 2.2s both;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -125,7 +365,9 @@
   *::before,
   *::after {
     animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
   }
 }

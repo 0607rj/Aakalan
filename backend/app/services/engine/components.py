@@ -1,14 +1,22 @@
 """Component labour cost (brief 7.1)."""
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 from decimal import Decimal
 
 from app.services.engine import spreads
 from app.services.engine.context import LineBuilder, PricingContext
 from app.services.engine.inputs import ComponentInstanceIn
-from app.services.engine.money import ONE, ZERO, dsum
+from app.services.engine.money import ONE, ZERO, dsum, paise_to_rupees, to_paise
 from app.services.engine.outputs import CostLineOut
-from app.services.engine.reference import BaselineEra, CatalogComponent, Driver, Size, TaskType
+from app.services.engine.reference import (
+    BaselineEra,
+    CatalogComponent,
+    Driver,
+    EffortCaps,
+    Size,
+    TaskType,
+)
 
 
 @dataclass(frozen=True)
@@ -17,6 +25,153 @@ class ComponentEffort:
     catalog: CatalogComponent
     effort_pd: Decimal  # before schedule compression
     ai_saved_pd: Decimal = ZERO  # effort the team's AI tools save (before compression)
+
+
+@dataclass(frozen=True)
+class EffortPlan:
+    """What every component's effort depends on beyond itself (parameter sets v20+), worked out
+    once from all components: the project's reuse ratio for whole-system testing, and the
+    scale each effort cap puts on its tasks (1 = not capped). Totals are kept for the trace."""
+
+    project_reuse_ratio: Decimal = ONE
+    review_scale: Decimal = ONE
+    pre_build_scale: Decimal = ONE
+    architecture_scale: Decimal = ONE
+    base_pd: Decimal = ZERO
+    review_pd: Decimal = ZERO
+    pre_build_pd: Decimal = ZERO
+    architecture_pd: Decimal = ZERO
+    architecture_cap_pd: Decimal = ZERO
+
+    def scale(self, caps: EffortCaps | None, stage: str, task: TaskType) -> Decimal:
+        if caps is None:
+            return ONE
+        s = self.pre_build_scale if stage == PRE_BUILD else ONE
+        if task is caps.review_task:
+            s *= self.review_scale
+        if task is caps.architecture_task:
+            s *= self.architecture_scale
+        return s
+
+
+NO_PLAN = EffortPlan()
+PRE_BUILD = "pre_build"
+BUILD = "build"
+
+
+def _stage(catalog: CatalogComponent) -> str:
+    return catalog.bucket.split(".", 1)[0]
+
+
+def _scratch(ctx: PricingContext, catalog: CatalogComponent) -> LineBuilder:
+    """A builder whose trace is thrown away (effort before pricing)."""
+    return ctx.builder(
+        line_key="scratch",
+        stage="build",
+        bucket=catalog.bucket,
+        year=0,
+        label="",
+        formula_id="component_labour.v2",
+    )
+
+
+def effort_plan(ctx: PricingContext) -> EffortPlan:
+    if ctx.effort_plan is None:
+        ctx.effort_plan = _make_plan(ctx)
+    return ctx.effort_plan
+
+
+def _make_plan(ctx: PricingContext) -> EffortPlan:
+    """1. project_reuse_ratio = Σ work after reuse / Σ work before, over build-stage components
+          (work = every task but reuse.follow_tasks; project-wide testing blocks left out).
+    2. Each component's effort with that ratio, uncapped (after AI savings).
+    3. The caps (EffortCaps), in order: review, pre-build (after the review cap), architect
+       (after both). Each scale = min(1, ceiling / total); no build base = no caps."""
+    reuse, caps = ctx.p.reuse, ctx.p.effort_caps
+    if (reuse is None or not reuse.follow_tasks) and caps is None:
+        return NO_PLAN
+    items = [(ci, ctx.inp.catalog.get(ci.catalog_key)) for ci in ctx.inp.components]
+    ratio = ONE
+    if reuse is not None and reuse.follow_tasks:
+        before = after = ZERO
+        for ci, catalog in items:
+            if _stage(catalog) != BUILD or catalog.key in reuse.project_wide_components:
+                continue
+            b, a = _work(_scratch(ctx, catalog), ci, catalog)
+            before, after = before + b, after + a
+        ratio = after / before if before else ONE
+    plan = EffortPlan(project_reuse_ratio=ratio)
+    if caps is None:
+        return plan
+    efforts = [
+        (ci, catalog, _task_efforts(_scratch(ctx, catalog), ci, catalog, plan)[0])
+        for ci, catalog in items
+    ]
+    base = dsum(
+        pd
+        for _, catalog, e in efforts
+        if _stage(catalog) == BUILD
+        for task, pd in e.items()
+        if task in caps.base_tasks
+    )
+    if base == ZERO:
+        return plan
+    review = dsum(e.get(caps.review_task, ZERO) for _, _, e in efforts)
+    review_share, pre_share = cap_shares(ctx, caps)
+    review_scale = min(ONE, review_share * base / review) if review else ONE
+    pre = dsum(
+        pd * (review_scale if task is caps.review_task else ONE)
+        for _, catalog, e in efforts
+        if _stage(catalog) == PRE_BUILD
+        for task, pd in e.items()
+    )
+    pre_scale = min(ONE, pre_share * base / pre) if pre else ONE
+    arch = dsum(
+        e.get(caps.architecture_task, ZERO) * (pre_scale if _stage(catalog) == PRE_BUILD else ONE)
+        for _, catalog, e in efforts
+    )
+    hard = sum(1 for ci, _, _ in efforts if ci.hard_problem)
+    arch_cap = architecture_floor(ctx, caps, base) + caps.architecture_pd_per_hard_problem * hard
+    return EffortPlan(
+        project_reuse_ratio=ratio,
+        review_scale=review_scale,
+        pre_build_scale=pre_scale,
+        architecture_scale=min(ONE, arch_cap / arch) if arch else ONE,
+        base_pd=base,
+        review_pd=review,
+        pre_build_pd=pre,
+        architecture_pd=arch,
+        architecture_cap_pd=arch_cap,
+    )
+
+
+def cap_shares(ctx: PricingContext, caps: EffortCaps) -> tuple[Decimal, Decimal]:
+    """(review, pre-build) cap shares: by project size when listed, else the flat shares."""
+    size = ctx.q.project_size
+    return (
+        caps.review_max_share_by_size.get(size or "", caps.review_max_share),
+        caps.pre_build_max_share_by_size.get(size or "", caps.pre_build_max_share),
+    )
+
+
+def architecture_floor(ctx: PricingContext, caps: EffortCaps, base: Decimal) -> Decimal:
+    """The architect's days before hard problems: max(architecture_base_pd, share[size] × build
+    base) when the project size is listed in architecture_max_share_by_size, else the base."""
+    share = caps.architecture_max_share_by_size.get(ctx.q.project_size or "")
+    if share is None:
+        return caps.architecture_base_pd
+    return max(caps.architecture_base_pd, share * base)
+
+
+def _cap_share(t: LineBuilder, caps: EffortCaps, which: str) -> Decimal:
+    """Record the cap share used (by project size when listed) on the line's trace."""
+    size = t.ctx.q.project_size
+    if size is not None and size in getattr(caps, f"{which}_by_size"):
+        t.driver("project_size")
+        share: Decimal = t.param("effort_caps", f"{which}_by_size", size)
+        return share
+    flat: Decimal = t.param("effort_caps", which)
+    return flat
 
 
 def concurrency_band_index(ctx: PricingContext, peak_users: int) -> int:
@@ -114,26 +269,19 @@ def base_effort(ctx: PricingContext, ci: ComponentInstanceIn) -> ComponentEffort
     """Effort in person-days before compression (used to size the timeline).
 
     effort = Σ_task base_pd[size] × quantity × share × M_complexity × M_nfr × licence_factor
-             × M_reuse(task) × (1 − min(max_saving, saving_task × maturity_scale))
+             × M_reuse(task) × M_follow(task) × cap(task)
+             × (1 − min(max_saving, saving_task × maturity_scale))
     """
     catalog = ctx.inp.catalog.get(ci.catalog_key)
-    scratch = ctx.builder(
-        line_key="scratch",
-        stage="build",
-        bucket=catalog.bucket,
-        year=0,
-        label="",
-        formula_id="component_labour.v2",
-    )
-    per_task, saved = _task_efforts(scratch, ci, catalog)
+    per_task, saved = _task_efforts(_scratch(ctx, catalog), ci, catalog)
     return ComponentEffort(ci, catalog, dsum(per_task.values()), dsum(saved.values()))
 
 
-def _task_efforts(
+def _raw_efforts(
     t: LineBuilder, ci: ComponentInstanceIn, catalog: CatalogComponent
-) -> tuple[dict[TaskType, Decimal], dict[TaskType, Decimal]]:
-    """(effort, effort saved by AI tools) per task type, in person-days. The saving is zero when
-    `ai_saving_applies` says the component's effort data must not be discounted."""
+) -> dict[TaskType, Decimal]:
+    """Per task, before reuse, caps and AI savings:
+    base_pd[size] × effort_multiplier × quantity × share × M_complexity × M_nfr × licence."""
     base: Decimal = catalog.base_effort_pd[Size(ci.size)] * t.calibration("effort_multiplier")
     m_cx: Decimal = t.param("complexity_multipliers", ci.complexity.value)
     m_nfr = nfr_multiplier(t, catalog)
@@ -141,6 +289,113 @@ def _task_efforts(
     if _uses_licence(t.ctx, catalog) and catalog.licence is not None:
         t.driver("licensing")
         lic = catalog.licence.effort_factor
+    return {
+        task: base * ci.quantity * share * m_cx * m_nfr * lic
+        for task, share in catalog.task_mix.items()
+    }
+
+
+def _work(
+    t: LineBuilder, ci: ComponentInstanceIn, catalog: CatalogComponent
+) -> tuple[Decimal, Decimal]:
+    """(before, after) reuse of a component's work: every task except reuse.follow_tasks."""
+    raw = _raw_efforts(t, ci, catalog)
+    reused, m_reuse = reuse_multiplier(t, ci)
+    follow = set(t.ctx.p.reuse.follow_tasks) if t.ctx.p.reuse else set()
+    work = {task: pd for task, pd in raw.items() if task not in follow}
+    after = dsum(pd * (m_reuse if task in reused else ONE) for task, pd in work.items())
+    return dsum(work.values()), after
+
+
+def follow_multiplier(
+    t: LineBuilder,
+    catalog: CatalogComponent,
+    raw: dict[TaskType, Decimal],
+    reused: set[TaskType],
+    m_reuse: Decimal,
+    plan: EffortPlan,
+) -> tuple[set[TaskType], Decimal]:
+    """(follow tasks, M_follow) (parameter sets v20+): review and tests shrink with the work
+    they check.
+
+      M_follow = Σ own work after reuse / Σ own work before   (work = the non-follow tasks)
+      M_follow = project_reuse_ratio                           (reuse.project_wide_components)
+
+    1 when nothing in the component is reused."""
+    reuse = t.ctx.p.reuse
+    if reuse is None or not reuse.follow_tasks:
+        return set(), ONE
+    follow = set(t.param("reuse", "follow_tasks")) & set(raw)
+    if not follow:
+        return set(), ONE
+    if catalog.key in reuse.project_wide_components:
+        t.param("reuse", "project_wide_components")
+        ratio = plan.project_reuse_ratio
+        if ratio == ONE:
+            return set(), ONE
+        expr = "project build work after reuse / before"
+        return follow, t.step("M_follow", f"{expr} = {ratio:.4f}", ratio)
+    work = {task: pd for task, pd in raw.items() if task not in follow}
+    before = dsum(work.values())
+    after = dsum(pd * (m_reuse if task in reused else ONE) for task, pd in work.items())
+    if before == ZERO or after == before:
+        return set(), ONE
+    expr = f"own work after reuse {after:.4f} / before {before:.4f}"
+    return follow, t.step("M_follow", expr, after / before)
+
+
+def _caps(
+    t: LineBuilder, catalog: CatalogComponent, tasks: set[TaskType], plan: EffortPlan
+) -> None:
+    """Record the effort caps that touch this component (parameter sets v20+)."""
+    caps = t.ctx.p.effort_caps
+    if caps is None:
+        return
+    stage = _stage(catalog)
+    if caps.review_task in tasks and plan.review_scale < ONE:
+        share = _cap_share(t, caps, "review_max_share")
+        t.step(
+            f"cap {caps.review_task.value}",
+            f"min(1, {share} × build {plan.base_pd:.2f} pd / review {plan.review_pd:.2f} pd)",
+            plan.review_scale,
+        )
+    if stage == PRE_BUILD and plan.pre_build_scale < ONE:
+        pre = _cap_share(t, caps, "pre_build_max_share")
+        t.step(
+            "cap pre-build",
+            f"min(1, {pre} × build {plan.base_pd:.2f} pd / pre-build {plan.pre_build_pd:.2f} pd)",
+            plan.pre_build_scale,
+        )
+    if caps.architecture_task in tasks and plan.architecture_scale < ONE:
+        t.param("effort_caps", "architecture_base_pd")
+        t.param("effort_caps", "architecture_pd_per_hard_problem")
+        size = t.ctx.q.project_size
+        if size is not None and size in caps.architecture_max_share_by_size:
+            t.driver("project_size")
+            share = t.param("effort_caps", "architecture_max_share_by_size", size)
+            floor = f"max({caps.architecture_base_pd}, {share} × build {plan.base_pd:.2f} pd)"
+        else:
+            floor = f"{caps.architecture_base_pd}"
+        t.step(
+            f"cap {caps.architecture_task.value}",
+            f"min(1, ({floor} + {caps.architecture_pd_per_hard_problem}"
+            f" × hard problems) {plan.architecture_cap_pd:.2f} pd"
+            f" / {plan.architecture_pd:.2f} pd)",
+            plan.architecture_scale,
+        )
+
+
+def _task_efforts(
+    t: LineBuilder,
+    ci: ComponentInstanceIn,
+    catalog: CatalogComponent,
+    plan: EffortPlan | None = None,
+) -> tuple[dict[TaskType, Decimal], dict[TaskType, Decimal]]:
+    """(effort, effort saved by AI tools) per task type, in person-days. The saving is zero when
+    `ai_saving_applies` says the component's effort data must not be discounted. `plan` (the
+    caps and project reuse ratio) defaults to the project's; `_make_plan` passes its own."""
+    plan = plan or effort_plan(t.ctx)
+    raw = _raw_efforts(t, ci, catalog)
     applies = ai_saving_applies(t.ctx, catalog)
     unknown = applies and catalog.source_era is BaselineEra.UNKNOWN
     if unknown and t.ctx.p.ai_productivity.unknown_era_is_pre_ai:
@@ -150,12 +405,18 @@ def _task_efforts(
         scale: Decimal = t.param("ai_productivity", "maturity_scale", maturity)
         cap: Decimal = t.param("ai_productivity", "max_saving")
     reused, m_reuse = reuse_multiplier(t, ci)
+    follow, m_follow = follow_multiplier(t, catalog, raw, reused, m_reuse, plan)
+    caps, stage = t.ctx.p.effort_caps, _stage(catalog)
+    if plan is not NO_PLAN:
+        _caps(t, catalog, set(raw), plan)
     efforts: dict[TaskType, Decimal] = {}
     saved: dict[TaskType, Decimal] = {}
-    for task, share in catalog.task_mix.items():
-        without_ai = base * ci.quantity * share * m_cx * m_nfr * lic
+    for task, without_ai in raw.items():
         if task in reused:
             without_ai *= m_reuse
+        elif task in follow:
+            without_ai *= m_follow
+        without_ai *= plan.scale(caps, stage, task)
         effective_saving = ZERO
         if applies:
             saving: Decimal = t.param("ai_productivity", "task_savings", task.value)
@@ -171,10 +432,13 @@ def component_line(
     """Price one component instance; the line carries per-task steps and role person-days.
     Catalog v6+ components also record where their effort data comes from and whether the AI
     saving was applied (formula component_labour.v3); with a parameter set that prices reuse
-    (v19+), the formula is component_labour.v4."""
+    (v19+), the formula is component_labour.v4; with review and tests following the reuse or
+    effort caps (v20+), component_labour.v5."""
     ci, catalog = effort.instance, effort.catalog
-    stage = catalog.bucket.split(".", 1)[0]
-    if catalog.source_era is None:
+    stage = _stage(catalog)
+    if effort_plan(ctx) is not NO_PLAN:
+        formula_id = "component_labour.v5"
+    elif catalog.source_era is None:
         formula_id = "component_labour.v2"
     else:
         formula_id = "component_labour.v3" if ctx.p.reuse is None else "component_labour.v4"
@@ -247,11 +511,17 @@ def ai_review_line(
     effort, but their output must be read, tested and fixed by people.
 
       review_pd = review_share_of_saved × Σ_component ai_saved_pd × M_compression
-      cost      = review_pd × rate(review_role)
+      cost      = review_pd × rate(review_role)                          (v1)
+      cost      = Σ_role review_pd × share_role × rate(role)             (v2: review_task's roles,
+                                                                          e.g. 0.7 developer /
+                                                                          0.3 senior developer)
+    The saved effort is after reuse and the effort caps, so only work still priced is reviewed.
     """
     ai = ctx.p.ai_productivity
     saved = dsum(e.ai_saved_pd for e in efforts)
-    if ai.review_share_of_saved is None or ai.review_role is None or saved == ZERO:
+    if ai.review_share_of_saved is None or saved == ZERO:
+        return []
+    if ai.review_task is None and ai.review_role is None:
         return []
     t = ctx.builder(
         line_key=AI_REVIEW_KEY,
@@ -259,18 +529,99 @@ def ai_review_line(
         bucket="build.testing",
         year=0,
         label="Extra review and security checks of AI-written code",
-        formula_id="build.ai_code_review.v1",
+        formula_id="build.ai_code_review.v1"
+        if ai.review_task is None
+        else "build.ai_code_review.v2",
     )
+    t.follows_build = True  # a share of the effort the AI tools save
     t.driver("team_ai_maturity")
     share: Decimal = t.param("ai_productivity", "review_share_of_saved")
-    role: str = t.param("ai_productivity", "review_role")
-    rate = t.rate_local(role)
+    if ai.review_task is None:  # v1: one role, traced in the order first recorded
+        role: str = t.param("ai_productivity", "review_role")
+        rate = t.rate_local(role)
     pd = t.step(
         "review person-days",
         f"{share} × {saved:.4f} AI-saved person-days × compression {compression:.4f}",
         share * saved * compression,
     )
-    t.add_role_pd(role, pd)
+    if ai.review_task is None:
+        t.add_role_pd(role, pd)
+        total = t.step("cost", f"{pd:.4f} pd × ₹{rate}/pd", pd * rate)
+    else:
+        t.param("ai_productivity", "review_task")
+        total = ZERO
+        for role, role_share in task_role_shares(t, ai.review_task):
+            rate = t.rate_local(role)
+            role_pd = pd * role_share
+            t.add_role_pd(role, role_pd)
+            total += t.step(
+                f"cost → {role}", f"{pd:.4f} pd × share {role_share} × ₹{rate}/pd", role_pd * rate
+            )
     t.add_input(ai_saved_pd=str(saved))
     spreads.clarity(t, ctx.overall_clarity())
-    return [t.finish(t.step("cost", f"{pd:.4f} pd × ₹{rate}/pd", pd * rate))]
+    return [t.finish(total)]
+
+
+AI_KEPT_KEY = "commercial.margin/ai_saving_kept"
+AI_CODING_TOOLS_KEY = "build.tools/ai_coding"
+SHARE_QUANTUM = Decimal("0.0001")
+
+
+def ai_saving_kept(
+    ctx: PricingContext,
+    efforts: list[ComponentEffort],
+    compression: Decimal,
+    base: Sequence[CostLineOut],
+) -> tuple[LineBuilder, Decimal] | None:
+    """The AI saving the estimate identifies, and the part kept as margin (the answer
+    ai_passthrough_percent, asked on every estimate; formula commercial.ai_saving_kept.v1):
+
+      saved      = Σ_component Σ_task ai_saved_pd × share_role × compression × rate(role)
+      identified = max(0, saved − AI review line − AI coding tools line)
+      kept       = identified × (1 − ai_passthrough_percent)
+
+    The cost lines are the same whatever the answer. None when it is not answered (all of the
+    saving passed through, as before the answer existed)."""
+    if ctx.q.ai_passthrough_percent is None:
+        return None
+    t = ctx.builder(
+        line_key=AI_KEPT_KEY,
+        stage="commercial",
+        bucket="commercial.margin",
+        year=0,
+        label="AI saving kept (margin)",
+        formula_id="commercial.ai_saving_kept.v1",
+    )
+    passthrough: Decimal = t.driver("ai_passthrough_percent")
+    saved = without = ZERO
+    for e in efforts:
+        per_task, saved_task = _task_efforts(_scratch(ctx, e.catalog), e.instance, e.catalog)
+        for task, pd in per_task.items():
+            for role, share in task_role_shares(t, task):
+                rate = t.rate_local(role)
+                without += (pd + saved_task[task]) * share * compression * rate
+                saved += saved_task[task] * share * compression * rate
+    saved = t.step(
+        "AI-saved labour", "Σ AI-saved person-days × role share × compression × rate", saved
+    )
+    review = paise_to_rupees(sum(ln.likely_paise for ln in base if ln.line_key == AI_REVIEW_KEY))
+    tools = paise_to_rupees(
+        sum(ln.likely_paise for ln in base if ln.line_key == AI_CODING_TOOLS_KEY)
+    )
+    identified = t.step(
+        "AI saving identified",
+        f"max(0, ₹{saved:.2f} − AI review ₹{review} − AI coding tools ₹{tools})",
+        max(ZERO, saved - review - tools),
+    )
+    t.add_input(
+        ai_saving_identified_paise=to_paise(identified),
+        build_labour_without_ai_paise=to_paise(without),
+        ai_saving_share=str((identified / without if without else ZERO).quantize(SHARE_QUANTUM)),
+        ai_passthrough_percent=str(passthrough),
+    )
+    kept = t.step(
+        "kept as margin",
+        f"₹{identified:.2f} × (1 − passed to the client {passthrough})",
+        identified * (ONE - passthrough),
+    )
+    return t, kept

@@ -27,7 +27,7 @@ export function AuthCard({
   footer?: React.ReactNode;
 }) {
   return (
-    <Card className="w-full max-w-sm rounded-[22px] shadow-[0_24px_60px_-28px_rgb(23_32_58/0.35)]">
+    <Card className="w-full max-w-sm rounded-[22px] shadow-[0_24px_60px_-28px_rgb(0_0_0/0.7)]">
       <CardHeader>
         <CardTitle className="text-2xl">{title}</CardTitle>
         <CardDescription>{description}</CardDescription>

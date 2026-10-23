@@ -1,6 +1,6 @@
 {
-  "note": "Result of the input above, computed before catalog v6 / baseline eras (commit 0d05c1f).",
-  "result_sha256": "fc12103f9a4cec7756ad468e7904657c4cdf1ae6f4901bef08d8afcda341bb88",
+  "note": "Result of the input above, computed before catalog v6 / baseline eras (commit 0d05c1f). Digest renewed for round 1 (OPEN_QUESTIONS 144): lines carry follows_build and the range drivers leave out lines that follow the build; every amount is unchanged.",
+  "result_sha256": "4d82a687de3c04e83e0f2f118b6bc8c77a16bf847304ca4b739f5bb778cb5c6c",
   "p10_paise": 247059542,
   "p50_paise": 324498498,
   "p90_paise": 421231757,

@@ -106,6 +106,10 @@ class CostLineOut(Out):
     gst_percent: Decimal
     role_pd: dict[str, Decimal]  # person-days by role, for the manpower view
     trace: LineTrace
+    # The amount follows the build effort or its duration (project management, support as a
+    # share of the build): its spread counts in the range, but it is not ranked as a source of
+    # uncertainty of its own.
+    follows_build: bool = False
 
 
 class Totals(Out):

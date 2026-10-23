@@ -65,9 +65,9 @@ def login(body: LoginRequest, db: DbSession) -> TokenResponse:
 
 @router.post("/signup", response_model=CodeSent, status_code=status.HTTP_201_CREATED)
 def signup(body: SignupRequest, db: DbSession) -> CodeSent:
-    """A new company with you as its admin; sign in after confirming the emailed code."""
+    """Your own account (and private space); sign in after confirming the emailed code."""
     try:
-        user = auth.sign_up(db, body.full_name, body.company, body.email, body.password)
+        user = auth.sign_up(db, body.full_name, body.email, body.password, body.company)
     except auth.AuthError as exc:
         db.rollback()
         raise HTTPException(exc.status, exc.message) from exc

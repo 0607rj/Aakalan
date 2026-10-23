@@ -38,6 +38,11 @@ from app.services.settings import (
 PRICED_STATUSES = {"confirmed", "edited"}
 SEED_BITS = 31
 
+# Defaults the engine still notes (old snapshots replay unchanged) that no price follows any
+# more: the client type (prices follow what is built). Not stored on new estimates, and not
+# shown for old ones (OPEN_QUESTIONS 147).
+UNRECORDED_ASSUMPTIONS = frozenset({"buyer_segment"})
+
 
 def _conflict(message: str) -> HTTPException:
     return HTTPException(status.HTTP_409_CONFLICT, message)
@@ -189,6 +194,8 @@ def persist(
             )
         )
     for a in result.assumptions:
+        if a.key in UNRECORDED_ASSUMPTIONS:
+            continue
         estimate.assumptions.append(
             Assumption(
                 org_id=project.org_id,

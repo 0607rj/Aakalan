@@ -3,7 +3,7 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 /**
- * The mark: a piece of measuring tape. A navy case, the yellow tape with tick marks, and a
+ * The mark: a piece of measuring tape. A dark case, the coral tape with tick marks, and a
  * marker where the most likely cost sits.
  */
 export function LogoMark({ className }: { className?: string }) {
@@ -14,8 +14,16 @@ export function LogoMark({ className }: { className?: string }) {
       focusable="false"
       className={cn("size-9", className)}
     >
-      <rect x="1" y="1" width="38" height="38" rx="10" fill="#17203a" />
-      <rect x="7" y="17" width="26" height="10" rx="2" fill="#f5c518" />
+      <rect
+        x="1"
+        y="1"
+        width="38"
+        height="38"
+        rx="10"
+        fill="#131418"
+        stroke="rgb(255 255 255 / 0.14)"
+      />
+      <rect x="7" y="17" width="26" height="10" rx="2" fill="#ff6b6b" />
       {[10, 14, 18, 22, 26, 30].map((x, i) => (
         <line
           key={x}
@@ -23,7 +31,7 @@ export function LogoMark({ className }: { className?: string }) {
           x2={x}
           y1="17"
           y2={i % 2 === 0 ? 23 : 21}
-          stroke="#17203a"
+          stroke="#240707"
           strokeWidth="1.4"
         />
       ))}
@@ -55,9 +63,7 @@ export function Logo({
     >
       <LogoMark />
       <span className="flex flex-col leading-none">
-        <span className="font-wide text-lg font-extrabold tracking-tight">
-          Aakalan
-        </span>
+        <span className="font-wide text-lg font-semibold">Aakalan</span>
         <span className="text-[11px] text-muted-foreground" lang="hi">
           आकलन
         </span>

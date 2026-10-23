@@ -73,7 +73,7 @@
           "auth"
         ],
         "summary": "Signup",
-        "description": "A new company with you as its admin; sign in after confirming the emailed code.",
+        "description": "Your own account (and private space); sign in after confirming the emailed code.",
         "operationId": "signup_auth_signup_post",
         "requestBody": {
           "content": {
@@ -2153,6 +2153,57 @@
         ]
       }
     },
+    "/quick-estimate/standard-blocks": {
+      "post": {
+        "tags": [
+          "quick estimate"
+        ],
+        "summary": "Standard",
+        "description": "The standard building blocks this form brings at its size (nothing is saved or\npriced): the form lists them as included by default, and each can be unticked.",
+        "operationId": "standard_quick_estimate_standard_blocks_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuickRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/StandardBlockOut"
+                  },
+                  "type": "array",
+                  "title": "Response Standard Quick Estimate Standard Blocks Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/quick-estimate/suggest": {
       "post": {
         "tags": [
@@ -2957,6 +3008,41 @@
   },
   "components": {
     "schemas": {
+      "AiSavingOut": {
+        "properties": {
+          "identified_paise": {
+            "type": "integer",
+            "title": "Identified Paise"
+          },
+          "percent": {
+            "type": "integer",
+            "title": "Percent"
+          },
+          "passed_percent": {
+            "type": "integer",
+            "title": "Passed Percent"
+          },
+          "kept_paise": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Kept Paise"
+          }
+        },
+        "type": "object",
+        "required": [
+          "identified_paise",
+          "percent",
+          "passed_percent"
+        ],
+        "title": "AiSavingOut",
+        "description": "The AI saving the engine identified and how much of it the price passes to the client\n(the rest is kept as margin; line commercial.ai_saving_kept.v1)."
+      },
       "AnswerIn": {
         "properties": {
           "key": {
@@ -2980,6 +3066,35 @@
           "key"
         ],
         "title": "AnswerIn"
+      },
+      "AssumedAnswer": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "question": {
+            "type": "string",
+            "title": "Question"
+          },
+          "answer": {
+            "type": "string",
+            "title": "Answer"
+          },
+          "detail": {
+            "type": "string",
+            "title": "Detail",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "question",
+          "answer"
+        ],
+        "title": "AssumedAnswer",
+        "description": "An answer nobody gave, priced at the usual answer: printed on the quote as assumed, to\nbe changed if wrong (silent defaults were behind most wrong estimates)."
       },
       "AssumptionOut": {
         "properties": {
@@ -4665,6 +4780,12 @@
               }
             ],
             "title": "Catalog Key"
+          },
+          "units": {
+            "type": "integer",
+            "minimum": 1.0,
+            "title": "Units",
+            "default": 1
           }
         },
         "type": "object",
@@ -5687,6 +5808,11 @@
             ],
             "title": "Story Level"
           },
+          "story_units": {
+            "type": "integer",
+            "title": "Story Units",
+            "default": 1
+          },
           "covers": {
             "items": {
               "type": "string"
@@ -5901,6 +6027,11 @@
             "type": "array",
             "title": "Stories",
             "default": []
+          },
+          "units": {
+            "type": "integer",
+            "title": "Units",
+            "default": 1
           }
         },
         "type": "object",
@@ -6667,6 +6798,80 @@
         ],
         "title": "MarketSource"
       },
+      "NotIncluded": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "feature",
+              "scope",
+              "standard"
+            ],
+            "title": "Kind"
+          },
+          "key": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Key"
+          },
+          "quote": {
+            "type": "string",
+            "maxLength": 500,
+            "title": "Quote",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "key"
+        ],
+        "title": "NotIncluded",
+        "description": "Something the user marked \"Not included\": a feature, a scope item, or a standard\nbuilding block unticked. Not priced, and listed as not included on the quote."
+      },
+      "NotIncludedOut": {
+        "properties": {
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "why": {
+            "type": "string",
+            "enum": [
+              "excluded_by_you",
+              "removed_by_you",
+              "not_sure",
+              "document_excluded",
+              "document_not_priced"
+            ],
+            "title": "Why"
+          },
+          "quote": {
+            "type": "string",
+            "title": "Quote",
+            "default": ""
+          },
+          "question_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Question Key"
+          }
+        },
+        "type": "object",
+        "required": [
+          "label",
+          "why"
+        ],
+        "title": "NotIncludedOut",
+        "description": "Not in the price, and said so on the quote: marked \"Not included\" or unticked by the\nuser, left out by a \"Not sure\" answer (its \"if required\" price is a priced option of\n`question_key`), ruled out by the document, or asked for there but not priced here."
+      },
       "OptionChange": {
         "properties": {
           "value": {
@@ -6728,6 +6933,11 @@
           "unsure": {
             "type": "boolean",
             "title": "Unsure",
+            "default": false
+          },
+          "left_out": {
+            "type": "boolean",
+            "title": "Left Out",
             "default": false
           },
           "max_users": {
@@ -7212,7 +7422,8 @@
             "type": "string",
             "enum": [
               "not_in_document",
-              "not_sure"
+              "not_sure",
+              "left_out"
             ],
             "title": "Why"
           },
@@ -7244,6 +7455,17 @@
             },
             "type": "array",
             "title": "Options"
+          },
+          "usual_change_paise": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Usual Change Paise"
           }
         },
         "type": "object",
@@ -7611,6 +7833,11 @@
               }
             ],
             "title": "Answered By Number"
+          },
+          "must_choose": {
+            "type": "boolean",
+            "title": "Must Choose",
+            "default": false
           }
         },
         "type": "object",
@@ -7773,6 +8000,14 @@
             "type": "array",
             "title": "Researched",
             "default": []
+          },
+          "commonly_needed": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Commonly Needed",
+            "default": []
           }
         },
         "type": "object",
@@ -7830,6 +8065,14 @@
             },
             "type": "object",
             "title": "Feature Levels",
+            "default": {}
+          },
+          "feature_units": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Feature Units",
             "default": {}
           },
           "custom_features": {
@@ -7924,6 +8167,28 @@
             ],
             "title": "Mode",
             "default": "vendor"
+          },
+          "not_included": {
+            "items": {
+              "$ref": "#/components/schemas/NotIncluded"
+            },
+            "type": "array",
+            "title": "Not Included",
+            "default": []
+          },
+          "answered": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Answered"
           }
         },
         "type": "object",
@@ -8254,6 +8519,16 @@
               }
             ]
           },
+          "ai_saving": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AiSavingOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "not_sure": {
             "items": {
               "type": "string"
@@ -8331,6 +8606,22 @@
                 "type": "null"
               }
             ]
+          },
+          "assumed": {
+            "items": {
+              "$ref": "#/components/schemas/AssumedAnswer"
+            },
+            "type": "array",
+            "title": "Assumed",
+            "default": []
+          },
+          "not_included": {
+            "items": {
+              "$ref": "#/components/schemas/NotIncludedOut"
+            },
+            "type": "array",
+            "title": "Not Included",
+            "default": []
           }
         },
         "type": "object",
@@ -9552,12 +9843,6 @@
             "minLength": 1,
             "title": "Full Name"
           },
-          "company": {
-            "type": "string",
-            "maxLength": 200,
-            "minLength": 1,
-            "title": "Company"
-          },
           "email": {
             "type": "string",
             "maxLength": 320,
@@ -9568,12 +9853,23 @@
             "type": "string",
             "maxLength": 128,
             "title": "Password"
+          },
+          "company": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 200
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Company"
           }
         },
         "type": "object",
         "required": [
           "full_name",
-          "company",
           "email",
           "password"
         ],
@@ -9748,6 +10044,29 @@
         ],
         "title": "SpreadFactor"
       },
+      "StandardBlockOut": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "hint": {
+            "type": "string",
+            "title": "Hint"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "label",
+          "hint"
+        ],
+        "title": "StandardBlockOut"
+      },
       "SuggestedFeature": {
         "properties": {
           "key": {
@@ -9859,6 +10178,22 @@
               }
             ],
             "title": "Note"
+          },
+          "excluded": {
+            "items": {
+              "$ref": "#/components/schemas/SuggestedFeature"
+            },
+            "type": "array",
+            "title": "Excluded",
+            "default": []
+          },
+          "excluded_scope": {
+            "items": {
+              "$ref": "#/components/schemas/SuggestedScope"
+            },
+            "type": "array",
+            "title": "Excluded Scope",
+            "default": []
           }
         },
         "type": "object",

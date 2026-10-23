@@ -143,18 +143,22 @@ def use_code(db: Session, user: User, purpose: Purpose, code: str) -> bool:
     return True
 
 
-def sign_up(db: Session, full_name: str, company: str, email: str, password: str) -> User:
-    """A new company with this person as its admin, not yet verified; a code is emailed.
-    Signing up again before verifying updates the details and sends a new code."""
+def sign_up(
+    db: Session, full_name: str, email: str, password: str, company: str | None = None
+) -> User:
+    """A new organisation with this person as its admin, not yet verified; a code is emailed.
+    Without a company name the organisation is the person's own, named by their email (which
+    is unique). Signing up again before verifying updates the details and sends a new code."""
     if not get_settings().signup_enabled:
         raise AuthError("Sign-up is closed. Ask your company admin for an account.", 403)
     email = normalise_email(email)
     if not EMAIL.match(email):
         raise AuthError("Enter a valid email address.", 422)
     check_password(password)
-    full_name, company = full_name.strip(), company.strip()
-    if not full_name or not company:
-        raise AuthError("Enter your name and your company's name.", 422)
+    full_name = full_name.strip()
+    if not full_name:
+        raise AuthError("Enter your name.", 422)
+    company = (company or "").strip() or email
     user = find_user(db, email)
     if user is not None and user.email_verified_at is not None:
         raise AuthError(

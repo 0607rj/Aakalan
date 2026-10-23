@@ -1,15 +1,19 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { CostSky } from "@/components/site/cost-sky";
 import {
   DocumentMockup,
   EstimateMockup,
+  FeatureBarsFigure,
+  Keypad,
   NotPricedMockup,
   QuestionMockup,
-  RangeTape,
+  RangeWidenFigure,
   TeamMockup,
+  TraceFigure,
 } from "@/components/site/mockups";
-import { Section, StartBand } from "@/components/site/sections";
+import { Section, Title } from "@/components/site/sections";
 import { buttonVariants } from "@/components/ui/button";
 
 export const metadata: Metadata = {
@@ -39,6 +43,29 @@ const OLD_VS_NEW = [
   },
 ];
 
+const SHOWCASE = [
+  {
+    claim: "A low, likely and high cost.",
+    rest: "For building, launch, servers, support for the years you choose, and tax.",
+    art: <EstimateMockup />,
+  },
+  {
+    claim: "Each feature on its own line.",
+    rest: "With and without AI tools, so you can drop one and see the price move.",
+    art: <FeatureBarsFigure />,
+  },
+  {
+    claim: "Every number has an address.",
+    rest: "AI only reads the document. Fixed formulas and dated rates work out every figure, so the same answers always give the same price.",
+    art: <TraceFigure />,
+  },
+  {
+    claim: "What is not priced is listed.",
+    rest: "Penalties, warranty, handover: with the page they are on, plus questions to send the client.",
+    art: <NotPricedMockup />,
+  },
+];
+
 const STEPS = [
   {
     title: "Say what you want to build",
@@ -52,26 +79,51 @@ const STEPS = [
   },
   {
     title: "Get the range and the reasons",
-    body: "Low, likely and high cost, the cost of each feature with and without AI tools, the team needed and what the document asks for that is not priced.",
+    body: "Low, likely and high cost, each feature with and without AI tools, the team needed and what the document asks for that is not priced.",
     art: <TeamMockup />,
   },
 ];
 
+const delay = (rd: number) => ({ "--rd": rd }) as React.CSSProperties;
+
 export default function HomePage() {
   return (
     <>
-      {/* Hero */}
-      <Section className="grid items-center gap-12 pt-14 pb-16 sm:pt-20 lg:grid-cols-[1.05fr_1fr] lg:pb-24">
-        <div className="flex flex-col gap-6">
-          <h1 className="font-wide text-[2.6rem] leading-[1.02] font-extrabold sm:text-6xl">
-            What should this software cost, now that AI writes much of the code?
+      {/* Hero: the sky of possible costs, the claim across its foot */}
+      <section className="relative">
+        <div className="mx-auto flex max-w-6xl flex-col items-center px-4 pt-8 text-center sm:px-6 sm:pt-12">
+          <div className="rise-in relative aspect-[4/3] w-full max-w-5xl overflow-hidden rounded-[22px] bg-[#08090b] shadow-[0_0_0_1px_rgb(255_255_255/0.09),0_40px_120px_rgb(0_0_0/0.65)] sm:aspect-[2/1]">
+            <CostSky />
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 bg-[linear-gradient(transparent_45%,rgb(7_8_10/0.85)_100%)]"
+            />
+            <span className="eyebrow absolute top-4 left-4 flex items-center gap-2 text-left text-white/70">
+              <span
+                className="pulse-dot size-1.5 rounded-full bg-tape"
+                aria-hidden="true"
+              />
+              30,000 possible costs of one project
+            </span>
+          </div>
+          <h1
+            className="rise-in font-display relative -mt-[0.6em] text-[clamp(3.2rem,10.5vw,7.5rem)] leading-[0.95] [text-shadow:0_10px_50px_rgb(0_0_0/0.6)]"
+            style={delay(1.5)}
+          >
+            Price what gets <em className="text-tape-2">built</em>.
           </h1>
-          <p className="max-w-xl text-lg text-muted-foreground">
-            Aakalan prices software by what is built, feature by feature, the
-            way teams build it today. You get the low, likely and high cost, and
-            what the same work would have cost without AI tools.
+          <p
+            className="rise-in mt-6 max-w-2xl text-lg text-muted-foreground sm:text-xl"
+            style={delay(2.5)}
+          >
+            What should this software cost, now that AI writes much of the code?
+            Aakalan prices it feature by feature, the way teams build it today,
+            with the low, likely and high cost.
           </p>
-          <div className="flex flex-wrap gap-3">
+          <div
+            className="rise-in mt-8 flex flex-wrap justify-center gap-3"
+            style={delay(3)}
+          >
             <Link
               href="/estimate/new"
               className={buttonVariants({ size: "lg" })}
@@ -85,133 +137,112 @@ export default function HomePage() {
               See how it works
             </Link>
           </div>
-          <p className="text-sm text-muted-foreground">
-            Checked against 56 real Indian projects with published prices.
+          <p className="rise-in eyebrow mt-6 normal-case" style={delay(3.5)}>
+            Feature by feature · AI-era hours · checked against 56 real Indian
+            projects
           </p>
         </div>
-        <EstimateMockup className="lg:ml-6" />
-      </Section>
+      </section>
 
       {/* The problem */}
-      <div className="border-y bg-card">
-        <Section className="grid gap-10 py-16 sm:py-20 lg:grid-cols-[0.8fr_1.2fr]">
-          <div className="flex flex-col gap-4">
-            <h2 className="font-wide text-3xl leading-tight font-extrabold sm:text-4xl">
-              Hourly rates were made for a world where people typed every line.
-            </h2>
-            <p className="text-muted-foreground">
-              AI tools now draft code, tests and documents in minutes, and
-              someone still has to read, test and fix what they write. A fair
-              price has to count both.
-            </p>
+      <Section className="pt-28 pb-20 sm:pt-40 sm:pb-28">
+        <Title claim="Hourly rates were made for a world where people typed every line.">
+          AI tools now draft code, tests and documents in minutes, and someone
+          still has to read, test and fix what they write. A fair price counts
+          both.
+        </Title>
+        <div className="mt-12 grid gap-4 md:grid-cols-2">
+          <div data-reveal className="rounded-[22px] border p-6 sm:p-8">
+            <p className="eyebrow">Priced by the hour</p>
+            <dl className="mt-5 flex flex-col divide-y">
+              {OLD_VS_NEW.map((row) => (
+                <div key={row.topic} className="flex flex-col gap-1 py-4">
+                  <dt className="text-sm text-muted-foreground">{row.topic}</dt>
+                  <dd className="text-white/55 line-through decoration-white/20">
+                    {row.old}
+                  </dd>
+                </div>
+              ))}
+            </dl>
           </div>
-          <div className="min-w-0 overflow-x-auto">
-            <table className="w-full min-w-[34rem] text-left text-sm">
-              <thead>
-                <tr className="border-b text-muted-foreground">
-                  <th className="py-3 pr-4 font-medium" />
-                  <th className="py-3 pr-4 font-medium">Priced by the hour</th>
-                  <th className="py-3 font-semibold text-foreground">
-                    Priced by Aakalan
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y">
-                {OLD_VS_NEW.map((row) => (
-                  <tr key={row.topic} className="align-top">
-                    <th scope="row" className="py-4 pr-4 font-semibold">
-                      {row.topic}
-                    </th>
-                    <td className="py-4 pr-4 text-muted-foreground">
-                      {row.old}
-                    </td>
-                    <td className="py-4">{row.now}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div
+            data-reveal
+            style={delay(1)}
+            className="panel relative overflow-hidden rounded-[22px] border-tape/30 p-6 sm:p-8"
+          >
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 bg-[radial-gradient(70%_60%_at_100%_0%,rgb(255_107_107/0.12),transparent_70%)]"
+            />
+            <p className="eyebrow relative text-tape">Priced by Aakalan</p>
+            <dl className="relative mt-5 flex flex-col divide-y">
+              {OLD_VS_NEW.map((row) => (
+                <div key={row.topic} className="flex flex-col gap-1 py-4">
+                  <dt className="text-sm text-muted-foreground">{row.topic}</dt>
+                  <dd>{row.now}</dd>
+                </div>
+              ))}
+            </dl>
           </div>
-        </Section>
-      </div>
+        </div>
+      </Section>
+
+      {/* What you get, each with its picture */}
+      <Section className="pb-20 sm:pb-28">
+        <Title center claim="Nothing hidden inside the total.">
+          Every part of the price is on the page, with its reason.
+        </Title>
+        <div className="mt-14 grid gap-5 lg:grid-cols-2">
+          {SHOWCASE.map((s, i) => (
+            <article
+              key={s.claim}
+              data-reveal
+              style={delay(i % 2)}
+              className="flex flex-col gap-6 rounded-[26px] border bg-white/[0.015] p-6 sm:p-8"
+            >
+              <p className="max-w-md text-lg leading-snug">
+                <span className="font-semibold">{s.claim}</span>{" "}
+                <span className="text-muted-foreground">{s.rest}</span>
+              </p>
+              <div className="mt-auto">{s.art}</div>
+            </article>
+          ))}
+        </div>
+      </Section>
 
       {/* How it works, short */}
-      <Section className="py-16 sm:py-24">
+      <Section className="pb-20 sm:pb-28">
         <div className="flex flex-wrap items-end justify-between gap-4">
-          <h2 className="font-wide max-w-xl text-3xl leading-tight font-extrabold sm:text-4xl">
-            Three steps, about as long as making tea.
-          </h2>
+          <Title claim="Three steps,">about as long as making tea.</Title>
           <Link
             href="/how-it-works"
-            className="text-sm font-semibold underline underline-offset-4"
+            className="text-sm font-semibold text-tape-2 underline-offset-4 hover:underline"
           >
-            The full walk-through
+            The full walk-through →
           </Link>
         </div>
-        <ol className="mt-10 grid gap-10 lg:grid-cols-3">
+        <ol className="mt-12 grid gap-10 lg:grid-cols-3">
           {STEPS.map((step, i) => (
-            <li key={step.title} className="flex flex-col gap-4">
-              <div className="flex items-baseline gap-3">
-                <span className="font-wide flex size-9 shrink-0 items-center justify-center rounded-full bg-tape text-sm font-extrabold">
-                  {i + 1}
-                </span>
-                <h3 className="text-lg font-bold">{step.title}</h3>
-              </div>
+            <li
+              key={step.title}
+              data-reveal
+              style={delay(i)}
+              className="flex flex-col gap-4"
+            >
+              <span className="font-mono text-sm text-tape">0{i + 1}</span>
+              <h3 className="text-xl font-semibold">{step.title}</h3>
               <p className="text-muted-foreground">{step.body}</p>
-              {step.art}
+              <div className="mt-2">{step.art}</div>
             </li>
           ))}
         </ol>
       </Section>
 
-      {/* What is inside */}
-      <div className="border-y bg-card">
-        <Section className="grid items-start gap-12 py-16 sm:py-20 lg:grid-cols-2">
-          <div className="flex flex-col gap-5">
-            <h2 className="font-wide text-3xl leading-tight font-extrabold sm:text-4xl">
-              Nothing hidden inside the total.
-            </h2>
-            <ul className="flex flex-col gap-4 text-muted-foreground">
-              <li>
-                <strong className="text-foreground">
-                  Each feature on its own line,
-                </strong>{" "}
-                with and without AI tools, so you can drop one and see the price
-                move.
-              </li>
-              <li>
-                <strong className="text-foreground">
-                  The people behind it:
-                </strong>{" "}
-                how many developers, testers and designers, and for how long.
-              </li>
-              <li>
-                <strong className="text-foreground">
-                  Paid to others, listed apart:
-                </strong>{" "}
-                SMS, maps, app stores and servers you already own.
-              </li>
-              <li>
-                <strong className="text-foreground">
-                  What the document asks for that is not priced,
-                </strong>{" "}
-                with its page, plus questions to send the client.
-              </li>
-            </ul>
-          </div>
-          <div className="grid items-start gap-5 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
-            <TeamMockup />
-            <NotPricedMockup />
-          </div>
-        </Section>
-      </div>
-
       {/* Honest about accuracy */}
-      <Section className="grid gap-10 py-16 sm:py-24 lg:grid-cols-[1fr_1fr]">
-        <div className="flex flex-col gap-4">
-          <h2 className="font-wide text-3xl leading-tight font-extrabold sm:text-4xl">
-            A range, because nobody knows the exact number yet.
-          </h2>
-          <p className="text-muted-foreground">
+      <Section className="grid items-center gap-12 pb-20 sm:pb-28 lg:grid-cols-2">
+        <div className="flex flex-col gap-5">
+          <Title claim="A range, because nobody knows the exact number yet." />
+          <p data-reveal className="text-muted-foreground">
             Aakalan prices the hours the work takes, not what vendors charged,
             and shows what 56 real Indian projects of the same size were bought
             for next to it, as published. Contract prices are not hours, so they
@@ -221,29 +252,54 @@ export default function HomePage() {
             &ldquo;not sure&rdquo;.
           </p>
           <Link
+            data-reveal
             href="/about"
-            className="w-fit text-sm font-semibold underline underline-offset-4"
+            className="w-fit text-sm font-semibold text-tape-2 underline-offset-4 hover:underline"
           >
-            How we test the prices
+            How we test the prices →
           </Link>
         </div>
-        <div className="flex flex-col justify-center gap-2 rounded-[22px] border bg-card p-6">
-          <span className="text-sm text-muted-foreground">
-            Example: the same app, answered with three &ldquo;not sure&rdquo;s
-          </span>
-          <RangeTape
-            low={1_200_000}
-            likely={1_900_000}
-            high={3_000_000}
-            scaleMax={3_300_000}
-          />
-          <span className="text-sm text-muted-foreground">
-            Find out the answers and calculate again for a narrower range.
-          </span>
-        </div>
+        <RangeWidenFigure />
       </Section>
 
-      <StartBand />
+      {/* Closing: the keypad presses itself */}
+      <section className="relative overflow-hidden border-t">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(50%_45%_at_50%_30%,rgb(255_107_107/0.09),transparent_70%)]"
+        />
+        <div className="relative mx-auto flex max-w-6xl flex-col items-center gap-12 px-4 py-24 text-center sm:px-6 sm:py-32">
+          <Keypad />
+          <div className="flex flex-col items-center gap-4">
+            <h2
+              data-reveal
+              className="font-display text-5xl leading-[1] sm:text-7xl"
+            >
+              Put the spreadsheet down.
+            </h2>
+            <p data-reveal className="max-w-xl text-lg text-muted-foreground">
+              Describe your software in a few lines and let Aakalan do the sums.
+            </p>
+            <div
+              data-reveal
+              className="mt-4 flex flex-wrap justify-center gap-3"
+            >
+              <Link
+                href="/estimate/new"
+                className={buttonVariants({ size: "lg" })}
+              >
+                Start an estimate
+              </Link>
+              <Link
+                href="/contact"
+                className={buttonVariants({ size: "lg", variant: "outline" })}
+              >
+                Talk to us
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
     </>
   );
 }

@@ -10,7 +10,12 @@ from decimal import Decimal, localcontext
 from typing import Literal
 
 from app.services.engine.commercial import base_commercial_lines, derived_lines
-from app.services.engine.components import ai_review_line, base_effort, component_line
+from app.services.engine.components import (
+    ai_review_line,
+    ai_saving_kept,
+    base_effort,
+    component_line,
+)
 from app.services.engine.context import PricingContext
 from app.services.engine.golive_programme import golive_lines, programme_lines
 from app.services.engine.inputs import EstimateInput
@@ -121,7 +126,7 @@ def _calculate(inp: EstimateInput) -> EstimateResult:
     base += maintenance_lines(ctx, timeline.build_effort_pd, band.audit_band)
     base += programme_lines(ctx, timeline)
     base += base_commercial_lines(ctx, timeline)
-    derived, factors = derived_lines(ctx, timeline, base)
+    derived, factors = derived_lines(ctx, timeline, base, ai_saving_kept(ctx, efforts, m, base))
 
     lines = sorted(
         base + derived,

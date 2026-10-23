@@ -54,7 +54,9 @@ EstimateInput (snapshot)                                   EstimateResult
 Pipeline inside `core.calculate`:
 
 1. `context.resolve_questionnaire` — answers over parameter-set defaults; defaults become assumptions.
-2. `components.base_effort` — effort per component (brief 7.1) → `timeline.build_timeline`:
+2. `components.base_effort` — effort per component (brief 7.1); from parameters v20 an
+   `EffortPlan` worked out once from all components (project reuse ratio, effort caps) scales
+   review, tests, pre-build and architect work → `timeline.build_timeline`:
    natural duration from a monotone max-team curve, size band, compression / extension, or
    *not feasible* with a phased plan.
 3. Base lines: component labour (× compression), go-live, hosting (`services/hosting`),
@@ -63,7 +65,8 @@ Pipeline inside `core.calculate`:
    PBG, penalty reserve, margin, GST).
 5. `simulation.simulate` — triangular Monte Carlo, one seeded quantile stream per uncertainty
    group, derived lines recomputed per run with the same function; P10/P50/P90 and bucket
-   variance shares (top range drivers).
+   variance shares (top range drivers; lines marked `follows_build`, such as project
+   management, are left out because their spread is the build's).
 
 Every line is built through a `LineBuilder` that records each driver (with the requirements
 the answer cites), rate item (with rate-card version and source), parameter (with
@@ -172,8 +175,26 @@ questions on one screen → check your answers → calculate. Options can add fe
 (`add_features`: mobile app, other software, old data — `hidden` features, not tick boxes), set
 the default level (`feature_level`), change a standard block's complexity
 (`component_complexity`, e.g. a ready design) or be "Not sure" (`unsure`: the usual answer, with
-requirement clarity lowered per `not_sure`, so the range widens). The summary also lists the team
-by role (`team`, `support_team`) from the engine's manpower rows.
+requirement clarity lowered per `not_sure`, so the range widens). A "Not sure" with `left_out`
+(old data, other software) instead leaves its features out of the price; `priced_options` quotes
+them "if required" and, with `plan_quick(include_left_out=True)`, at the usual size (the
+earlier behaviour). The summary also lists the team by role (`team`, `support_team`) from the
+engine's manpower rows.
+
+What a quote rests on and leaves out (OPEN_QUESTIONS 147) is listed on the result page, the PDF
+and the Excel from the same summary fields: `assumed` (questions that matter, answered neither
+on the form — `QuickRequest.answered` — nor by the document) and `not_included` (features and
+scope items marked "Not included", standard blocks unticked on the form, items "Not sure" left
+out, the document's exclusions and not-priced topics). The form gets the size's standard
+blocks from `POST /quick-estimate/standard-blocks`; a description's "no mobile app" is found by
+`extraction/describe.py:ruled_out` (code, keyword windows from the quick config).
+
+The features screen (OPEN_QUESTIONS 150), the same for a description and an uploaded document
+(`frontend/src/app/estimate/new/feature-sections.tsx`), is laid out in the frontend only, with no new pricing:
+found in the description, included by default (the standard blocks), a fixed shortlist
+(`QuickOptions.commonly_needed`, from the quick config) minus what was found, then browse all
+(closed). The kind of software orders the shortlist and ticks nothing. A feature a question
+adds (mobile app, other software, old data) is ticked by setting that question's answer.
 
 ## Document reading (M3, scoped to simple mode)
 

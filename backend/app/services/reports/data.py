@@ -10,10 +10,11 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models import Document, Estimate, Project
+from app.services.estimates.service import UNRECORDED_ASSUMPTIONS
 from app.services.extraction.prebid import PrebidQuery, prebid_queries
 from app.services.extraction.tender import TenderExtraction
 from app.services.quick.config import quick_config
-from app.services.quick.service import QuickSummary, summary_for
+from app.services.quick.service import PricedOption, QuickSummary, priced_options, summary_for
 
 MARGIN_BUCKET = "commercial.margin"
 PAISE_PER_RUPEE = Decimal(100)
@@ -121,6 +122,32 @@ def fmt_approx(minor: int | None, currency: str) -> str:
     return "-" if minor is None else f"about {_estimate(minor, currency)}"
 
 
+def fmt_change(minor: int | None, currency: str) -> str:
+    """A rounded price change with its sign ('+Rs 2.4 L', '-Rs 80,000')."""
+    if minor is None:
+        return "-"
+    sign = "+" if minor > 0 else "-" if minor < 0 else ""
+    return sign + _estimate(abs(minor), currency)
+
+
+def fmt_change_range(low: int | None, high: int | None, currency: str) -> str:
+    if low is None or high is None:
+        return "-"
+    a, b = fmt_change(low, currency), fmt_change(high, currency)
+    return a if a == b else f"{a} to {b}"
+
+
+MARGIN_ANSWER = "margin_percent"
+
+NOT_INCLUDED_WHY = {
+    "excluded_by_you": "Marked not included",
+    "removed_by_you": "Standard part left out on request",
+    "not_sure": "Not decided yet: quoted separately",
+    "document_excluded": "The document rules it out",
+    "document_not_priced": "Asked for in the document, not priced here",
+}
+
+
 @dataclass
 class ReportLine:
     number: int
@@ -151,6 +178,50 @@ class ReportData:
     currency: str = "INR"
     document_name: str | None = None
     prebid: list[PrebidQuery] = field(default_factory=list)
+    # open answers with what other answers would change (GET /estimates/{id}/options)
+    options: list[PricedOption] = field(default_factory=list)
+
+    def assumptions(self) -> list[Any]:
+        """The engine's defaulted answers worth printing (margin only for who may see it)."""
+        return [
+            a
+            for a in self.estimate.assumptions
+            if a.key not in UNRECORDED_ASSUMPTIONS
+            and (self.margin_visible or a.key != MARGIN_ANSWER)
+        ]
+
+    def not_included_rows(self) -> list[tuple[str, str]]:
+        """(item, why) for everything the price leaves out; an item a "Not sure" answer left
+        out carries its "if required" price."""
+        by_key = {o.key: o for o in self.options if o.why == "left_out"}
+        rows = []
+        for item in self.summary.not_included:
+            why = NOT_INCLUDED_WHY[item.why]
+            opt = by_key.get(item.question_key or "")
+            if opt is not None and opt.low_change_paise is not None:
+                price = fmt_change_range(opt.low_change_paise, opt.high_change_paise, self.currency)
+                why += f". If required: {price}"
+            if item.quote:
+                why += f' ("{item.quote}")'
+            rows.append((item.label, why))
+        return rows
+
+    def open_rows(self) -> list[tuple[str, str, str]]:
+        """(question, priced as, what the other answers change) for answers left open."""
+        return [
+            (
+                o.question,
+                o.priced_as,
+                "; ".join(
+                    f"{c.label}: {fmt_change(c.change_paise, self.currency)}"
+                    if c.change_paise is not None
+                    else f"{c.label}: not possible by the deadline"
+                    for c in o.options
+                ),
+            )
+            for o in self.options
+            if o.why != "left_out"
+        ]
 
 
 def build_report(
@@ -191,6 +262,7 @@ def build_report(
     prebid: list[PrebidQuery] = []
     if doc is not None and doc.extraction:
         prebid = prebid_queries(cfg, TenderExtraction.model_validate(doc.extraction))
+    options = priced_options(db, cfg, estimate, project) if estimate.feasible else []
     return ReportData(
         project_name=project.name,
         estimate=estimate,
@@ -201,4 +273,5 @@ def build_report(
         currency=estimate.inputs_snapshot["rate_card"].get("currency", "INR"),
         document_name=doc.filename if doc else None,
         prebid=prebid,
+        options=options,
     )

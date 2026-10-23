@@ -126,8 +126,8 @@ def test_prompt_lists_every_scope_item_and_the_status_rules() -> None:
 def test_a_corrigendum_can_rule_an_item_out() -> None:
     rfp = read("Staff shall sign in with two-factor authentication.")
     corrigendum = read("Two-factor authentication is not required.")
-    first = SimpleNamespace(kind="rfp", filename="rfp.pdf")
-    later = SimpleNamespace(kind="corrigendum", filename="corr.pdf")
+    first = SimpleNamespace(kind="rfp", filename="rfp.pdf", page_texts=None)
+    later = SimpleNamespace(kind="corrigendum", filename="corr.pdf", page_texts=None)
     merged, _ = merge_extractions([(first, rfp), (later, corrigendum)])  # type: ignore[list-item]
     assert merged.scope == [] and [s.key for s in merged.scope_set_aside] == ["two_step_sign_in"]
     again, _ = merge_extractions([(first, corrigendum), (first, rfp)])  # type: ignore[list-item]

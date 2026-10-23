@@ -1695,3 +1695,68 @@ blocks:
     block: document_management
     level: basic
     why: Printable form output (PDF generation) and retrieval of generated documents.
+- key: researched_categorie_check_delegate_grati_registration
+  name: Delegate registration categories and gratis check
+  section: business
+  base_type: module
+  method: analysis
+  added: '2026-10-22'
+  spec:
+    source: 'AI analysis (no published hours found): Online registration / empanelment application (standard),
+      Master data management (basic), Approval workflow engine (basic); hours are those blocks'' own catalog
+      hours (S / L = one size smaller / larger); low confidence'
+    key: researched_categorie_check_delegate_grati_registration
+    name: Delegate registration categories and gratis check
+    category: custom
+    bucket: build.module_development
+    description: Lets delegates register under different categories (e.g. paid, student, speaker, guest)
+      and checks whether they qualify for free (gratis) entry, so fees are waived or applied accordingly.
+    task_mix:
+      crud: '0.55'
+      tests: '0.2'
+      ui_design: '0.05'
+      documentation: '0.05'
+      review_uat: '0.15'
+    base_effort_pd:
+      S: '34.9'
+      M: '57.4'
+      L: '137.3'
+    applicable_drivers:
+    - languages
+    - accessibility
+    - concurrency
+    tags: []
+    licence: null
+    section: business
+    source_era: unknown
+    era_reason: Composed from catalog blocks; AI use behind their hours is not established
+    confidence: low
+    evidence:
+    - id: researched_categorie_check_delegate_grati_registration.1
+      citation: 'AI analysis 2026-10-22: registration_empanelment standard (Multi-step delegate registration
+        form with category selection, document upload for eligibility proof, validation and status tracking.);
+        master_data_management basic (Admin-managed delegate categories, fee amounts and gratis eligibility
+        rules.); workflow_engine basic (Gratis eligibility claims need a simple approve/reject step by
+        an organiser.)'
+      source_type: expert_judgement
+      published: null
+      url: null
+      era: unknown
+      era_basis: not_established
+      ai_workflow: null
+      sample_size: null
+      quality: low
+  sources:
+  - kind: part
+    block: registration_empanelment
+    level: standard
+    why: Multi-step delegate registration form with category selection, document upload for eligibility
+      proof, validation and status tracking.
+  - kind: part
+    block: master_data_management
+    level: basic
+    why: Admin-managed delegate categories, fee amounts and gratis eligibility rules.
+  - kind: part
+    block: workflow_engine
+    level: basic
+    why: Gratis eligibility claims need a simple approve/reject step by an organiser.

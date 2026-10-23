@@ -137,6 +137,18 @@ class Questionnaire(Strict):
     # The web address: a .gov.in / .nic.in one (free from NIC) or a commercial one, priced by
     # maintenance.domain_rate_key_by_type (v19+).
     web_domain: Literal["gov_in", "commercial"] = "gov_in"
+    # Whether the vendor pays for the web address and the SSL certificate, or the client provides
+    # them (a clause such as "domain and hosting will be provided by the department"): then the
+    # line is kept at zero, citing the clause. Hosting has hosting_in_scope.
+    domain_in_scope: bool = True
+    ssl_in_scope: bool = True
+    # The SSL certificate: a free domain-validated one (Let's Encrypt) or an organisation-
+    # validated one the document asks for, priced by maintenance.ssl_rate_key_by_type (v20+).
+    ssl_type: Literal["dv_free", "ov"] = "ov"
+    # Share of the AI saving passed to the client in the price (0..1), a sales decision asked on
+    # every estimate: the rest is kept as margin (commercial.ai_saving_kept.v1). None = all of it
+    # passed through, as before the answer existed; the cost model is the same either way.
+    ai_passthrough_percent: Decimal | None = Field(default=None, ge=0, le=1)
     # How big and deep the work is, independent of the feature list: the same features cost
     # far less as a simple website than as a state-wide system. None = no size factor.
     project_size: Literal["small", "small_medium", "medium", "medium_large", "large"] | None = None

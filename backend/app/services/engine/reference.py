@@ -373,9 +373,16 @@ class AiProductivity(Sourced):
     # v12+: extra review of AI-written code, as a share of the effort AI saves, by this role.
     review_share_of_saved: Decimal | None = Field(default=None, ge=0, le=1)
     review_role: str | None = None
+    # v20+: the review of AI-written code is shared between roles like other review work
+    # (task_roles for this task, e.g. review_uat: 0.7 developer / 0.3 senior developer);
+    # None = all of it by review_role.
+    review_task: TaskType | None = None
     # v18+: effort data of unknown era counts as pre-AI (the hours are calibrated against
     # finished pre-AI projects), so the team's AI savings apply to it in the estimate itself.
     unknown_era_is_pre_ai: bool = False
+    # v20+: a source for one field that differs from the group's, e.g.
+    # {review_share_of_saved: placeholder}; the trace and the calibration status use it.
+    field_sources: dict[str, str] = {}
 
 
 class Reuse(Sourced):
@@ -385,11 +392,54 @@ class Reuse(Sourced):
 
     tasks: list[TaskType]
     factor_by_build_type: dict[str, Decimal]
+    # v20+: tasks that check the build (review, tests) and shrink in proportion to it: a
+    # component's follow tasks × (its other work after reuse / before reuse).
+    follow_tasks: list[TaskType] = []
+    # v20+: components that test the whole system (e.g. functional testing and UAT): their
+    # follow tasks use the project's ratio (all build-stage components) instead of their own.
+    project_wide_components: list[str] = []
 
     @model_validator(mode="after")
     def _factors(self) -> "Reuse":
         if any(not Decimal(0) < f <= Decimal(1) for f in self.factor_by_build_type.values()):
             raise ValueError("reuse factors must be in (0, 1]")
+        if set(self.follow_tasks) & set(self.tasks):
+            raise ValueError("a reuse task cannot also follow the reused work")
+        return self
+
+
+class EffortCaps(Sourced):
+    """v20+: ceilings on work that tends to grow out of proportion with the build, applied to
+    the summed component effort before pricing (each cap scales its tasks down, never up):
+
+      base     = Σ build-stage component effort on base_tasks
+      review   ≤ review_max_share[size] × base    (review_task, every component)
+      pre-build ≤ pre_build_max_share[size] × base (every task of pre-build components)
+      architect ≤ floor + architecture_pd_per_hard_problem × hard problems
+                                                   (architecture_task, after the pre-build cap)
+      floor    = max(architecture_base_pd, architecture_max_share_by_size[size] × base)
+                 when the size is listed, else architecture_base_pd
+
+    The shares by project size (`*_by_size`, keys as the answer project_size) replace the flat
+    share when the size is known and listed: review, integration and design overhead grows with
+    size.
+    """
+
+    base_tasks: list[TaskType]
+    review_task: TaskType
+    review_max_share: Decimal = Field(gt=0)
+    pre_build_max_share: Decimal = Field(gt=0)
+    architecture_task: TaskType
+    architecture_base_pd: Decimal = Field(ge=0)
+    architecture_pd_per_hard_problem: Decimal = Field(ge=0)
+    review_max_share_by_size: dict[str, Decimal] = {}
+    pre_build_max_share_by_size: dict[str, Decimal] = {}
+    architecture_max_share_by_size: dict[str, Decimal] = {}
+
+    @model_validator(mode="after")
+    def _base(self) -> "EffortCaps":
+        if {self.review_task, self.architecture_task} & set(self.base_tasks):
+            raise ValueError("a capped task cannot be part of the base it is capped against")
         return self
 
 
@@ -490,6 +540,9 @@ class Maintenance(Sourced):
     # v19+: the domain rate by the address the document names (questionnaire web_domain), e.g.
     # a free .gov.in address only when the document asks for one; empty = domain_rate_key.
     domain_rate_key_by_type: dict[str, str] = {}
+    # v20+: the SSL rate by certificate type (questionnaire ssl_type): a free domain-validated
+    # one unless the document asks for an organisation-validated one; empty = ssl_rate_key.
+    ssl_rate_key_by_type: dict[str, str] = {}
 
 
 class GoLive(Sourced):
@@ -747,6 +800,7 @@ class ParameterSet(Frozen):
     nfr: NfrMultipliers
     ai_productivity: AiProductivity
     reuse: Reuse | None = None  # None (older sets): every build priced as written from scratch
+    effort_caps: EffortCaps | None = None  # None (older sets): no ceilings
     task_roles: TaskRoles
     timeline: Timeline
     programme: Programme

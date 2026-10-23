@@ -3,7 +3,7 @@
 from decimal import Decimal
 
 from app.services.quick.config import quick_config
-from app.services.quick.reality import FeatureShare, reality_check
+from app.services.quick.reality import FeatureShare, SharedBlock, SharedRequirement, reality_check
 
 
 def shares(setup: int, *features: tuple[str, int]) -> list[FeatureShare]:
@@ -61,3 +61,29 @@ def test_running_team_researched_and_not_sure() -> None:
         "not_sure": False,
     }
     assert run(f, run_parts_paise={"run": 500_000}, support_years=1)["running"]
+
+
+def test_one_requirement_priced_by_several_blocks_is_flagged() -> None:
+    shared = [
+        SharedRequirement(
+            code="FR-07",
+            title="Alerts",
+            blocks=[
+                SharedBlock(name="Notifications", amount_paise=3_300_000),
+                SharedBlock(name="SMS gateway", amount_paise=25_000_000),
+            ],
+        )
+    ]
+    out = run(shares(100, ("A", 100)), shared=shared)
+    assert out["same_requirement"] is False
+    rules = quick_config().reality_check
+    assert rules is not None
+    check = next(
+        c
+        for c in reality_check(
+            rules, shares(100, ("A", 100)), 1_000_000, {}, 0, None, [], 0, shared=shared
+        ).checks
+        if c.key == "same_requirement"
+    )
+    assert "FR-07 (Alerts): Notifications ₹33k + SMS gateway ₹2.5 lakh" in check.detail
+    assert "same_requirement" not in run(shares(100, ("A", 100)), shared=[])

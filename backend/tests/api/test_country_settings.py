@@ -91,7 +91,7 @@ def test_company_settings_change_new_estimates(client: TestClient, admin_headers
         after = quick(client, admin_headers)
         assert after["likely_paise"] < before["likely_paise"]  # type: ignore[operator]
         detail = client.get(f"/estimates/{after['estimate_id']}", headers=admin_headers).json()
-        margin = next(ln for ln in detail["lines"] if ln["bucket"] == "commercial.margin")
+        margin = next(ln for ln in detail["lines"] if ln["line_key"] == "commercial.margin/total")
         trace = client.get(
             f"/estimates/{detail['id']}/lines/{margin['id']}/trace", headers=admin_headers
         )

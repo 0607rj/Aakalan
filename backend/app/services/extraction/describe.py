@@ -5,6 +5,7 @@ suggests), else by the keyword reader. Every suggestion must quote the user's ow
 nothing is priced until the user confirms the ticks (rule 6). Nothing is stored."""
 
 import logging
+import re
 
 from pydantic import BaseModel
 
@@ -46,6 +47,9 @@ class Suggestion(BaseModel):
     scope: list[SuggestedScope] = []  # scope items the words ask for (e.g. two-step sign-in)
     not_priced: list[str] = []  # asked for, but not something this estimate can price
     note: str | None  # e.g. why the basic reader may miss things
+    # ruled out by the words ("no mobile app"): offered as "Not included", with the words
+    excluded: list[SuggestedFeature] = []
+    excluded_scope: list[SuggestedScope] = []
 
 
 def with_everyday_words(cfg: QuickConfig) -> QuickConfig:
@@ -59,6 +63,56 @@ def with_everyday_words(cfg: QuickConfig) -> QuickConfig:
     }
     keywords = cfg.keywords.model_copy(update={"features": words})
     return cfg.model_copy(update={"keywords": keywords})
+
+
+CLAUSE = re.compile(r"[.;,!?\n]|\bbut\b", re.IGNORECASE)
+WORD = re.compile(r"[a-z0-9']+")
+
+
+def _tokens(text: str) -> list[str]:
+    return WORD.findall(text.lower().replace("\u2019", "'"))
+
+
+def _at(tokens: list[str], phrase: list[str]) -> list[int]:
+    """Where `phrase` (tokens) starts in `tokens`."""
+    n = len(phrase)
+    return [i for i in range(len(tokens) - n + 1) if n and tokens[i : i + n] == phrase]
+
+
+def _negated(cfg: QuickConfig, tokens: list[str], start: int, end: int) -> bool:
+    """An exclusion phrase just before tokens[start:end] or just after them (at most
+    `exclusion_window_words` words between)."""
+    kw = cfg.keywords
+    gap = kw.exclusion_window_words
+    for phrase in kw.exclusion_before:
+        pt = _tokens(phrase)
+        if any(0 <= start - (j + len(pt)) <= gap for j in _at(tokens, pt)):
+            return True
+    for phrase in kw.exclusion_after:
+        pt = _tokens(phrase)
+        if any(0 <= j - end <= gap for j in _at(tokens, pt)):
+            return True
+    return False
+
+
+def ruled_out(cfg: QuickConfig, text: str) -> dict[str, str]:
+    """Features the description rules out ("no mobile app", "don't need online payments",
+    "payments not needed"), with the clause that says so: the feature's words appear only in
+    clauses that negate them (a clause that asks for it wins). Code only, no AI."""
+    words = with_everyday_words(cfg).keywords.features
+    negated: dict[str, str] = {}
+    wanted: set[str] = set()
+    for clause in CLAUSE.split(text):
+        tokens = _tokens(clause)
+        for key, phrases in words.items():
+            for phrase in phrases:
+                pt = _tokens(phrase)
+                for i in _at(tokens, pt):
+                    if _negated(cfg, tokens, i, i + len(pt)):
+                        negated.setdefault(key, clause.strip())
+                    else:
+                        wanted.add(key)
+    return {k: q for k, q in negated.items() if k not in wanted}
 
 
 def suggest_features(cfg: QuickConfig, text: str) -> Suggestion:
@@ -92,12 +146,22 @@ def suggest_features(cfg: QuickConfig, text: str) -> Suggestion:
     found: TenderExtraction = verify_findings(
         cfg, parsed, raw, reader=reader, version=version, document=DESCRIPTION
     )
+    excluded = ruled_out(cfg, text)
     return Suggestion(
         reader=reader,
         features=[
             SuggestedFeature(key=f.key, label=f.label, quote=f.evidence[0].quote)
             for f in found.features
-            if f.evidence
+            if f.evidence and f.key not in excluded
+        ],
+        excluded=[
+            SuggestedFeature(key=k, label=cfg.feature(k).label, quote=q)
+            for k, q in excluded.items()
+        ],
+        excluded_scope=[
+            SuggestedScope(key=sc.key, label=sc.label, quote=sc.evidence[0].quote, status=sc.status)
+            for sc in found.scope_set_aside
+            if sc.evidence and sc.status == "excluded"
         ],
         other_features=found.other_features,
         choices={k: v.value for k, v in found.choices.items()},

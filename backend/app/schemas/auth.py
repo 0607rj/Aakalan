@@ -27,9 +27,9 @@ class TokenResponse(BaseModel):
 
 class SignupRequest(BaseModel):
     full_name: str = Field(min_length=1, max_length=200)
-    company: str = Field(min_length=1, max_length=200)
     email: str = Field(min_length=3, max_length=320)
     password: str = Field(max_length=128)
+    company: str | None = Field(default=None, max_length=200)  # optional: else the email
 
 
 class EmailRequest(BaseModel):

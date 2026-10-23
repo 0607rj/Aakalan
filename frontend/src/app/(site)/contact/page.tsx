@@ -33,7 +33,7 @@ export default function ContactPage() {
       <Section className="grid gap-12 py-16 sm:py-20 lg:grid-cols-[1.2fr_0.8fr]">
         <ContactForm />
         <aside className="flex flex-col gap-8">
-          <h2 className="font-wide text-2xl font-extrabold">
+          <h2 data-reveal className="font-wide text-2xl font-semibold">
             What we can help with
           </h2>
           <dl className="flex flex-col gap-6">

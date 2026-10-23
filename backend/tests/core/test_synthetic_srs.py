@@ -185,8 +185,8 @@ def test_corrigendum_rules_an_item_out() -> None:
     rfp, corr = basic(m["document"]), basic(m["corrigendum"])
     merged, _ = merge_extractions(
         [
-            (SimpleNamespace(kind="rfp", filename=m["document"]), rfp),  # type: ignore[list-item]
-            (SimpleNamespace(kind="corrigendum", filename=m["corrigendum"]), corr),  # type: ignore[list-item]
+            (SimpleNamespace(kind="rfp", filename=m["document"], page_texts=None), rfp),  # type: ignore[list-item]
+            (SimpleNamespace(kind="corrigendum", filename=m["corrigendum"], page_texts=None), corr),  # type: ignore[list-item]
         ]
     )
     offered = {s.key for s in merged.scope}

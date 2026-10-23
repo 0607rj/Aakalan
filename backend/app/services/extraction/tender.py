@@ -177,6 +177,7 @@ class FoundFeature(BaseModel):
     suggested: bool = True  # False: mentioned only in passing in a long document
     stories: list[str] = []  # user stories the document asks for under it
     story_level: LevelKey | None = None  # the level their count gives (None: no stories)
+    story_units: int = 1  # how many modules of that level the stories make (round 3)
     covers: list[str] = []  # an app: the features it offers, whose stories size it
 
 
@@ -197,6 +198,7 @@ class FoundOtherFeature(BaseModel):
     size: str  # S / M / L (from its user stories when it has any)
     evidence: list[VerifiedEvidence]
     stories: list[str] = []
+    units: int = 1  # how many modules of that size its stories make (round 3)
 
 
 class FoundValue(BaseModel):
@@ -475,7 +477,8 @@ def _stories(have: list[str], more: list[str]) -> list[str]:
 def _size_by_stories(
     cfg: QuickConfig, features: dict[str, "FoundFeature"], others: dict[str, "FoundOtherFeature"]
 ) -> None:
-    """Each feature's level, and each extra's S / M / L, from its count of user stories."""
+    """Each feature's level, and each extra's S / M / L, from its count of user stories, and
+    how many modules of it they make (more than advanced_max stories: several)."""
     rule = cfg.sizing.stories
     if rule is None:
         return
@@ -483,6 +486,7 @@ def _size_by_stories(
     for f in features.values():
         if f.stories:
             f.story_level = rule.level(len(f.stories))
+            f.story_units = rule.units(len(f.stories))
     by_key = {f.key: f for f in cfg.features}
     for f in features.values():  # an app: its own stories plus those of what it offers
         if not by_key[f.key].sized_by_features:
@@ -500,9 +504,11 @@ def _size_by_stories(
         total = len(f.stories) + sum(max(1, len(features[k].stories)) for k in offered)
         if total:
             f.story_level = rule.level(total)
+            f.story_units = rule.units(total)
     for o in others.values():
         if o.stories:
             o.size = str(size_of[rule.level(len(o.stories))].value)
+            o.units = rule.units(len(o.stories))
 
 
 def verify_findings(

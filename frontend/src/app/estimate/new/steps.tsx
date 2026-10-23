@@ -9,7 +9,12 @@ import { cn } from "@/lib/utils";
 
 import type { QuestionImpact } from "@/lib/api/client";
 
-import { type Choice, QuestionGroup } from "./parts";
+import {
+  type Choice,
+  NotIncludedToggle,
+  QuestionGroup,
+  shownChoice,
+} from "./parts";
 
 export type Level = "basic" | "standard" | "advanced";
 export type Feature = QuickOptions["features"][number];
@@ -328,7 +333,8 @@ export function answerLabel(
   question: QuickOptions["questions"][number],
   value: Choice | undefined,
 ): string {
-  const v = value ?? question.default;
+  const v = value ?? (question.must_choose ? undefined : question.default);
+  if (v === undefined) return "Not answered yet";
   return question.options.find((o) => o.value === v)?.label ?? String(v);
 }
 
@@ -379,7 +385,7 @@ export function DetailsStep({
         <QuestionGroup
           key={q.key}
           question={q}
-          value={choices[q.key] ?? q.default}
+          value={shownChoice(q, choices)}
           impact={impacts.get(q.key)}
           currency={currency}
           onChange={(value) => onChange(q.key, value)}
@@ -418,6 +424,8 @@ export function ScopeStep({
   source = "your description",
   onToggle,
   onTickSuggested,
+  notIncluded,
+  onNotIncluded,
 }: {
   groups: ScopeGroup[];
   chosen: string[];
@@ -426,6 +434,9 @@ export function ScopeStep({
   source?: string;
   onToggle: (key: string) => void;
   onTickSuggested?: () => void;
+  /** Items marked "Not included" (printed on the quote as not in the price). */
+  notIncluded?: string[];
+  onNotIncluded?: (key: string) => void;
 }) {
   const offered = new Set(groups.flatMap((g) => g.items.map((i) => i.key)));
   const waiting = suggested.filter(
@@ -474,41 +485,50 @@ export function ScopeStep({
               {group.items.map((item) => {
                 const isSuggested = suggested.includes(item.key);
                 const checked = chosen.includes(item.key);
+                const excluded = notIncluded?.includes(item.key) ?? false;
                 return (
-                  <label
-                    key={item.key}
-                    className={cn(
-                      "flex cursor-pointer items-start gap-2 rounded-lg p-2 hover:bg-muted/40",
-                      isSuggested &&
-                        !checked &&
-                        "border border-dashed border-primary/40",
-                    )}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={checked}
-                      onChange={() => onToggle(item.key)}
-                      className="mt-1 size-4 accent-primary"
-                    />
-                    <span className="flex flex-col gap-1">
-                      <span>
-                        {item.label}
-                        {isSuggested ? " " : null}
-                        {isSuggested ? (
-                          <span className="ml-1 rounded bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary">
-                            Suggested
+                  <div key={item.key} className="flex flex-col gap-1">
+                    <label
+                      className={cn(
+                        "flex cursor-pointer items-start gap-2 rounded-lg p-2 hover:bg-muted/40",
+                        isSuggested &&
+                          !checked &&
+                          "border border-dashed border-primary/40",
+                        excluded && "opacity-60",
+                      )}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => onToggle(item.key)}
+                        className="mt-1 size-4 accent-primary"
+                      />
+                      <span className="flex flex-col gap-1">
+                        <span>
+                          {item.label}
+                          {isSuggested ? " " : null}
+                          {isSuggested ? (
+                            <span className="ml-1 rounded bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary">
+                              Suggested
+                            </span>
+                          ) : null}
+                        </span>
+                        {item.note ? (
+                          <span className="text-sm text-muted-foreground">
+                            {item.partly_priced ? "Partly priced. " : ""}
+                            {item.note}
                           </span>
                         ) : null}
+                        {notes[item.key] ?? null}
                       </span>
-                      {item.note ? (
-                        <span className="text-sm text-muted-foreground">
-                          {item.partly_priced ? "Partly priced. " : ""}
-                          {item.note}
-                        </span>
-                      ) : null}
-                      {notes[item.key] ?? null}
-                    </span>
-                  </label>
+                    </label>
+                    {onNotIncluded && !checked ? (
+                      <NotIncludedToggle
+                        excluded={excluded}
+                        onClick={() => onNotIncluded(item.key)}
+                      />
+                    ) : null}
+                  </div>
                 );
               })}
             </div>

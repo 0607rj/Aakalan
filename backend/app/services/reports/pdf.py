@@ -144,7 +144,7 @@ def build_pdf(data: ReportData) -> bytes:
                     if s.likely_without_tax_paise
                     else ""
                 )
-                + ": the planned cost plus an allowance for risks. This is an estimate before "
+                + ": the planned cost plus the expected overrun (work usually runs over the plan; from simulating the project, not a cost line). This is an estimate before "
                 "the work starts, not a final bill. "
                 f"Time to build: about {s.build_months} months. Support included: "
                 + (
@@ -170,7 +170,9 @@ def build_pdf(data: ReportData) -> bytes:
                     f"about {about(s.traditional_paise - s.likely_paise)}"
                     + (f" ({s.ai_saving_percent}%)" if s.ai_saving_percent else "")
                     + ", already in the price above after the cost of the AI tools and of "
-                    "checking what the AI wrote.",
+                    "checking what the AI wrote. This is the whole price with and without AI "
+                    "tools, so it includes the smaller support, management, margin and GST "
+                    "that follow the smaller build, not only the build days saved.",
                     BODY,
                 )
             )
@@ -184,10 +186,14 @@ def build_pdf(data: ReportData) -> bytes:
                     [pt.label, span(pt.low_paise, pt.high_paise), f"{pt.share_percent}%"]
                     for pt in s.parts
                 ]
-                + [["Planned cost (before the risk allowance)", about(s.planned_paise), ""]]
+                + [["Planned cost (the cost lines added up)", about(s.planned_paise), ""]]
                 + (
                     [
-                        ["Allowance for risks", about(s.risk_allowance_paise), ""],
+                        [
+                            "Expected overrun (risk, from the simulation)",
+                            about(s.risk_allowance_paise),
+                            "",
+                        ],
                         ["Likely price (with GST)", about(s.likely_paise), ""],
                     ]
                     if s.risk_allowance_paise and s.risk_allowance_paise > 0
@@ -258,6 +264,40 @@ def build_pdf(data: ReportData) -> bytes:
                 {1, 2},
             ),
         ]  # fmt: skip
+    if s.assumed:
+        story += [
+            _p("Assumed answers: please change any that are wrong", H2),
+            _p("Nobody gave these answers, so the price uses the usual one.", NOTE),
+            _table(
+                ["Question", "Assumed answer"],
+                [[a.question, a.answer + (f" ({a.detail})" if a.detail else "")]
+                 for a in s.assumed],
+                [width * 0.5, width * 0.5],
+                set(),
+            ),
+        ]  # fmt: skip
+    not_included = data.not_included_rows()
+    if not_included:
+        story += [
+            _p("Not included in this price", H2),
+            _table(
+                ["Item", "Why"],
+                [[item, why] for item, why in not_included],
+                [width * 0.4, width * 0.6],
+                set(),
+            ),
+        ]
+    open_rows = data.open_rows()
+    if open_rows:
+        story += [
+            _p("Open answers and what other answers would change", H2),
+            _table(
+                ["Question", "Priced as", "Other answers"],
+                [list(row) for row in open_rows],
+                [width * 0.35, width * 0.2, width * 0.45],
+                set(),
+            ),
+        ]
     if r.get("top_drivers_text") or r.get("sanity_checks"):
         story.append(_p("Range drivers and checks", H2))
         if r.get("top_drivers_text"):
@@ -322,7 +362,7 @@ def build_pdf(data: ReportData) -> bytes:
                 {3, 4, 5},
             ),
         ]  # fmt: skip
-    assumptions = [a for a in e.assumptions if data.margin_visible or a.key != "margin_percent"]
+    assumptions = data.assumptions()
     if assumptions:
         story += [_p("Assumptions (defaults used where no answer was given)", H2)]
         story += [_p(f"• {a.text}", SMALL) for a in assumptions]

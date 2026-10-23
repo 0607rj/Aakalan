@@ -8,20 +8,21 @@
   run by one draw of triangular(1 − down, 1, 1 + up): estimation error is systematic, so it
   does not average out across groups the way independent group noise does.
 - Derived commercial lines are recomputed per run with `commercial.derived_amounts`.
+- Range drivers rank buckets by their own variance, leaving out lines that follow the build.
 - Floats live only inside this module; results are rounded to paise at the boundary.
 """
 
 import hashlib
 from collections import defaultdict
 from collections.abc import Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from decimal import Decimal
 
 import numpy as np
 from numpy.typing import NDArray
 
 from app.services.engine.commercial import BaseSums, Factors, derived_amounts
-from app.services.engine.money import float_to_paise
+from app.services.engine.money import float_to_paise, to_paise
 from app.services.engine.outputs import CostLineOut, RangeDriver
 from app.services.engine.reference import Taxonomy
 
@@ -86,7 +87,8 @@ def simulate(
             float(line.likely_paise),
             float(line.high_paise),
         )
-        by_bucket[line.bucket] += x  # range drivers: the lines' own spread
+        if not line.follows_build:  # range drivers: sources of their own uncertainty only
+            by_bucket[line.bucket] += x
         x = x * model
         total += x
         if line.year == 0 and line.stage != "commercial":
@@ -95,7 +97,8 @@ def simulate(
             run += x
         by_rate[line.gst_percent] += x
 
-    float_factors = factors.map(float)
+    # the runs add up paise: the AI saving kept (a fixed amount in rupees) is converted to paise
+    float_factors = replace(factors.map(float), ai_kept=float(to_paise(factors.ai_kept)))
     derived = derived_amounts(
         BaseSums(total, build, run, dict(by_rate)), float_factors, lambda r: float(r)
     )
@@ -111,7 +114,9 @@ def simulate(
 
 def range_drivers(by_bucket: dict[str, FloatArray], taxonomy: Taxonomy) -> list[RangeDriver]:
     """Share of the base-cost variance contributed by each bucket. Groups never span buckets
-    and are independent, so bucket variances add up to the total base variance."""
+    and are independent, so bucket variances add up to the total base variance. Lines whose
+    amount follows the build (project management, support as a share of the build) are left
+    out: their spread is a consequence of the build's, not an unknown of its own."""
     variances = {b: float(np.var(v)) for b, v in by_bucket.items()}
     total = sum(variances.values())
     if total <= 0:

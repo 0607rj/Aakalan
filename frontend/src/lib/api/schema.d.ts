@@ -49,7 +49,7 @@ export interface paths {
         put?: never;
         /**
          * Signup
-         * @description A new company with you as its admin; sign in after confirming the emailed code.
+         * @description Your own account (and private space); sign in after confirming the emailed code.
          */
         post: operations["signup_auth_signup_post"];
         delete?: never;
@@ -690,6 +690,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/quick-estimate/standard-blocks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Standard
+         * @description The standard building blocks this form brings at its size (nothing is saved or
+         *     priced): the form lists them as included by default, and each can be unticked.
+         */
+        post: operations["standard_quick_estimate_standard_blocks_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/quick-estimate/suggest": {
         parameters: {
             query?: never;
@@ -961,6 +982,21 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        /**
+         * AiSavingOut
+         * @description The AI saving the engine identified and how much of it the price passes to the client
+         *     (the rest is kept as margin; line commercial.ai_saving_kept.v1).
+         */
+        AiSavingOut: {
+            /** Identified Paise */
+            identified_paise: number;
+            /** Percent */
+            percent: number;
+            /** Passed Percent */
+            passed_percent: number;
+            /** Kept Paise */
+            kept_paise?: number | null;
+        };
         /** AnswerIn */
         AnswerIn: {
             /** Key */
@@ -972,6 +1008,24 @@ export interface components {
              * @default []
              */
             requirement_ids: string[];
+        };
+        /**
+         * AssumedAnswer
+         * @description An answer nobody gave, priced at the usual answer: printed on the quote as assumed, to
+         *     be changed if wrong (silent defaults were behind most wrong estimates).
+         */
+        AssumedAnswer: {
+            /** Key */
+            key: string;
+            /** Question */
+            question: string;
+            /** Answer */
+            answer: string;
+            /**
+             * Detail
+             * @default
+             */
+            detail: string;
         };
         /** AssumptionOut */
         AssumptionOut: {
@@ -1551,6 +1605,11 @@ export interface components {
             found_index?: number | null;
             /** Catalog Key */
             catalog_key?: string | null;
+            /**
+             * Units
+             * @default 1
+             */
+            units: number;
         };
         /** CustomTypeOut */
         CustomTypeOut: {
@@ -1893,6 +1952,11 @@ export interface components {
             /** Story Level */
             story_level?: ("basic" | "standard" | "advanced") | null;
             /**
+             * Story Units
+             * @default 1
+             */
+            story_units: number;
+            /**
              * Covers
              * @default []
              */
@@ -2029,6 +2093,11 @@ export interface components {
              * @default []
              */
             stories: string[];
+            /**
+             * Units
+             * @default 1
+             */
+            units: number;
         };
         /**
          * FoundPayment
@@ -2326,6 +2395,47 @@ export interface components {
             /** Projects */
             projects: number;
         };
+        /**
+         * NotIncluded
+         * @description Something the user marked "Not included": a feature, a scope item, or a standard
+         *     building block unticked. Not priced, and listed as not included on the quote.
+         */
+        NotIncluded: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "feature" | "scope" | "standard";
+            /** Key */
+            key: string;
+            /**
+             * Quote
+             * @default
+             */
+            quote: string;
+        };
+        /**
+         * NotIncludedOut
+         * @description Not in the price, and said so on the quote: marked "Not included" or unticked by the
+         *     user, left out by a "Not sure" answer (its "if required" price is a priced option of
+         *     `question_key`), ruled out by the document, or asked for there but not priced here.
+         */
+        NotIncludedOut: {
+            /** Label */
+            label: string;
+            /**
+             * Why
+             * @enum {string}
+             */
+            why: "excluded_by_you" | "removed_by_you" | "not_sure" | "document_excluded" | "document_not_priced";
+            /**
+             * Quote
+             * @default
+             */
+            quote: string;
+            /** Question Key */
+            question_key?: string | null;
+        };
         /** OptionChange */
         OptionChange: {
             /** Value */
@@ -2348,6 +2458,11 @@ export interface components {
              * @default false
              */
             unsure: boolean;
+            /**
+             * Left Out
+             * @default false
+             */
+            left_out: boolean;
             /** Max Users */
             max_users?: number | null;
             /**
@@ -2514,13 +2629,15 @@ export interface components {
              * Why
              * @enum {string}
              */
-            why: "not_in_document" | "not_sure";
+            why: "not_in_document" | "not_sure" | "left_out";
             /** Low Change Paise */
             low_change_paise: number | null;
             /** High Change Paise */
             high_change_paise: number | null;
             /** Options */
             options: components["schemas"]["OptionChange"][];
+            /** Usual Change Paise */
+            usual_change_paise?: number | null;
         };
         /** ProjectCreate */
         ProjectCreate: {
@@ -2658,6 +2775,11 @@ export interface components {
             on_upload: string;
             /** Answered By Number */
             answered_by_number?: string | null;
+            /**
+             * Must Choose
+             * @default false
+             */
+            must_choose: boolean;
         };
         /** QuestionnaireField */
         QuestionnaireField: {
@@ -2724,6 +2846,11 @@ export interface components {
              * @default []
              */
             researched: components["schemas"]["ResearchedOut"][];
+            /**
+             * Commonly Needed
+             * @default []
+             */
+            commonly_needed: string[];
         };
         /** QuickRequest */
         QuickRequest: {
@@ -2747,6 +2874,13 @@ export interface components {
              */
             feature_levels: {
                 [key: string]: "basic" | "standard" | "advanced";
+            };
+            /**
+             * Feature Units
+             * @default {}
+             */
+            feature_units: {
+                [key: string]: number;
             };
             /**
              * Custom Features
@@ -2784,6 +2918,13 @@ export interface components {
              * @enum {string}
              */
             mode: "vendor" | "client";
+            /**
+             * Not Included
+             * @default []
+             */
+            not_included: components["schemas"]["NotIncluded"][];
+            /** Answered */
+            answered?: string[] | null;
         };
         /** QuickSummary */
         QuickSummary: {
@@ -2907,6 +3048,7 @@ export interface components {
             should_cost: boolean;
             market?: components["schemas"]["MarketOut"] | null;
             era_sensitivity?: components["schemas"]["EraSensitivityOut"] | null;
+            ai_saving?: components["schemas"]["AiSavingOut"] | null;
             /**
              * Not Sure
              * @default []
@@ -2934,6 +3076,16 @@ export interface components {
              */
             support_term_open: boolean;
             independent_check?: components["schemas"]["IndependentCheckOut"] | null;
+            /**
+             * Assumed
+             * @default []
+             */
+            assumed: components["schemas"]["AssumedAnswer"][];
+            /**
+             * Not Included
+             * @default []
+             */
+            not_included: components["schemas"]["NotIncludedOut"][];
         };
         /** RangeDriver */
         RangeDriver: {
@@ -3380,12 +3532,12 @@ export interface components {
         SignupRequest: {
             /** Full Name */
             full_name: string;
-            /** Company */
-            company: string;
             /** Email */
             email: string;
             /** Password */
             password: string;
+            /** Company */
+            company?: string | null;
         };
         /**
          * SimilarProject
@@ -3448,6 +3600,15 @@ export interface components {
             /** Up */
             up: string;
         };
+        /** StandardBlockOut */
+        StandardBlockOut: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Hint */
+            hint: string;
+        };
         /** SuggestedFeature */
         SuggestedFeature: {
             /** Key */
@@ -3492,6 +3653,16 @@ export interface components {
             not_priced: string[];
             /** Note */
             note: string | null;
+            /**
+             * Excluded
+             * @default []
+             */
+            excluded: components["schemas"]["SuggestedFeature"][];
+            /**
+             * Excluded Scope
+             * @default []
+             */
+            excluded_scope: components["schemas"]["SuggestedScope"][];
         };
         /**
          * TaskType
@@ -5269,6 +5440,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["QuestionImpact"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    standard_quick_estimate_standard_blocks_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QuickRequest"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StandardBlockOut"][];
                 };
             };
             /** @description Validation Error */

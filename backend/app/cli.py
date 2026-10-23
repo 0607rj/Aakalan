@@ -93,7 +93,11 @@ def cmd_backtest(args: argparse.Namespace) -> None:
                 published += f"-{row.published_high_minor / 100:,.0f}"
             sys.stdout.write(
                 f" {mark} {row.id[:38]:38} {row.buyer[:5]:5} published {published:>21}"
-                f"  ours {ours:>14}  error {row.error_percent}%\n"
+                f"  ours {ours:>14}  error {row.error_percent}%"
+                f"  GST {'incl' if row.gst_inclusive else 'excl'}"
+                f"{'' if row.gst_stated else ' (assumed)'}"
+                f"  {'pre-AI' if row.pre_ai else 'with AI'}"
+                f" (with AI x{row.ratio_with_ai}, without x{row.ratio_pre_ai})\n"
             )
 
     dials = reference["parameters"].calibration or Calibration(source="none")
@@ -130,16 +134,47 @@ def cmd_backtest(args: argparse.Namespace) -> None:
             "prices are contract values, not effort: these numbers compare prices only. bias = "
             "ours / published (median of logs); band hits count as exact and flatter the result.\n"
         )
+        target = report.ai_price_target
+        sys.stdout.write(
+            "\nROUND 3 SCORING (new basis, not comparable with earlier reports): published "
+            "prices were costed on people's time, so our price WITHOUT AI tools is scored "
+            "against them (target 1.0x)"
+            + (
+                f", and our price WITH AI tools against the published price x {target.low}-"
+                f"{target.high} (the expected AI saving; inside counts as exact)"
+                if target
+                else ""
+            )
+            + ". The quoted price sits between the two when only part of the AI saving is "
+            "passed on. Each column's P10-P90 is checked against its own target. The old "
+            "judged column follows for comparison.\n"
+        )
         titles = {"all": "All", "size": "By size (set by hand)", "derived_size": "By size (app)"}
-        for key, segments in report.segments.items():
-            sys.stdout.write(f"\n{titles.get(key, 'By client type')}\n")
-            for m in segments:
-                sys.stdout.write(
-                    f"  {BUYER_TITLES.get(m.segment, m.segment):28} n={m.projects:3}  "
-                    f"median |error| {m.median_abs_error_percent:6.1f}%  bias x{m.bias:<6}  "
-                    f"within 25%: {m.within_25_percent:3}  in P10-P90: {m.inside_range:3}  "
-                    f"band hits: {m.band_hits}\n"
+        columns = (
+            ("WITHOUT AI TOOLS vs published (target 1.0x)", report.segments_pre_ai),
+            *(
+                (
+                    (
+                        f"WITH AI TOOLS vs published x {target.low}-{target.high}",
+                        report.segments_ai_target,
+                    ),
                 )
+                if target
+                else ()
+            ),
+            ("OLD BASIS: JUDGED (for comparison)", report.segments),
+        )
+        for column, by_key in columns:
+            sys.stdout.write(f"\n=== {column} ===\n")
+            for key, segments in by_key.items():
+                sys.stdout.write(f"{titles.get(key, 'By client type')}\n")
+                for m in segments:
+                    sys.stdout.write(
+                        f"  {BUYER_TITLES.get(m.segment, m.segment):28} n={m.projects:3}  "
+                        f"median |error| {m.median_abs_error_percent:6.1f}%  bias x{m.bias:<6}"
+                        f"  within 25%: {m.within_25_percent:3}  in P10-P90: "
+                        f"{m.inside_range:3}  band hits: {m.band_hits}\n"
+                    )
 
 
 def cmd_test_email(args: argparse.Namespace) -> None:

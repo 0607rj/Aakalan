@@ -48,6 +48,7 @@ class Factors:
     gst_pbg: Any
     gst_penalty_reserve: Any
     gst_margin: Any
+    ai_kept: Any = ZERO  # the AI saving kept as margin: a fixed amount in rupees, not a factor
 
     def map(self, fn: Callable[[Decimal], Any]) -> "Factors":
         return replace(self, **{f.name: fn(getattr(self, f.name)) for f in fields(self)})
@@ -59,7 +60,8 @@ def derived_amounts(b: BaseSums, f: Factors, rate: Callable[[Decimal], Any]) -> 
     PBG = pbg_factor × (total + C)
     LD  = ld_build × build + penalty_run × run
     M   = margin × (total + C + WC + PBG + LD)
-    GST = Σ_rate rate × base_at_rate + Σ_derived gst_derived × derived
+    K   = the AI saving kept (commercial.ai_saving_kept.v1; a fixed amount, no margin on it)
+    GST = Σ_rate rate × base_at_rate + Σ_derived gst_derived × derived + gst_margin × K
     """
     c = f.contingency * b.total
     wc = f.working_capital * b.build
@@ -74,6 +76,7 @@ def derived_amounts(b: BaseSums, f: Factors, rate: Callable[[Decimal], Any]) -> 
         + f.gst_pbg * pbg
         + f.gst_penalty_reserve * ld
         + f.gst_margin * m
+        + f.gst_margin * f.ai_kept
     )
     return {
         "contingency": c,
@@ -81,6 +84,7 @@ def derived_amounts(b: BaseSums, f: Factors, rate: Callable[[Decimal], Any]) -> 
         "pbg": pbg,
         "penalty_reserve": ld,
         "margin": m,
+        "ai_saving_kept": f.ai_kept,
         "gst": gst,
     }
 
@@ -190,8 +194,13 @@ def ctx_months(t: LineBuilder) -> Decimal:
 
 
 def derived_lines(
-    ctx: PricingContext, timeline: Timeline, base: Sequence[CostLineOut]
+    ctx: PricingContext,
+    timeline: Timeline,
+    base: Sequence[CostLineOut],
+    ai_kept: tuple[LineBuilder, Decimal] | None = None,
 ) -> tuple[list[CostLineOut], Factors]:
+    """The derived commercial lines; `ai_kept` (components.ai_saving_kept) adds the AI saving
+    kept as margin, when the passthrough was answered."""
     builders: dict[str, LineBuilder] = {}
     names = {
         "contingency": "Contingency",
@@ -223,6 +232,8 @@ def derived_lines(
             f"interpolate(contingency_at_clarity, clarity {clarity:.2f})",
             interpolate(points, clarity),
         )
+        if contingency == ZERO:  # v16+: risk is priced as the expected overrun (P50 − plan)
+            t.label = "Contingency (none: the expected overrun covers risk)"
 
     wc = working_capital_factor(builders["working_capital"], timeline.delivery_duration_months)
 
@@ -278,7 +289,9 @@ def derived_lines(
         gst_pbg=gst_of("commercial.pbg"),
         gst_penalty_reserve=gst_of("commercial.penalty_reserve"),
         gst_margin=gst_of("commercial.margin"),
+        ai_kept=ai_kept[1] if ai_kept else ZERO,
     )
+    shown = [f.name for f in fields(factors) if ai_kept or f.name != "ai_kept"]
 
     def ident(rate: Decimal) -> Decimal:
         return rate
@@ -294,7 +307,7 @@ def derived_lines(
         t.step("base total", "Σ base lines (likely)", likely_base.total)
         t.step("build base", "Σ year-0 base lines", likely_base.build)
         t.step("run base", "Σ O&M-year base lines", likely_base.run)
-        t.add_input(**{f"factor_{f.name}": str(getattr(factors, f.name)) for f in fields(factors)})
+        t.add_input(**{f"factor_{name}": str(getattr(factors, name)) for name in shown})
         lines.append(
             t.finish_three_point(
                 points["low_paise"][key],
@@ -302,5 +315,10 @@ def derived_lines(
                 points["high_paise"][key],
                 gst_percent=ZERO if key == "gst" else gst_of(f"commercial.{key}"),
             )
+        )
+    if ai_kept:
+        t, kept = ai_kept
+        lines.append(
+            t.finish_three_point(kept, kept, kept, gst_percent=gst_of("commercial.margin"))
         )
     return lines, factors

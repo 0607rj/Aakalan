@@ -148,6 +148,7 @@ def programme_lines(ctx: PricingContext, timeline: Timeline) -> list[CostLineOut
             formula_id=formula,
             uncertainty_group="programme",
         )
+        t.follows_build = True  # programme months follow the build's duration
         t.driver("deadline_months")
         squeezed = timeline.status == "compressed" and ctx.p.timeline.programme_follows_deadline
         t.step(
@@ -233,6 +234,7 @@ def programme_lines(ctx: PricingContext, timeline: Timeline) -> list[CostLineOut
             formula_id="programme.om_pm.v1",
             uncertainty_group="programme",
         )
+        t.follows_build = True  # by the project's size band (or a share of the build, lean)
         t.driver("om_years")
         fte = t.param("timeline", "size_bands", idx, "om_pm_fte")
         pd_year: Decimal = t.param("calendar", "pd_per_year")

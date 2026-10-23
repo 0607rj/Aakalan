@@ -6,6 +6,19 @@ quick-estimate form) is priced by the normal engine and compared with the publis
     published today = published value × (1 + escalation_labour)^(this year − award year)
     ratio = our most-likely price (P50, matched for tax) / published today
 
+Each project is priced twice: with AI tools (as the app prices today) and without them. A
+contract awarded before AI coding tools were common (`pre_ai_until`, or the project's own
+`pre_ai` flag) is judged against our price without AI tools, a later one against our price
+with them: published prices reflect how the work was delivered when it was priced. The judged
+column is a fairer measurement, not a different price.
+
+Round 3 scoring (OPEN_QUESTIONS 151): published prices were costed on people's time, mostly
+before AI tools, so our price WITHOUT AI tools is scored against the published price (target
+1.0x), and our price WITH AI tools against the published price times the expected AI saving
+(`ai_price_target`, e.g. 0.75-0.80x: inside it counts as exact, outside is measured to the
+nearer edge, like a published band). The quoted price sits between the two when only part of
+the AI saving is passed on (`ai_passthrough`). Each column has its own P10-P90 coverage.
+
 A published price band (e.g. a review site's 10k–50k band) counts as exact when our price falls
 inside it; otherwise the ratio is taken against the nearer edge.
 
@@ -26,11 +39,11 @@ from decimal import Decimal
 from itertools import pairwise
 from pathlib import Path
 from statistics import median, quantiles
-from typing import Any
+from typing import Any, Literal
 
 import yaml
 from fastapi import HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 from app.services.engine.core import calculate
 from app.services.engine.reference import Calibration, ParameterSet, version_key
@@ -53,6 +66,8 @@ LEVEL_BY_SIZE: dict[str, LevelKey] = {
 # A benchmark's user scale (small / medium / large) as the form's number-of-users answer.
 SCALE_BY_CLASS = {"small": "up_to_10k", "medium": "up_to_1l", "large": "over_10l"}
 PERCENT = 100
+AI_USE = "ai_use"  # the form's question for the team's AI tools
+NO_AI = "none"
 
 
 class BenchmarkModel(BaseModel):
@@ -64,9 +79,47 @@ class BenchmarkModel(BaseModel):
     om_years: int = Field(ge=0)
     deadline_months: int | None = None
     features: list[str] = []
+    # how many modules of its level a feature is (round 3 scope capture; unset = 1)
+    feature_units: dict[str, int] = {}
+    # each feature's level when the scope was measured (a reading); unset = the size class's
+    feature_levels: dict[str, LevelKey] = {}
     custom_features: list[CustomFeature] = []
     hosting_included: bool = False
     helpdesk_included: bool = False
+    # people the contract places at the client's office through support, as its tender states
+    # (round 3 reading, pages in `reading.not_build`); priced as the form's onsite_staff answer
+    onsite_staff: int | None = Field(default=None, ge=1)
+
+
+class ReadModule(BaseModel):
+    """One module a tender asks to be built, counted from the document (round 3)."""
+
+    name: str
+    feature_key: str  # a quick-config feature, or "custom"
+    custom_type: str | None = None  # custom_feature_types key when feature_key is "custom"
+    stories: int = Field(ge=0)
+    level: LevelKey
+    units: int = Field(default=1, ge=1)
+    pages: str  # file and pages in the tender, to check the count
+    confidence: str = ""
+
+
+class Reading(BaseModel):
+    """How a benchmark's scope was measured from its tender (round 3): who read it, the modules
+    with their user stories and pages, and what the contract includes besides building
+    software (flags only, never priced from here)."""
+
+    reader: str
+    files: list[str] = []
+    modules: list[ReadModule]
+    not_build: list[dict[str, str]] = []
+    ready_product: bool = False
+    notes: str = ""
+
+
+ExcludeRule = Literal[
+    "staffing", "subscription", "open_ended", "not_a_new_build", "unfinished", "unreliable_price"
+]
 
 
 class Benchmark(BaseModel):
@@ -82,7 +135,30 @@ class Benchmark(BaseModel):
     confidence: str
     use: bool
     reason: str = ""
+    # why it is left out: one of the written rules at the top of the benchmark file
+    exclude_rule: ExcludeRule | None = None
+    # Whether the contract was priced before AI coding tools were common; None = by award year
+    # (BenchmarkSet.pre_ai_until).
+    pre_ai: bool | None = None
     model: BenchmarkModel
+    reading: Reading | None = None  # the scope measured from the tender (round 3)
+
+    @model_validator(mode="after")
+    def _left_out_by_a_rule(self) -> "Benchmark":
+        """A project out of the back-test names the written rule and its reason (round 3)."""
+        if not self.use and (self.exclude_rule is None or not self.reason):
+            raise ValueError(f"{self.id}: left out without an exclude_rule and a reason")
+        if self.use and self.exclude_rule is not None:
+            raise ValueError(f"{self.id}: used, yet has an exclude_rule")
+        return self
+
+
+class PriceTarget(BaseModel):
+    """Where our price with AI tools should sit, as a share of the published price."""
+
+    low: Decimal = Field(gt=0)
+    high: Decimal = Field(gt=0)
+    source: str
 
 
 class BenchmarkSet(BaseModel):
@@ -91,11 +167,20 @@ class BenchmarkSet(BaseModel):
     tax_included_when_unknown: bool = True
     # How much AI tooling vendors used in the year a contract was priced (older = none).
     ai_adoption_by_year: dict[int, str] = {}
+    # Contracts awarded up to this year are judged against our price without AI tools.
+    pre_ai_until: int | None = None
+    # Our price with AI tools is scored against published × this band (round 3 scoring).
+    ai_price_target: PriceTarget | None = None
     projects: list[Benchmark]
 
     def ai_level(self, year: int) -> str:
         known = [y for y in self.ai_adoption_by_year if y <= year]
         return self.ai_adoption_by_year[max(known)] if known else "none"
+
+    def is_pre_ai(self, b: Benchmark) -> bool:
+        if b.pre_ai is not None:
+            return b.pre_ai
+        return self.pre_ai_until is not None and b.award_year <= self.pre_ai_until
 
 
 GOVERNMENT = "government"
@@ -125,6 +210,23 @@ class BacktestRow(BaseModel):
     derived_size: str | None = None  # the size the app gives the scope (feature points)
     award_year: int | None = None
     band: bool = False  # published as a price band (inside it counts as exact)
+    # Whether the published value includes GST (our price is matched to it), and whether the
+    # source says so (False: assumed by tax_included_when_unknown). GST moves the ratio ~18%.
+    gst_inclusive: bool = True
+    gst_stated: bool = False
+    # Both prices (P50, matched for tax) and their ratios; `estimate_minor` / `ratio` above are
+    # the judged one: without AI tools for a contract priced before them (`pre_ai`).
+    pre_ai: bool = False
+    estimate_with_ai_minor: int | None = None
+    estimate_pre_ai_minor: int | None = None
+    ratio_with_ai: float | None = None
+    ratio_pre_ai: float | None = None
+    # Round 3 scoring: with AI tools against published × ai_price_target (inside counts as
+    # exact), and each column's P10-P90 against its own target (the published price, or the
+    # published price × the target band).
+    ratio_ai_target: float | None = None
+    inside_range_pre_ai: bool | None = None
+    inside_range_ai_target: bool | None = None
 
 
 class SegmentMetrics(BaseModel):
@@ -174,7 +276,13 @@ class BacktestReport(BaseModel):
     within_25_percent: int
     inside_range: int = 0  # projects whose published price falls inside our P10-P90 range
     rows: list[BacktestRow]
-    segments: dict[str, list[SegmentMetrics]] = {}  # by size, derived_size, buyer
+    segments: dict[str, list[SegmentMetrics]] = {}  # by size, derived_size, buyer (judged)
+    # the same on one column for every project: with AI tools, or without them
+    segments_with_ai: dict[str, list[SegmentMetrics]] = {}
+    segments_pre_ai: dict[str, list[SegmentMetrics]] = {}
+    # round 3 scoring: with AI tools against published × ai_price_target
+    segments_ai_target: dict[str, list[SegmentMetrics]] = {}
+    ai_price_target: PriceTarget | None = None
 
 
 def load_benchmarks(path: Path) -> BenchmarkSet:
@@ -212,6 +320,16 @@ def today_value(minor: int, award_year: int, this_year: int, escalation: Decimal
     return int((Decimal(minor) * (1 + escalation) ** years).to_integral_value())
 
 
+def overlaps(ours: tuple[int, int, int], low: int, high: int | None) -> bool:
+    """Our P10-P90 meets the target (a price, or a band)."""
+    return ours[0] <= (high or low) and low <= ours[2]
+
+
+def scaled(value: int, factor: Decimal) -> int:
+    """value × factor, rounded to whole minor units."""
+    return int((Decimal(value) * factor).to_integral_value())
+
+
 def band_ratio(ours: int, low: int, high: int | None) -> float:
     """ours / published; inside a band counts as exact, outside is measured to the nearer edge."""
     if high is None:
@@ -245,13 +363,18 @@ def benchmark_request(
     overrides: dict[str, int | float] = {"om_years": m.om_years}
     if m.deadline_months:
         overrides["deadline_months"] = m.deadline_months
+    if m.onsite_staff:
+        overrides["onsite_staff"] = m.onsite_staff
     return QuickRequest(
         name=b.title[:300],
         country=region,
         features=m.features,
         feature_levels={
-            f: LEVEL_BY_SIZE[size] for f in dict.fromkeys(m.features) if cfg.feature(f).levels
+            f: m.feature_levels.get(f, LEVEL_BY_SIZE[size])
+            for f in dict.fromkeys(m.features)
+            if cfg.feature(f).levels
         },
+        feature_units=m.feature_units,
         custom_features=m.custom_features,
         choices=choices,
         overrides=overrides,
@@ -344,6 +467,7 @@ def backtest(
     }
     escalation = params.escalation.labour
     as_of = as_of or datetime.now(UTC).date()  # pin it for a reproducible report
+    with_ai_level = str(cfg.questions[AI_USE].default)  # how the app prices today
     this_year = as_of.year
     rows = []
     for b in bench.projects:
@@ -360,19 +484,18 @@ def backtest(
             if b.value_includes_tax is not None
             else bench.tax_included_when_unknown
         )
+        pre_ai = bench.is_pre_ai(b)
         try:
-            found = estimate_range_for(
-                cfg,
-                b,
-                ref,
-                tax_included,
-                bench.ai_level(b.award_year),
-                pin_size=pin_size,
-                as_of=as_of,
+            with_ai = estimate_range_for(
+                cfg, b, ref, tax_included, with_ai_level, pin_size=pin_size, as_of=as_of
+            )
+            without_ai = estimate_range_for(
+                cfg, b, ref, tax_included, NO_AI, pin_size=pin_size, as_of=as_of
             )
             sized: str | None = derived_size(cfg, b, ref["rate_card"].region)
         except HTTPException:  # scope too thin to model (e.g. no features known)
-            found, sized = None, None
+            with_ai, without_ai, sized = None, None, None
+        found = without_ai if pre_ai else with_ai
         ours = found[1] if found else None
         low = today_value(b.value_minor, b.award_year, this_year, escalation)
         high = (
@@ -381,8 +504,15 @@ def backtest(
             else None
         )
         ratio = band_ratio(ours, low, high) if ours else None
+        ratio_with = band_ratio(with_ai[1], low, high) if with_ai else None
+        ratio_pre = band_ratio(without_ai[1], low, high) if without_ai else None
         # inside the range: our P10-P90 overlaps the published price (or its band)
-        inside = found[0] <= (high or low) and low <= found[2] if found else None
+        inside = overlaps(found, low, high) if found else None
+        # round 3: with AI tools against published × the expected AI saving (a band)
+        target = bench.ai_price_target
+        t_low = scaled(low, target.low) if target else None
+        t_high = scaled(high or low, target.high) if target else None
+        ratio_target = band_ratio(with_ai[1], t_low, t_high) if with_ai and t_low else None
         rows.append(
             BacktestRow(
                 id=b.id,
@@ -401,6 +531,18 @@ def backtest(
                 derived_size=sized,
                 award_year=b.award_year,
                 band=b.value_high_minor is not None,
+                gst_inclusive=tax_included,
+                gst_stated=b.value_includes_tax is not None,
+                pre_ai=pre_ai,
+                estimate_with_ai_minor=with_ai[1] if with_ai else None,
+                estimate_pre_ai_minor=without_ai[1] if without_ai else None,
+                ratio_with_ai=round(ratio_with, 3) if ratio_with else None,
+                ratio_pre_ai=round(ratio_pre, 3) if ratio_pre else None,
+                ratio_ai_target=round(ratio_target, 3) if ratio_target else None,
+                inside_range_pre_ai=overlaps(without_ai, low, high) if without_ai else None,
+                inside_range_ai_target=overlaps(with_ai, t_low, t_high)
+                if with_ai and t_low
+                else None,
             )
         )
     used = [r for r in rows if r.use and r.ratio]
@@ -415,8 +557,38 @@ def backtest(
         within_25_percent=sum(1 for e in errors if e <= 25),
         inside_range=sum(1 for r in used if r.inside_range),
         rows=rows,
-        segments={k: segment_metrics(rows, k) for k in ("all", "size", "derived_size", "buyer")},
+        segments={k: segment_metrics(rows, k) for k in KEYS},
+        segments_with_ai={k: segment_metrics(on_column(rows, "with_ai"), k) for k in KEYS},
+        segments_pre_ai={k: segment_metrics(on_column(rows, "pre_ai"), k) for k in KEYS},
+        segments_ai_target=(
+            {k: segment_metrics(on_column(rows, "ai_target"), k) for k in KEYS}
+            if bench.ai_price_target
+            else {}
+        ),
+        ai_price_target=bench.ai_price_target,
     )
+
+
+KEYS = ("all", "size", "derived_size", "buyer")
+
+
+def on_column(rows: list[BacktestRow], column: str) -> list[BacktestRow]:
+    """The rows judged on one column for every project: "with_ai", "pre_ai" (against the
+    published price) or "ai_target" (with AI tools against published × ai_price_target), with
+    that column's own P10-P90 coverage where it is measured ("with_ai" has none)."""
+    out = []
+    for r in rows:
+        ratio: float | None = getattr(r, f"ratio_{column}")
+        out.append(
+            r.model_copy(
+                update={
+                    "ratio": ratio,
+                    "error_percent": round((ratio - 1) * PERCENT, 1) if ratio else None,
+                    "inside_range": getattr(r, f"inside_range_{column}", None),
+                }
+            )
+        )
+    return out
 
 
 def reference_for(data: ReferenceData, country: str) -> dict[str, Any]:

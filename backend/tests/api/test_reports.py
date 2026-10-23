@@ -41,7 +41,7 @@ def test_excel_boq_matches_api_exactly(client: TestClient, admin_headers: H) -> 
         row[0]: row[1] for row in wb["Summary"].iter_rows(values_only=True) if row and row[0]
     }
     assert (
-        paise(summary["Likely price (P50: planned cost + risk allowance, with GST)"])
+        paise(summary["Likely price (P50: planned cost + expected overrun, with GST)"])
         == est["p50_paise"]
     )
     assert paise(summary["Low (P10)"]) == est["p10_paise"]

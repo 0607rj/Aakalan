@@ -53,6 +53,8 @@ export type QuickSummary = Schemas["QuickSummary"];
 export type SecondOpinionState = Schemas["SecondOpinionState"];
 export type IndependentCheck = Schemas["IndependentCheckOut"];
 export type PricedOption = Schemas["PricedOption"];
+export type NotIncluded = Schemas["NotIncluded"];
+export type StandardBlock = Schemas["StandardBlockOut"];
 export type Researched = Schemas["ResearchedOut"];
 export type PlainPart = Schemas["PlainPart"];
 export type TenderDocument = Schemas["DocumentOut"];
@@ -272,6 +274,12 @@ export const api = {
     send<QuickSummary>("POST", `/estimates/${estimateId}/check/confirm`),
   getPricedOptions: (estimateId: string) =>
     request<PricedOption[]>(`/estimates/${estimateId}/options`),
+  standardBlocks: (body: QuickRequest, signal?: AbortSignal) =>
+    request<StandardBlock[]>("/quick-estimate/standard-blocks", {
+      method: "POST",
+      body: JSON.stringify(body),
+      signal,
+    }),
 
   uploadDocument: (file: File) => {
     const form = new FormData();

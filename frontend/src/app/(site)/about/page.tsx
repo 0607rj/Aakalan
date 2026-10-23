@@ -37,7 +37,10 @@ export default function AboutPage() {
 
       <Section className="grid gap-12 py-16 sm:py-24 lg:grid-cols-[1fr_1fr]">
         <div className="flex flex-col gap-5 text-lg">
-          <h2 className="font-wide text-3xl leading-tight font-extrabold">
+          <h2
+            data-reveal
+            className="font-wide text-3xl leading-tight font-semibold"
+          >
             The question we set out to answer
           </h2>
           <p className="text-muted-foreground">
@@ -89,7 +92,9 @@ export default function AboutPage() {
 
       <div className="border-y bg-card">
         <Section className="py-16 sm:py-20">
-          <h2 className="font-wide text-3xl font-extrabold">What we hold to</h2>
+          <h2 data-reveal className="font-wide text-3xl font-semibold">
+            What we hold to
+          </h2>
           <dl className="mt-10 grid gap-x-12 gap-y-10 md:grid-cols-2">
             {PRINCIPLES.map((p) => (
               <div key={p.title} className="flex flex-col gap-2">
@@ -108,7 +113,9 @@ export default function AboutPage() {
       </div>
 
       <Section className="py-16 sm:py-20">
-        <h2 className="font-wide text-3xl font-extrabold">Who it is for</h2>
+        <h2 data-reveal className="font-wide text-3xl font-semibold">
+          Who it is for
+        </h2>
         <div className="mt-8 grid gap-8 md:grid-cols-3">
           <div>
             <h3 className="font-bold">Companies quoting a project</h3>

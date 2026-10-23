@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import {
   api,
   errorText,
+  type NotIncluded,
   type QuickOptions,
   type QuickRequest,
   type Suggestion,
@@ -31,7 +32,9 @@ import {
   QuestionHeading,
   relevantQuestions,
   setChoice,
+  shownChoice,
   StepIndicator,
+  unchosen,
   useQuestionImpact,
 } from "./parts";
 import {
@@ -55,12 +58,17 @@ import {
   VERSION,
 } from "./steps";
 import {
-  CustomFeaturesSection,
   type CustomItem,
   itemsFromTemplate,
-  ResearchedFeatures,
   toCustomFeatures,
 } from "./custom-features";
+import {
+  FeatureChoice,
+  FeatureSections,
+  featureTicks,
+  notIncludedText,
+  sentNotIncluded,
+} from "./feature-sections";
 import { ReviewForm } from "./review";
 import { UploadStep } from "./upload-step";
 
@@ -93,7 +101,8 @@ function ManualForm({
   const [projectType, setProjectType] = React.useState<string | null>(
     () => saved?.project_type ?? (saved ? OTHER_TYPE : null),
   );
-  const [showAll, setShowAll] = React.useState(false);
+  // asked for in the description, but nothing this estimate can price
+  const [notPriced, setNotPriced] = React.useState<string[]>([]);
   // features suggested from the user's own description: key -> the words that asked for it
   const [reasons, setReasons] = React.useState<Record<string, string>>({});
   const [levels, setLevels] = React.useState<Record<string, Level>>(
@@ -120,6 +129,14 @@ function ManualForm({
   const answered = React.useRef(
     new Set<string>(Object.keys(saved?.choices ?? {})),
   );
+  // the answers the user gave; the rest print on the quote as assumed ("change if wrong")
+  const [touched, setTouched] = React.useState<string[]>(
+    () => saved?.answered ?? Object.keys(saved?.choices ?? {}),
+  );
+  // features, scope items and standard blocks marked "Not included"
+  const [notIncluded, setNotIncluded] = React.useState<NotIncluded[]>(
+    () => saved?.not_included ?? [],
+  );
   const overrides = saved?.overrides ?? {};
   const [deadline, setDeadline] = React.useState(
     saved?.deadline_months ? String(saved.deadline_months) : "",
@@ -134,16 +151,11 @@ function ManualForm({
       deadlineMonths >= 1 &&
       deadlineMonths <= 60);
   const typeDone = name.trim().length > 0 && projectType !== null;
-  const canContinue =
-    typeDone && (features.length > 0 || customFeatures.length > 0);
   const kind = options.project_types.find((t) => t.key === projectType);
-  const tickable = options.features.filter((f) => !f.hidden);
-  const firstShown =
-    kind && kind.features.length > 0
-      ? tickable.filter((f) => kind.features.includes(f.key))
-      : tickable;
-  const moreShown = tickable.filter((f) => !firstShown.includes(f));
   const everything = allFeatures(options, features, choices);
+  // a mobile app, other software or old data count too (ticked through their question)
+  const canContinue =
+    typeDone && (everything.length > 0 || customFeatures.length > 0);
   const leveled = featuresWithLevels(options, everything);
   const scopeGroups = applicableScope(options, everything);
   const effective = effectiveLevels(options, everything, choices, levels);
@@ -178,19 +190,38 @@ function ManualForm({
       : steps.current;
   // Only levels picked by hand are sent; the rest follow the answers.
   const featureLevels = pickedLevels(options, everything, levels);
+  const pricedScope = chosenScope(scopeGroups, scope);
+  const ticks = featureTicks({
+    options,
+    features,
+    setFeatures,
+    everything,
+    notIncluded,
+    setNotIncluded,
+  });
+  const { unmark, toggleOut } = ticks;
   const request: QuickRequest = {
     name: name.trim(),
     project_type: projectType,
     country: options.country,
     features,
     feature_levels: featureLevels,
+    // a template keeps its features' module counts (only for features still ticked)
+    feature_units: Object.fromEntries(
+      Object.entries(saved?.feature_units ?? {}).filter(([k]) =>
+        everything.includes(k),
+      ),
+    ),
     custom_features: customFeatures,
     choices,
-    scope: chosenScope(scopeGroups, scope),
+    scope: pricedScope,
     deadline_months: deadlineValid ? deadlineMonths : null,
     document_id: documentId,
     overrides,
     mode: "vendor",
+    // an answer may have added a feature marked not included (e.g. an app): it is priced
+    not_included: sentNotIncluded(notIncluded, everything, pricedScope),
+    answered: touched,
   };
   const impacts = useQuestionImpact(
     (current.startsWith("q:") || current === "details") && canContinue
@@ -200,6 +231,7 @@ function ManualForm({
 
   function change(key: string, value: Choice) {
     answered.current.add(key);
+    setTouched((now) => (now.includes(key) ? now : [...now, key]));
     if (key === VERSION) setLevels({}); // a new overall level resets hand-picked ones
     setChoices((now) =>
       setChoice(options.questions, now, answered.current, key, value),
@@ -207,9 +239,32 @@ function ManualForm({
   }
   const currency = optionsCurrency(options);
 
-  function toggle(key: string) {
-    setFeatures((now) =>
-      now.includes(key) ? now.filter((k) => k !== key) : [...now, key],
+  const removedBlocks = notIncluded.filter((n) => n.kind === "standard");
+
+  // features found in the description, with the words (ruled-out ones too, with theirs)
+  const ruledOut = notIncluded.filter(
+    (n) => n.kind === "feature" && n.quote !== "",
+  );
+  const foundKeys = [
+    ...new Set([...Object.keys(reasons), ...ruledOut.map((n) => n.key)]),
+  ].filter((k) => options.features.some((f) => f.key === k));
+  const described = customItems.filter((i) => i.fromDescription !== undefined);
+
+  /** One feature with its three states and the words behind it. */
+  function card(key: string) {
+    const out = notIncluded.find((n) => n.kind === "feature" && n.key === key);
+    return (
+      <FeatureChoice
+        key={key}
+        options={options}
+        featureKey={key}
+        ticks={ticks}
+        onTick={(k) => ticks.tick(k, change)}
+        notIncluded={notIncluded}
+      >
+        <FromWords quote={reasons[key]} />
+        <RuledOutBecause quote={out?.quote} />
+      </FeatureChoice>
     );
   }
 
@@ -279,12 +334,7 @@ function ManualForm({
                   type="button"
                   role="radio"
                   aria-checked={active}
-                  onClick={() => {
-                    setProjectType(t.key);
-                    setShowAll(false);
-                    // start with the usual features, unless some are already ticked
-                    if (features.length === 0) setFeatures(t.suggested);
-                  }}
+                  onClick={() => setProjectType(t.key)}
                   className={cn(
                     "flex flex-col gap-1 rounded-xl border bg-card p-4 text-left transition-colors",
                     active
@@ -308,15 +358,14 @@ function ManualForm({
           />
         </section>
       ) : current === "features" ? (
-        <section className="flex flex-col gap-6">
+        <section className="flex flex-col gap-8">
           <div>
             <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
               What should it do?
             </h1>
             <p className="mt-1 text-muted-foreground">
-              {kind && kind.features.length > 0
-                ? `The usual features for ${kind.label.toLowerCase()}. We ticked the most common; change anything.`
-                : "Tick everything the software should do."}
+              Describe it and we find the features, or tick them yourself. Each
+              feature can be ticked, left out, or marked not included.
             </p>
           </div>
           <DescribeBox
@@ -328,19 +377,56 @@ function ManualForm({
               setReasons(
                 Object.fromEntries(s.features.map((f) => [f.key, f.quote])),
               );
+              setNotPriced(s.not_priced ?? []);
+              // what the words rule out ("no mobile app"): marked not included
+              const out: NotIncluded[] = [
+                ...(s.excluded ?? []).map((f) => ({
+                  kind: "feature" as const,
+                  key: f.key,
+                  quote: f.quote,
+                })),
+                ...(s.excluded_scope ?? []).map((i) => ({
+                  kind: "scope" as const,
+                  key: i.key,
+                  quote: i.quote,
+                })),
+              ];
+              const outKeys = new Set(out.map((o) => o.key));
               setFeatures((now) => [
-                ...new Set([...now, ...keys.filter((k) => tickable.has(k))]),
+                ...new Set([
+                  ...now.filter((k) => !outKeys.has(k)),
+                  ...keys.filter((k) => tickable.has(k)),
+                ]),
               ]);
               // a mobile app, other software or old data: answer those questions
-              const implied = {
+              const implied: Record<string, Choice> = {
                 ...presetFromFeatures(
                   options,
                   keys.filter((k) => !tickable.has(k)),
                 ),
                 ...s.choices,
               };
+              // one ruled out that an answer adds (an app): the answer without it
+              for (const o of out) {
+                if (o.kind !== "feature" || tickable.has(o.key)) continue;
+                const q = options.questions.find((x) =>
+                  x.options.some((opt) => o.key in (opt.add_features ?? {})),
+                );
+                const keep = q?.options.find(
+                  (opt) => !(o.key in (opt.add_features ?? {})) && !opt.unsure,
+                );
+                if (q && keep) implied[q.key] = keep.value;
+              }
               for (const key of Object.keys(implied)) answered.current.add(key);
+              setTouched((now) => [
+                ...new Set([...now, ...Object.keys(implied)]),
+              ]);
               setChoices((now) => ({ ...now, ...implied }));
+              setScope((now) => now.filter((k) => !outKeys.has(k)));
+              setNotIncluded((now) => [
+                ...now.filter((n) => !outKeys.has(n.key)),
+                ...out,
+              ]);
               const items = s.scope ?? [];
               setScopeReasons(
                 Object.fromEntries(
@@ -352,88 +438,84 @@ function ManualForm({
                   ]),
                 ),
               );
-              if (keys.some((k) => moreShown.some((f) => f.key === k))) {
-                setShowAll(true);
-              }
-              if (s.other_features.length > 0) {
-                setCustomItems((now) => [
-                  ...now,
-                  ...s.other_features.map((o, i) => ({
-                    id: `described-${Date.now()}-${i}`,
-                    name: o.name,
-                    category: o.category,
-                    size: o.size as "S" | "M" | "L",
-                    foundIndex: null,
-                    description: o.description,
-                    evidence: [],
-                    included: true,
-                  })),
-                ]);
-              }
+              // not in our list: priced as the user's own features, shown under "Found"
+              setCustomItems((now) => [
+                ...now.filter((i) => i.fromDescription === undefined),
+                ...s.other_features.map((o, i) => ({
+                  id: `described-${Date.now()}-${i}`,
+                  name: o.name,
+                  category: o.category,
+                  size: o.size as "S" | "M" | "L",
+                  foundIndex: null,
+                  description: o.description,
+                  evidence: [],
+                  included: true,
+                  fromDescription: o.evidence[0]?.quote ?? o.name,
+                })),
+              ]);
             }}
           />
-          <div className="grid gap-3 sm:grid-cols-2">
-            {firstShown.map((feature) => (
-              <FeatureCard
-                key={feature.key}
-                label={feature.label}
-                hint={feature.hint}
-                checked={features.includes(feature.key)}
-                onToggle={() => toggle(feature.key)}
-              >
-                <SuggestedBecause quote={reasons[feature.key]} />
-              </FeatureCard>
-            ))}
-          </div>
-          {moreShown.length > 0 ? (
-            <div className="flex flex-col gap-3">
-              <button
-                type="button"
-                onClick={() => setShowAll((v) => !v)}
-                className="w-fit text-sm font-medium text-primary hover:underline"
-              >
-                {showAll
-                  ? "Hide more features"
-                  : `More features (${moreShown.length})${
-                      moreShown.some((f) => features.includes(f.key))
-                        ? " — some ticked"
-                        : ""
-                    }`}
-              </button>
-              {showAll ? (
-                <div className="grid gap-3 sm:grid-cols-2">
-                  {moreShown.map((feature) => (
-                    <FeatureCard
-                      key={feature.key}
-                      label={feature.label}
-                      hint={feature.hint}
-                      checked={features.includes(feature.key)}
-                      onToggle={() => toggle(feature.key)}
-                    >
-                      <SuggestedBecause quote={reasons[feature.key]} />
-                    </FeatureCard>
-                  ))}
+
+          <FeatureSections
+            options={options}
+            foundTitle="Found in your description"
+            foundKeys={foundKeys}
+            foundCount={foundKeys.length + described.length}
+            found={
+              <>
+                {foundKeys.map((key) => card(key))}
+                {described.map((item) => (
+                  <FeatureCard
+                    key={item.id}
+                    label={item.name}
+                    hint="Not in our list: priced as your own feature"
+                    checked={item.included}
+                    onToggle={() =>
+                      setCustomItems((now) =>
+                        now.map((i) =>
+                          i.id === item.id
+                            ? { ...i, included: !i.included }
+                            : i,
+                        ),
+                      )
+                    }
+                  >
+                    <FromWords quote={item.fromDescription} />
+                  </FeatureCard>
+                ))}
+              </>
+            }
+            foundNote={
+              notPriced.length > 0 ? (
+                <div className="rounded-xl border border-dashed px-4 py-3 text-sm">
+                  <span className="font-medium">
+                    Asked for, but not priced by this estimate:
+                  </span>{" "}
+                  {notPriced.join(", ")}. Price these separately if they are
+                  needed.
                 </div>
-              ) : null}
-            </div>
-          ) : null}
-          <ResearchedFeatures
-            researched={options.researched ?? []}
-            items={customItems}
-            onChange={setCustomItems}
+              ) : null
+            }
+            emptyHint="Describe your project to find features, or browse all below."
+            card={card}
+            isTicked={ticks.isTicked}
+            kindFeatures={kind?.features ?? []}
+            blocksBody={
+              typeDone ? { ...request, not_included: [], answered: null } : null
+            }
+            removedBlocks={removedBlocks.map((n) => n.key)}
+            onToggleBlock={(key) => toggleOut("standard", key)}
+            customItems={customItems}
+            onCustomItems={setCustomItems}
           />
-          <CustomFeaturesSection
-            items={customItems}
-            onChange={setCustomItems}
-            types={options.custom_feature_types}
-          />
+
           <StepButtons
             onBack={steps.prev}
             onNext={steps.next}
             nextDisabled={!canContinue}
             hint={
               canContinue
-                ? `${features.length + customFeatures.length} selected`
+                ? `${everything.length + customFeatures.length} selected`
                 : "Tick or add at least one feature to continue."
             }
           />
@@ -452,16 +534,21 @@ function ManualForm({
             notes={Object.fromEntries(
               Object.entries(scopeReasons).map(([k, quote]) => [
                 k,
-                <SuggestedBecause key={k} quote={quote} />,
+                <FromWords key={k} quote={quote} />,
               ]),
             )}
-            onToggle={(key) =>
+            onToggle={(key) => {
               setScope((now) =>
                 now.includes(key)
                   ? now.filter((k) => k !== key)
                   : [...now, key],
-              )
-            }
+              );
+              unmark("scope", key);
+            }}
+            notIncluded={notIncluded
+              .filter((n) => n.kind === "scope")
+              .map((n) => n.key)}
+            onNotIncluded={(key) => toggleOut("scope", key)}
           />
           <StepButtons onBack={steps.prev} onNext={steps.next} />
         </>
@@ -486,7 +573,7 @@ function ManualForm({
           />
           <QuestionGroup
             question={question}
-            value={choices[question.key] ?? question.default}
+            value={shownChoice(question, choices)}
             impact={impacts.get(question.key)}
             currency={currency}
             hideLegend
@@ -504,7 +591,16 @@ function ManualForm({
               Want to set each feature yourself? Change levels →
             </button>
           ) : null}
-          <StepButtons onBack={steps.prev} onNext={steps.next} />
+          <StepButtons
+            onBack={steps.prev}
+            onNext={steps.next}
+            nextDisabled={unchosen([question], choices).length > 0}
+            hint={
+              unchosen([question], choices).length > 0
+                ? "Pick an answer to continue."
+                : null
+            }
+          />
         </section>
       ) : current === "details" ? (
         <>
@@ -588,6 +684,11 @@ function ManualForm({
                 value: answerLabel(q, choices[q.key]),
               })),
               {
+                step: "features",
+                label: "Not included",
+                value: notIncludedText(options, notIncluded),
+              },
+              {
                 step: "deadline",
                 label: "Deadline",
                 value: deadlineMonths ? `${deadlineMonths} months` : "None",
@@ -600,7 +701,14 @@ function ManualForm({
             onBack={steps.prev}
             onNext={submit}
             nextLabel="Calculate my cost"
-            nextDisabled={!deadlineValid}
+            nextDisabled={
+              !deadlineValid || unchosen(questions, choices).length > 0
+            }
+            hint={
+              unchosen(questions, choices).length > 0
+                ? `Answer: ${unchosen(questions, choices)[0].label}`
+                : null
+            }
           />
         </>
       )}
@@ -631,7 +739,7 @@ function DescribeBox({
       setMessage(
         (found === 0
           ? "We could not match any feature to this. Please tick them below."
-          : `We ticked ${found} feature${found === 1 ? "" : "s"} from your description. Check them below and add anything missing.`) +
+          : `We found ${found} feature${found === 1 ? "" : "s"} in your description. Check them below and add anything missing.`) +
           (s.note ? ` ${s.note}` : ""),
       );
     } catch (e) {
@@ -644,7 +752,7 @@ function DescribeBox({
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-primary/30 bg-primary/5 p-4">
       <Label htmlFor="describe" className="text-base font-semibold">
-        Describe it in a few lines (optional)
+        Describe your project
       </Label>
       <textarea
         id="describe"
@@ -657,7 +765,7 @@ function DescribeBox({
       />
       <div className="flex flex-wrap items-center gap-3">
         <Button onClick={suggest} disabled={!ready || busy}>
-          {busy ? "Reading…" : "Suggest features"}
+          {busy ? "Reading…" : "Find features"}
         </Button>
         <span className="text-sm text-muted-foreground">
           We only tick features; you can untick them or add others yourself.
@@ -669,12 +777,18 @@ function DescribeBox({
   );
 }
 
-/** Under a feature ticked from the description: the user's words that asked for it. */
-function SuggestedBecause({ quote }: { quote?: string }) {
+/** Under a feature found in the description: the user's words it came from. */
+function FromWords({ quote }: { quote?: string }) {
+  if (!quote) return null;
+  return <span className="text-sm text-primary">from: “{quote}”</span>;
+}
+
+/** Under a feature marked not included from the description: the words that ruled it out. */
+function RuledOutBecause({ quote }: { quote?: string }) {
   if (!quote) return null;
   return (
-    <span className="text-sm text-primary">
-      Suggested because you wrote: “{quote}”
+    <span className="text-sm text-muted-foreground">
+      Marked not included because you wrote: “{quote}”
     </span>
   );
 }

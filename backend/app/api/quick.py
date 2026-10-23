@@ -23,6 +23,7 @@ from app.services.quick.service import (
     feature_level_options,
     priced_options,
     question_impact,
+    standard_blocks,
     summarise,
     summary_for,
 )
@@ -38,6 +39,7 @@ class OptionOut(BaseModel):
     label: str
     hint: str
     unsure: bool = False  # "Not sure": the usual answer, with a wider range
+    left_out: bool = False  # "Not sure" that leaves the item out and quotes it as an option
     max_users: int | None = None  # scale options: the most users it covers (None = no limit)
     add_features: dict[str, str | None] = {}  # features this answer adds (and their level)
     feature_level: str | None = None  # default level of every feature (MVP / full product)
@@ -55,6 +57,7 @@ class QuestionOut(BaseModel):
     default_by: dict[str, dict[str, str | int]] = {}  # default that follows another answer
     on_upload: str = "ask"  # document = on file upload, the document decides; never asked
     answered_by_number: str | None = None  # not asked when this number is known
+    must_choose: bool = False  # nothing pre-selected: the user must pick an answer
 
 
 class LevelOut(BaseModel):
@@ -126,6 +129,8 @@ class QuickOptions(BaseModel):
     custom_feature_types: list[CustomTypeOut]
     scope: list[ScopeGroupOut] = []  # what else a feature may need (QuickRequest.scope)
     researched: list[ResearchedOut] = []  # the company's researched features, by section
+    # "Not mentioned: do you need these?": features often needed (at most 8), in order
+    commonly_needed: list[str] = []
 
 
 def researched_options(db: DbSession, org_id: str, types: set[str]) -> list[ResearchedOut]:
@@ -222,6 +227,7 @@ def options(db: DbSession, user: CurrentUser, country: str = "india") -> QuickOp
                         label=o.label,
                         hint=o.hint,
                         unsure=o.unsure,
+                        left_out=bool(o.left_out),
                         add_features=dict(o.add_features),
                         feature_level=o.feature_level,
                         max_users=o.max_users,
@@ -236,6 +242,7 @@ def options(db: DbSession, user: CurrentUser, country: str = "india") -> QuickOp
                 group=q.group,
                 on_upload=q.on_upload,
                 answered_by_number=q.answered_by_number,
+                must_choose=q.must_choose,
             )
             for key, q in cfg.questions.items()
             if q.group != "hidden"
@@ -244,6 +251,7 @@ def options(db: DbSession, user: CurrentUser, country: str = "india") -> QuickOp
             CustomTypeOut(key=k, label=t.label) for k, t in cfg.custom_feature_types.items()
         ],
         researched=researched_options(db, user.org_id, set(cfg.custom_feature_types)),
+        commonly_needed=cfg.commonly_needed,
     )
 
 
@@ -329,6 +337,28 @@ def ask_second_opinion(estimate_id: str, db: DbSession, user: EditorUser) -> Sec
 def impact(body: QuickRequest, db: DbSession, user: CurrentUser) -> list[QuestionImpact]:
     """Which questions change the price most for this form (nothing is saved)."""
     return question_impact(db, user, quick_config(), body)
+
+
+class StandardBlockOut(BaseModel):
+    key: str  # catalog block key (QuickRequest.not_included kind "standard")
+    label: str
+    hint: str
+
+
+@router.post("/quick-estimate/standard-blocks", response_model=list[StandardBlockOut])
+def standard(body: QuickRequest, _user: CurrentUser) -> list[StandardBlockOut]:
+    """The standard building blocks this form brings at its size (nothing is saved or
+    priced): the form lists them as included by default, and each can be unticked."""
+    cfg = quick_config()
+    out = []
+    for key in standard_blocks(cfg, body):
+        block = cfg.standard_blocks.get(key)
+        out.append(
+            StandardBlockOut(
+                key=key, label=block.label if block else key, hint=block.hint if block else ""
+            )
+        )
+    return out
 
 
 class DescribeIn(BaseModel):

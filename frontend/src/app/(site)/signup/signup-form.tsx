@@ -16,11 +16,10 @@ import { api, setToken } from "@/lib/api/client";
 
 const MIN_PASSWORD = 8;
 
-/** A new account and company; then the emailed code confirms the address and signs in. */
+/** A new account (name, email, password); then the emailed code confirms the address and signs in. */
 export function SignupForm() {
   const router = useRouter();
   const [fullName, setFullName] = React.useState("");
-  const [company, setCompany] = React.useState("");
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [error, setError] = React.useState<string | null>(null);
@@ -34,7 +33,6 @@ export function SignupForm() {
     try {
       const sent = await api.signup({
         full_name: fullName,
-        company,
         email,
         password,
       });
@@ -61,13 +59,12 @@ export function SignupForm() {
 
   const ready =
     fullName.trim() !== "" &&
-    company.trim() !== "" &&
     email.trim() !== "" &&
     password.length >= MIN_PASSWORD;
   return (
     <AuthCard
       title="Create an account"
-      description="Your own space for your company's estimates. We'll email you a code to confirm your address."
+      description="We'll email you a code to confirm your address."
       footer={
         <span>
           Already have an account?{" "}
@@ -89,15 +86,8 @@ export function SignupForm() {
           onChange={setFullName}
         />
         <TextField
-          id="company"
-          label="Company"
-          autoComplete="organization"
-          value={company}
-          onChange={setCompany}
-        />
-        <TextField
           id="email"
-          label="Work email"
+          label="Email"
           type="email"
           autoComplete="email"
           value={email}

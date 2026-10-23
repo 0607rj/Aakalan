@@ -18,6 +18,7 @@ HEADER_FILL = PatternFill("solid", fgColor="1F2A44")
 TITLE = Font(bold=True, size=14)
 WIDE = 60
 NORMAL = 16
+WIDE_COLUMNS = {"Item", "Query", "Assumption", "Clauses", "Question", "Why", "Other answers"}
 
 
 def _money(paise: int | None) -> Any:
@@ -39,9 +40,7 @@ def _table(
         for col in money_cols:
             ws.cell(row=ws.max_row, column=col).number_format = money_fmt
     for i, h in enumerate(headers, start=1):
-        ws.column_dimensions[get_column_letter(i)].width = (
-            WIDE if h in {"Item", "Query", "Assumption", "Clauses"} else NORMAL
-        )
+        ws.column_dimensions[get_column_letter(i)].width = WIDE if h in WIDE_COLUMNS else NORMAL
     ws.freeze_panes = "A2"
 
 
@@ -60,10 +59,10 @@ def build_boq(data: ReportData) -> bytes:
         ("Rate card / parameters", f"{e.rate_card_version} / {e.parameter_set_version}"),
         ("Seed", e.seed),
         ("Low (P10)", _money(e.p10_paise)),
-        ("Likely price (P50: planned cost + risk allowance, with GST)", _money(e.p50_paise)),
+        ("Likely price (P50: planned cost + expected overrun, with GST)", _money(e.p50_paise)),
         ("High (P90)", _money(e.p90_paise)),
         (
-            "Planned cost (sum of the planned lines, before the risk allowance)",
+            "Planned cost (sum of the planned lines, before the expected overrun)",
             _money(e.likely_paise),
         ),
         ("Likely price without GST", _money(s.likely_without_tax_paise)),
@@ -175,6 +174,24 @@ def build_boq(data: ReportData) -> bytes:
             {2, 3},
         )
 
+    if s.assumed:
+        assumed = wb.create_sheet("Assumed answers")
+        _table(
+            money_fmt,
+            assumed,
+            ["Question", "Assumed answer (change if wrong)", "Meaning"],
+            ([a.question, a.answer, a.detail] for a in s.assumed),
+            set(),
+        )
+    not_included = data.not_included_rows()
+    if not_included:
+        excluded = wb.create_sheet("Not included")
+        _table(money_fmt, excluded, ["Item", "Why"], not_included, set())
+    open_rows = data.open_rows()
+    if open_rows:
+        open_sheet = wb.create_sheet("Open answers")
+        _table(money_fmt, open_sheet, ["Question", "Priced as", "Other answers"], open_rows, set())
+
     manpower = wb.create_sheet("Manpower")
     _table(
         money_fmt,
@@ -193,11 +210,7 @@ def build_boq(data: ReportData) -> bytes:
         money_fmt,
         assumptions,
         ["Key", "Assumption"],
-        (
-            [a.key, a.text]
-            for a in e.assumptions
-            if data.margin_visible or a.key != "margin_percent"
-        ),
+        ([a.key, a.text] for a in data.assumptions()),
         set(),
     )
 

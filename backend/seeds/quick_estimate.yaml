@@ -313,6 +313,13 @@ sizing:
     source: "placeholder, reasoned: the catalog sizes S = a few screens, M = a full module with workflow, L = a large sub-system; about 1-3, 4-8 and 9+ user stories (2026-10-22); calibrate on recorded projects"
     basic_max: 3
     standard_max: 8
+    # Round 3 (OPEN_QUESTIONS 152): one advanced block covers up to 15 stories; a feature with
+    # more is several advanced modules (ceil(stories / 15)), so a large sub-system is measured
+    # instead of capped at one block. 15 continues the doubling of 3 and 8 (placeholder).
+    advanced_max: 15
+  # The most modules one feature or extra feature can be (an ERP of 83 modules is one extra
+  # feature of 83 standard modules). Placeholder: a limit against typing mistakes only.
+  max_units: 100
   tiers:
     - max_points: 4
       project_size: small
@@ -367,10 +374,12 @@ questions:
       - {value: web, label: Website, hint: "Works in the browser on phones and computers", answers: {}}
       - {value: web_mobile, label: Website and app, hint: "A website and an app for Android and iPhone", add_features: {mobile_app: null}, answers: {}}
       - {value: app, label: Mobile app only, hint: "An app for Android and iPhone, with a simple web admin panel to manage it", add_features: {mobile_app: null}, answers: {}}
+      - {value: not_sure, label: Not sure, hint: "We price a website and show a wider range; the price of adding an app is shown with the estimate", unsure: true, answers: {}}
   scale:
     label: How many people will use it?
     default: up_to_10k
     answered_by_number: users_total   # a stated user count picks the option
+    detail: "{users_total:,} users, {peak_concurrent_users:,} at the same time"
     options:
       - {value: up_to_100, max_users: 100, label: Up to 100, hint: "A team or a small office", answers: {users_total: 100, peak_concurrent_users: 10, documents_per_month: 50, chatbot_queries_per_day: 20}}
       - {value: up_to_1k, max_users: 1000, label: "100 – 1,000", hint: "A company or a few branches", answers: {users_total: 1000, peak_concurrent_users: 50, documents_per_month: 200, chatbot_queries_per_day: 100}}
@@ -387,7 +396,9 @@ questions:
       - {value: none, label: "No", hint: "It works on its own", answers: {}}
       - {value: one_two, label: "Yes, one or two", hint: "e.g. accounting software (Tally, SAP) or an existing app", add_features: {connect_existing: standard}, answers: {}}
       - {value: many, label: "Yes, several", hint: "Many systems, kept in sync", add_features: {connect_existing: advanced}, answers: {}}
-      - {value: not_sure, label: Not sure, hint: "We assume one or two and show a wider range", add_features: {connect_existing: standard}, unsure: true, answers: {}}
+      # v3 (OPEN_QUESTIONS 147): "Not sure" leaves the connections out of the price and quotes
+      # them as an option; until then it priced one or two (connect_existing standard)
+      - {value: not_sure, label: Not sure, hint: "Not in the price: quoted separately, in case it is needed", left_out: {connect_existing: standard}, unsure: true, answers: {}}
   old_data:
     label: Do you need to bring in data from an old system?
     group: detail  # optional: skipped = the usual answer, which is priced
@@ -396,7 +407,9 @@ questions:
       - {value: "no", label: "No", hint: "Starting fresh", answers: {}}
       - {value: little, label: "Yes, a little", hint: "One or two spreadsheets", add_features: {old_data: basic}, answers: {}}
       - {value: lot, label: "Yes, a lot", hint: "Years of records from old software", add_features: {old_data: advanced}, answers: {}}
-      - {value: not_sure, label: Not sure, hint: "We assume a few tables and show a wider range", add_features: {old_data: standard}, unsure: true, answers: {}}
+      # v3 (OPEN_QUESTIONS 147): "Not sure" leaves the data move out of the price and quotes it
+      # as an option; until then it priced a few tables (old_data standard)
+      - {value: not_sure, label: Not sure, hint: "Not in the price: quoted separately, in case it is needed", left_out: {old_data: standard}, unsure: true, answers: {}}
   build_type:
     # asked on the form and after an upload (unless the document says): what the build reuses
     # changes the price a lot (parameter sets v19+: reuse)
@@ -475,6 +488,7 @@ questions:
     options:
       - {value: "no", label: "No", hint: "No penalty clause", answers: {penalty_clause: false}}
       - {value: "yes", label: "Yes", hint: "Liquidated damages or service-level penalties: a small reserve is priced", answers: {penalty_clause: true}}
+      - {value: not_sure, label: Not sure, hint: "We price no penalty clause and show a wider range", unsure: true, answers: {penalty_clause: false}}
   web_domain:
     # free from NIC only for a .gov.in / .nic.in address the document names (v19+)
     label: What web address will it use?
@@ -483,6 +497,18 @@ questions:
     options:
       - {value: commercial, label: "A .in or .com address", hint: "Bought from a registrar every year", answers: {web_domain: commercial}}
       - {value: gov_in, label: "A .gov.in or .nic.in address", hint: "Free from NIC for government bodies", answers: {web_domain: gov_in}}
+      - {value: client, label: "The client provides it", hint: "The document says the client gives the address (no cost in the price)", answers: {domain_in_scope: false}}
+  ssl_certificate:
+    # v20 parameter sets: a free certificate unless the document asks for OV; nothing to pay when
+    # the client provides it. Most documents never mention it, which is not a gap.
+    label: Which SSL certificate does it need?
+    group: document
+    default: free
+    silent_means_usual: true
+    options:
+      - {value: free, label: "A free certificate (Let's Encrypt)", hint: "Domain-validated, renewed automatically", answers: {ssl_type: dv_free}}
+      - {value: ov, label: "An organisation-validated (OV or EV) certificate", hint: "When the document asks for OV or EV", answers: {ssl_type: ov}}
+      - {value: client, label: "The client provides it", hint: "The document says the client gives the certificate (no cost in the price)", answers: {ssl_in_scope: false}}
   security_audit:
     label: Do you need an independent security check before launch?
     group: document   # not asked on the form; read from an uploaded document, else the usual answer
@@ -505,6 +531,7 @@ questions:
       - {value: ready, label: "Yes, the design is ready", hint: "Screens already designed (e.g. in Figma), or a brand guide to follow closely", component_complexity: {ui_ux_design: low}, answers: {}}
       - {value: some, label: "A little (logo and colours)", hint: "The team designs the screens", answers: {}}
       - {value: custom, label: "No, we want a special design", hint: "A unique look with custom illustrations and animations", component_complexity: {ui_ux_design: high}, answers: {}}
+      - {value: not_sure, label: Not sure, hint: "We price the team designing the screens and show a wider range", unsure: true, answers: {}}
   chatbot_task:
     label: What should the chatbot handle?
     group: detail
@@ -514,6 +541,7 @@ questions:
     options:
       - {value: simple, label: Common questions, hint: "FAQs and information from your documents (a smaller, cheaper AI model)", answers: {ai_model_tier: simple}}
       - {value: advanced, label: Complex questions, hint: "Reasoning over many documents and multi-step help (a larger AI model, costs more per question)", answers: {ai_model_tier: advanced}}
+      - {value: not_sure, label: Not sure, hint: "We price common questions and show a wider range", unsure: true, answers: {ai_model_tier: simple}}
   chatbot_volume:
     label: About how many questions will the chatbot answer each day?
     group: document   # not asked on the form; read from an uploaded document, else the usual answer
@@ -537,10 +565,25 @@ questions:
     label: How long are staff needed at the client's office?
     group: document   # not asked on the form; read from an uploaded document, else the usual answer
     default: support
+    only_with_override: onsite_staff
     options:
       - {value: support, label: Throughout support, hint: "Every year of support after launch", answers: {}}
       - {value: event, label: Only during an event or the launch, hint: "A few days (onsite_event_days), priced once", answers: {}}
   # --- not asked ---------------------------------------------------------------------------
+  # A sales decision, asked on every estimate (nothing pre-selected): the share of the AI saving
+  # the price passes to the client; the rest is kept as margin (engine ai_passthrough_percent).
+  # The default only serves requests that do not send it (API, back-test, older estimates
+  # re-priced): all passed through, as before the question existed. OPEN_QUESTIONS 145.
+  ai_passthrough:
+    label: How much of the AI saving do you pass on to the client?
+    default: all
+    must_choose: true
+    options:
+      - {value: all, label: All of it, hint: "Lowest price. For competitive and government tenders, where the lowest bid wins", answers: {ai_passthrough_percent: 1}}
+      - {value: most, label: Most of it (75%), hint: "Still a competitive price, with a little extra margin", answers: {ai_passthrough_percent: 0.75}}
+      - {value: half, label: Half, hint: "Between the two", answers: {ai_passthrough_percent: 0.5}}
+      - {value: keep, label: Keep it, hint: "For private or negotiated work: the price stays at the usual level and the saving is your margin", answers: {ai_passthrough_percent: 0}}
+
   ai_use:
     label: How much will the development team use AI tools (like Claude or Copilot)?
     group: hidden   # the company's own setting (Settings); the back-test sets it by award year
@@ -914,6 +957,46 @@ always_included:
     - {key: running, label: "Hosting, backups and restore, SSL certificate, domain, basic uptime monitoring"}
     - {key: manuals, label: "User manuals, admin guides, technical documentation, training of users"}
 
+# "Not mentioned: do you need these?" on the features screen: the features most often needed
+# that a short description leaves out, at most these 8 (those the description found are shown
+# under "Found" instead). The kind of software only changes their order (its features first).
+# Features added by a question (mobile app, other software, old data) are ticked by setting
+# that question's usual answer. Reasoned list, agreed with the user (2026-10-23).
+commonly_needed: [old_data, mobile_app, connect_existing, payments, notifications, dashboards, documents, search]
+
+# What a CMS already has (OPEN_QUESTIONS 154). Built on a CMS, these features, and extra
+# features whose names say they are the CMS's own parts, are set up rather than built: at most
+# the basic level, one module each, with `note` in the quote. Without this a tender read story
+# by story prices every built-in capability of the product as work to build (the Indian Bank
+# websites tender: 140 stories, 1.95x its published price). Business workflows, payments,
+# integrations and data migration are not on the list: a CMS does not ship them.
+cms_built_in:
+  source: "placeholder: the core features of Drupal (https://www.drupal.org/docs/core-modules-and-themes/core-modules) and WordPress (https://wordpress.org/about/features/): pages and news, search, translation, media and file library, forms (Drupal Webform), editor, revisions, roles, SEO fields; the level is a guess, not measured"
+  build_types: [cms]
+  features: [public_website, search, languages, documents, online_forms]
+  level: basic
+  extra_words: [cms, content management, editor, publishing, page builder, page building, templates, microsite, microsites, versioning, revisions, archive, seo, media library]
+  note: "Already part of the CMS: set up, not built."
+
+# The standard building blocks in plain words: the form lists those of the project's size as
+# "included by default" and the user may untick one (it is then left out of the price and the
+# quote says so). Labels only; what each block costs comes from the catalog.
+standard_blocks:
+  discovery_requirement_study: {label: "Requirement study", hint: "Workshops to agree what is built, written down before work starts"}
+  solution_architecture: {label: "Technical design", hint: "How the system is put together: servers, database, security"}
+  ui_ux_design: {label: "Screen design", hint: "How every screen looks and works"}
+  user_management_rbac: {label: "Sign-in, users and roles", hint: "Login, password reset, roles and who may see what"}
+  responsive_frontend: {label: "Screens that work on phones and computers", hint: "Menus, navigation and forms that fit any screen"}
+  audit_trail_logging: {label: "Audit log", hint: "A record of who did what and when"}
+  security_hardening: {label: "Security set-up", hint: "Protection against common attacks"}
+  notifications: {label: "Email and SMS alerts", hint: "Messages the system sends to users"}
+  integration_sms_email_gateway: {label: "SMS and email service connection", hint: "Connecting to the SMS and email provider"}
+  functional_testing_uat_support: {label: "Testing", hint: "Test cases, bug fixing and help while users test it"}
+  documentation_manuals: {label: "Manuals", hint: "User and admin guides"}
+  devops_cicd_setup: {label: "Servers and release set-up", hint: "Test and live environments, automatic deployment"}
+  performance_load_testing: {label: "Load testing", hint: "Checking it stays fast with many users at once"}
+  vapt_remediation: {label: "Fixing security audit findings", hint: "Fixing what the outside security audit finds"}
+
 # Research for a feature the catalog lacks (services/research; prompts in app/llm/prompts).
 # Only with an AI key; without one the custom feature type prices it, as before. Order: a
 # catalog block with a close name; else published hours from the web (the AI searches with the
@@ -994,6 +1077,9 @@ cost_items:
   - {key: ssl_domain, group: run, label: SSL certificate and domain name, buckets: [run.ssl_domain]}
   - {key: pm, group: management, label: Project manager, buckets: [programme.project_management], people: true}
   - {key: governance, group: management, label: "Client meetings, monthly reports and travel", buckets: [programme.steering_meetings, programme.mis_reports, programme.travel], people: true}
+  # the AI saving not passed to the client (ai_passthrough), shown on its own: the estimator's
+  # discount room. Internal like margin (merged into the buffer for who may not see margin).
+  - {key: ai_saving_kept, group: commercial, label: "AI saving kept (your discount room, internal)", line_prefixes: [commercial.margin/ai_saving_kept], margin: true}
   - {key: margin, group: commercial, label: Profit margin, buckets: [commercial.margin], margin: true}
   - {key: buffer, group: commercial, label: Risk buffer (for unknowns), buckets: [commercial.contingency, commercial.penalty_reserve]}
   - {key: finance, group: commercial, label: "Cost of money: waiting for payments, deposits and bank guarantees", buckets: [commercial.working_capital, commercial.emd, commercial.pbg]}
@@ -1051,6 +1137,13 @@ similar_projects:
 keywords:
   # Long documents name many features in passing (payment terms, "dashboard of bids"): from
   # this many pages a feature needs this many mentions to be ticked; fewer are only offered.
+  # A short description that rules a feature out: "no mobile app", "without payments",
+  # "payments not needed" (describe.py; in one clause, with at most exclusion_window_words
+  # words between the phrase and the feature's words: "no waiting for bookings" is not one).
+  # Reasoned from common phrasing (2026-10-23), placeholder.
+  exclusion_before: ["no", "without", "no need for", "don't need", "do not need", "doesn't need", "does not need", "excluding", "except", "not including"]
+  exclusion_after: ["not needed", "not required", "not wanted", "out of scope", "is excluded", "are excluded", "not included", "already exists", "we already have"]
+  exclusion_window_words: 1
   long_document_pages: 20
   min_mentions_long_document: 3
   features:
@@ -1156,6 +1249,25 @@ keywords:
     support_hours:
       always: [24x7, 24 x 7, "24*7", 24/7, round the clock]
       office: [8x5, 8 x 5, office hours, working hours]
+    ssl_certificate:
+      ov: [ov ssl, ov certificate, organisation validated, organization validated, ev ssl, ev certificate, extended validation]
+
+# A sentence saying the client provides hosting, the web address or the SSL certificate answers
+# that question, citing the sentence (services/extraction/client_provided.py). Checked in code on
+# the stored page text of every document, with either reader, and on earlier readings too.
+# Outside review of the PBD estimate (2026-10-23): "Domain and hosting will be provided to the
+# agency from the department" was read, cited, and still priced as ₹5.7 lakh of hosting.
+# Licences and devices are left out: quick estimates never price them.
+client_provided:
+  source: "Outside review of the PBD and clinic estimates (2026-10-23); phrase lists reasoned"
+  give: [will be provided, shall be provided, would be provided, to be provided, will provide, shall provide, provided by, provided from, will be made available, shall be made available, infrastructure provided by]
+  by_client: [department, client, ministry, purchaser, employer]
+  by_vendor: [by the agency, by the bidder, by the vendor, by the selected agency, by the successful bidder, by the contractor, by the system integrator, by the service provider, agency shall, agency will, bidder shall, bidder will, vendor shall, vendor will, contractor shall, contractor will]
+  max_sentence_chars: 400
+  items:
+    - {words: [hosting, server, servers, server space, cloud space, data centre, data center, infrastructure], question: hosting, value: existing}
+    - {words: [domain, domain name, web address, url], question: web_domain, value: client}
+    - {words: [ssl, ssl certificate, tls certificate], question: ssl_certificate, value: client}
 
 # Things a requirement document may ask for that this estimate does not price: shown to the
 # user with the page, so nothing is silently left out (basic reader: these words; AI reader:

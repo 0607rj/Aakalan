@@ -120,13 +120,19 @@ def test_saved_estimate_unchanged_when_catalog_v6_arrives(
     next one uses the newest catalog (source eras; from parameters v18 unknown-era data counts
     as pre-AI, so the saving is taken off it as before)."""
     project, _ = ready_project(client, estimator_headers)
-    old = estimate(client, estimator_headers, project["id"], catalog_version="v5")
+    # parameters v19: the last set without effort caps, so the formula shows the catalog's eras
+    old = estimate(
+        client, estimator_headers, project["id"], catalog_version="v5", parameter_set_version="v19"
+    )
     labour = {ln["formula_id"] for ln in old["lines"] if ln["component_instance_id"]}
     assert old["catalog_version"] == "v5" and labour == {"component_labour.v2"}
-    new = estimate(client, estimator_headers, project["id"])
+    new = estimate(client, estimator_headers, project["id"], parameter_set_version="v19")
     labour = {ln["formula_id"] for ln in new["lines"] if ln["component_instance_id"]}
     # v3: source eras (catalog v6); v4 adds the reuse factor (parameters v19)
     assert int(new["catalog_version"][1:]) >= 6 and labour == {"component_labour.v4"}
+    newest = estimate(client, estimator_headers, project["id"])
+    labour = {ln["formula_id"] for ln in newest["lines"] if ln["component_instance_id"]}
+    assert labour == {"component_labour.v5"}  # parameters v20+: effort caps and follow tasks
 
     again = client.get(f"/estimates/{old['id']}", headers=estimator_headers).json()
     keys = ("likely_paise", "p10_paise", "p50_paise", "p90_paise")

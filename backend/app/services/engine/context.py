@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from decimal import Decimal
-from typing import Any, Literal
+from typing import TYPE_CHECKING, Any, Literal
 
 from app.services.engine.formulas import FORMULAS
 from app.services.engine.inputs import (
@@ -35,6 +35,9 @@ from app.services.engine.outputs import (
     TraceStep,
 )
 from app.services.engine.reference import PLACEHOLDER, CatalogComponent, RateItem
+
+if TYPE_CHECKING:
+    from app.services.engine.components import EffortPlan
 
 SPREAD_QUANTUM = Decimal("0.0001")
 
@@ -86,6 +89,9 @@ class PricingContext:
         self.placeholders: set[str] = set()
         if inp.taxonomy.source == PLACEHOLDER:
             self.placeholders.add("taxonomy")
+        # the effort caps and project-wide reuse ratio (engine/components.py), worked out once
+        # from every component on first use
+        self.effort_plan: EffortPlan | None = None
 
     # --- convenience accessors -------------------------------------------------------------
 
@@ -113,6 +119,10 @@ class PricingContext:
             "disaster_recovery": False,  # default: no DR site, as before the answer existed
             "penalty_clause": self.p.commercial.penalty_needs_clause,
             "web_domain": bool(self.p.maintenance.domain_rate_key_by_type),
+            "domain_in_scope": False,  # default: the vendor pays, as before the answer existed
+            "ssl_in_scope": False,
+            "ssl_type": bool(self.p.maintenance.ssl_rate_key_by_type),
+            "ai_passthrough_percent": False,  # default: all passed through, as before
         }.get(key, True)
 
     def assumptions(self) -> list[AssumptionOut]:
@@ -175,6 +185,7 @@ class LineBuilder:
     inputs: dict[str, object] = field(default_factory=dict)
     role_pd: dict[str, Decimal] = field(default_factory=dict)
     spread_factors: list[SpreadFactor] = field(default_factory=list)
+    follows_build: bool = False  # see CostLineOut.follows_build
 
     # --- recording -------------------------------------------------------------------------
 
@@ -226,10 +237,13 @@ class LineBuilder:
         return getattr(self.ctx.q, key)
 
     def param(self, *path: str | int) -> Any:
-        """Read a parameter by attribute/key path and record it with its group's source."""
+        """Read a parameter by attribute/key path and record it with its group's source (or the
+        field's own, when the group lists it in `field_sources`)."""
         obj: Any = self.ctx.p
         source = self.ctx.p.complexity_source if path[0] == "complexity_multipliers" else ""
+        own_source = False
         for part in path:
+            overrides: dict[str, str] = getattr(obj, "field_sources", None) or {}
             if isinstance(obj, dict):
                 obj = next(v for k, v in obj.items() if str(k) == str(part))
             elif isinstance(obj, list):
@@ -237,9 +251,11 @@ class LineBuilder:
             else:
                 obj = getattr(obj, str(part))
             source = getattr(obj, "source", source)
+            if str(part) in overrides:
+                source, own_source = overrides[str(part)], True
         dotted = ".".join(str(p) for p in path)
         if source == PLACEHOLDER:
-            self.ctx.placeholders.add(f"param:{path[0]}")
+            self.ctx.placeholders.add(f"param:{dotted if own_source else path[0]}")
         value = obj.model_dump(mode="json") if hasattr(obj, "model_dump") else obj
         self.parameters[dotted] = TraceParameter(
             path=dotted,
@@ -480,4 +496,5 @@ class LineBuilder:
             gst_percent=gst_percent,
             role_pd=self.role_pd,
             trace=trace,
+            follows_build=self.follows_build,
         )

@@ -31,6 +31,10 @@ export interface CustomItem {
   included: boolean;
   /** A feature researched before: priced by its saved block, not searched again. */
   catalogKey?: string | null;
+  /** Found in the user's description (not in our list): the words it came from. */
+  fromDescription?: string;
+  /** How many modules of this size it is (a large sub-system can be several). */
+  units?: number;
 }
 
 const SIZES: { value: Size; label: string }[] = [
@@ -55,6 +59,7 @@ export function itemsFromDocument(found: FoundOtherFeature[]): CustomItem[] {
     description: f.description,
     evidence: f.evidence,
     included: true,
+    units: f.units,
   }));
 }
 
@@ -70,6 +75,7 @@ export function itemsFromTemplate(saved: CustomFeature[]): CustomItem[] {
     evidence: [],
     included: true,
     catalogKey: f.catalog_key ?? null,
+    units: f.units,
   }));
 }
 
@@ -152,8 +158,11 @@ export function toCustomFeatures(items: CustomItem[]): CustomFeature[] {
       size: i.size,
       found_index: i.foundIndex,
       catalog_key: i.catalogKey ?? null,
+      units: i.units ?? 1,
     }));
 }
+
+const MAX_UNITS = 100; // as the quick config's sizing.max_units
 
 function TypeAndSize({
   item,
@@ -165,7 +174,7 @@ function TypeAndSize({
   onChange: (patch: Partial<CustomItem>) => void;
 }) {
   return (
-    <div className="grid gap-2 sm:grid-cols-2">
+    <div className="grid gap-2 sm:grid-cols-[1fr_1fr_7rem]">
       <Select
         aria-label="Type"
         value={item.category}
@@ -188,6 +197,22 @@ function TypeAndSize({
           </option>
         ))}
       </Select>
+      <Input
+        aria-label="How many modules of this size"
+        title="How many modules of this size (a large sub-system can be several)"
+        type="number"
+        min={1}
+        max={MAX_UNITS}
+        value={item.units ?? 1}
+        onChange={(e) =>
+          onChange({
+            units: Math.min(
+              MAX_UNITS,
+              Math.max(1, Math.round(Number(e.target.value) || 1)),
+            ),
+          })
+        }
+      />
     </div>
   );
 }
@@ -242,10 +267,15 @@ function ItemCard({
             <TypeAndSize item={item} types={types} onChange={onChange} />
           ) : null}
           {fromDocument ? (
-            <Citation
-              evidence={item.evidence}
-              approximatePages={approximatePages}
-            />
+            <>
+              <span className="text-xs text-muted-foreground">
+                Not in our list: priced as its own feature
+              </span>
+              <Citation
+                evidence={item.evidence}
+                approximatePages={approximatePages}
+              />
+            </>
           ) : (
             <span className="text-xs text-muted-foreground">Added by you</span>
           )}
@@ -306,8 +336,8 @@ function AddFeatureForm({
           + Add a feature
         </Button>
         <span className="text-sm text-muted-foreground">
-          Something the document asks for that isn&apos;t listed above? Add it
-          here so it is priced too.
+          Something it needs that isn&apos;t listed above? Add it here so it is
+          priced too.
         </span>
       </div>
     );
@@ -315,8 +345,8 @@ function AddFeatureForm({
   return (
     <div className="flex flex-col gap-3 rounded-xl border border-dashed bg-card p-4">
       <span className="text-sm text-muted-foreground">
-        Something the document asks for that isn&apos;t listed above? Add it
-        here so it is priced too.
+        Something it needs that isn&apos;t listed above? Add it here so it is
+        priced too.
       </span>
       <div className="grid gap-3 md:grid-cols-[2fr_1fr_1fr_auto] md:items-end">
         <div className="flex flex-col gap-1">
@@ -374,25 +404,19 @@ function AddFeatureForm({
 }
 
 /**
- * Features outside the ready-made list: the ones found in the document (tick to keep) and the
- * ones the user adds. All of them are priced by type and size.
+ * Features outside the ready-made list that the user adds (the document's own are shown with
+ * what was found, `FoundOtherFeatures`). All of them are priced by type and size.
  */
 export function CustomFeaturesSection({
   items,
   onChange,
   types,
   approximatePages = false,
-  showFoundHeading = false,
-  aiMissing = false,
 }: {
   items: CustomItem[];
   onChange: (items: CustomItem[]) => void;
   types: CustomFeatureType[];
   approximatePages?: boolean;
-  /** Review screen: show the "found in your document" heading. */
-  showFoundHeading?: boolean;
-  /** The document was read without the AI key. */
-  aiMissing?: boolean;
 }) {
   const found = items.filter((i) => i.foundIndex !== null);
   const added = items.filter((i) => i.foundIndex === null);
@@ -406,28 +430,6 @@ export function CustomFeaturesSection({
 
   return (
     <section className="flex flex-col gap-4">
-      {showFoundHeading ? (
-        <div>
-          <h2 className="text-xl font-semibold">
-            Other features found in your document
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            {found.length > 0
-              ? "These are not in the list above but are still priced. Fix the name, type or size if needed, or untick to leave one out."
-              : aiMissing
-                ? "Automatic detection of extra features needs the AI key — add any missing features yourself."
-                : "Nothing outside the list above was found. Add anything that was missed."}
-          </p>
-          {found.length > 0 && aiMissing ? (
-            <p className="mt-1 text-sm text-muted-foreground">
-              Automatic detection of extra features needs the AI key — add any
-              missing features yourself.
-            </p>
-          ) : null}
-        </div>
-      ) : added.length > 0 ? (
-        <h2 className="text-lg font-semibold">Features you added</h2>
-      ) : null}
       {found.length + added.length > 0 ? (
         <div className="grid gap-3 lg:grid-cols-2">
           {[...found, ...added].map((item) => (
@@ -450,4 +452,33 @@ export function CustomFeaturesSection({
       />
     </section>
   );
+}
+
+/** Features the document asks for that are not in our list: priced as their own, editable. */
+export function FoundOtherFeatures({
+  items,
+  onChange,
+  types,
+  approximatePages,
+}: {
+  items: CustomItem[];
+  onChange: React.Dispatch<React.SetStateAction<CustomItem[]>>;
+  types: CustomFeatureType[];
+  approximatePages: boolean;
+}) {
+  return items
+    .filter((i) => i.foundIndex !== null)
+    .map((item) => (
+      <ItemCard
+        key={item.id}
+        item={item}
+        types={types}
+        approximatePages={approximatePages}
+        onChange={(change) =>
+          onChange((now) =>
+            now.map((i) => (i.id === item.id ? { ...i, ...change } : i)),
+          )
+        }
+      />
+    ));
 }

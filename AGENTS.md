@@ -66,6 +66,11 @@ backend/
                           #   items; far from the price => export blocked until confirmed
                           #   (POST /estimates/{id}/check/confirm); open answers priced as
                           #   options (GET /estimates/{id}/options)
+                          #   quote lists (OPEN_QUESTIONS 147): answers nobody gave
+                          #   (`assumed`, the form sends `answered`), `not_included`
+                          #   (features / scope / unticked standard blocks, the document's
+                          #   exclusions); "Not sure" with `left_out` (old data, other
+                          #   software) leaves the item out, quoted "if required"
       research/           # a feature the catalog lacks: catalog match, else AI web search with the
                           #   code checking every page, else AI analysis as catalog blocks; saved
                           #   per org (ResearchedComponent, auto-approved) and reused; config
@@ -77,6 +82,8 @@ backend/
       extraction/         # tender reading: AI (LLMClient) or basic keyword reader + citation check,
                           #   merge of several files (corrigenda override), pre-bid queries;
                           #   inventory.py: AI lists quoted items for the independent check
+                          #   client_provided.py: "hosting / domain / SSL provided by the
+                          #   department" sentences answer those questions (code, cited)
       reports/            # PDF report (reportlab) + Excel BoQ (openpyxl) from one ReportData
       outcomes.py         # bid results + calibration report
       documents/ extraction/ retrieval/ mapping/ reports/ templates/   # later milestones
@@ -84,6 +91,10 @@ backend/
     jobs/                 # Huey instance and tasks
   seeds/                  # taxonomy/v1..v2, catalog/v1..v7, rate_cards/, parameters/,
                           #   quick_estimate.yaml (plain features/questions for simple mode)
+                          #   + `commonly_needed`: the fixed 8 features the features screen asks
+                          #   about when the description did not mention them (OPEN_QUESTIONS 150)
+                          #   + `cms_built_in`: on a CMS build, what the CMS already has is
+                          #   set up, not built (basic, one module; OPEN_QUESTIONS 154)
                           #   + `scope`: what else a feature needs, as catalog blocks at a level
                           #   (every value has a `source`; `placeholder` = uncalibrated)
                           #   prices follow what is built (feature levels), never the client type
@@ -94,6 +105,16 @@ backend/
                           #   for build_type cms or framework (placeholder priors); hard-problem
                           #   components get a wider range and no reuse; penalty reserve only
                           #   with a penalty clause
+                          #   parameters v20+ (OPEN_QUESTIONS 144): review and tests follow
+                          #   the reuse (`reuse.follow_tasks`); `effort_caps` on review,
+                          #   pre-build and architect; AI review split like review work;
+                          #   rate card v9: audited cloud/SSL rates, free DV certificate;
+                          #   caps by project size (review, pre-build, architect; the
+                          #   in-between sizes are written-out midpoints, a guess);
+                          #   `ai_passthrough` question (asked on every estimate) keeps the
+                          #   rest of the AI saving as margin, shown as its own internal item
+                          #   parameters v21+: the range widens with project size
+                          #   (model_spread_by_size, placeholder; OPEN_QUESTIONS 153)
                           #   catalog v7+: a tech-stack `section` per component (core, web,
                           #   mobile, ecommerce, ai_ml, security, ...) and a `url` per source
   migrations/             # Alembic
@@ -121,7 +142,8 @@ Run from the repo root. `make <target>` and `python scripts/tasks.py <target>` a
 | Regenerate OpenAPI JSON + TS types | `make openapi` |
 | Regenerate golden expectations (intentional engine change only) | `make golden` |
 | New migration after model change | `make migration m="describe change"` |
-| Back-test against real projects, priced as the app prices: error, bias (ours / published), P10-P90 coverage and band hits by size and client type, in one run / fit the smooth size curve (factor by feature points) | `cd backend && uv run python -m app.cli backtest --country india [--as-of YYYY-MM-DD] [--layers] [--calibrate]` |
+| Back-test against real projects, priced as the app prices, with and without AI tools (contracts up to `pre_ai_until` judged without): error, bias (ours / published), P10-P90 coverage and band hits by size and client type, in one run / fit the smooth size curve (factor by feature points) | `cd backend && uv run python -m app.cli backtest --country india [--as-of YYYY-MM-DD] [--layers] [--calibrate]` |
+| Benchmark tender readings (round 3): `reading:` blocks and `onsite_staff` in `backend/seeds/benchmarks/india.yaml`; a project left out names its `exclude_rule` (rules at the top of each benchmark file, OPEN_QUESTIONS 155); the reading files and scripts in `data/benchmark_readings/` (not committed) | see OPEN_QUESTIONS 153, 155; PBD control log 156 |
 | Check the email (SMTP) settings: send one test email | `cd backend && uv run python -m app.cli test-email you@example.com` |
 | Show market prices (published contracts) on results again (off: they fluctuate too much, OPEN_QUESTIONS 127) | `show_market_prices:` in `backend/seeds/quick_estimate.yaml` |
 | Switch a country on/off in the app | `enabled:` under `countries:` in `backend/seeds/quick_estimate.yaml` (the US is off for now) |

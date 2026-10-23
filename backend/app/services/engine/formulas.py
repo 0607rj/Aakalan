@@ -3,6 +3,16 @@ shows the expression. Change a formula -> bump its version suffix so old traces 
 
 FORMULAS: dict[str, str] = {
     # components (brief 7.1)
+    "component_labour.v5": (
+        "Σ_task base_effort_pd[size] × effort_multiplier × quantity × task_share × M_complexity"
+        " × M_nfr × licence_effort_factor × M_reuse(task) × M_follow(task) × cap(task)"
+        " × (1 − s_task) × M_compression × rate_role(task); M_reuse as v4; M_follow(task) ="
+        " own work after reuse / before (project build work for reuse.project_wide_components)"
+        " when task is in reuse.follow_tasks, else 1; cap(task) = min(1, ceiling / total) for the"
+        " review task (review_max_share × build base), every pre-build task (pre_build_max_share"
+        " × build base) and the architecture task (architecture_base_pd +"
+        " architecture_pd_per_hard_problem × hard problems); s_task as v4"
+    ),
     "component_labour.v4": (
         "Σ_task base_effort_pd[size] × effort_multiplier × quantity × task_share × M_complexity"
         " × M_nfr × licence_effort_factor × M_reuse(task) × (1 − s_task) × M_compression"
@@ -25,6 +35,10 @@ FORMULAS: dict[str, str] = {
         "Σ_task base_effort_pd[size] × quantity × task_share × M_complexity × M_nfr"
         " × licence_effort_factor × (1 − min(max_saving, ai_saving_task × maturity_scale))"
         " × M_compression × rate_role(task)"
+    ),
+    "build.ai_code_review.v2": (
+        "review_share_of_saved × Σ_component ai_saved_pd × M_compression"
+        " × Σ_role (share_role × rate_role), roles of review_task"
     ),
     "build.ai_code_review.v1": (
         "review_share_of_saved × Σ_component ai_saved_pd × M_compression × rate(review_role)"
@@ -146,6 +160,10 @@ FORMULAS: dict[str, str] = {
     ),
     "maintenance.annual_audit.v1": "annual_audit_fee[size_band] × (1 + escalation_prices)^year",
     "maintenance.ssl_domain.v1": "(ssl_rate + domain_rate) × (1 + escalation_prices)^year",
+    "maintenance.ssl_domain.v2": (
+        "(ssl_rate[ssl_type] × ssl_in_scope + domain_rate[web_domain] × domain_in_scope)"
+        " × (1 + escalation_prices)^year; an item the client provides is 0, citing its clause"
+    ),
     "run.licence.v1": "licence_rate_per_year × (1 + escalation_prices)^year",
     # commercial (brief 7.5)
     "commercial.emd.v1": "emd × cost_of_capital × lock_months / months_per_year",
@@ -164,4 +182,9 @@ FORMULAS: dict[str, str] = {
         "margin_percent × (base_total + contingency + working_capital + pbg + penalty_reserve)"
     ),
     "commercial.gst.v1": "Σ_line gst_percent(line) × value(line)",
+    # the AI saving kept as margin, when the share passed to the client is answered
+    "commercial.ai_saving_kept.v1": (
+        "max(0, Σ_task ai_saved_pd × role_share × compression × rate(role) − ai_review"
+        " − ai_coding_tools) × (1 − ai_passthrough_percent)"
+    ),
 }

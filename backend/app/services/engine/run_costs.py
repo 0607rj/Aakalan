@@ -5,7 +5,7 @@ from decimal import Decimal
 
 from app.services.engine import spreads
 from app.services.engine.context import LineBuilder, PricingContext
-from app.services.engine.money import ONE, ceil
+from app.services.engine.money import ONE, ZERO, ceil
 from app.services.engine.outputs import CostLineOut
 
 
@@ -82,6 +82,40 @@ def ai_runtime_lines(ctx: PricingContext) -> list[CostLineOut]:
     return lines
 
 
+def _ssl_and_domain(t: LineBuilder) -> Decimal:
+    """One year's SSL certificate and web address (maintenance.ssl_domain.v1 / v2):
+
+    v1: ssl_rate + domain_rate
+    v2: ssl_rate[ssl_type] (0 when the client provides it) + domain_rate[web_domain] (0 when
+        the client provides it); the answers cite the clause that says so.
+    """
+    ctx, mt = t.ctx, t.ctx.p.maintenance
+    v2 = bool(mt.ssl_rate_key_by_type) or not ctx.q.ssl_in_scope or not ctx.q.domain_in_scope
+    if v2:
+        t.formula_id = "maintenance.ssl_domain.v2"
+    ssl = ZERO
+    if v2 and not t.driver("ssl_in_scope"):
+        t.step("SSL certificate", "provided by the client", ZERO)
+    else:
+        ssl_key: str = (
+            t.param("maintenance", "ssl_rate_key_by_type", t.driver("ssl_type"))
+            if mt.ssl_rate_key_by_type
+            else t.param("maintenance", "ssl_rate_key")
+        )
+        ssl = t.rate_local(ssl_key)
+    domain = ZERO
+    if v2 and not t.driver("domain_in_scope"):
+        t.step("web address", "provided by the client", ZERO)
+    else:
+        domain_key: str = (
+            t.param("maintenance", "domain_rate_key_by_type", t.driver("web_domain"))
+            if mt.domain_rate_key_by_type
+            else t.param("maintenance", "domain_rate_key")
+        )
+        domain = t.rate_local(domain_key)
+    return ssl + domain
+
+
 def maintenance_lines(
     ctx: PricingContext, build_effort_pd: Decimal, audit_band: str
 ) -> list[CostLineOut]:
@@ -135,6 +169,7 @@ def maintenance_lines(
         ):
             formula = "maintenance.upgrades.v2" if item == "upgrade" else f"maintenance.{item}.v2"
             t = _run(ctx, item, "run.patching_bugfix", year, label, formula)
+            t.follows_build = True
             share: Decimal = t.param("maintenance", f"{item}_share_of_build_pd")
             t.step("build effort", "Σ component effort (pd)", build_effort_pd)
             pd = t.step(
@@ -152,6 +187,7 @@ def maintenance_lines(
         )
         cr: Decimal | None = t.driver("change_request_pd_per_year")
         if cr is None:
+            t.follows_build = True
             share = t.param("maintenance", "change_request_share_of_build_pd")
             cr = t.step(
                 "CR person-days", f"{build_effort_pd:.2f} × {share}", build_effort_pd * share
@@ -198,14 +234,7 @@ def maintenance_lines(
             "SSL certificate and domain",
             "maintenance.ssl_domain.v1",
         )
-        ssl = t.rate_local(t.param("maintenance", "ssl_rate_key"))
-        domain_key: str = (
-            t.param("maintenance", "domain_rate_key_by_type", t.driver("web_domain"))
-            if ctx.p.maintenance.domain_rate_key_by_type
-            else t.param("maintenance", "domain_rate_key")
-        )
-        amount = ssl + t.rate_local(domain_key)
-        lines.append(price(t, amount, year))
+        lines.append(price(t, _ssl_and_domain(t), year))
 
         if ctx.q.licensing == "licensed":
             licence_keys = sorted(

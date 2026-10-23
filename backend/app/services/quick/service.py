@@ -11,7 +11,7 @@ import json
 import re
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime
-from decimal import Decimal
+from decimal import ROUND_HALF_UP, Decimal
 from functools import lru_cache
 from statistics import median, quantiles
 from typing import Any, Literal
@@ -31,6 +31,7 @@ from app.models import (
     Requirement,
     User,
 )
+from app.services.engine.components import AI_KEPT_KEY
 from app.services.engine.core import calculate
 from app.services.engine.inputs import (
     AnswerIn,
@@ -50,7 +51,7 @@ from app.services.estimates.reference_store import (
     get_taxonomy,
 )
 from app.services.extraction.merge import project_extraction
-from app.services.extraction.tender import FoundInventory
+from app.services.extraction.tender import FoundInventory, TenderExtraction
 from app.services.quick.anchor import CheckLine, IndependentCheckOut, independent_check
 from app.services.quick.config import (
     CostItemRule,
@@ -61,7 +62,14 @@ from app.services.quick.config import (
     SizeTier,
     quick_config,
 )
-from app.services.quick.reality import FeatureShare, RealityOut, SupportRule, reality_check
+from app.services.quick.reality import (
+    FeatureShare,
+    RealityOut,
+    SharedBlock,
+    SharedRequirement,
+    SupportRule,
+    reality_check,
+)
 from app.services.research.service import PREFIX as RESEARCH_PREFIX
 from app.services.research.service import resolve_features
 from app.services.settings import (
@@ -136,6 +144,18 @@ class CustomFeature(BaseModel):
     # The catalog block that prices it (a published or researched block, services/research);
     # None = the generic block of its type. Set when the estimate is made, kept for re-runs.
     catalog_key: str | None = Field(default=None, max_length=100)
+    # How many modules of this size it is (round 3): an ERP's 83 modules, a sub-system that
+    # is several large modules. Priced as that many blocks; adds that many times the points.
+    units: int = Field(default=1, ge=1)
+
+
+class NotIncluded(BaseModel):
+    """Something the user marked "Not included": a feature, a scope item, or a standard
+    building block unticked. Not priced, and listed as not included on the quote."""
+
+    kind: Literal["feature", "scope", "standard"]
+    key: str = Field(min_length=1, max_length=100)
+    quote: str = Field(default="", max_length=500)  # the user's words that ruled it out
 
 
 class QuickRequest(BaseModel):
@@ -145,6 +165,8 @@ class QuickRequest(BaseModel):
     features: list[str] = []
     # How much of each ticked feature is built (basic / standard / advanced); unset = standard.
     feature_levels: dict[str, LevelKey] = {}
+    # How many modules of its level a feature is (round 3; unset = 1), e.g. from its stories.
+    feature_units: dict[str, int] = {}
     custom_features: list[CustomFeature] = []
     choices: dict[str, str | int] = {}
     deadline_months: int | None = Field(default=None, ge=1, le=60)
@@ -158,6 +180,12 @@ class QuickRequest(BaseModel):
     # vendor: pricing our own bid; client: a department or company planning its budget
     # (tender estimate) - priced at market rates, with a bid check.
     mode: Literal["vendor", "client"] = "vendor"
+    # Marked "Not included" (features, scope items) or unticked standard blocks.
+    not_included: list[NotIncluded] = []
+    # Questions the user answered on the form. The others are listed on the quote as assumed
+    # ("change if wrong"). None: not sent (older forms, the API): an answer equal to its
+    # default counts as assumed.
+    answered: list[str] | None = None
 
 
 class PlainPart(BaseModel):
@@ -241,6 +269,18 @@ class MarketOut(BaseModel):
     sources: list[MarketSource] = []
     first_year: int | None = None  # award years of the projects
     last_year: int | None = None
+
+
+class AiSavingOut(BaseModel):
+    """The AI saving the engine identified and how much of it the price passes to the client
+    (the rest is kept as margin; line commercial.ai_saving_kept.v1)."""
+
+    identified_paise: int
+    percent: int  # of the build labour without AI tools
+    passed_percent: int  # share passed to the client in the price
+    # the share kept as margin (most likely, before GST): the estimator's discount room.
+    # Internal: None for users who may not see margin.
+    kept_paise: int | None = None
 
 
 class EraSensitivityOut(BaseModel):
@@ -333,6 +373,32 @@ class ClientPays(BaseModel):
     note: str | None  # e.g. a per-payment fee that depends on the client's sales
 
 
+class AssumedAnswer(BaseModel):
+    """An answer nobody gave, priced at the usual answer: printed on the quote as assumed, to
+    be changed if wrong (silent defaults were behind most wrong estimates)."""
+
+    key: str
+    question: str
+    answer: str
+    detail: str = ""  # what it means, e.g. "10,000 users, 200 at the same time"
+
+
+NotIncludedWhy = Literal[
+    "excluded_by_you", "removed_by_you", "not_sure", "document_excluded", "document_not_priced"
+]
+
+
+class NotIncludedOut(BaseModel):
+    """Not in the price, and said so on the quote: marked "Not included" or unticked by the
+    user, left out by a "Not sure" answer (its "if required" price is a priced option of
+    `question_key`), ruled out by the document, or asked for there but not priced here."""
+
+    label: str
+    why: NotIncludedWhy
+    quote: str = ""  # the words that ruled it out (the user's or the document's)
+    question_key: str | None = None  # not_sure: the question whose priced option it is
+
+
 class QuickSummary(BaseModel):
     project_id: str
     estimate_id: str
@@ -376,6 +442,7 @@ class QuickSummary(BaseModel):
     should_cost: bool = False  # priced from effort, not tuned to market prices
     market: MarketOut | None = None  # real contracts of this size, for comparison
     era_sensitivity: EraSensitivityOut | None = None  # if the unknown-era data predates AI
+    ai_saving: AiSavingOut | None = None  # AI saving identified, and the share passed on
     not_sure: list[str] = []  # questions answered "Not sure" (they widen the range)
     project_size: str | None = None  # Small / ... / Large, from what is built
     size_points: int | None = None
@@ -387,6 +454,8 @@ class QuickSummary(BaseModel):
     support_term_open: bool = False
     # a second estimate counted from the document (uploads only); None for the form
     independent_check: IndependentCheckOut | None = None
+    assumed: list[AssumedAnswer] = []  # answers nobody gave, priced at the usual answer
+    not_included: list[NotIncludedOut] = []  # not in the price, and why
 
 
 def _default(cfg: QuickConfig, req: QuickRequest, key: str) -> str | int:
@@ -451,6 +520,7 @@ class PlannedComponent:
     requirements: list[str]
     label: str | None = None
     hard_problem: bool = False  # a feature the document's hard problems belong to
+    quantity: int = 1  # how many modules of this size (a feature's or extra's units)
 
 
 @dataclass
@@ -466,6 +536,8 @@ class QuickPlan:
     clarity: int = 3  # requirement clarity (1-5); lower with "Not sure" answers
     levels: dict[str, str] = field(default_factory=dict)  # feature key -> level
     unsure: list[str] = field(default_factory=list)  # questions answered "Not sure"
+    # "Not sure" answers that leave their features out of the price (quoted as options)
+    left_out: list[str] = field(default_factory=list)
     scope: list[str] = field(default_factory=list)  # scope items priced, in order
     # after an upload: questions the document does not answer, priced at the usual answer
     assumed: list[str] = field(default_factory=list)
@@ -482,11 +554,14 @@ def plan_quick(
     filename: str,
     *,
     project_size: str | None = None,
+    include_left_out: bool = False,
 ) -> QuickPlan:
     """The project a quick request describes. The price follows what is built: each feature's
     level sets its components' size and complexity and adds points; the total points set the
     project size (standard building blocks, launch defaults and the size factor). `project_size`
-    pins the size instead (back-testing against projects whose size is known)."""
+    pins the size instead (back-testing against projects whose size is known).
+    `include_left_out` prices what "Not sure" answers leave out, as they were priced before
+    (OPEN_QUESTIONS 147): the "if required" price of those items."""
     unknown = set(req.choices) - set(cfg.questions)
     if unknown:
         raise _unprocessable(f"Unknown questions: {sorted(unknown)}")
@@ -497,15 +572,22 @@ def plan_quick(
         raise _unprocessable(f"Unknown values: {sorted(bad_overrides)}")
     options = {key: _choice(cfg, req, key) for key in cfg.questions}
     try:
-        added = added_features(options)
+        added = added_features(options, include_left_out=include_left_out)
         features = [cfg.feature(k) for k in dict.fromkeys([*req.features, *added])]
     except ValueError as exc:
         raise _unprocessable(str(exc)) from exc
     if not features and not req.custom_features:
         raise _unprocessable("Tick or add at least one feature.")
+    removed = _check_not_included(cfg, req, {f.key for f in features})
     stray = set(req.feature_levels) - {f.key for f in features}
     if stray:
         raise _unprocessable(f"Levels given for features not ticked: {sorted(stray)}")
+    stray = set(req.feature_units) - {f.key for f in features}
+    if stray:
+        raise _unprocessable(f"Modules given for features not ticked: {sorted(stray)}")
+    units = [*req.feature_units.values(), *(c.units for c in req.custom_features)]
+    if any(n < 1 or n > cfg.sizing.max_units for n in units):
+        raise _unprocessable(f"A feature is 1 to {cfg.sizing.max_units} modules.")
     try:
         chosen_scope = [cfg.scope_item(k) for k in dict.fromkeys(req.scope)]
     except ValueError as exc:
@@ -533,16 +615,8 @@ def plan_quick(
     hosting = options["hosting"].answers.get("hosting_provider")
     if hosting not in country.hosting_options:
         raise _unprocessable(f"{options['hosting'].label} is not available for {country.label}")
-    default_level = next(
-        (o.feature_level for o in options.values() if o.feature_level is not None),
-        cfg.sizing.default_level,
-    )
-    levels: dict[str, LevelKey] = {
-        f.key: req.feature_levels.get(f.key) or added.get(f.key) or default_level for f in features
-    }
-    custom_levels = [cfg.sizing.custom_size_level[c.size] for c in req.custom_features]
-    points = sum(cfg.sizing.levels[levels[f.key]].points for f in features if f.counts_for_size)
-    points += sum(cfg.sizing.levels[lv].points for lv in custom_levels)
+    req, built_in = _cms_built_in(cfg, req, options, features)
+    levels, points = _levels_and_points(cfg, req, options, features, added, built_in)
     tier = cfg.sizing.tier_for(project_size) if project_size else cfg.sizing.tier(points)
     extraction = extraction or {}
     found_features = {f["key"]: f for f in extraction.get("features", [])}
@@ -550,6 +624,8 @@ def plan_quick(
     found_numbers: dict[str, Any] = extraction.get("numbers", {})
 
     unsure = [key for key, o in options.items() if o.unsure]
+    # what is left out of the price does not make the price less certain
+    left_out = [] if include_left_out else [k for k in unsure if options[k].left_out]
     assumed = (
         _assumed(cfg, req, options, {f.key for f in features}, found_choices, found_numbers)
         if extraction
@@ -558,8 +634,9 @@ def plan_quick(
     plan = QuickPlan(
         size_points=points,
         project_size=tier.project_size,
-        clarity=_clarity(cfg, len(unsure), len(assumed)),
+        clarity=_clarity(cfg, len(unsure) - len(left_out), len(assumed)),
         unsure=unsure,
+        left_out=left_out,
         levels=dict(levels),
         assumed=assumed,
     )
@@ -575,15 +652,23 @@ def plan_quick(
         refs = _evidence_refs(found, filename) or [
             {"clause_ref": f"Feature: {f.label}", "document": FORM_DOCUMENT}
         ]
-        feature_req[f.key] = requirement(f"{f.label}. {f.hint}{_quote(found)}", "functional", refs)
+        note = _built_in_note(cfg, f.key in built_in)
+        feature_req[f.key] = requirement(
+            f"{f.label}. {f.hint}{note}{_quote(found)}", "functional", refs
+        )
 
-    standard = _standard_components(tier, options)
+    standard = [k for k in _standard_components(tier, options) if k not in removed]
     component_reqs: dict[str, list[str]] = {k: [] for k in standard}
     component_level: dict[str, LevelKey] = {}
+    component_units: dict[str, int] = {}  # a block two features share: the larger count
     for f in features:
         for key in f.components:
             component_reqs.setdefault(key, []).append(feature_req[f.key])
             component_level[key] = _larger(cfg, component_level.get(key), levels[f.key])
+            if key not in standard:
+                component_units[key] = max(
+                    component_units.get(key, 1), req.feature_units.get(f.key, 1)
+                )
     # Scope items: each adds catalog blocks at its level. A block already in the project is
     # not added again (the larger level wins); a standard block keeps at least its project size.
     found_scope = {s["key"]: s for s in extraction.get("scope", [])}
@@ -626,7 +711,12 @@ def plan_quick(
             level = cfg.sizing.levels[component_level[key]]
             plan.components.append(
                 PlannedComponent(
-                    key, level.component_size, level.complexity, reqs, scope_label.get(key)
+                    key,
+                    level.component_size,
+                    level.complexity,
+                    reqs,
+                    scope_label.get(key),
+                    quantity=component_units.get(key, 1),
                 )
             )
     plan.components.extend(own_blocks)
@@ -646,11 +736,19 @@ def plan_quick(
             {"clause_ref": f"Added by user: {custom.name}", "document": FORM_DOCUMENT}
         ]
         detail = f" {found['description']}" if found and found.get("description") else ""
-        code = requirement(f"{custom.name}.{detail}{_quote(found)}", "functional", refs)
+        note = _built_in_note(cfg, custom.name in built_in)
+        code = requirement(f"{custom.name}.{detail}{note}{_quote(found)}", "functional", refs)
         component = custom.catalog_key or cfg.custom_feature_types[custom.category].component
         level = cfg.sizing.levels[cfg.sizing.custom_size_level[custom.size]]
         plan.components.append(
-            PlannedComponent(component, custom.size, level.complexity, [code], custom.name)
+            PlannedComponent(
+                component,
+                custom.size,
+                level.complexity,
+                [code],
+                custom.name,
+                quantity=custom.units,
+            )
         )
 
     def cited(found: dict[str, Any] | None, label: str) -> list[str]:
@@ -708,13 +806,86 @@ def plan_quick(
     return plan
 
 
-def added_features(options: dict[str, Any]) -> dict[str, LevelKey | None]:
+def added_features(
+    options: dict[str, Any], *, include_left_out: bool = False
+) -> dict[str, LevelKey | None]:
     """Features the answers add (a mobile app, connecting other software, old data), each with
-    its level (None = the default level)."""
+    its level (None = the default level); with `include_left_out`, also those a "Not sure"
+    answer leaves out (in the same place, so the plan is the one priced before)."""
     out: dict[str, LevelKey | None] = {}
     for option in options.values():
         out.update(option.add_features)
+        if include_left_out:
+            out.update(option.left_out)
     return out
+
+
+def _levels_and_points(
+    cfg: QuickConfig,
+    req: QuickRequest,
+    options: dict[str, Any],
+    features: list[Feature],
+    added: dict[str, LevelKey | None],
+    built_in: set[str] | None = None,
+) -> tuple[dict[str, LevelKey], int]:
+    """Each feature's level (picked by hand, else set by the answer that added it, else the
+    overall level) and the feature points they add up to: a level's points × its modules.
+    A feature the CMS already has is at most the configured level (cms_built_in)."""
+    default_level = next(
+        (o.feature_level for o in options.values() if o.feature_level is not None),
+        cfg.sizing.default_level,
+    )
+    levels: dict[str, LevelKey] = {
+        f.key: req.feature_levels.get(f.key) or added.get(f.key) or default_level for f in features
+    }
+    if built_in and cfg.cms_built_in is not None:
+        cap = cfg.cms_built_in.level
+        for key in built_in & set(levels):
+            levels[key] = _smaller(cfg, levels[key], cap)
+    points = sum(
+        cfg.sizing.levels[levels[f.key]].points * req.feature_units.get(f.key, 1)
+        for f in features
+        if f.counts_for_size
+    )
+    points += sum(
+        cfg.sizing.levels[cfg.sizing.custom_size_level[c.size]].points * c.units
+        for c in req.custom_features
+    )
+    return levels, points
+
+
+def _check_not_included(cfg: QuickConfig, req: QuickRequest, features: set[str]) -> set[str]:
+    """Validate what is marked "Not included"; returns the unticked standard blocks. A
+    feature or scope item cannot be both priced and not included."""
+    standard = set(cfg.standard_keys())
+    for item in req.not_included:
+        try:
+            if item.kind == "feature":
+                cfg.feature(item.key)
+            elif item.kind == "scope":
+                cfg.scope_item(item.key)
+        except ValueError as exc:
+            raise _unprocessable(str(exc)) from exc
+        if item.kind == "standard" and item.key not in standard:
+            raise _unprocessable(f"{item.key!r} is not a standard building block")
+        if (item.kind == "feature" and item.key in features) or (
+            item.kind == "scope" and item.key in req.scope
+        ):
+            raise _unprocessable(f"{item.key!r} is both in the price and not included")
+    return {i.key for i in req.not_included if i.kind == "standard"}
+
+
+def standard_blocks(cfg: QuickConfig, req: QuickRequest) -> list[str]:
+    """The standard building blocks the request's size and answers bring, before any is
+    unticked (the form lists them as included by default)."""
+    options = {key: _choice(cfg, req, key) for key in cfg.questions}
+    added = added_features(options)
+    try:
+        features = [cfg.feature(k) for k in dict.fromkeys([*req.features, *added])]
+    except ValueError as exc:
+        raise _unprocessable(str(exc)) from exc
+    _, points = _levels_and_points(cfg, req, options, features, added)
+    return _standard_components(cfg.sizing.tier(points), options)
 
 
 def request_features(cfg: QuickConfig, req: QuickRequest) -> list[str]:
@@ -749,25 +920,136 @@ def _assumed(
     """After an upload: questions that apply, the document does not answer (no choice, no
     number that answers them, no stated support term) and that are priced at their usual
     answer. "Not sure" answers are counted on their own."""
-    custom_types = {c.category for c in req.custom_features}
     out = []
     for key, q in cfg.questions.items():
         if q.group == "hidden" or key in found_choices or options[key].unsure:
             continue
-        limited = q.only_with_features or q.only_with_custom_types
-        if limited and not (
-            features & set(q.only_with_features) or custom_types & set(q.only_with_custom_types)
-        ):
+        if q.silent_means_usual or q.must_choose:
             continue
-        if any(str(_choice(cfg, req, k).value) in map(str, v) for k, v in q.hide_when.items()):
-            continue
-        if q.answered_by_number and q.answered_by_number in {*req.overrides, *found_numbers}:
-            continue
-        if key == SUPPORT_YEARS and "om_years" in {*req.overrides, *found_numbers}:
+        # as before only_with_override existed, so the range of an upload is unchanged
+        if not _applies(cfg, req, key, features, set(found_numbers), check_override=False):
             continue
         if str(options[key].value) == str(_default(cfg, req, key)):
             out.append(key)
     return out
+
+
+def _applies(
+    cfg: QuickConfig,
+    req: QuickRequest,
+    key: str,
+    features: set[str],
+    numbers: set[str],
+    *,
+    check_override: bool = True,
+) -> bool:
+    """Whether a question matters for this project: its features are chosen, no other answer
+    hides it, and no known number (`numbers`: read from the document; the form's own numbers
+    are added) answers it."""
+    q = cfg.questions[key]
+    custom_types = {c.category for c in req.custom_features}
+    limited = q.only_with_features or q.only_with_custom_types
+    if limited and not (
+        features & set(q.only_with_features) or custom_types & set(q.only_with_custom_types)
+    ):
+        return False
+    if any(str(_choice(cfg, req, k).value) in map(str, v) for k, v in q.hide_when.items()):
+        return False
+    known = {*req.overrides, *numbers}
+    if q.answered_by_number and q.answered_by_number in known:
+        return False
+    if check_override and q.only_with_override and q.only_with_override not in req.overrides:
+        return False
+    return not (key == SUPPORT_YEARS and "om_years" in known)
+
+
+def assumed_answers(
+    cfg: QuickConfig, req: QuickRequest, found_choices: set[str], found_numbers: set[str]
+) -> list[AssumedAnswer]:
+    """Answers nobody gave: questions that matter for this project, answered neither on the
+    form (`req.answered`; when not sent, an answer equal to its default) nor by the document,
+    priced at the usual answer. Includes the questions the form never asks (availability, a
+    disaster site, a security audit, ...). Not "Not sure" answers (listed on their own), nor
+    decisions asked on every estimate, nor the company's own settings."""
+    try:
+        options = {key: _choice(cfg, req, key) for key in cfg.questions}
+    except HTTPException:  # saved with an older set of questions
+        return []
+    features = set(request_features(cfg, req))
+    out = []
+    for key, q in cfg.questions.items():
+        option = options[key]
+        if q.group == "hidden" or q.must_choose or option.unsure or key in found_choices:
+            continue
+        if not _applies(cfg, req, key, features, found_numbers):
+            continue
+        if req.answered is not None:
+            if key in req.answered:
+                continue
+        elif str(option.value) != str(_default(cfg, req, key)):
+            continue
+        out.append(
+            AssumedAnswer(key=key, question=q.label, answer=option.label, detail=_detail(q, option))
+        )
+    return out
+
+
+def _detail(question: Any, option: Option) -> str:
+    """What an answer means: the question's `detail` filled with the option's answers (e.g.
+    the number of users), else the option's hint."""
+    if question.detail:
+        try:
+            return str(question.detail.format(**option.answers))
+        except (KeyError, IndexError, ValueError):
+            return ""
+    return option.hint
+
+
+def not_included(
+    cfg: QuickConfig,
+    req: QuickRequest,
+    priced_blocks: set[str],
+    extraction: TenderExtraction | None = None,
+) -> list[NotIncludedOut]:
+    """Everything the quote says is not in the price: what the user marked "Not included",
+    standard blocks unticked (and not needed by a feature: `priced_blocks`, the catalog keys
+    priced), features a "Not sure" answer left out, and what the document rules out or asks
+    for but this estimate does not price."""
+    out: list[NotIncludedOut] = []
+    standard = set(standard_blocks(cfg, req)) if req.not_included else set()
+    for item in req.not_included:
+        if item.kind == "feature":
+            label = cfg.feature(item.key).label
+            out.append(NotIncludedOut(label=label, why="excluded_by_you", quote=item.quote))
+        elif item.kind == "scope":
+            group, scope_item = cfg.scope_item(item.key)
+            label = f"{group.label}: {scope_item.label}"
+            out.append(NotIncludedOut(label=label, why="excluded_by_you", quote=item.quote))
+        elif item.key in standard and item.key not in priced_blocks:
+            block = cfg.standard_blocks.get(item.key)
+            label = block.label if block else item.key
+            out.append(NotIncludedOut(label=label, why="removed_by_you", quote=item.quote))
+    options = {key: _choice(cfg, req, key) for key in cfg.questions}
+    for key, option in options.items():
+        if option.unsure:
+            for feature in option.left_out:
+                label = cfg.feature(feature).label
+                out.append(NotIncludedOut(label=label, why="not_sure", question_key=key))
+    if extraction is not None:
+        for sc in extraction.scope_set_aside:
+            if sc.status == "excluded":
+                quote = sc.evidence[0].quote if sc.evidence else ""
+                out.append(NotIncludedOut(label=sc.label, why="document_excluded", quote=quote))
+        for n in extraction.not_priced:
+            quote = n.evidence[0].quote if n.evidence else ""
+            out.append(NotIncludedOut(label=n.label, why="document_not_priced", quote=quote))
+    seen: set[str] = set()
+    unique = []
+    for o in out:
+        if o.label not in seen:
+            seen.add(o.label)
+            unique.append(o)
+    return unique
 
 
 def _standard_components(tier: SizeTier, options: dict[str, Any]) -> list[str]:
@@ -784,6 +1066,40 @@ SIZE_RANK = {Size.S: 0, Size.M: 1, Size.L: 2}
 
 def _bigger(a: Size, b: Size) -> Size:
     return a if SIZE_RANK[a] >= SIZE_RANK[b] else b
+
+
+def _smaller(cfg: QuickConfig, a: LevelKey, b: LevelKey) -> LevelKey:
+    """The smaller of two levels."""
+    return a if cfg.sizing.levels[a].points <= cfg.sizing.levels[b].points else b
+
+
+def _cms_built_in(
+    cfg: QuickConfig, req: QuickRequest, options: dict[str, Any], features: list[Feature]
+) -> tuple[QuickRequest, set[str]]:
+    """On a CMS build, what the CMS already has is set up, not built (cms_built_in): its
+    features and CMS-part extras are one module each, extras at most the configured level's
+    size (feature levels are capped in _levels_and_points). Returns the request priced that
+    way and the feature keys and extra names it applies to."""
+    rule = cfg.cms_built_in
+    if rule is None or options["build_type"].answers.get("build_type") not in rule.build_types:
+        return req, set()
+    touched = {f.key for f in features if f.key in rule.features}
+    cap = cfg.sizing.levels[rule.level].points
+    cap_size = next(s for s, lv in cfg.sizing.custom_size_level.items() if lv == rule.level)
+    customs = []
+    for c in req.custom_features:
+        if rule.is_cms_part(c.name):
+            touched.add(c.name)
+            own = cfg.sizing.levels[cfg.sizing.custom_size_level[c.size]].points
+            c = c.model_copy(update={"units": 1, "size": cap_size if own > cap else c.size})
+        customs.append(c)
+    units = {k: n for k, n in req.feature_units.items() if k not in touched}
+    return req.model_copy(update={"feature_units": units, "custom_features": customs}), touched
+
+
+def _built_in_note(cfg: QuickConfig, applies: bool) -> str:
+    """The quote's words for something the CMS already has."""
+    return f" {cfg.cms_built_in.note}" if applies and cfg.cms_built_in is not None else ""
 
 
 def _larger(cfg: QuickConfig, a: LevelKey | None, b: LevelKey) -> LevelKey:
@@ -901,7 +1217,7 @@ def create_quick_estimate(db: Session, user: User, cfg: QuickConfig, req: QuickR
                 label=c.label,
                 size=c.size.value,
                 complexity=c.complexity.value,
-                quantity=1,
+                quantity=c.quantity,
                 driver_values={"hard_problem": True} if c.hard_problem else {},
                 requirement_ids=[ids[r] for r in c.requirements],
                 status="confirmed",
@@ -928,8 +1244,18 @@ def create_quick_estimate(db: Session, user: User, cfg: QuickConfig, req: QuickR
 
 def request_seed(req: QuickRequest, doc: Document | None) -> int:
     """The simulation seed follows what was asked (answers, features, the file's contents), not
-    the upload or the estimate's name: the same file and answers give the same range."""
-    asked = req.model_dump(mode="json", exclude={"document_id", "name"})
+    the upload or the estimate's name: the same file and answers give the same range.     Which
+    answers were touched does not change the price; nothing marked "Not included", and every
+    feature one module, keep the seed of a request made before those fields existed."""
+    asked = req.model_dump(mode="json", exclude={"document_id", "name", "answered"})
+    if not asked["not_included"]:
+        del asked["not_included"]
+    # one module each (no units given) keeps the seed of a request made before units existed
+    if not asked["feature_units"]:
+        del asked["feature_units"]
+    for custom in asked["custom_features"]:
+        if custom["units"] == 1:
+            del custom["units"]
     key = json.dumps([asked, doc.sha256 if doc else None], sort_keys=True)
     return int(hashlib.sha256(key.encode("utf-8")).hexdigest(), 16) % (1 << estimates.SEED_BITS)
 
@@ -976,6 +1302,7 @@ def plan_to_input(
                 label=c.label,
                 size=c.size,
                 complexity=c.complexity,
+                quantity=c.quantity,
                 requirement_ids=c.requirements,
                 hard_problem=c.hard_problem,
             )
@@ -1062,10 +1389,14 @@ class PricedOption(BaseModel):
     key: str
     question: str
     priced_as: str  # the answer in the price
-    why: Literal["not_in_document", "not_sure"]
+    # left_out: "Not sure" left the item out of the price; the changes are its "if required"
+    # price (low / high over the answers that add it)
+    why: Literal["not_in_document", "not_sure", "left_out"]
     low_change_paise: int | None  # smallest and largest change over the other answers
     high_change_paise: int | None
     options: list[OptionChange]
+    # left_out: the item at the usual size, as "Not sure" priced it before (OPEN_QUESTIONS 147)
+    usual_change_paise: int | None = None
 
 
 def priced_options(
@@ -1087,8 +1418,8 @@ def priced_options(
     }
     today = estimate.as_of_date
 
-    def likely(r: QuickRequest) -> int | None:
-        plan = plan_quick(cfg, r, extraction, filename)
+    def likely(r: QuickRequest, include_left_out: bool = False) -> int | None:
+        plan = plan_quick(cfg, r, extraction, filename, include_left_out=include_left_out)
         inp = plan_to_input(
             plan, req.name, reference, today, cfg.impact.seed, cfg.impact.monte_carlo_runs
         )
@@ -1099,10 +1430,14 @@ def priced_options(
     base = likely(req)
     if base is None:
         return []
-    open_keys: list[tuple[str, Literal["not_in_document", "not_sure"]]] = [
+    open_keys: list[tuple[str, Literal["not_in_document", "not_sure", "left_out"]]] = [
         (k, "not_in_document") for k in base_plan.assumed
     ]
-    open_keys += [(k, "not_sure") for k in base_plan.unsure if k not in base_plan.assumed]
+    open_keys += [
+        (k, "left_out" if k in base_plan.left_out else "not_sure")
+        for k in base_plan.unsure
+        if k not in base_plan.assumed
+    ]
     out = []
     for key, why in open_keys:
         question = cfg.questions[key]
@@ -1123,9 +1458,21 @@ def priced_options(
                     change_paise=None if price is None else price - base,
                 )
             )
-        known = [c.change_paise for c in changes if c.change_paise is not None]
+        adds = {o.value for o in question.options if o.add_features}
+        known = [
+            c.change_paise
+            for c in changes
+            if c.change_paise is not None and (why != "left_out" or c.value in adds)
+        ]
         if not changes:
             continue
+        usual = None
+        if why == "left_out":
+            try:
+                with_it = likely(req, include_left_out=True)
+            except HTTPException:  # e.g. the item is also marked "Not included"
+                with_it = None
+            usual = None if with_it is None else with_it - base
         out.append(
             PricedOption(
                 key=key,
@@ -1135,6 +1482,7 @@ def priced_options(
                 low_change_paise=min(known) if known else None,
                 high_change_paise=max(known) if known else None,
                 options=changes,
+                usual_change_paise=usual,
             )
         )
     out.sort(key=lambda o: -max((abs(c.change_paise or 0) for c in o.options), default=0))
@@ -1160,6 +1508,7 @@ def summary_for(
         margin_visible=margin_visible,
         document=merged is not None,
         inventory=merged.inventory if merged else None,
+        extraction=merged,
     )
 
 
@@ -1171,9 +1520,11 @@ def summarise(
     margin_visible: bool = True,
     document: bool = False,
     inventory: FoundInventory | None = None,
+    extraction: TenderExtraction | None = None,
 ) -> QuickSummary:
     """`document`: the project was priced from an uploaded document, so the independent check
-    is made (from `inventory`, the document's count of what the system contains)."""
+    is made (from `inventory`, the document's count of what the system contains). `extraction`:
+    the documents' reading, for the answers they give and what they rule out."""
     result: dict[str, Any] = estimate.result
     stage_likely = {g["key"]: g["likely_paise"] for g in result["by_stage"]}
     stage_low = {g["key"]: g["low_paise"] for g in result["by_stage"]}
@@ -1258,6 +1609,7 @@ def summarise(
         if cfg.show_market_prices
         else None,
         era_sensitivity=_era_sensitivity(result),
+        ai_saving=_ai_saving(estimate, margin_visible),
         not_sure=_not_sure(cfg, project),
         project_size=_size_label(cfg, estimate),
         size_points=_size_points(cfg, project),
@@ -1266,6 +1618,16 @@ def summarise(
         researched=researched_features(estimate),
         support_term_open=_support_term_open(cfg, project),
     )
+    req = _saved_request(project)
+    if req is not None:
+        found = extraction.choices if extraction else {}
+        numbers = extraction.numbers if extraction else {}
+        priced = {c["catalog_key"] for c in estimate.inputs_snapshot.get("components", [])}
+        try:
+            summary.assumed = assumed_answers(cfg, req, set(found), set(numbers))
+            summary.not_included = not_included(cfg, req, priced, extraction)
+        except (HTTPException, ValueError):  # saved with an older set of questions
+            pass
     emd = next(
         (
             a["value"]
@@ -1290,7 +1652,37 @@ def summarise(
             emd_rules=cfg.reality_check,
             confirmed_at=estimate.check_confirmed_at,
         )
-    return with_reality(cfg, summary, emd_paise, result.get("sanity_checks", []))
+    return with_reality(
+        cfg, summary, emd_paise, result.get("sanity_checks", []), shared_requirements(estimate)
+    )
+
+
+def shared_requirements(estimate: Estimate) -> list[SharedRequirement]:
+    """Requirements that are the first (primary) evidence of more than one priced block, in
+    the order of the requirements: each block should be separate work, so they are shown for a
+    person to check (nothing is merged)."""
+    snap = estimate.inputs_snapshot
+    codes = {r["id"]: (r["code"], r["text"]) for r in snap.get("requirements", [])}
+    amounts = {ln.component_instance_id: ln.likely_paise for ln in estimate.lines}
+    catalog = {c["key"]: c["name"] for c in snap["catalog"]["components"]}
+    by_req: dict[str, list[tuple[str, int]]] = {}
+    for c in snap.get("components", []):
+        if not c.get("requirement_ids") or c["id"] not in amounts:
+            continue
+        name = c.get("label") or catalog.get(c["catalog_key"], c["catalog_key"])
+        by_req.setdefault(c["requirement_ids"][0], []).append((name, amounts[c["id"]]))
+    out = []
+    for rid, blocks in by_req.items():
+        if len(blocks) > 1 and rid in codes:
+            code, text = codes[rid]
+            out.append(
+                SharedRequirement(
+                    code=code,
+                    title=text.split(". ", 1)[0][:120],
+                    blocks=[SharedBlock(name=n, amount_paise=a) for n, a in blocks],
+                )
+            )
+    return sorted(out, key=lambda s: s.code)
 
 
 TOP_LINES = 3
@@ -1341,6 +1733,7 @@ def with_reality(
     summary: QuickSummary,
     emd_paise: int | None = None,
     sanity_checks: list[dict[str, Any]] | None = None,
+    shared: list[SharedRequirement] | None = None,
 ) -> QuickSummary:
     """The summary with its "does this price look real?" checks (when configured). The engine's
     support rule of thumb is explained with the independent check's direction: support looks
@@ -1367,6 +1760,7 @@ def with_reality(
         emd_paise=emd_paise,
         support_rule=_support_rule(sanity_checks or []),
         build_looks=_build_looks(summary.independent_check),
+        shared=shared or [],
     )
     return summary.model_copy(update={"reality": reality})
 
@@ -1924,9 +2318,19 @@ def _not_sure(cfg: QuickConfig, project: Project) -> list[str]:
         if question is None:
             continue
         option = next((o for o in question.options if o.value == value), None)
-        if option is not None and option.unsure:
+        if option is not None and option.unsure and not option.left_out:
             out.append(question.label)
     return out
+
+
+def _saved_request(project: Project) -> QuickRequest | None:
+    """The quick form a project was priced from; None for other projects."""
+    if not project.quick_request:
+        return None
+    try:
+        return QuickRequest.model_validate(project.quick_request)
+    except ValueError:
+        return None
 
 
 def _size_label(cfg: QuickConfig, estimate: Estimate) -> str | None:
@@ -2040,6 +2444,22 @@ ERA_NOTE = (
     "whether AI tools were used, so no AI saving is taken off them. If that data predates AI "
     "tools, your team's AI tools would save more: the range then starts lower."
 )
+
+
+def _ai_saving(estimate: Estimate, margin_visible: bool = True) -> AiSavingOut | None:
+    """From the engine's AI-saving line, when the share passed to the client was answered; the
+    kept amount only for users who may see margin."""
+    line = next((ln for ln in estimate.lines if ln.line_key == AI_KEPT_KEY), None)
+    if line is None:
+        return None
+    share = Decimal(str(line.inputs["ai_saving_share"]))
+    passed = Decimal(str(line.inputs["ai_passthrough_percent"]))
+    return AiSavingOut(
+        identified_paise=int(line.inputs["ai_saving_identified_paise"]),
+        percent=int((share * 100).to_integral_value(ROUND_HALF_UP)),
+        passed_percent=int((passed * 100).to_integral_value(ROUND_HALF_UP)),
+        kept_paise=line.likely_paise if margin_visible else None,
+    )
 
 
 def _era_sensitivity(result: dict[str, Any]) -> EraSensitivityOut | None:

@@ -39,6 +39,22 @@ class FeatureShare(BaseModel):
     standard: bool  # the standard building blocks every project gets
 
 
+class SharedBlock(BaseModel):
+    name: str
+    amount_paise: int
+
+
+class SharedRequirement(BaseModel):
+    """A requirement that is the primary evidence of more than one priced block."""
+
+    code: str
+    title: str
+    blocks: list[SharedBlock]
+
+
+SHOWN_SHARED = 3  # requirements named in the check; the rest are counted
+
+
 def _pct(part: int, whole: int) -> int:
     return int((Decimal(part) * PERCENT / Decimal(whole)).quantize(0, rounding=ROUND_HALF_UP))
 
@@ -56,6 +72,7 @@ def reality_check(
     emd_paise: int | None = None,
     support_rule: SupportRule | None = None,
     build_looks: Literal["high", "low"] | None = None,
+    shared: list[SharedRequirement] | None = None,
 ) -> RealityOut:
     """Each check: ok, or a plain reason to look again. Verdict "check" if any is not ok.
     `build_looks`: what the independent check says of the build, so a support share outside
@@ -155,6 +172,8 @@ def reality_check(
     emd_check = _emd_check(rules, price_paise, emd_paise)
     if emd_check is not None:
         checks.append(emd_check)
+    if shared:
+        checks.append(_shared_check(shared))
     verdict: Literal["realistic", "check"] = "realistic" if all(c.ok for c in checks) else "check"
     return RealityOut(verdict=verdict, checks=checks)
 
@@ -179,6 +198,26 @@ def _support_share(rule: SupportRule, build_looks: Literal["high", "low"] | None
     return Check(key="support_share", ok=False, title=first, detail=detail)
 
 
+def _shared_check(shared: list[SharedRequirement]) -> Check:
+    """One requirement priced by several blocks: often separate work (storing documents and
+    searching them), sometimes the same work twice. Shown, never merged."""
+    named = "; ".join(
+        f"{s.code} ({s.title}): "
+        + " + ".join(f"{b.name} {_short(b.amount_paise)}" for b in s.blocks)
+        for s in shared[:SHOWN_SHARED]
+    )
+    more = len(shared) - SHOWN_SHARED
+    return Check(
+        key="same_requirement",
+        ok=False,
+        title=f"{len(shared)} requirement{'s' if len(shared) != 1 else ''} priced by more than "
+        "one block",
+        detail=f"{named}{f'; and {more} more' if more > 0 else ''}. Each block should be "
+        "separate work. If two cover the same thing (e.g. sending SMS in both), remove one "
+        "before quoting.",
+    )
+
+
 PAISE_PER_CRORE = 10**9
 PAISE_PER_LAKH = 10**7
 
@@ -187,6 +226,16 @@ def _inr(paise: Decimal) -> str:
     if paise >= PAISE_PER_CRORE:
         return f"₹{(paise / PAISE_PER_CRORE).quantize(Decimal('0.01'), ROUND_HALF_UP)} cr"
     return f"₹{(paise / PAISE_PER_LAKH).quantize(Decimal('0.1'), ROUND_HALF_UP)} lakh"
+
+
+PAISE_PER_THOUSAND = 10**5
+
+
+def _short(paise: int) -> str:
+    """₹33k below a lakh, else as _inr."""
+    if paise < PAISE_PER_LAKH:
+        return f"₹{(Decimal(paise) / PAISE_PER_THOUSAND).quantize(0, ROUND_HALF_UP)}k"
+    return _inr(Decimal(paise))
 
 
 def _emd_check(rules: RealityCheck, price_paise: int | None, emd_paise: int | None) -> Check | None:

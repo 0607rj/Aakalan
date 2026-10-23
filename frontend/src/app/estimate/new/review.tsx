@@ -12,6 +12,7 @@ import {
   api,
   errorText,
   type FoundValue,
+  type NotIncluded,
   type QuickOptions,
   type QuickRequest,
   type TenderDocument,
@@ -23,14 +24,15 @@ import {
   type Choice,
   Citation,
   DOCUMENT_STEPS,
-  FeatureCard,
   initialChoices,
   optionsCurrency,
   QuestionGroup,
   QuestionHeading,
   relevantQuestions,
   setChoice,
+  shownChoice,
   StepIndicator,
+  unchosen,
   useQuestionImpact,
 } from "./parts";
 import {
@@ -54,11 +56,18 @@ import {
   VERSION,
 } from "./steps";
 import {
-  CustomFeaturesSection,
   type CustomItem,
+  FoundOtherFeatures,
   itemsFromDocument,
   toCustomFeatures,
 } from "./custom-features";
+import {
+  FeatureChoice,
+  FeatureSections,
+  featureTicks,
+  notIncludedText,
+  sentNotIncluded,
+} from "./feature-sections";
 import { PrebidQueries } from "./prebid";
 
 /** Unit conversions between what the user types and what the API stores. */
@@ -214,11 +223,16 @@ export function ReviewForm({
   const answered = React.useRef(
     new Set<string>([...Object.keys(found), ...Object.keys(preset)]),
   );
+  // answers from the document or the user; the rest print on the quote as assumed
+  const [touched, setTouched] = React.useState<string[]>(() => [
+    ...new Set([...Object.keys(found), ...Object.keys(preset)]),
+  ]);
   const [customItems, setCustomItems] = React.useState<CustomItem[]>(() =>
     itemsFromDocument(extraction.other_features ?? []),
   );
   const customFeatures = toCustomFeatures(customItems);
-  const anyFeature = features.length > 0 || customFeatures.length > 0;
+  // features, scope items and standard blocks marked "Not included"
+  const [notIncluded, setNotIncluded] = React.useState<NotIncluded[]>([]);
   // each found feature starts at the level its user stories give; the user can still change it
   const [levels, setLevels] = React.useState<Record<string, Level>>(() =>
     Object.fromEntries(
@@ -242,6 +256,16 @@ export function ReviewForm({
   const [useTerms, setUseTerms] = React.useState(terms !== null);
   const [customizing, setCustomizing] = React.useState(false);
   const everything = allFeatures(options, features, choices);
+  // a mobile app, other software or old data count too (ticked through their question)
+  const anyFeature = everything.length > 0 || customFeatures.length > 0;
+  const ticks = featureTicks({
+    options,
+    features,
+    setFeatures,
+    everything,
+    notIncluded,
+    setNotIncluded,
+  });
   const leveled = featuresWithLevels(options, everything);
   const effective = effectiveLevels(options, everything, choices, levels);
   const scopeGroups = applicableScope(options, everything);
@@ -303,12 +327,16 @@ export function ReviewForm({
       isOpen(q) &&
       byNumber[q.key] === undefined &&
       !(q.key === "support_years" && omYearsGiven) &&
+      !q.must_choose &&
       String(choices[q.key] ?? q.default) === String(q.default),
   );
-  const canSubmit = name.trim().length > 0 && anyFeature && !hasErrors;
+  const toChoose = unchosen(questions, choices);
+  const canSubmit =
+    name.trim().length > 0 && anyFeature && !hasErrors && toChoose.length === 0;
 
   // Only levels picked by hand are sent; the rest follow the answers.
   const featureLevels = pickedLevels(options, everything, levels);
+  const pricedScope = chosenScope(scopeGroups, scope);
   const request: QuickRequest = {
     mode: "vendor",
     name: name.trim() || "Estimate",
@@ -316,10 +344,20 @@ export function ReviewForm({
     document_id: doc.id,
     features,
     feature_levels: featureLevels,
+    // a feature with more user stories than one large block covers is several modules
+    feature_units: Object.fromEntries(
+      extraction.features.flatMap((f) =>
+        (f.story_units ?? 1) > 1 && everything.includes(f.key)
+          ? [[f.key, f.story_units]]
+          : [],
+      ),
+    ),
     custom_features: customFeatures,
     choices: { ...choices, ...byNumber },
-    scope: chosenScope(scopeGroups, scope),
+    scope: pricedScope,
     overrides,
+    not_included: sentNotIncluded(notIncluded, everything, pricedScope),
+    answered: [...new Set([...touched, ...Object.keys(byNumber)])],
     payment_schedule:
       terms && useTerms
         ? terms.payments.map((p) => ({
@@ -349,11 +387,47 @@ export function ReviewForm({
       : null,
   );
 
-  function toggle(key: string) {
-    setFeatures((current) =>
-      current.includes(key)
-        ? current.filter((k) => k !== key)
-        : [...current, key],
+  // features from the list the document mentions (ticked if it asks for them), with the pages
+  const foundKeys = options.features
+    .filter((f) => foundFeatures.has(f.key))
+    .map((f) => f.key);
+  const foundOther = customItems.filter((i) => i.foundIndex !== null);
+
+  /** One feature with its three states and where the document mentions it. */
+  function card(key: string) {
+    const found = foundFeatures.get(key);
+    return (
+      <FeatureChoice
+        key={key}
+        options={options}
+        featureKey={key}
+        ticks={ticks}
+        onTick={(k) => ticks.tick(k, changeChoice)}
+        notIncluded={notIncluded}
+      >
+        {found && !found.suggested ? (
+          <span className="text-sm text-warning">
+            Mentioned only{" "}
+            {found.mentions === 1 ? "once" : `${found.mentions} times`} in a
+            long document, so not ticked. Tick it if it is part of the work.
+          </span>
+        ) : null}
+        {found ? (
+          <Citation evidence={found.evidence} approximatePages={approx} />
+        ) : null}
+        {found ? (
+          <Stories stories={found.stories} level={found.story_level ?? null} />
+        ) : null}
+      </FeatureChoice>
+    );
+  }
+
+  function changeChoice(key: string, value: Choice) {
+    answered.current.add(key);
+    setTouched((now) => (now.includes(key) ? now : [...now, key]));
+    if (key === VERSION) setLevels({}); // a new overall level resets hand-picked ones
+    setChoices((now) =>
+      setChoice(options.questions, now, answered.current, key, value),
     );
   }
 
@@ -377,13 +451,6 @@ export function ReviewForm({
   const question = steps.current.startsWith("q:")
     ? openQuestions.find((q) => `q:${q.key}` === steps.current)
     : undefined;
-  const changeChoice = (key: string, value: Choice) => {
-    answered.current.add(key);
-    if (key === VERSION) setLevels({}); // a new overall level resets hand-picked ones
-    setChoices((now) =>
-      setChoice(options.questions, now, answered.current, key, value),
-    );
-  };
 
   return (
     <div className="flex flex-col gap-8">
@@ -428,64 +495,52 @@ export function ReviewForm({
             </div>
           </section>
 
-          <section className="flex flex-col gap-4">
-            <div>
-              <h2 className="text-xl font-semibold">
-                What the document asks for
-              </h2>
-              <p className="text-sm text-muted-foreground">
-                We ticked what the document mentions. Untick anything wrong and
-                tick anything we missed.
-              </p>
-            </div>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {options.features
-                .filter((feature) => !feature.hidden)
-                .map((feature) => {
-                  const found = foundFeatures.get(feature.key);
-                  return (
-                    <FeatureCard
-                      key={feature.key}
-                      label={feature.label}
-                      hint={feature.hint}
-                      checked={features.includes(feature.key)}
-                      onToggle={() => toggle(feature.key)}
-                    >
-                      {found && !found.suggested ? (
-                        <span className="text-sm text-warning">
-                          Mentioned only{" "}
-                          {found.mentions === 1
-                            ? "once"
-                            : `${found.mentions} times`}{" "}
-                          in a long document, so not ticked. Tick it if it is
-                          part of the work.
-                        </span>
-                      ) : null}
-                      {found ? (
-                        <Citation
-                          evidence={found.evidence}
-                          approximatePages={approx}
-                        />
-                      ) : null}
-                      {found ? (
-                        <Stories
-                          stories={found.stories}
-                          level={found.story_level ?? null}
-                        />
-                      ) : null}
-                    </FeatureCard>
-                  );
-                })}
-            </div>
-          </section>
-
-          <CustomFeaturesSection
-            items={customItems}
-            onChange={setCustomItems}
-            types={options.custom_feature_types}
+          <FeatureSections
+            options={options}
+            foundTitle="Found in your document"
+            foundKeys={foundKeys}
+            foundCount={foundKeys.length + foundOther.length}
+            found={
+              <>
+                {foundKeys.map((key) => card(key))}
+                <FoundOtherFeatures
+                  items={customItems}
+                  onChange={setCustomItems}
+                  types={options.custom_feature_types}
+                  approximatePages={approx}
+                />
+              </>
+            }
+            foundNote={
+              (extraction.not_priced ?? []).length > 0 ? (
+                <div className="rounded-xl border border-dashed px-4 py-3 text-sm">
+                  <span className="font-medium">
+                    Asked for, but not priced by this estimate:
+                  </span>{" "}
+                  {(extraction.not_priced ?? []).map((n) => n.label).join(", ")}
+                  . Details on the last screen; price these separately.
+                </div>
+              ) : null
+            }
+            emptyHint={
+              extraction.reader === "ai"
+                ? "Nothing from our list was found in the document. Tick features below, or add your own."
+                : "Nothing from our list was found (basic reading, no AI key). Tick features below, or add your own."
+            }
+            card={card}
+            isTicked={ticks.isTicked}
+            blocksBody={
+              name.trim() !== ""
+                ? { ...request, not_included: [], answered: null }
+                : null
+            }
+            removedBlocks={notIncluded
+              .filter((n) => n.kind === "standard")
+              .map((n) => n.key)}
+            onToggleBlock={(key) => ticks.toggleOut("standard", key)}
+            customItems={customItems}
+            onCustomItems={setCustomItems}
             approximatePages={approx}
-            showFoundHeading
-            aiMissing={extraction.reader !== "ai"}
           />
           <StepButtons
             onBack={onBack}
@@ -496,7 +551,7 @@ export function ReviewForm({
                 ? "Enter a project name."
                 : !anyFeature
                   ? "Tick or add at least one thing the software should do."
-                  : `${features.length + customFeatures.length} selected`
+                  : `${everything.length + customFeatures.length} selected`
             }
           />
         </>
@@ -523,13 +578,18 @@ export function ReviewForm({
                 </span>,
               ]),
             )}
-            onToggle={(key) =>
+            onToggle={(key) => {
               setScope((now) =>
                 now.includes(key)
                   ? now.filter((k) => k !== key)
                   : [...now, key],
-              )
-            }
+              );
+              ticks.unmark("scope", key);
+            }}
+            notIncluded={notIncluded
+              .filter((n) => n.kind === "scope")
+              .map((n) => n.key)}
+            onNotIncluded={(key) => ticks.toggleOut("scope", key)}
           />
           {(extraction.scope_set_aside ?? []).length > 0 ? (
             <div className="flex flex-col gap-2 rounded-xl bg-muted/60 px-4 py-3 text-sm">
@@ -666,13 +726,15 @@ export function ReviewForm({
             currency={currency}
           />
           <p className="-mt-4 text-sm text-muted-foreground">
-            {preset[question.key] !== undefined
-              ? "The document mentions this, so we picked the matching answer."
-              : "The document doesn't say, so we picked the usual answer."}
+            {question.must_choose
+              ? "Your decision: pick one."
+              : preset[question.key] !== undefined
+                ? "The document mentions this, so we picked the matching answer."
+                : "The document doesn't say, so we picked the usual answer."}
           </p>
           <QuestionGroup
             question={question}
-            value={choices[question.key] ?? question.default}
+            value={shownChoice(question, choices)}
             impact={impacts.get(question.key)}
             currency={currency}
             hideLegend
@@ -690,7 +752,16 @@ export function ReviewForm({
               Want to set each feature yourself? Change levels →
             </button>
           ) : null}
-          <StepButtons onBack={steps.prev} onNext={steps.next} />
+          <StepButtons
+            onBack={steps.prev}
+            onNext={steps.next}
+            nextDisabled={unchosen([question], choices).length > 0}
+            hint={
+              unchosen([question], choices).length > 0
+                ? "Pick an answer to continue."
+                : null
+            }
+          />
         </section>
       ) : steps.current === "details" ? (
         <>
@@ -760,7 +831,7 @@ export function ReviewForm({
                 {open ? (
                   <QuestionGroup
                     question={q}
-                    value={choices[q.key] ?? q.default}
+                    value={shownChoice(q, choices)}
                     onChange={(value) => changeChoice(q.key, value)}
                     hideLegend
                     impact={impacts.get(q.key)}
@@ -803,6 +874,11 @@ export function ReviewForm({
                   label: f.label,
                   value: facts[f.key] ?? "",
                 })),
+              {
+                step: "found",
+                label: "Not included",
+                value: notIncludedText(options, notIncluded),
+              },
             ]}
             onChange={steps.goTo}
           >
@@ -880,7 +956,9 @@ export function ReviewForm({
                   ? "Enter a project name."
                   : !anyFeature
                     ? "Tick or add at least one thing the software should do."
-                    : "Fix the highlighted numbers."
+                    : toChoose.length > 0
+                      ? `Answer: ${toChoose[0].label}`
+                      : "Fix the highlighted numbers."
             }
           />
         </>

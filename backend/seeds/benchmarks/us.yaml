@@ -6,6 +6,24 @@ country: us
 currency: USD
 # AI coding tools: rare before 2023, spreading 2023-24, common from 2025 (assumption).
 ai_adoption_by_year: {2020: none, 2023: low, 2025: medium}
+# Which contracts are left out of the back-test (round 3, OPEN_QUESTIONS 155). A contract is
+# used only when its published value is the price of a fixed piece of software we can describe
+# on the form. Every project with `use: false` names one of these rules (`exclude_rule`) and its
+# reason; the loader refuses one without. Applied to every project, not only new ones.
+#   staffing          the main thing bought is people's time: staff by the month, time and
+#                     material, team augmentation, or only a monthly rate. Staff bundled with a
+#                     fixed build stay in when the tender states the headcount (priced as
+#                     `onsite_staff`); out when it cannot be counted.
+#   subscription      a subscription or licence of an existing product (SaaS, a platform
+#                     bought through a reseller), not a build.
+#   open_ended        a programme or operations of unknown length or scope, or build and ongoing
+#                     work mixed without a split.
+#   not_a_new_build   a rework, upgrade, migration, design only or frontend only.
+#   unfinished        not finished when priced: spend to date, a first milestone, a failed project.
+#   unreliable_price  the price cannot be matched to a scope: no scope beyond the title, a
+#                     budget rather than a contract value, a band with a thin or vague scope,
+#                     figures that contradict each other, too old, or client type or country
+#                     unknown.
 projects:
   - id: sba-dlap-salesforce-chatbot
     title: Salesforce, chatbot and Disaster Loan Application Portal replacement (COVID-19)
@@ -50,6 +68,7 @@ projects:
     source_url: https://www.usaspending.gov/award/CONT_AWD_19AQMM24F0815_1900_NNG15SD26B_8000
     confidence: medium
     use: false
+    exclude_rule: subscription
     reason: 5-week crisis build on an existing platform via a reseller; not comparable to a custom build
     model: {scale: small, om_years: 0, deadline_months: 2, features: [online_forms], custom_features: []}
   - id: sandy-springs-opengov-permitting
@@ -62,6 +81,7 @@ projects:
     source_url: https://www.appenmedia.com/sandy_springs/sandy-springs-opengov-platform-is-up-and-running/article_c9de22a2-3d64-11ef-b566-bb3850e60fe5.html
     confidence: medium
     use: false
+    exclude_rule: subscription
     reason: off-the-shelf SaaS subscription, not a custom build
     model: {scale: medium, om_years: 1, deadline_months: 7, features: [online_forms, approval_workflow, documents, payments, staff_login], custom_features: []}
   - id: college-station-tyler-permitting
@@ -74,6 +94,7 @@ projects:
     source_url: https://communityimpact.com/bryan-college-station/government/college-station-approves-13m-cloud-based-software-overhaul/
     confidence: medium
     use: false
+    exclude_rule: subscription
     reason: off-the-shelf SaaS licence; implementation-only part is $451k
     model: {scale: medium, om_years: 3, deadline_months: null, features: [online_forms, approval_workflow, staff_login], custom_features: [{name: Inspections and code enforcement, category: module, size: M}]}
   - id: illinois-idfpr-core-licensing
@@ -86,6 +107,7 @@ projects:
     source_url: https://idfpr.illinois.gov/content/soi/idfpr/en/news/2024/idfpr-announces-plans-for-new-digital-licensure-process.html
     confidence: medium
     use: false
+    exclude_rule: unreliable_price
     reason: budget figure, not a contract value; vendor platform
     model: {scale: large, om_years: 1, deadline_months: 24, features: [online_forms, approval_workflow, payments, staff_login], custom_features: []}
   - id: usda-farmers-gov-cx-portal
@@ -98,6 +120,7 @@ projects:
     source_url: https://www.usaspending.gov/award/CONT_AWD_12314423F0411_1205_75N98120D00092_7529
     confidence: medium
     use: false
+    exclude_rule: open_ended
     reason: multi-year national programme; scope far beyond a single portal build
     model: {scale: large, om_years: 4, deadline_months: null, features: [public_website], custom_features: []}
   - id: nps-youth-programs-portal
@@ -110,6 +133,7 @@ projects:
     source_url: https://www.usaspending.gov/award/CONT_AWD_140P2120F0241_1443_GS35F0381L_4730
     confidence: low
     use: false
+    exclude_rule: unreliable_price
     reason: scope not described beyond the title
     model: {scale: small, om_years: 2, deadline_months: null, features: [online_forms], custom_features: []}
   - id: hud-opfund-portal-modernization
@@ -122,6 +146,7 @@ projects:
     source_url: https://www.usaspending.gov/award/CONT_AWD_86615324F00017_8600_86615323D00001_8600
     confidence: low
     use: false
+    exclude_rule: open_ended
     reason: second task order of a larger effort; scope not described
     model: {scale: small, om_years: 0, deadline_months: 18, features: [], custom_features: []}
   # ---- private and small-business projects (Clutch verified reviews, researched 2026-10-16) ----
@@ -255,6 +280,7 @@ projects:
     source_url: https://clutch.co/profile/complete-web
     confidence: low
     use: false
+    exclude_rule: unreliable_price
     reason: client country only inferred
     model: {buyer: small_business, scale: small, om_years: 0, deadline_months: 3, features: [payments, connect_existing, public_website], custom_features: []}
   - id: clutch-bonus-billing-android
@@ -268,6 +294,7 @@ projects:
     source_url: https://clutch.co/profile/bitcot
     confidence: medium
     use: false
+    exclude_rule: unfinished
     reason: ongoing engagement when reviewed
     model: {buyer: small_business, scale: small, om_years: 0, deadline_months: null, features: [mobile_app, billing, dashboards], custom_features: []}
   - id: clutch-sendmammogram-portal
@@ -281,5 +308,6 @@ projects:
     source_url: https://clutch.co/profile/daffodil-software
     confidence: medium
     use: false
+    exclude_rule: not_a_new_build
     reason: enhancements to an existing product, not a new build
     model: {buyer: private, scale: small, om_years: 0, deadline_months: 7, features: [documents, mobile_app, connect_existing], custom_features: []}

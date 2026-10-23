@@ -71,12 +71,12 @@ export default function HowItWorksPage() {
             >
               <span
                 aria-hidden="true"
-                className="font-wide absolute top-0 -left-[3.05rem] flex size-10 items-center justify-center rounded-full bg-tape text-sm font-extrabold ring-4 ring-background sm:-left-[4.05rem]"
+                className="font-wide absolute top-0 -left-[3.05rem] flex size-10 items-center justify-center rounded-full bg-tape text-sm font-semibold text-primary-foreground ring-4 ring-background sm:-left-[4.05rem]"
               >
                 {i + 1}
               </span>
               <div className="flex flex-col gap-3">
-                <h2 className="font-wide text-2xl font-extrabold">
+                <h2 data-reveal className="font-wide text-2xl font-semibold">
                   {step.title}
                 </h2>
                 <p className="text-lg text-muted-foreground">{step.body}</p>
@@ -93,7 +93,7 @@ export default function HowItWorksPage() {
       <div className="border-y bg-card">
         <Section className="grid gap-8 py-16 md:grid-cols-2">
           <div>
-            <h2 className="font-wide text-2xl font-extrabold">
+            <h2 data-reveal className="font-wide text-2xl font-semibold">
               What happens to your document
             </h2>
             <p className="mt-3 text-muted-foreground">
@@ -104,7 +104,7 @@ export default function HowItWorksPage() {
             </p>
           </div>
           <div>
-            <h2 className="font-wide text-2xl font-extrabold">
+            <h2 data-reveal className="font-wide text-2xl font-semibold">
               Where the prices come from
             </h2>
             <p className="mt-3 text-muted-foreground">

@@ -1,6 +1,7 @@
 """Quick-estimate configuration (`seeds/quick_estimate.yaml`): plain-language features and
 questions that map to catalog components and questionnaire drivers. No prices live here."""
 
+import re
 from decimal import Decimal
 from functools import lru_cache
 from pathlib import Path
@@ -48,6 +49,10 @@ class Option(Frozen):
     feature_level: LevelKey | None = None  # default level of every feature (MVP / full)
     component_complexity: dict[str, Complexity] = {}  # e.g. a ready design: ui_ux_design low
     unsure: bool = False  # "Not sure": the usual answer, with a wider range
+    # "Not sure" that leaves these features out of the price and quotes them as an option
+    # ("if required"), at these levels (None = the default level). Not counted as unclear:
+    # what is left out does not widen the range. OPEN_QUESTIONS 147.
+    left_out: dict[str, LevelKey | None] = {}
 
 
 class Question(Frozen):
@@ -72,6 +77,17 @@ class Question(Frozen):
     # A document whose reading lists this not-priced topic (with quotes) answers "yes" (e.g.
     # penalties): readings made before the question existed still answer it.
     from_not_priced: str | None = None
+    # A document that does not mention it is not a gap: the usual answer applies without
+    # lowering the requirement clarity (e.g. who provides the SSL certificate).
+    silent_means_usual: bool = False
+    # A decision the user must make on every estimate (no answer is pre-selected on the form,
+    # and it is never "assumed"); `default` only serves requests that do not send it.
+    must_choose: bool = False
+    # What the answer means in numbers, shown with an assumed answer: a template filled with
+    # the option's answers, e.g. "{users_total:,} users".
+    detail: str | None = None
+    # Only applies when this number is set (e.g. onsite_period needs onsite_staff).
+    only_with_override: str | None = None
 
     @model_validator(mode="after")
     def _default_exists(self) -> "Question":
@@ -99,6 +115,12 @@ class Keywords(Frozen):
     # places to be ticked automatically (fewer: offered, not ticked).
     long_document_pages: int = Field(default=20, ge=1)
     min_mentions_long_document: int = Field(default=3, ge=1)
+    # A short description that rules a feature out ("no mobile app", "payments not needed"):
+    # one of `exclusion_before` before the feature's words, or one of `exclusion_after` after
+    # them, in one clause, with at most `exclusion_window_words` words between.
+    exclusion_before: list[str] = []
+    exclusion_after: list[str] = []
+    exclusion_window_words: int = Field(default=1, ge=0)
 
 
 class Impact(Frozen):
@@ -143,16 +165,27 @@ class SizeTier(Frozen):
 class StorySizing(Frozen):
     """A feature found in a document takes its level from how many user stories the document
     asks for under it: up to basic_max stories = basic, up to standard_max = standard, more =
-    advanced (services/extraction/tender.py). The reader lists stories; it never sizes."""
+    advanced (services/extraction/tender.py). The reader lists stories; it never sizes.
+
+    One advanced block covers up to advanced_max stories; a feature with more is several
+    advanced modules: units = ceil(stories / advanced_max) (round 3, OPEN_QUESTIONS 152).
+    Without advanced_max a feature is always one module (the earlier behaviour)."""
 
     source: str
     basic_max: int = Field(ge=1)
     standard_max: int = Field(ge=2)
+    advanced_max: int | None = Field(default=None, ge=3)
 
     def level(self, stories: int) -> LevelKey:
         if stories <= self.basic_max:
             return "basic"
         return "standard" if stories <= self.standard_max else "advanced"
+
+    def units(self, stories: int) -> int:
+        """How many modules of its level the stories make: 1 up to advanced_max."""
+        if self.advanced_max is None or stories <= self.advanced_max:
+            return 1
+        return -(-stories // self.advanced_max)  # ceil
 
 
 class Sizing(Frozen):
@@ -162,6 +195,8 @@ class Sizing(Frozen):
     custom_size_level: dict[Size, LevelKey]  # a custom feature's S/M/L as a level
     tiers: list[SizeTier]
     stories: StorySizing | None = None  # levels from a document's user stories
+    # The most modules one feature or extra feature can be (units; 1 = no more than one).
+    max_units: int = Field(default=1, ge=1)
 
     @model_validator(mode="after")
     def _open_tier(self) -> "Sizing":
@@ -409,12 +444,61 @@ class IncludedItem(Frozen):
     label: str  # what the reader is told is already in every price
 
 
+class StandardBlock(Frozen):
+    """A standard building block in plain words, shown on the form as included by default."""
+
+    label: str
+    hint: str = ""
+
+
 class AlwaysIncluded(Frozen):
     """Work every estimate already prices (base blocks, run costs). A requirement that is only
     a part of one of these is not priced again as an extra (services/extraction/tender.py)."""
 
     source: str
     items: list[IncludedItem]
+
+
+class ClientProvidedItem(Frozen):
+    """Something the client may provide, and the answer that says so."""
+
+    words: list[str]  # any one names the item in the sentence
+    question: str
+    value: str
+
+
+class ClientProvided(Frozen):
+    """A sentence saying the client provides an item (hosting, the web address, the SSL
+    certificate) answers that item's question, citing the sentence. A sentence counts when it
+    has one `give` phrase, one `by_client` word, an item word and no `by_vendor` phrase, and is
+    at most `max_sentence_chars` long (long run-on text from lists is skipped). Whole words,
+    any case. Found in code on the stored page text, so earlier readings get it too."""
+
+    source: str
+    give: list[str]
+    by_client: list[str]
+    by_vendor: list[str]
+    max_sentence_chars: int = Field(ge=20)
+    items: list[ClientProvidedItem]
+
+
+class CmsBuiltIn(Frozen):
+    """What a CMS already has (OPEN_QUESTIONS 154). On a build of one of `build_types`, these
+    features, and the extra features whose names say they are the CMS's own parts (editor,
+    templates, versions, SEO ...), are set up rather than built: priced at most at `level`,
+    one module each. A tender read story by story otherwise counts every built-in capability
+    of the product as work to build."""
+
+    source: str
+    build_types: list[str]
+    features: list[str]
+    level: LevelKey
+    extra_words: list[str]  # whole words in an extra feature's name, any case
+    note: str  # added to each such requirement, so the quote says why it costs little
+
+    def is_cms_part(self, name: str) -> bool:
+        text = name.lower()
+        return any(re.search(rf"\b{re.escape(w.lower())}\b", text) for w in self.extra_words)
 
 
 class QuickConfig(Frozen):
@@ -455,6 +539,41 @@ class QuickConfig(Frozen):
     reality_check: RealityCheck | None = None
     always_included: AlwaysIncluded | None = None
     independent_check: IndependentCheck | None = None
+    client_provided: ClientProvided | None = None
+    # catalog key -> plain words, for the standard blocks the form lets the user untick
+    standard_blocks: dict[str, StandardBlock] = {}
+    # the form's "Not mentioned: do you need these?" shortlist (feature keys, at most 8)
+    commonly_needed: list[str] = Field(default=[], max_length=8)
+    cms_built_in: CmsBuiltIn | None = None  # what a CMS already has (OPEN_QUESTIONS 154)
+
+    @model_validator(mode="after")
+    def _client_provided(self) -> "QuickConfig":
+        for item in self.client_provided.items if self.client_provided else []:
+            question = self.questions.get(item.question)
+            if question is None:
+                raise ValueError(f"client_provided: unknown question {item.question!r}")
+            question.option(item.value)  # raises when the option does not exist
+        return self
+
+    @model_validator(mode="after")
+    def _commonly_needed(self) -> "QuickConfig":
+        unknown = set(self.commonly_needed) - {f.key for f in self.features}
+        if unknown:
+            raise ValueError(f"commonly_needed: unknown features {sorted(unknown)}")
+        return self
+
+    @model_validator(mode="after")
+    def _cms_built_in(self) -> "QuickConfig":
+        rule = self.cms_built_in
+        if rule is None:
+            return self
+        unknown = set(rule.features) - {f.key for f in self.features}
+        if unknown:
+            raise ValueError(f"cms_built_in: unknown features {sorted(unknown)}")
+        build_types = {o.value for o in self.questions["build_type"].options}
+        if set(rule.build_types) - build_types:
+            raise ValueError(f"cms_built_in: unknown build types {rule.build_types}")
+        return self
 
     @model_validator(mode="after")
     def _scope_keys(self) -> "QuickConfig":
@@ -472,6 +591,12 @@ class QuickConfig(Frozen):
                 if raised:  # a size step is a larger module, not the item's own increment
                     raise ValueError(f"scope item {i.key}: may not make {raised} bigger")
         return self
+
+    def standard_keys(self) -> list[str]:
+        """Every block that can be standard: the size tiers' and those answers add."""
+        keys = [k for t in self.sizing.tiers for k in t.base_components]
+        keys += [k for q in self.questions.values() for o in q.options for k in o.extra_components]
+        return list(dict.fromkeys(keys))
 
     def scope_item(self, key: str) -> tuple[ScopeGroup, ScopeItem]:
         for g in self.scope:

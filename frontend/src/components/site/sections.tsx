@@ -3,7 +3,7 @@ import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-/** The top of an inner page: a headline and one paragraph, left aligned. */
+/** The top of an inner page: a big serif headline and one paragraph, under a soft glow. */
 export function PageIntro({
   title,
   children,
@@ -12,12 +12,15 @@ export function PageIntro({
   children: React.ReactNode;
 }) {
   return (
-    <section className="border-b bg-card/60">
-      <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-14 sm:px-6 sm:py-20">
-        <h1 className="font-wide max-w-3xl text-4xl leading-[1.05] font-extrabold sm:text-5xl">
+    <section className="glow relative overflow-hidden border-b">
+      <div className="mx-auto flex max-w-6xl flex-col gap-5 px-4 pt-20 pb-16 sm:px-6 sm:pt-28 sm:pb-20">
+        <h1 className="rise-in font-display max-w-4xl text-5xl leading-[1.02] sm:text-7xl">
           {title}
         </h1>
-        <div className="max-w-2xl text-lg text-muted-foreground">
+        <div
+          className="rise-in max-w-2xl text-lg text-muted-foreground"
+          style={{ "--rd": 1 } as React.CSSProperties}
+        >
           {children}
         </div>
       </div>
@@ -44,6 +47,38 @@ export function Section({
   );
 }
 
+/**
+ * A section headline: the claim in white, the explanation after it in grey, one paragraph,
+ * the way the closing lines of a good brief read.
+ */
+export function Title({
+  claim,
+  children,
+  className,
+  center,
+}: {
+  claim: string;
+  children?: React.ReactNode;
+  className?: string;
+  center?: boolean;
+}) {
+  return (
+    <h2
+      data-reveal
+      className={cn(
+        "font-wide max-w-4xl text-[1.75rem] leading-[1.12] font-semibold sm:text-[2.6rem]",
+        center && "mx-auto text-center",
+        className,
+      )}
+    >
+      {claim}
+      {children ? (
+        <span className="text-muted-foreground"> {children}</span>
+      ) : null}
+    </h2>
+  );
+}
+
 /** The closing band on every public page. */
 export function StartBand({
   title = "Describe your software in a few lines and see what it costs.",
@@ -51,35 +86,29 @@ export function StartBand({
   title?: string;
 }) {
   return (
-    <Section className="py-16 sm:py-20">
-      <div className="relative overflow-hidden rounded-[28px] bg-foreground px-6 py-12 text-primary-foreground sm:px-12">
+    <Section className="py-16 sm:py-24">
+      <div
+        data-reveal
+        className="panel relative overflow-hidden rounded-[28px] px-6 py-14 text-center sm:px-12"
+      >
         <div
           aria-hidden="true"
-          className="tape-ticks absolute inset-x-0 bottom-0 h-4 bg-tape opacity-90"
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_80%_at_50%_120%,rgb(255_107_107/0.22),transparent_70%)]"
         />
-        <h2 className="font-wide max-w-2xl text-3xl leading-tight font-extrabold sm:text-4xl">
+        <h2 className="font-display relative mx-auto max-w-3xl text-4xl leading-[1.05] sm:text-6xl">
           {title}
         </h2>
-        <p className="mt-3 max-w-xl text-primary-foreground/75">
+        <p className="relative mx-auto mt-4 max-w-xl text-muted-foreground">
           Tick what it should do or upload the requirement document, answer ten
           short questions, and get the low, likely and high cost.
         </p>
-        <div className="mt-8 flex flex-wrap gap-3 pb-4">
-          <Link
-            href="/estimate/new"
-            className={cn(
-              buttonVariants({ size: "lg" }),
-              "bg-tape text-foreground hover:bg-tape/90",
-            )}
-          >
+        <div className="relative mt-8 flex flex-wrap justify-center gap-3">
+          <Link href="/estimate/new" className={buttonVariants({ size: "lg" })}>
             Start an estimate
           </Link>
           <Link
             href="/contact"
-            className={cn(
-              buttonVariants({ size: "lg", variant: "outline" }),
-              "border-primary-foreground/30 bg-transparent text-primary-foreground hover:bg-primary-foreground/10 hover:text-primary-foreground",
-            )}
+            className={buttonVariants({ size: "lg", variant: "outline" })}
           >
             Talk to us
           </Link>

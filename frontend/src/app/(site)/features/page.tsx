@@ -107,7 +107,10 @@ export default function FeaturesPage() {
             className="grid items-center gap-10 lg:grid-cols-2"
           >
             <div className={i % 2 === 1 ? "lg:order-2" : undefined}>
-              <h2 className="font-wide text-3xl leading-tight font-extrabold">
+              <h2
+                data-reveal
+                className="font-wide text-3xl leading-tight font-semibold"
+              >
                 {f.title}
               </h2>
               <p className="mt-3 text-lg text-muted-foreground">{f.body}</p>
@@ -132,7 +135,9 @@ export default function FeaturesPage() {
 
       <div className="border-y bg-card">
         <Section className="py-16">
-          <h2 className="font-wide text-2xl font-extrabold">Also included</h2>
+          <h2 data-reveal className="font-wide text-2xl font-semibold">
+            Also included
+          </h2>
           <dl className="mt-8 grid gap-x-10 gap-y-8 sm:grid-cols-2">
             {ALSO.map((a) => (
               <div key={a.title} className="border-l-4 border-tape pl-4">

@@ -8,6 +8,44 @@ currency: INR
 tax_included_when_unknown: true
 # AI coding tools: rare before 2023, spreading 2023-24, common from 2025 (assumption).
 ai_adoption_by_year: {2020: none, 2023: low, 2025: medium}
+# The back-test judges contracts awarded up to this year against our price without AI tools
+# (priced before AI coding tools were common) and later ones (the last year or two) against our
+# price with them; a project's own `pre_ai: true/false` overrides it. Reasoned, outside review
+# 2026-10-23.
+pre_ai_until: 2024
+# Round 3 scoring (OPEN_QUESTIONS 151): published prices were costed on people's time, so our
+# price with AI tools should come in below them by the AI saving. It is scored against the
+# published price times this band (inside counts as exact); our price without AI tools is
+# scored against the published price itself (target 1.0x).
+ai_price_target:
+  low: 0.75
+  high: 0.80
+  source: "placeholder: agreed with the product owner 2026-10-23 (the back-test showed our AI tools cut the price by about 20-25%)"
+# Round 3 scope capture (OPEN_QUESTIONS 152): a feature can be several modules (`units`,
+# `feature_units`). Rules, set from the scope text only, never from the price or the team size:
+#   1. A named module of a state or enterprise system (treasury, registry, ERP) is a large
+#      sub-system (L), as the catalog defines L.
+#   2. A stated count of modules is priced as that many modules at the form's default level
+#      (standard), less the ones already mapped to our features.
+#   3. No module list or count stated: unchanged (a document re-read is needed to measure it).
+# Which contracts are left out of the back-test (round 3, OPEN_QUESTIONS 155). A contract is
+# used only when its published value is the price of a fixed piece of software we can describe
+# on the form. Every project with `use: false` names one of these rules (`exclude_rule`) and its
+# reason; the loader refuses one without. Applied to every project, not only new ones.
+#   staffing          the main thing bought is people's time: staff by the month, time and
+#                     material, team augmentation, or only a monthly rate. Staff bundled with a
+#                     fixed build stay in when the tender states the headcount (priced as
+#                     `onsite_staff`); out when it cannot be counted.
+#   subscription      a subscription or licence of an existing product (SaaS, a platform
+#                     bought through a reseller), not a build.
+#   open_ended        a programme or operations of unknown length or scope, or build and ongoing
+#                     work mixed without a split.
+#   not_a_new_build   a rework, upgrade, migration, design only or frontend only.
+#   unfinished        not finished when priced: spend to date, a first milestone, a failed project.
+#   unreliable_price  the price cannot be matched to a scope: no scope beyond the title, a
+#                     budget rather than a contract value, a band with a thin or vague scope,
+#                     figures that contradict each other, too old, or client type or country
+#                     unknown.
 projects:
   - id: irfc-egov-erp-railtel
     title: Paperless e-governance and ERP workflow system with 10-year support (IRFC)
@@ -28,7 +66,10 @@ projects:
       hosting_included: true   # 10 years hosting + DR on RailTel cloud
       features: [approval_workflow, documents, staff_login, payments, connect_existing]
       custom_features:
-        - {name: ERP finance modules (borrowing, leasing, lending, risk), category: module, size: L}
+        # round 3 scope capture (rule 2, OPEN_QUESTIONS 152): the stated 83 modules, less the 5
+        # mapped to our features, as standard modules (the form's default level); was one large
+        # module (ERP finance), which the 83 include
+        - {name: "e-office and ERP modules (83 stated, incl. borrowing, leasing, lending, risk)", category: module, size: M, units: 78}
         - {name: Mobile app, category: mobile, size: M}
         - {name: Digital signature integration, category: integration, size: S}
   - id: arunachal-family-registry-protean
@@ -49,7 +90,8 @@ projects:
       deadline_months: 12
       features: [online_forms, connect_existing, staff_login]
       custom_features:
-        - {name: Family and resident data repository with validation, category: module, size: M}
+        # round 3 (rule 1): the core system of a state-wide platform is a large sub-system (was M)
+        - {name: Family and resident data repository with validation, category: module, size: L}
         - {name: Mobile-based registration app, category: mobile, size: M}
   - id: mhada-digital-transformation-ceinsys
     title: Housing authority digital transformation (land, projects, GIS app, SSO, website, CMS)
@@ -129,11 +171,13 @@ projects:
       deadline_months: 6
       features: [staff_login, approval_workflow]
       custom_features:
-        - {name: Pension management, category: module, size: M}
-        - {name: Employee management, category: module, size: M}
-        - {name: Works and accounts management, category: module, size: M}
-        - {name: Salary management, category: module, size: M}
-        - {name: Grant-in-aid, category: module, size: M}
+        # round 3 (rule 1): each named module of a state treasury system is a large sub-system
+        # (was M each)
+        - {name: Pension management, category: module, size: L}
+        - {name: Employee management, category: module, size: L}
+        - {name: Works and accounts management, category: module, size: L}
+        - {name: Salary management, category: module, size: L}
+        - {name: Grant-in-aid, category: module, size: L}
         - {name: Mobile app, category: mobile, size: M}
   - id: odisha-oswas3-tcs
     title: AI-enabled secretariat workflow / e-file platform (OSWAS 3.0)
@@ -145,6 +189,7 @@ projects:
     source_url: https://www.orissapost.com/odisha-govt-to-build-ai-enabled-governance-platform-this-company-wins-bid/
     confidence: medium
     use: false
+    exclude_rule: open_ended
     reason: statewide 6-year programme far beyond a single portal build
     model: {scale: medium, om_years: 5, deadline_months: null, features: [approval_workflow, documents, dashboards, staff_login, connect_existing, languages, accessibility], custom_features: [{name: AI document processing and routing, category: ai, size: L}]}
   - id: hitpa-claims-portal-railtel
@@ -157,6 +202,7 @@ projects:
     source_url: https://insights.dsij.in/dsijarticledetail/rs-4682-crore-order-book-navratna-railway-telecom-company-bags-new-order-worth-rs-487000000-from-health-insurance-tpa-of-india-ltd-id001-42088
     confidence: medium
     use: false
+    exclude_rule: open_ended
     reason: one-line scope, multi-year operations of unknown length
     model: {scale: large, om_years: 5, deadline_months: null, features: [online_forms, approval_workflow, documents], custom_features: [{name: Mobile app, category: mobile, size: M}]}
   - id: rbu-admission-saas-euphoria
@@ -169,6 +215,7 @@ projects:
     source_url: https://tradebrains.in/features/penny-stock-jumps-4-after-receiving-an-order-worth-2-45-cr-from-govt-of-west-bengal/
     confidence: medium
     use: false
+    exclude_rule: subscription
     reason: SaaS subscription, not a custom build
     model: {scale: medium, om_years: 7, deadline_months: null, features: [online_forms, approval_workflow, staff_login], custom_features: []}
   - id: odisha-higher-edu-cdgp-railtel
@@ -181,6 +228,7 @@ projects:
     source_url: https://www.psuconnect.in/psu-news/railtel-wins-48-98-crore-order-from-odisha-higher-education-department
     confidence: low
     use: false
+    exclude_rule: open_ended
     reason: bundles manpower deployment; 83 modules not individually described
     model: {scale: large, om_years: 0, deadline_months: 7, features: [connect_existing, approval_workflow, staff_login], custom_features: []}
   # ---- private and small-business projects (Clutch verified reviews, researched 2026-10-16) ----
@@ -271,6 +319,7 @@ projects:
     source_url: https://clutch.co/profile/techugo
     confidence: medium
     use: false
+    exclude_rule: unreliable_price
     reason: scope too thin for its size (6-person team for 10 months, only two features described)
     model:
       size: medium
@@ -292,6 +341,7 @@ projects:
     source_url: https://clutch.co/profile/webandcrafts
     confidence: high
     use: false
+    exclude_rule: unreliable_price
     reason: 2014 price of a WordPress theme site - too old and too far from custom software
     model: {buyer: small_business, scale: small, om_years: 0, deadline_months: 3, features: [public_website, documents], custom_features: []}
   - id: clutch-omoiyari-sleep-care-apps
@@ -305,6 +355,7 @@ projects:
     source_url: https://clutch.co/profile/antino-labs
     confidence: medium
     use: false
+    exclude_rule: unfinished
     reason: only the first milestone was done when reviewed
     model: {buyer: small_business, scale: small, om_years: 0, deadline_months: 3, features: [mobile_app, bookings, documents, connect_existing], custom_features: []}
   - id: clutch-cedarwood-afterschool-platform
@@ -318,6 +369,7 @@ projects:
     source_url: https://clutch.co/profile/squareboat
     confidence: low
     use: false
+    exclude_rule: open_ended
     reason: seven-year engagement including marketing
     model: {buyer: small_business, scale: medium, om_years: 0, deadline_months: null, features: [online_forms, payments, billing, mobile_app, dashboards], custom_features: []}
   - id: clutch-act-fibernet-app-chatbot
@@ -331,6 +383,7 @@ projects:
     source_url: https://clutch.co/profile/daffodil-software
     confidence: medium
     use: false
+    exclude_rule: staffing
     reason: ongoing team augmentation, not a defined build
     model: {buyer: private, scale: large, om_years: 0, deadline_months: null, features: [mobile_app, ai_chatbot], custom_features: []}
   - id: clutch-matrixone-workforce-webapp
@@ -344,6 +397,7 @@ projects:
     source_url: https://clutch.co/profile/ahex-technologies
     confidence: low
     use: false
+    exclude_rule: open_ended
     reason: ongoing, scope not described
     model: {buyer: small_business, scale: small, om_years: 0, deadline_months: null, features: [], custom_features: [{name: Workforce management web app, category: module, size: M}]}
   # ---- mid-size private projects (Clutch verified reviews, researched 2026-10-16) ------------
@@ -406,6 +460,7 @@ projects:
     source_url: https://clutch.co/profile/techugo
     confidence: medium
     use: false
+    exclude_rule: unreliable_price
     reason: client may be public sector; support bundled with the build
     model: {buyer: private, scale: medium, om_years: 1, deadline_months: null, features: [staff_login, dashboards, connect_existing, mobile_app], custom_features: []}
   - id: clutch-national-bank-mobile-app
@@ -419,6 +474,7 @@ projects:
     source_url: https://clutch.co/profile/techugo
     confidence: low
     use: false
+    exclude_rule: unreliable_price
     reason: the review does not say whether the bank is private or public sector; 2015 price
     model: {buyer: private, scale: large, om_years: 0, deadline_months: 28, features: [staff_login, payments, connect_existing, mobile_app], custom_features: []}
   - id: clutch-titan-wot-app
@@ -432,6 +488,7 @@ projects:
     source_url: https://clutch.co/profile/robosoft-technologies
     confidence: low
     use: false
+    exclude_rule: open_ended
     reason: band only, ongoing, build and maintenance mixed
     model: {buyer: private, scale: large, om_years: 1, deadline_months: null, features: [mobile_app, connect_existing], custom_features: []}
   - id: clutch-ev-maker-vehicle-system
@@ -445,6 +502,7 @@ projects:
     source_url: https://clutch.co/profile/successive-technologies
     confidence: medium
     use: false
+    exclude_rule: unfinished
     reason: pilot still in progress; spend to date only
     model: {buyer: private, scale: small, om_years: 0, deadline_months: null, features: [maps, dashboards, connect_existing], custom_features: [{name: Vehicle information system, category: module, size: M}]}
   - id: clutch-branchx-fintech-ops
@@ -458,6 +516,7 @@ projects:
     source_url: https://clutch.co/profile/antino-labs
     confidence: low
     use: false
+    exclude_rule: unreliable_price
     reason: band only and thin scope
     model: {buyer: private, scale: small, om_years: 0, deadline_months: 23, features: [approval_workflow, staff_login, connect_existing], custom_features: []}
   - id: clutch-essell-web-mobile
@@ -471,6 +530,7 @@ projects:
     source_url: https://clutch.co/profile/codewave-technologies
     confidence: low
     use: false
+    exclude_rule: unreliable_price
     reason: vague scope
     model: {buyer: private, scale: small, om_years: 0, deadline_months: 10, features: [mobile_app, connect_existing], custom_features: []}
   - id: clutch-worxogo-php-upgrade
@@ -484,6 +544,7 @@ projects:
     source_url: https://clutch.co/profile/unico-connect
     confidence: low
     use: false
+    exclude_rule: not_a_new_build
     reason: a modernisation of an existing product, not a new build
     model: {buyer: private, scale: medium, om_years: 0, deadline_months: 12, features: [dashboards, staff_login], custom_features: []}
   # ---- government documents with GeM award values (researched 2026-10-16) -------------
@@ -500,6 +561,7 @@ projects:
     source_url: https://bidplus.gem.gov.in/bidding/bid/getBidResultView/5212046
     confidence: medium
     use: false
+    exclude_rule: staffing
     model:
       buyer: government
       size: large
@@ -628,7 +690,7 @@ projects:
     award_year: 2025
     value_minor: 7249920000
     value_includes_tax: null
-    value_note: GeM award (Keypoint Technologies (India) Private Limited); scope read from the full document by the keyword reader
+    value_note: GeM award (Keypoint Technologies (India) Private Limited); scope measured from the tender by a manual reading (round 3, see reading)
     source_url: https://bidplus.gem.gov.in/bidding/bid/getBidResultView/7922493
     confidence: medium
     use: true
@@ -638,28 +700,87 @@ projects:
       size_reason: customer portal and apps for a city-gas utility
       scale: medium
       om_years: 3
+      onsite_staff: 5  # 4 developers + 1 project manager at Noida for the 36 support months (att04.pdf p.39, p.46)
       deadline_months: null
       features:
       - dashboards
-      - payments
-      - staff_login
-      - connect_existing
-      - grievances
+      - online_forms
+      - approval_workflow
       - billing
-      - bookings
-      - crm
+      - grievances
       - mobile_app
       - notifications
-      - maps
-      custom_features: []
+      - payments
+      - aadhaar_digilocker
+      - connect_existing
+      - ai_documents
+      - old_data
+      feature_levels: {dashboards: advanced, online_forms: advanced, approval_workflow: advanced, billing: advanced, grievances: advanced, mobile_app: standard, payments: standard, connect_existing: standard, old_data: basic}
+      feature_units: {dashboards: 3, billing: 2}
+      custom_features:
+      - {name: "Debt Recovery Agency (revenue recovery and KYC)", category: module, size: L}
+      - {name: "Platform administration (roles and area-wise masters)", category: module, size: L, units: 2}
+      - {name: "Promotional schemes and CNG fleet card", category: module, size: S}
+      - {name: "Log monitoring admin panel (DC, DR, application and DB logs with email alerts)", category: module, size: S}
+      - {name: "Management dashboard (sales, collection, onboarding pipeline, complaints)", category: report, size: M}
+      - {name: "Analytical dashboards and custom report generation (after go-live, under the support line)", category: report, size: M}
+      - {name: "Payments, receipts, security deposit and refunds (back office)", category: module, size: L}
+      - {name: "Field app for Direct Marketing Agency and execution contractors (Android)", category: mobile, size: M}
+      - {name: "Spot-billing app for billing agency representatives (Android)", category: mobile, size: M}
+      - {name: "Field app for execution contractor / debt recovery agency (Android)", category: mobile, size: M}
       hosting_included: true
+    reading:
+      reader: "manual reading in a Claude Code session (not the app's reader), blind to prices, 2026-10-23"
+      files: ["att01.xlsx", "att02.pdf", "att03.pdf", "att04.pdf", "att06.pdf"]
+      ready_product: false
+      notes: "att06.pdf p.226-290 is a copy of att04.pdf (SCC/SOW and annexures; only layout differs, checked by diff), so requirements are counted once from att04.pdf. att06 p.1-225 and p.291-294 are general bid/contract terms; att03 is a GeM availability report; att02 is empty; att01 is the schedule of rates (quantities used only for the non-build list). The scope is a rebuild of the existing SAHAJ platform 'with all existing functionality'; the module lists in att04 p.5-10 are called indicative and not exhaustive, and functions added to the old system during the build must also be built, so the true size may be larger. Onboarding (27 listed items) and Billing & Payment (32 items) were split into two modules each by function. The four mobile apps (att04 p.4, garbled table) are front-ends for workflows already counted in the web modules; their stories are only the mobile-specific screens (field capture, photo, GPS, digital signature, Bluetooth printing). The 4th app row is garbled ('Execution Contractor ... Debt Recovery Agency'), hence low confidence. Customer portal and customer app share one story list (counted once). Dashboard stories grouped drill-downs rather than counting every metric line. Promotional schemes / CNG fleet card are named in the title but described in only two lines. The analytical dashboards are delivered after go-live under the support line, not the build line. No language, accessibility or chatbot requirement found. Future items (GIS, prepaid meters, bots, blockchain, extension to commercial/industrial segments) are 'if adopted' and not counted beyond the existing GIS/prepaid-meter integrations."
+      modules:
+      - {name: "Management dashboard (sales, collection, onboarding pipeline, complaints)", feature_key: dashboards, stories: 6, level: standard, units: 1, pages: "att04.pdf p.5-6", confidence: high}
+      - {name: "Customer onboarding: registration and customer master data", feature_key: online_forms, stories: 12, level: advanced, units: 1, pages: "att04.pdf p.2, p.6-7", confidence: high}
+      - {name: "Customer onboarding: connection execution workflow (feasibility, LMC, meter, RFC, gas-in, status change, meter replacement)", feature_key: approval_workflow, stories: 15, level: advanced, units: 1, pages: "att04.pdf p.2, p.6-7", confidence: high}
+      - {name: "Billing: meter reading, invoicing, adjustments", feature_key: billing, stories: 17, level: advanced, units: 2, pages: "att04.pdf p.3, p.7-8", confidence: high}
+      - {name: "Payments, receipts, security deposit and refunds (back office)", feature_key: billing, stories: 15, level: advanced, units: 1, pages: "att04.pdf p.3, p.7-8", confidence: high}
+      - {name: "CRM: complaints and service requests", feature_key: grievances, stories: 9, level: advanced, units: 1, pages: "att04.pdf p.3, p.8, p.14", confidence: high}
+      - {name: "Debt Recovery Agency (revenue recovery and KYC)", feature_key: custom, custom_type: module, stories: 10, level: advanced, units: 1, pages: "att04.pdf p.3, p.8", confidence: high}
+      - {name: "Platform administration (roles and area-wise masters)", feature_key: custom, custom_type: module, stories: 25, level: advanced, units: 2, pages: "att04.pdf p.8-9", confidence: high}
+      - {name: "Reports (39 standard MIS reports)", feature_key: dashboards, stories: 39, level: advanced, units: 3, pages: "att04.pdf p.9-10, p.13", confidence: high}
+      - {name: "Customer self-service portal and app (PNG MITRA; web + Android + iOS)", feature_key: mobile_app, stories: 8, level: standard, units: 1, pages: "att04.pdf p.3-4, p.10, p.14, p.33", confidence: medium}
+      - {name: "Field app for Direct Marketing Agency and execution contractors (Android)", feature_key: mobile_app, stories: 6, level: standard, units: 1, pages: "att04.pdf p.4, p.14", confidence: medium}
+      - {name: "Spot-billing app for billing agency representatives (Android)", feature_key: mobile_app, stories: 5, level: standard, units: 1, pages: "att04.pdf p.4, p.14", confidence: medium}
+      - {name: "Field app for execution contractor / debt recovery agency (Android)", feature_key: mobile_app, stories: 5, level: standard, units: 1, pages: "att04.pdf p.4, p.14", confidence: low}
+      - {name: "Promotional schemes and CNG fleet card", feature_key: custom, custom_type: module, stories: 3, level: basic, units: 1, pages: "att04.pdf p.1, p.32-33", confidence: low}
+      - {name: "Customer communications (SMS, email, WhatsApp, push, OBD/IVR)", feature_key: notifications, stories: 8, level: standard, units: 1, pages: "att04.pdf p.3, p.11, p.14, p.33", confidence: high}
+      - {name: "Payment integrations (ICICI CMS gateway, BBPS, dynamic QR, cheque status API; 4-5 gateways)", feature_key: payments, stories: 5, level: standard, units: 1, pages: "att04.pdf p.10, p.16-17, p.23", confidence: high}
+      - {name: "Aadhaar verification", feature_key: aadhaar_digilocker, stories: 1, level: basic, units: 1, pages: "att04.pdf p.11, p.23", confidence: medium}
+      - {name: "Integration with SAP and other existing systems (prepaid meters, agency receipts, GIS, intranet)", feature_key: connect_existing, stories: 5, level: standard, units: 1, pages: "att04.pdf p.10-11, p.33, p.45", confidence: medium}
+      - {name: "Image-to-text conversion integration", feature_key: ai_documents, stories: 1, level: basic, units: 1, pages: "att04.pdf p.25", confidence: low}
+      - {name: "Log monitoring admin panel (DC, DR, application and DB logs with email alerts)", feature_key: custom, custom_type: module, stories: 2, level: basic, units: 1, pages: "att04.pdf p.23", confidence: medium}
+      - {name: "Analytical dashboards and custom report generation (after go-live, under the support line)", feature_key: dashboards, stories: 6, level: standard, units: 1, pages: "att04.pdf p.46-47", confidence: medium}
+      - {name: "Migration of data from the existing SAHAJ platform", feature_key: old_data, stories: 3, level: basic, units: 1, pages: "att04.pdf p.12, p.14, p.45", confidence: medium}
+      not_build:
+      - {item: "cloud hosting", detail: "MeitY-empanelled, STQC-audited CSP, Tier-3 DC plus DR (RPO 30 min, RTO 1 h); application VMs 12 total (4 per year: 3 DC + 1 DR) and DB VMs 12 total; 8-10 TB file storage; ~25,000 users/day; sized for 20-30 lakh DPNG customers; load balancer, CDN, message queue, monitoring, object storage; 36 months after go-live (cloud during the 8-month build is inside the development line)", pages: "att01.xlsx p.1 (item 2); att04.pdf p.12, p.15-17, p.25-29, p.45"}
+      - {item: "security appliances / services", detail: "WAF, anti-virus, SSL-VPN, firewall, SIEM integration, DDoS protection, 180-day log retention", pages: "att04.pdf p.17-23, p.27-28"}
+      - {item: "software licences", detail: "MSSQL Server Enterprise (4 per year), server OS (Windows Server / RHEL) per VM, anti-virus, backup and other stack licences in GAIL Gas's name, with warranty/AMC", pages: "att04.pdf p.16-17, p.25, p.27"}
+      - {item: "bulk email service", detail: "dedicated email service for SAHAJ; about 5 lakh emails/month now; SOR quantity 220,000 thousand emails over the contract", pages: "att01.xlsx p.1 (item 4); att04.pdf p.24-25, p.46"}
+      - {item: "onsite O&M manpower", detail: "at least 4 full-stack developers (incl. 1 team lead and 1 mobile developer) + 1 project manager at GAIL Gas Noida; 36 man-months line after go-live", pages: "att01.xlsx p.1 (item 3); att04.pdf p.39, p.46"}
+      - {item: "change-request man-days", detail: "Team Lead 800 man-days, Web developer 1500, Mobile developer 1500, QA/testing 800, used on EIC approval for new requirements", pages: "att01.xlsx p.1 (items 5-8); att04.pdf p.31-32, p.47-48"}
+      - {item: "project manager during build", detail: "dedicated PM onsite at GAIL Gas office until go-live", pages: "att04.pdf p.32, p.45"}
+      - {item: "O&M years", detail: "contract 3 years 8 months (8-month build + 36 months maintenance and technical support), extendable by 6 months; 99.5% uptime SLA", pages: "att04.pdf p.31, p.37, p.43, p.45"}
+      - {item: "helpdesk / support", detail: "24x7 technical support via phone, chat and email; email service issues resolved within 3 hours", pages: "att04.pdf p.25, p.28, p.35"}
+      - {item: "audits", detail: "VAPT by CERT-In empanelled agency before go-live and for changes; STQC, VAPT and IDC audits semi-annually; ISO 27001 / CERT-In compliance", pages: "att04.pdf p.22-23, p.27"}
+      - {item: "training", detail: "regular training and knowledge sharing for GAIL Gas employees on new/modified functions", pages: "att04.pdf p.35"}
+      - {item: "data migration", detail: "complete migration from existing SAHAJ (MSSQL, ~8 TB total space, 5 VMs) without data loss; also any later cloud change migration at vendor cost", pages: "att04.pdf p.12, p.14, p.45"}
+      - {item: "domains and SSL", detail: "payments for gailgaspng.com and 10 associated domains; SSL certificates for the contract period", pages: "att04.pdf p.27, p.40"}
+      - {item: "app store accounts", detail: "Google Play and Apple developer accounts in GAIL Gas's name, maintenance and renewal", pages: "att04.pdf p.32-33, p.41"}
+      - {item: "content and design", detail: "UI/UX wireframes for every screen; photographs, graphics and content created by the vendor", pages: "att04.pdf p.13, p.36, p.41"}
+      - {item: "transition and documentation", detail: "exit transition, API/functional/technical/DB design documents, CMMI-standard code documentation, source code handover", pages: "att04.pdf p.32, p.40-41"}
   - id: gem-mmrcl-line3-website-app
     title: Design, Development & Hosting of official website and Mobile Application for Mumbai Metro Line-3 including maintenance and support for 5 years
     buyer: Mumbai Metro Rail Corporation Limited (MMRCL)
     award_year: 2024
     value_minor: 7449753000
     value_includes_tax: null
-    value_note: GeM award (Arohatech IT Services Private Limited); scope read from the full document by the keyword reader
+    value_note: GeM award (Arohatech IT Services Private Limited); scope measured from the tender by a manual reading (round 3, see reading)
     source_url: https://bidplus.gem.gov.in/bidding/bid/getBidResultView/6227460
     confidence: high
     use: true
@@ -669,22 +790,92 @@ projects:
       size_reason: corporate website and passenger app for a metro line
       scale: medium
       om_years: 5
+      onsite_staff: 1  # 1 website manager cum content writer for 5 years after go-live (att01.pdf p.26-28)
       deadline_months: null
       features:
-      - online_forms
-      - approval_workflow
-      - dashboards
-      - ai_chatbot
-      - payments
+      - public_website
       - languages
       - accessibility
-      - public_website
-      - grievances
+      - maps
+      - connect_existing
+      - payments
       - bookings
-      - online_store
+      - marketplace
+      - grievances
+      - online_forms
+      - ai_chatbot
+      - ai_voice
       - mobile_app
+      - offline_app
       - notifications
-      custom_features: []
+      - old_data
+      feature_levels: {public_website: advanced, maps: advanced, connect_existing: basic, payments: basic, bookings: basic, marketplace: advanced, grievances: advanced, online_forms: advanced, ai_chatbot: advanced, mobile_app: standard, old_data: basic}
+      feature_units: {online_forms: 2}
+      custom_features:
+      - {name: "Line and station information (real-time status, station profiles, parking)", category: module, size: M}
+      - {name: "Commuter accounts (registration, login, profile, favourites, history)", category: module, size: M}
+      - {name: "Ticketing and wallet (QR tickets, passes, smart card recharge, loyalty)", category: module, size: M}
+      - {name: "Last-mile connectivity (feeder bus, taxi aggregator APIs for up to 4 services)", category: integration, size: S}
+      - {name: "Revenue and property business (lease properties, co-branded station pages, advertising, reward campaigns)", category: module, size: M}
+      - {name: "Events and user participation", category: module, size: S}
+      - {name: "Interactive kiosk software (optional Phase III)", category: module, size: M}
+      - {name: "ONDC (Open Network for Digital Commerce) integration", category: integration, size: S}
+      - {name: "Lost and found management", category: module, size: M}
+      - {name: "Staff admin panel (masters, roles, content, revenue reports, maker-checker)", category: module, size: L}
+      - {name: "Cloud IVR call centre (agent, supervisor, admin panels)", category: module, size: L}
+      - {name: "Support ticket module for MMRCL to log bugs and change requests to the vendor", category: module, size: S}
+      - {name: "Vigilance complaint micro-site (separate site and database)", category: module, size: L}
+      - {name: "Central ticket management system linked to grievance and vigilance portals", category: module, size: M}
+    reading:
+      reader: "manual reading in a Claude Code session (not the app's reader), blind to prices, 2026-10-23"
+      files: ["att01.pdf", "att03.pdf"]
+      ready_product: true
+      notes: "Website and mobile app share most functions (journey planner, station info, ticketing, grievances, chatbot, e-commerce). Each function is counted once as a shared module; the 'Mobile app shell' module counts only the app-only screens, so the Flutter app's front-end effort for shared functions is not counted twice. The website and app phases list the same features again (Table J, p.29-34) - these were merged, not re-counted. The RFP says the listed features are 'only the high-level requirements' to be finalised in requirement gathering (p.16). Recruitment portal (25 stories) could be split into applicant and HR/admin modules; kept as one module with units = 2. Kiosk software and hardware are an optional Phase III paid on actuals. Ridership projections (0.63-1.65 million per day) indicate scale. The call centre / chatbot / voicebot is largely a procured cloud product configured and integrated, so those modules are configuration-heavy rather than pure builds. att03.pdf is only a GeM availability report. Ready product: Partly. The omnichannel call centre (cloud IVR with dialer, agent/supervisor panels, call recording, IVR designer) and the NLP chatbot / voicebot are listed as licences/subscriptions the bidder procures, hosts and integrates ('AI Chatbot (NLP) and IVR, Voicebot solution (Including Dialer, Ticketing Solution with API Support)'); a CMS licence is also listed. The website (React front end, Java/Python back end), recruitment portal and Flutter app are custom builds. (att01.pdf p.11, p.13, p.17, p.20-22, p.50)"
+      modules:
+      - {name: "Official / corporate + passenger website with CMS", feature_key: public_website, stories: 10, level: advanced, units: 1, pages: "att01.pdf p.9, p.12-14", confidence: high}
+      - {name: "Multilingual content (English, Hindi, Marathi) on website, app, chatbot and IVR", feature_key: languages, stories: 2, level: basic, units: 1, pages: "att01.pdf p.7, p.9, p.12, p.17, p.19-20", confidence: high}
+      - {name: "Accessibility for visually / hearing impaired users (GIGW, screen readers, greyscale mode)", feature_key: accessibility, stories: 2, level: basic, units: 1, pages: "att01.pdf p.9, p.13, p.17, p.19, p.37", confidence: medium}
+      - {name: "Journey planner and interactive metro route map (web and app)", feature_key: maps, stories: 10, level: advanced, units: 1, pages: "att01.pdf p.14, p.18-20, p.29-30", confidence: high}
+      - {name: "Line and station information (real-time status, station profiles, parking)", feature_key: custom, custom_type: module, stories: 7, level: standard, units: 1, pages: "att01.pdf p.14, p.18-20, p.30", confidence: high}
+      - {name: "Commuter accounts (registration, login, profile, favourites, history)", feature_key: custom, custom_type: module, stories: 5, level: standard, units: 1, pages: "att01.pdf p.14, p.18, p.29, p.32, p.37", confidence: high}
+      - {name: "Ticketing and wallet (QR tickets, passes, smart card recharge, loyalty)", feature_key: custom, custom_type: module, stories: 8, level: standard, units: 1, pages: "att01.pdf p.14, p.18, p.20, p.30, p.32", confidence: high}
+      - {name: "AFC (Automatic Fare Collection) integration and porting of existing AFC app", feature_key: connect_existing, stories: 2, level: basic, units: 1, pages: "att01.pdf p.8-9, p.20", confidence: medium}
+      - {name: "Payment gateway integration (tickets, recharge, e-commerce, application fees)", feature_key: payments, stories: 3, level: basic, units: 1, pages: "att01.pdf p.9-10, p.14-15, p.17, p.20", confidence: high}
+      - {name: "Last-mile connectivity (feeder bus, taxi aggregator APIs for up to 4 services)", feature_key: custom, custom_type: integration, stories: 3, level: basic, units: 1, pages: "att01.pdf p.14, p.18, p.20, p.32", confidence: medium}
+      - {name: "Revenue and property business (lease properties, co-branded station pages, advertising, reward campaigns)", feature_key: custom, custom_type: module, stories: 7, level: standard, units: 1, pages: "att01.pdf p.13-14, p.19, p.32-33", confidence: medium}
+      - {name: "Events and user participation", feature_key: custom, custom_type: module, stories: 2, level: basic, units: 1, pages: "att01.pdf p.14, p.16, p.33", confidence: low}
+      - {name: "Wheelchair advance booking", feature_key: bookings, stories: 1, level: basic, units: 1, pages: "att01.pdf p.15, p.32", confidence: low}
+      - {name: "Interactive kiosk software (optional Phase III)", feature_key: custom, custom_type: module, stories: 4, level: standard, units: 1, pages: "att01.pdf p.15, p.34-35, p.72", confidence: medium}
+      - {name: "Multi-merchant e-commerce for station shops", feature_key: marketplace, stories: 10, level: advanced, units: 1, pages: "att01.pdf p.13, p.15-16, p.19, p.32", confidence: high}
+      - {name: "ONDC (Open Network for Digital Commerce) integration", feature_key: custom, custom_type: integration, stories: 1, level: basic, units: 1, pages: "att01.pdf p.10, p.15, p.19, p.32", confidence: medium}
+      - {name: "Lost and found management", feature_key: custom, custom_type: module, stories: 7, level: standard, units: 1, pages: "att01.pdf p.15-16, p.19-20", confidence: high}
+      - {name: "Public grievance management micro-site (with complaints and feedback)", feature_key: grievances, stories: 13, level: advanced, units: 1, pages: "att01.pdf p.15-16, p.19-20, p.31", confidence: high}
+      - {name: "Vigilance complaint micro-site (separate site and database)", feature_key: grievances, stories: 9, level: advanced, units: 1, pages: "att01.pdf p.15, p.33", confidence: high}
+      - {name: "Staff admin panel (masters, roles, content, revenue reports, maker-checker)", feature_key: custom, custom_type: module, stories: 10, level: advanced, units: 1, pages: "att01.pdf p.13, p.16, p.31, p.33", confidence: high}
+      - {name: "Recruitment portal (applicant, HR department and admin sides)", feature_key: online_forms, stories: 25, level: advanced, units: 2, pages: "att01.pdf p.9, p.16-17, p.30-33", confidence: high}
+      - {name: "AI chatbot (NLP, text + voice) in 3 languages on web, app and kiosk", feature_key: ai_chatbot, stories: 13, level: advanced, units: 1, pages: "att01.pdf p.15, p.19, p.21-25, p.31", confidence: high}
+      - {name: "Voicebot / speech (ASR, TTS) for IVR and chatbot", feature_key: ai_voice, stories: 3, level: basic, units: 1, pages: "att01.pdf p.15, p.21-22, p.24, p.31", confidence: high}
+      - {name: "Cloud IVR call centre (agent, supervisor, admin panels)", feature_key: custom, custom_type: module, stories: 11, level: advanced, units: 1, pages: "att01.pdf p.10, p.20-25, p.29", confidence: high}
+      - {name: "Central ticket management system linked to grievance and vigilance portals", feature_key: grievances, stories: 4, level: standard, units: 1, pages: "att01.pdf p.21", confidence: medium}
+      - {name: "Mobile app shell (Android/iOS, Flutter) - app-only screens", feature_key: mobile_app, stories: 6, level: standard, units: 1, pages: "att01.pdf p.9, p.17-20, p.29-30, p.37, p.47", confidence: high}
+      - {name: "Offline mode for route and station information", feature_key: offline_app, stories: 2, level: basic, units: 1, pages: "att01.pdf p.18, p.20", confidence: high}
+      - {name: "Notifications (SMS alerts, push, email)", feature_key: notifications, stories: 4, level: standard, units: 1, pages: "att01.pdf p.9, p.14-15, p.19, p.30, p.47", confidence: medium}
+      - {name: "Support ticket module for MMRCL to log bugs and change requests to the vendor", feature_key: custom, custom_type: module, stories: 3, level: basic, units: 1, pages: "att01.pdf p.48", confidence: medium}
+      - {name: "Migration of existing Drupal website content to the new site", feature_key: old_data, stories: 1, level: basic, units: 1, pages: "att01.pdf p.7-8, p.13, p.33", confidence: medium}
+      not_build:
+      - {item: "cloud hosting (MeitY empanelled)", detail: "Production, dev/test, UAT and staging environments plus DR at 100% of production capacity; minimum 1 application server (8 CPU, 16 GB RAM, 100 GB SSD) and 2 database servers (4 CPU, 16 GB RAM, 50 GB SSD each), +100 GB storage per year; backups daily and snapshots; for 5 years. Existing website hosted on the new cloud until go-live.", pages: "att01.pdf p.8, p.11-12, p.32, p.34, p.48-50"}
+      - {item: "licences / subscriptions", detail: "Domain and DNS hosting, CMS, AI chatbot (NLP) + IVR + voicebot (dialer, ticketing), cloud, SSL, Cert-In VAPT, maps, SMS and email APIs (email gateway provided by MMRCL; bidder prices a stated total SMS volume, figure blanked), app store publishing; licences renewable for 5 more years after contract.", pages: "att01.pdf p.11, p.50"}
+      - {item: "call centre and chatbot volumes / managed service", detail: "Chatbot ~6,000 users and ~24,000 questions per day, 80% resolved without agent; IVR 200-300 calls per day, ~50,000 minutes per month, 24x7; ~10 inbound agents in 3 shifts hired by MMRCL (not the bidder); telecom service procured by MMRCL. Managed services, re-training and support for IVR, chatbot and voicebot for 5 years.", pages: "att01.pdf p.20-25, p.34, p.71"}
+      - {item: "hardware: interactive kiosks (optional Phase III)", detail: "Floor-mounted metal enclosure, 55-inch 4K LED with 10-touch IR overlay; priced per kiosk unit, quantity not stated, paid on actuals; internet and power by MMRCL.", pages: "att01.pdf p.15, p.34-35, p.71-72"}
+      - {item: "onsite manpower", detail: "Project Manager (12+ yrs) onsite through implementation till final go-live and attending reviews; one Website Manager cum Content Writer (English/Hindi/Marathi) full time at MMRCL Mumbai from work order through 5 years after go-live; implementation team onsite until SRS sign-off and during UAT; one person for handholding MMRCL staff.", pages: "att01.pdf p.8, p.10, p.26-28, p.47"}
+      - {item: "O&M / support", detail: "5 years after go-live: office-hours support with urgent after-hours updates, 99.5% uptime, quarterly preventive maintenance, quarterly performance/SEO reports, quarterly VAPT, app-store rating reviews, chatbot/voicebot accuracy updates, IVR maintenance; bug-fix SLAs.", pages: "att01.pdf p.25-26, p.47-51"}
+      - {item: "takeover and maintenance of existing website", detail: "Take over the existing Drupal site and intranet CMS from the previous contractor, migrate it to the new cloud and maintain it (page changes, content, bug fixes, UI changes) until final go-live.", pages: "att01.pdf p.8, p.12"}
+      - {item: "security audits and certification", detail: "Cert-In empanelled security audit before go-live of each phase and yearly; STQC certification; quarterly VAPT; GIGW compliance.", pages: "att01.pdf p.8, p.17, p.25, p.45"}
+      - {item: "training", detail: "2 onsite trainings of 2 days each plus online trainings on request; training of system admin, IT department and business users with materials; system training for call-centre agents.", pages: "att01.pdf p.24, p.33, p.40"}
+      - {item: "business and UX studies", detail: "Study of at least two Indian metros and one foreign metro; as-is / to-be process study of all MMRCL departments; personas, UX research, usability testing with closed user groups, design system deliverables.", pages: "att01.pdf p.35-38"}
+      - {item: "SEO and content services", detail: "Keep the website in top search results for main keywords; regular web promotion; content creation, translation and upload by the onsite content writer.", pages: "att01.pdf p.14, p.26"}
+      - {item: "change requests", detail: "Per-day rate for additional work, based on a team of Project Manager, developers, QA and designer.", pages: "att01.pdf p.35, p.48, p.71"}
+      - {item: "exit handover", detail: "Knowledge transfer to MMRCL officials at least 3 months before contract end and handover to a new contractor.", pages: "att01.pdf p.47"}
   - id: gem-iob-trade-finance-portal
     title: Supply, Implementation and Maintenance of Trade Finance Customer Portal for the Bank
     buyer: Indian Overseas Bank, IT Department, Chennai
@@ -881,7 +1072,7 @@ projects:
     award_year: 2024
     value_minor: 2721000000
     value_includes_tax: true
-    value_note: GeM award (Planet E-Com Solutions Private Limited); scope read from the full document by the keyword reader
+    value_note: GeM award (Planet E-Com Solutions Private Limited); scope measured from the tender by a manual reading (round 3, see reading)
     source_url: https://bidplus.gem.gov.in/bidding/bid/getBidResultView/7160337
     confidence: high
     use: true
@@ -890,24 +1081,90 @@ projects:
       size: medium
       size_reason: EMD Rs 1,500,000 -> client budget about Rs 500 lakh (GFR 2-5%)
       scale: medium
+      build_type: cms  # licensed CMS product configured and customised (att01.pdf p.26, p.34, p.89-90)
       om_years: 5
+      onsite_staff: 3  # at least 3 onsite support staff, 2 shifts, 5 years (att01.pdf p.47-48, p.94)
       deadline_months: null
       features:
-      - approval_workflow
-      - dashboards
-      - ai_chatbot
-      - connect_existing
-      - languages
-      - accessibility
       - public_website
-      - old_data
-      - billing
-      - bookings
-      - mobile_app
-      - notifications
-      - maps
       - search
-      custom_features: []
+      - ai_voice
+      - accessibility
+      - languages
+      - maps
+      - online_forms
+      - ai_recommend
+      - ai_images
+      - notifications
+      - dashboards
+      - connect_existing
+      - staff_login
+      - approval_workflow
+      - documents
+      - old_data
+      feature_levels: {public_website: standard, maps: basic, online_forms: standard, ai_recommend: basic, dashboards: standard, connect_existing: standard, approval_workflow: standard, documents: standard, old_data: standard}
+      feature_units: {}
+      custom_features:
+      - {name: "Loan and EMI calculators with graphs", category: module, size: M}
+      - {name: "Interactive product guide (question-and-answer wizard)", category: module, size: S}
+      - {name: "Social media integration", category: integration, size: S}
+      - {name: "Content feedback (comments, ratings, report content)", category: module, size: M}
+      - {name: "CMS user, role and permission management", category: module, size: M}
+      - {name: "CMS page building, templates and microsites", category: module, size: L}
+      - {name: "CMS editor and publishing tools", category: module, size: L}
+      - {name: "Versioning, archive and recovery", category: module, size: M}
+      - {name: "SEO controls", category: module, size: M}
+    reading:
+      reader: "manual reading in a Claude Code session (not the app's reader), blind to prices, 2026-10-23"
+      files: ["att01.pdf", "att02.pdf", "att03.pdf", "att04.pdf", "att05.pdf", "att06.pdf", "att07.pdf", "att08.pdf", "att09.pdf", "att10.pdf"]
+      ready_product: true
+      notes: "att03.pdf is a verbatim repeat of att01 Section III (p.23-61); att06.pdf and att09.pdf repeat Table A (att01 p.82-91) word for word; att02, att04, att05, att10 repeat eligibility, payment terms, LD/uptime and integrity pact clauses; att07 is a GeM availability report and att08 is empty. Nothing was counted twice. The functional list (att01 p.24-30) and Table A (110 scored points, 80 mandatory) cover the same requirements; I counted from the functional list and used Table A only for page refs. Judgements: (1) the CMS is a licensed OEM product configured and customised (ready_product true), so the CMS modules (page building, editor, versioning, user management, workflow, asset repository) are largely product configuration, not new code, but I counted them as required; they could fold into public_website in a simpler catalog. (2) 'The revamped website must contain all the functionalities present in current website irrespective of any mention in this document' (p.24) adds an unknown amount of existing-site features not counted. (3) The scope covers 3 websites plus 5 microsites from one CMS instance; counted once as one CMS with microsites, not per site. (4) The 'Virtual assistant/Interactive guide' is a Q&A wizard, not an AI chatbot (the Bank already has an AI chatbot ADYA, p.12); mapped to custom module. (5) Integrations with CBS/net banking/third-party apps are stated only as capability ('should be able to integrate ... as required'), low confidence. (6) Non-functional items (security, WCAG/GIGW compliance, responsive design, performance <2 s, 3-tier, HA, SIEM/WAF/DAM/vRealize integration support) not counted as stories. (7) Table A marks some items as non-mandatory ('No'): theme switching, TTS, voice search, product wizard, X feeds, surveys, recommendations, PDF-HTML conversion, machine translation, Excel visualisation, forms, comments/ratings, image editing, duplicate detection, watermark, emergency access; they are still listed in the scope and were counted. Commercial format also lists an onsite resources line with '5' near the years column and a note of minimum 3 staff; read as 3 staff for 5 years. Ready product: The CMS is a licensed (OEM) product that is configured and customised, not built from scratch: 'CMS should be support licensed', development 'will include incorporation of the proposed Out of the Box (OOTB) solutions, Customizations, Configurations', enterprise-wide all-inclusive perpetual licences with 1-year warranty + 4 years ATS, OEM to audit the implementation, commercial Table A 'Licensing Components'. Table A scoring gives full marks to features 'Available' in the product and half marks to 'Customisable' ones. The current site is WordPress on NGINX/PHP/MariaDB. (att01.pdf p.26, p.34, p.40, p.52, p.56, p.59, p.89-90, p.93)"
+      modules:
+      - {name: "Public website pages, navigation and microsites (indianbank.in with 5 microsites, SLBC Puducherry, Indian Bank Singapore)", feature_key: public_website, stories: 8, level: standard, units: 1, pages: "att01.pdf p.13, p.23-26, p.30-31, p.82-84", confidence: high}
+      - {name: "Site search (full-text, faceted, documents and media)", feature_key: search, stories: 14, level: advanced, units: 1, pages: "att01.pdf p.24-25, p.82", confidence: high}
+      - {name: "Text-to-speech widget and voice search", feature_key: ai_voice, stories: 2, level: basic, units: 1, pages: "att01.pdf p.25, p.82-83", confidence: high}
+      - {name: "Accessibility options (WCAG AAA, GIGW, STQC certification)", feature_key: accessibility, stories: 1, level: basic, units: 1, pages: "att01.pdf p.25-26, p.82, p.84-85", confidence: medium}
+      - {name: "Multilingual site and translation management", feature_key: languages, stories: 7, level: standard, units: 1, pages: "att01.pdf p.24, p.28-30, p.86", confidence: high}
+      - {name: "Loan and EMI calculators with graphs", feature_key: custom, custom_type: module, stories: 5, level: standard, units: 1, pages: "att01.pdf p.26, p.83", confidence: medium}
+      - {name: "Branch / ATM locator", feature_key: maps, stories: 3, level: basic, units: 1, pages: "att01.pdf p.26, p.83", confidence: high}
+      - {name: "Interactive product guide (question-and-answer wizard)", feature_key: custom, custom_type: module, stories: 2, level: basic, units: 1, pages: "att01.pdf p.25, p.83", confidence: medium}
+      - {name: "Social media integration", feature_key: custom, custom_type: integration, stories: 3, level: basic, units: 1, pages: "att01.pdf p.26, p.83", confidence: high}
+      - {name: "Forms, surveys and opinion polls", feature_key: online_forms, stories: 6, level: standard, units: 1, pages: "att01.pdf p.26, p.28, p.83, p.87", confidence: medium}
+      - {name: "Personalisation and content recommendations", feature_key: ai_recommend, stories: 3, level: basic, units: 1, pages: "att01.pdf p.29, p.83-84", confidence: medium}
+      - {name: "AI image/document auto-tagging and duplicate image detection", feature_key: ai_images, stories: 2, level: basic, units: 1, pages: "att01.pdf p.29-30, p.84, p.89", confidence: medium}
+      - {name: "Content feedback (comments, ratings, report content)", feature_key: custom, custom_type: module, stories: 5, level: standard, units: 1, pages: "att01.pdf p.30, p.88-89", confidence: high}
+      - {name: "Web push notifications", feature_key: notifications, stories: 3, level: basic, units: 1, pages: "att01.pdf p.29, p.87", confidence: high}
+      - {name: "Data visualisation of uploaded Excel data", feature_key: dashboards, stories: 4, level: standard, units: 1, pages: "att01.pdf p.28, p.87", confidence: high}
+      - {name: "Integration with Bank back-end and third-party services", feature_key: connect_existing, stories: 5, level: standard, units: 1, pages: "att01.pdf p.26, p.57, p.83, p.85", confidence: low}
+      - {name: "CMS user, role and permission management", feature_key: custom, custom_type: module, stories: 5, level: standard, units: 1, pages: "att01.pdf p.26-27, p.88", confidence: high}
+      - {name: "CMS login with Bank Active Directory and MFA", feature_key: staff_login, stories: 3, level: basic, units: 1, pages: "att01.pdf p.27, p.29, p.33, p.56, p.88, p.90", confidence: high}
+      - {name: "CMS page building, templates and microsites", feature_key: custom, custom_type: module, stories: 11, level: advanced, units: 1, pages: "att01.pdf p.26-27, p.40, p.85-86", confidence: high}
+      - {name: "CMS editor and publishing tools", feature_key: custom, custom_type: module, stories: 14, level: advanced, units: 1, pages: "att01.pdf p.27-28, p.86-87", confidence: high}
+      - {name: "Versioning, archive and recovery", feature_key: custom, custom_type: module, stories: 6, level: standard, units: 1, pages: "att01.pdf p.28, p.33, p.60, p.87", confidence: high}
+      - {name: "Maker-checker approval workflow and audit trail", feature_key: approval_workflow, stories: 8, level: standard, units: 1, pages: "att01.pdf p.27, p.29, p.32, p.57, p.88", confidence: high}
+      - {name: "Digital asset / content repository", feature_key: documents, stories: 8, level: standard, units: 1, pages: "att01.pdf p.29-30, p.84, p.89", confidence: high}
+      - {name: "SEO controls", feature_key: custom, custom_type: module, stories: 7, level: standard, units: 1, pages: "att01.pdf p.26, p.29, p.84", confidence: medium}
+      - {name: "Data migration from the existing WordPress site", feature_key: old_data, stories: 5, level: standard, units: 1, pages: "att01.pdf p.23-24, p.34, p.43-44, p.93", confidence: high}
+      not_build:
+      - {item: "licences", detail: "Enterprise-wide, all-inclusive perpetual licences for the CMS product and any other solution components, unlimited users (500+ CMS users, 50 concurrent, +10%/yr), covering production, test and DR; 1-year warranty + 4 years ATS; supplier maintains all third-party licences in the Bank's name for 5 years", pages: "att01.pdf p.56, p.59, p.93"}
+      - {item: "licences / subscriptions", detail: "EV SSL certificate (pro version) for 5 years; enterprise support subscriptions for open-source components in the Bank's name; any third-party push notification service to be named", pages: "att01.pdf p.29, p.47, p.56, p.59"}
+      - {item: "hosting / data centre", detail: "On-premises only, at Bank DC and DR on the Bank's private cloud (AMBAR, VMware). Bank provides hardware, OS, Oracle DB, WebLogic, load balancer, Redis, OpenShift/Tanzu, GitLab, monitoring; supplier must supply any other system software (e.g. a different database) and size the infrastructure. ~20,000 concurrent website users, RTO 30 min, RPO 0, 99.9% uptime (99.98% in SLA)", pages: "att01.pdf p.23, p.32-34, p.55-56, p.59-61, p.74"}
+      - {item: "hardware", detail: "Supplied by the Bank; supplier only states the sizing in the technical bid", pages: "att01.pdf p.33, p.55"}
+      - {item: "onsite manpower", detail: "Onsite support at Bank premises 8 AM-10 PM every day (14x7x365) for 5 years; commercial format asks for a minimum of 3 support staff to cover 2 rotational shifts", pages: "att01.pdf p.23, p.47-48, p.94"}
+      - {item: "offsite support team", detail: "Team of at least 5 (developer, designer, hosting/server admin, tester, QA) through warranty and AMC, 24x7x365 support", pages: "att01.pdf p.47-48"}
+      - {item: "hand-holding", detail: "90 days after go-live, 1 full-time resource onsite", pages: "att01.pdf p.46"}
+      - {item: "years of O&M", detail: "1 year warranty + 4 years AMC (5 years after go-live); build within 9 months of PO; patches, upgrades, SSL renewals, backups, DB admin, monitoring, monthly analytics reports, quarterly performance reports", pages: "att01.pdf p.47-49, p.57-59, p.93-94"}
+      - {item: "takeover of existing website", detail: "Run and maintain the current WordPress site (NGINX/PHP/MariaDB on Oracle Linux 9) until the new site launches, incl. fixes and enhancements", pages: "att01.pdf p.34, p.72"}
+      - {item: "content operations", detail: "Day-to-day upload and publishing of content, designing new pages, link checking, archival, by onsite resource during O&M", pages: "att01.pdf p.46-48"}
+      - {item: "SEO and content suggestion services", detail: "Offsite SEO and content suggestions for 60 months; periodic competitor performance comparison; monthly traffic/analytics reports", pages: "att01.pdf p.29, p.49, p.61, p.94"}
+      - {item: "continuous development (change requests)", detail: "On-demand enhancements paid per man-day; commercial format quotes 100 man-days; team BA, UI/UX, full-stack dev, PM, QA working at Bank premises", pages: "att01.pdf p.53-54, p.94"}
+      - {item: "UI/UX research and creatives", detail: "Personas, stakeholder/user interviews, online survey, journeys, competitive analysis, IA, wireframes, prototypes, style guide, heuristic review, formative and summative usability testing, analytics report; infographics, banners, icons (videography/photography excluded)", pages: "att01.pdf p.35-38, p.58"}
+      - {item: "training", detail: "End-user, technical and administrator training on-site at Bank locations in India, train-the-trainer, manuals, e-learning module and video tutorials", pages: "att01.pdf p.45, p.58"}
+      - {item: "audits", detail: "Support Bank's VAPT, third-party application/data/process audit, risk assessment, STQC website quality certification, SAST of every change and of open-source libraries, half-yearly patch certificate; fix all observations at no extra cost", pages: "att01.pdf p.26, p.32, p.42, p.44, p.47, p.57"}
+      - {item: "data migration", detail: "Full migration of existing website content in all languages, documents, images, media; volume not stated", pages: "att01.pdf p.43-44, p.93"}
+      - {item: "DR drills and BCP", detail: "At least 1 DR drill per quarter, BCP document, DC-DR sync, health check every 6 months", pages: "att01.pdf p.53, p.61"}
+      - {item: "tools", detail: "Supplier provides incident management / ticketing tool, performance/load testing tools and design/prototyping tools", pages: "att01.pdf p.38, p.42, p.46, p.53"}
+      - {item: "source code escrow", detail: "Tripartite escrow for source code, cost shared 50/50 with the Bank", pages: "att01.pdf p.79"}
   - id: gem-cbdt-tds-chatbot
     title: Design, Development, Hosting and Maintenance of AI based Multilingual Chatbot System with Mobile Application and Browser based Web Application for TDS
     buyer: Central Board of Direct Taxes (CIT TDS Chennai)
@@ -1362,6 +1619,7 @@ projects:
     source_url: https://clutch.co/profile/daffodil-software
     confidence: medium
     use: false
+    exclude_rule: staffing
     reason: only a monthly rate (USD 25,000 a month), no total or duration
     model:
       buyer: small_business
@@ -1386,6 +1644,7 @@ projects:
     source_url: https://clutch.co/profile/successive-technologies
     confidence: medium
     use: false
+    exclude_rule: not_a_new_build
     value_high_minor: 1673591632
     reason: a rework and cloud migration, not a new build
     model:
@@ -1410,6 +1669,7 @@ projects:
     source_url: https://clutch.co/profile/konstant-infosolutions
     confidence: medium
     use: false
+    exclude_rule: unreliable_price
     value_high_minor: 1478392608
     reason: location not stated and band only
     model:
@@ -1434,6 +1694,7 @@ projects:
     source_url: https://clutch.co/profile/antino-labs
     confidence: medium
     use: false
+    exclude_rule: staffing
     value_high_minor: 369592608
     reason: one developer hired by the month (staff augmentation)
     model:
@@ -1459,6 +1720,7 @@ projects:
     source_url: https://clutch.co/profile/antino-labs
     confidence: medium
     use: false
+    exclude_rule: not_a_new_build
     reason: design only, not a build
     model:
       buyer: small_business
@@ -1480,6 +1742,7 @@ projects:
     source_url: https://clutch.co/profile/techugo
     confidence: medium
     use: false
+    exclude_rule: unfinished
     value_high_minor: 39435200
     reason: a failed project (never released)
     model:
@@ -1505,6 +1768,7 @@ projects:
     source_url: https://clutch.co/profile/techugo
     confidence: medium
     use: false
+    exclude_rule: unfinished
     reason: spend so far on unfinished work
     model:
       buyer: small_business
@@ -1527,6 +1791,7 @@ projects:
     source_url: https://clutch.co/profile/techugo
     confidence: medium
     use: false
+    exclude_rule: unreliable_price
     value_high_minor: 74100000
     reason: the band (under USD 10k) contradicts a 10-12 person team for 15 months
     model:
@@ -1551,6 +1816,7 @@ projects:
     source_url: https://clutch.co/profile/successive-technologies
     confidence: medium
     use: false
+    exclude_rule: unfinished
     value_high_minor: 157200000
     reason: only one sprint done when reviewed
     model:
@@ -1575,6 +1841,7 @@ projects:
     source_url: https://clutch.co/profile/squareboat
     confidence: medium
     use: false
+    exclude_rule: not_a_new_build
     value_high_minor: 369592608
     reason: frontend only
     model:
@@ -1622,10 +1889,12 @@ projects:
     award_year: 2023
     value_minor: 200010000
     value_includes_tax: null
-    value_note: GeM award; scope read from the full document by the keyword reader (out-of-sample test set 2026-10-16)
+    value_note: GeM award; scope measured from the tender by a manual reading (round 3, see reading) (out-of-sample test set 2026-10-16)
     source_url: https://bidplus.gem.gov.in/bidding/bid/getBidResultView/5198337
     confidence: medium
-    use: true
+    use: false
+    exclude_rule: staffing
+    reason: time-and-material staffing of 10 people for 24 months (att01.pdf p.13-19), no fixed scope to price by features
     model:
       buyer: government
       size: medium
@@ -1634,10 +1903,24 @@ projects:
       om_years: 2
       deadline_months: null
       features:
-      - online_forms
-      - billing
       - maps
-      custom_features: []
+      feature_levels: {maps: basic}
+      feature_units: {}
+      custom_features:
+      - {name: "APIs for dissemination of SOI datasets and products (open APIs, OGC WMS/WFS services)", category: integration, size: S}
+    reading:
+      reader: "manual reading in a Claude Code session (not the app's reader), blind to prices, 2026-10-23"
+      files: ["att01.pdf", "att04.pdf"]
+      ready_product: false
+      notes: "This is a staff-augmentation (man-month) empanelment, not a fixed-scope build. The scope of work is three sentences: develop and deploy the SOI Geo-portal 'including various API for dissemination of datasets and products'; the RFP says itself it is not exhaustive and the scope will be set at kick-off and in an SRS the bidder writes. Modules and story counts are therefore inferred from the scope paragraph, the background and the GIS specialist's duties (OGC/WMS/WFS, geoprocessing) and are low confidence. No hosting, hardware, licences, helpdesk, training or data migration are asked for. Pre-qualification mentions experience with a cloud application of 100,000+ monthly users, which hints at scale but is not a requirement of this system. att04.pdf is only a GeM availability report."
+      modules:
+      - {name: "Survey of India Geo-portal (online maps and geospatial data viewer)", feature_key: maps, stories: 2, level: basic, units: 1, pages: "att01.pdf p.3, p.11, p.18", confidence: low}
+      - {name: "APIs for dissemination of SOI datasets and products (open APIs, OGC WMS/WFS services)", feature_key: custom, custom_type: integration, stories: 2, level: basic, units: 1, pages: "att01.pdf p.3, p.11, p.18", confidence: low}
+      not_build:
+      - {item: "resident / onsite manpower (the whole contract is time-and-material staffing)", detail: "Resumes asked for 10 people: 1 Application Architect, 1 Product Manager/Business Analyst, 4 Full Stack Developers, 2 GIS Specialists, 2 UI/UX designers. Price schedule lists the same 5 roles in two experience bands (1-3 yrs and 4-8 yrs), 1 unit each, billed per man-month. SOI may place them onsite at SOI Delhi office at no extra cost. Work orders issued as and when required.", pages: "att01.pdf p.13-14, p.16-19, p.22"}
+      - {item: "contract period", detail: "Empanelment for 24 months, extendable by 12 months; development, maintenance and testing of the geo-portal throughout (no separate O&M term).", pages: "att01.pdf p.3, p.12"}
+      - {item: "documentation and handover", detail: "SRS report / project plan within 15 days of award; source code, libraries, database dictionaries and documents handed over to SOI.", pages: "att01.pdf p.11, p.16"}
+      - {item: "non-software design work", detail: "UI/UX designer also creates social media posts, newsletters and banners.", pages: "att01.pdf p.19"}
   - id: gem-sail-rsp-website-apps
     title: SAIL Rourkela website and Android / iOS app support and development
     buyer: SAIL Rourkela Steel Plant
@@ -1666,7 +1949,7 @@ projects:
     award_year: 2025
     value_minor: 20119000000
     value_includes_tax: null
-    value_note: GeM award; scope read from the full document by the keyword reader (out-of-sample test set 2026-10-16)
+    value_note: GeM award; scope measured from the tender by a manual reading (round 3, see reading) (out-of-sample test set 2026-10-16)
     source_url: https://bidplus.gem.gov.in/bidding/bid/getBidResultView/8354537
     confidence: high
     use: true
@@ -1676,15 +1959,70 @@ projects:
       size_reason: judged from the scope before pricing (no EMD in the document)
       scale: medium
       om_years: 3
+      onsite_staff: 40  # facility management of 40 onsite resources, marked optional but part of the 3-year TCO (att06.pdf p.17, p.99-100, p.112-114)
       deadline_months: null
       features:
       - approval_workflow
       - dashboards
-      - aadhaar_digilocker
-      - grievances
-      - billing
+      - connect_existing
       - maps
-      custom_features: []
+      - grievances
+      feature_levels: {approval_workflow: standard, dashboards: standard, connect_existing: standard, maps: standard, grievances: basic}
+      feature_units: {}
+      custom_features:
+      - {name: "User Management", category: module, size: M}
+      - {name: "Vendor Management", category: module, size: M}
+      - {name: "Transaction Reconciliation", category: module, size: S}
+      - {name: "Budget Management", category: module, size: M}
+      - {name: "Head Management", category: module, size: S}
+      - {name: "Government Resolution (GR) Creation", category: module, size: M}
+      - {name: "Limit Allocation", category: module, size: M}
+      - {name: "Bill Generation (ZP level)", category: module, size: S}
+      - {name: "Standard Deduction and Settlement", category: module, size: S}
+      - {name: "Account Management (chart of accounts, ledgers)", category: module, size: M}
+      - {name: "Digital Signature (DSC) Based Approval", category: integration, size: M}
+      - {name: "Progress Management (photo + GPS)", category: module, size: M}
+      - {name: "Proposal Workflow (ZP to State)", category: module, size: M}
+      - {name: "Technical Sanction", category: module, size: M}
+      - {name: "Administrative Approval", category: module, size: M}
+      - {name: "Reports and Exports for All Modules", category: report, size: M}
+    reading:
+      reader: "manual reading in a Claude Code session (not the app's reader), blind to prices, 2026-10-23"
+      files: ["att01.pdf", "att02.pdf", "att03.pdf", "att04.pdf", "att05.pdf", "att06.pdf"]
+      ready_product: false
+      notes: "att01.pdf is a copy of section 4.2 (att06 p.23-28) and Annexure C (att06 p.105-109); att04 = Annexure E, att05 = Annexure D; att02/att03 are GeM forms with no scope. Each module counted once. Large parts of att06 (Annexure C p.110-116, Annexure F p.122, SLA p.123-127) are boilerplate from a Bank Finacle facility-management RFP (mentions IBU Solution Suite, Finacle, EOD/BOD, 1-week implementation); the 1-week timeline is not realistic for building 20 modules. Mentioned without detail and not counted as modules: Aadhaar integration (compliance line only), NIC databases, eOffice integration (if required); responsive web UI only, no mobile app asked (progress photos with GPS imply phone-browser use). Reports module counted with one story per named report type. Bank switch mapped to connect_existing (Bank's existing MahaPay switch), Gram Manchitra to maps. Notifications/alerts counted inside their modules, not separately. Total: 21 modules, 94 stories."
+      modules:
+      - {name: "User Management", feature_key: custom, custom_type: module, stories: 6, level: standard, units: 1, pages: "att06.pdf p.24, p.105; att01.pdf p.1", confidence: high}
+      - {name: "3-Level Access & Approval Workflow (JE-DE-EE, district level)", feature_key: approval_workflow, stories: 5, level: standard, units: 1, pages: "att06.pdf p.24, p.105; att01.pdf p.1", confidence: high}
+      - {name: "Vendor Management", feature_key: custom, custom_type: module, stories: 5, level: standard, units: 1, pages: "att06.pdf p.24, p.105; att01.pdf p.2", confidence: high}
+      - {name: "MIS & Analytics Dashboard", feature_key: dashboards, stories: 6, level: standard, units: 1, pages: "att06.pdf p.24, p.105-106; att01.pdf p.2", confidence: high}
+      - {name: "Bank Switch Integration (MahaPay / state-approved bank APIs)", feature_key: connect_existing, stories: 5, level: standard, units: 1, pages: "att06.pdf p.7-8, p.24-25, p.106; att01.pdf p.2", confidence: high}
+      - {name: "Transaction Reconciliation", feature_key: custom, custom_type: module, stories: 3, level: basic, units: 1, pages: "att06.pdf p.25, p.106; att01.pdf p.2", confidence: high}
+      - {name: "Budget Management", feature_key: custom, custom_type: module, stories: 4, level: standard, units: 1, pages: "att06.pdf p.25, p.106; att01.pdf p.2-3", confidence: high}
+      - {name: "Head Management", feature_key: custom, custom_type: module, stories: 2, level: basic, units: 1, pages: "att06.pdf p.25, p.106; att01.pdf p.3", confidence: high}
+      - {name: "Proposal Workflow (ZP to State)", feature_key: approval_workflow, stories: 5, level: standard, units: 1, pages: "att06.pdf p.25, p.106-107; att01.pdf p.3", confidence: high}
+      - {name: "Government Resolution (GR) Creation", feature_key: custom, custom_type: module, stories: 4, level: standard, units: 1, pages: "att06.pdf p.25, p.107; att01.pdf p.3", confidence: high}
+      - {name: "Limit Allocation", feature_key: custom, custom_type: module, stories: 4, level: standard, units: 1, pages: "att06.pdf p.26, p.107; att01.pdf p.3", confidence: high}
+      - {name: "Bill Generation (ZP level)", feature_key: custom, custom_type: module, stories: 3, level: basic, units: 1, pages: "att06.pdf p.26, p.107; att01.pdf p.3-4", confidence: high}
+      - {name: "Standard Deduction and Settlement", feature_key: custom, custom_type: module, stories: 3, level: basic, units: 1, pages: "att06.pdf p.26, p.107; att01.pdf p.4", confidence: high}
+      - {name: "Account Management (chart of accounts, ledgers)", feature_key: custom, custom_type: module, stories: 5, level: standard, units: 1, pages: "att06.pdf p.26, p.107-108; att01.pdf p.4", confidence: high}
+      - {name: "Reports and Exports for All Modules", feature_key: dashboards, stories: 7, level: standard, units: 1, pages: "att06.pdf p.26, p.108; att01.pdf p.4", confidence: medium}
+      - {name: "Digital Signature (DSC) Based Approval", feature_key: custom, custom_type: integration, stories: 4, level: standard, units: 1, pages: "att06.pdf p.26-27, p.108; att01.pdf p.4", confidence: high}
+      - {name: "Technical Sanction", feature_key: approval_workflow, stories: 5, level: standard, units: 1, pages: "att06.pdf p.27, p.108; att01.pdf p.4-5", confidence: high}
+      - {name: "Administrative Approval", feature_key: approval_workflow, stories: 6, level: standard, units: 1, pages: "att06.pdf p.27, p.108-109; att01.pdf p.5", confidence: high}
+      - {name: "Progress Management (photo + GPS)", feature_key: custom, custom_type: module, stories: 6, level: standard, units: 1, pages: "att06.pdf p.27, p.109; att01.pdf p.5", confidence: high}
+      - {name: "Gram Manchitra (GIS) Integration", feature_key: maps, stories: 4, level: standard, units: 1, pages: "att06.pdf p.8, p.27, p.109, p.128; att01.pdf p.5", confidence: high}
+      - {name: "Grievance redressal / ticketing", feature_key: grievances, stories: 2, level: basic, units: 1, pages: "att06.pdf p.28, p.109; att01.pdf p.6", confidence: low}
+      not_build:
+      - {item: "hosting / data centre", detail: "Hosted on MahaIT (GoM) server or MeitY-approved govt cloud (NIC/MeghRaj) or as Bank directs; Bank manages infrastructure; DC-DR active-passive; vendor submits sizing document (CPU/RAM/storage/bandwidth); 'hosting, maintenance and technical support for at least 5 years' listed as a deliverable", pages: "att06.pdf p.27-28, p.109, p.125, p.128; att05.pdf p.3; att01.pdf p.5-6"}
+      - {item: "licences / subscriptions", detail: "Enterprise licence of solution with one-year warranty and ATS lines in commercial format; support for all open-source/third-party software at no extra cost; no SMS/WhatsApp volumes stated", pages: "att06.pdf p.11, p.28, p.99-100"}
+      - {item: "O&M / warranty / ATS", detail: "Contract 3 years from SLA execution (extendable); warranty & ATS 3 years from signoff; patches/upgrades within 60 days, N/N-1; bug fixing, new customisations, integrations, APIs and reports during contract; 99.95% uptime 24x7x365. Conflicts with 'at least 5 years' support in key deliverables and 5-year MAF warranty", pages: "att06.pdf p.17, p.27-28, p.37, p.55, p.90, p.110-111, p.114-115, p.123"}
+      - {item: "onsite manpower (facility management)", detail: "FM for 40 (forty) resources, marked optional, over 3-year TCO; resources full-time onsite at Mumbai, no remote support; key roles: Project Manager, Technical Architect, Business Analyst, DBA, Network Specialist, Senior Software Developer, Software Developer, Tester, IT Security Manager, UI/UX Expert", pages: "att06.pdf p.17, p.58, p.99-100, p.103, p.112-114"}
+      - {item: "helpdesk / support", detail: "Helpdesk for application support; severity-based response 15-30 min, resolution 2 h to 2 days; 24x7x365 back-to-back OEM support", pages: "att06.pdf p.28, p.109-110, p.124; att01.pdf p.6"}
+      - {item: "training and documentation", detail: "Training sessions and user manuals in English and Marathi; knowledge transfer; reverse-transition training; SOPs, SCD, troubleshooting manual, training materials; training cost part of TCO", pages: "att06.pdf p.28, p.39, p.100, p.116, p.129; att01.pdf p.5"}
+      - {item: "audits and testing", detail: "VA/PT before go-live; UAT, security audit, performance/load testing and DR drill before go-live; quarterly VAPT/IS/process audits by Bank to be complied with; onsite support at quarterly DR drills; secure code review", pages: "att06.pdf p.28, p.55, p.111, p.115, p.128-129"}
+      - {item: "data migration", detail: "Bidder must provide a data migration plan; bid form mentions migration; no volumes given", pages: "att06.pdf p.84, p.129"}
+      - {item: "integration with Bank security/monitoring tools", detail: "Integrate with Bank SIEM (QRadar), ITSM, NMS, TACACS, PIM; handle alerts; integrate with Bank monitoring/EMS", pages: "att06.pdf p.58, p.114-115, p.128"}
   - id: gem-aiims-exam-portal
     title: AIIMS exams web portal with SMS, WhatsApp and email support
     buyer: AIIMS New Delhi

@@ -65,6 +65,15 @@ def test_signup_verify_and_sign_in(client: TestClient, mail: Mailbox) -> None:
     assert client.get("/quick-estimates", headers=bearer(token)).json() == []
 
 
+def test_signup_with_name_email_and_password_only(client: TestClient, mail: Mailbox) -> None:
+    body = {"full_name": "Ravi", "email": "ravi@solo.example", "password": "long-enough-1"}
+    assert client.post("/auth/signup", json=body).status_code == 201
+    code = mail.code("ravi@solo.example")
+    ok = client.post("/auth/verify-email", json={"email": "ravi@solo.example", "code": code})
+    me = client.get("/auth/me", headers=bearer(ok.json()["access_token"])).json()
+    assert (me["full_name"], me["org_name"], me["role"]) == ("Ravi", "ravi@solo.example", "admin")
+
+
 def test_signup_refusals(client: TestClient, mail: Mailbox) -> None:
     assert signup(client, "taken@newco.example", "Taken Co") == 201
     code = mail.code("taken@newco.example")

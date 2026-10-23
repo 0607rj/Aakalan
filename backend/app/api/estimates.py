@@ -84,7 +84,8 @@ def _estimate_out(e: Estimate, user: User) -> EstimateOut:
     assumptions = [
         AssumptionOut(key=a.key, text=a.text, value=a.value, overridden=a.overridden)
         for a in e.assumptions
-        if show_margin or a.key != "margin_percent"
+        if (show_margin or a.key != "margin_percent")
+        and a.key not in service.UNRECORDED_ASSUMPTIONS
     ]
     by_bucket = [g for g in r["by_bucket"] if show_margin or g["key"] != MARGIN_BUCKET]
     return EstimateOut(

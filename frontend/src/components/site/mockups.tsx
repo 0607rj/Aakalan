@@ -2,7 +2,10 @@
  * Illustrations made of the product's own pieces: the cost range as a measuring tape, a
  * requirement document with the line a feature came from, a question, the team. Figures are
  * a worked example (a small clinic booking app), labelled as such wherever they appear.
+ * Parts marked fig-* play once when their `[data-reveal]` parent comes into view.
  */
+import type { CSSProperties } from "react";
+
 import { cn } from "@/lib/utils";
 
 const LAKH = 100_000;
@@ -10,6 +13,11 @@ const LAKH = 100_000;
 function lakh(rupees: number): string {
   return `₹${(rupees / LAKH).toLocaleString("en-IN", { maximumFractionDigits: 1 })} L`;
 }
+
+/** A delay step for the fig-* animations. */
+const step = (d: number) => ({ "--d": d }) as CSSProperties;
+
+const FIGURE = "panel rounded-2xl p-5";
 
 /**
  * The signature: a cost range drawn on a measuring tape. The band runs from the low to the
@@ -36,31 +44,31 @@ export function RangeTape({
         className="absolute top-0 flex -translate-x-1/2 flex-col items-center"
         style={{ left: at(likely) }}
       >
-        <span className="rounded-full bg-foreground px-2.5 py-1 text-xs font-semibold whitespace-nowrap text-primary-foreground tabular-nums">
+        <span className="rounded-full bg-foreground px-2.5 py-1 font-mono text-[11px] font-medium whitespace-nowrap text-background tabular-nums">
           Likely {lakh(likely)}
         </span>
-        <span className="h-3 w-0.5 bg-foreground" />
+        <span className="h-3 w-px bg-foreground" />
       </div>
       {/* tape */}
-      <div className="tape-ticks relative h-8 overflow-hidden rounded-md bg-tape shadow-[inset_0_-2px_0_rgb(23_32_58/0.15)]">
+      <div className="tape-ticks relative h-8 overflow-hidden rounded-md bg-tape shadow-[inset_0_1px_0_rgb(255_255_255/0.4),0_0_40px_-6px_rgb(255_107_107/0.5)]">
         <div
-          className="absolute inset-y-0 bg-foreground/15"
+          className="absolute inset-y-0 bg-black/25"
           style={{ left: at(low), width: `calc(${at(high)} - ${at(low)})` }}
         />
         <div
-          className="absolute inset-y-0 w-0.5 bg-foreground"
+          className="absolute inset-y-0 w-0.5 bg-white"
           style={{ left: at(likely) }}
         />
       </div>
       {/* ends of the range */}
       <span
-        className="absolute bottom-0 -translate-x-1/2 text-xs text-muted-foreground tabular-nums"
+        className="absolute bottom-0 -translate-x-1/2 font-mono text-[11px] text-muted-foreground tabular-nums"
         style={{ left: at(low) }}
       >
         {lakh(low)}
       </span>
       <span
-        className="absolute bottom-0 -translate-x-1/2 text-xs text-muted-foreground tabular-nums"
+        className="absolute bottom-0 -translate-x-1/2 font-mono text-[11px] text-muted-foreground tabular-nums"
         style={{ left: at(high) }}
       >
         {lakh(high)}
@@ -76,29 +84,23 @@ const EXAMPLE = {
   withoutAi: 2_350_000,
 };
 
-/** The hero picture: what an estimate looks like. */
+const EXAMPLE_FEATURES = [
+  { name: "Bookings and appointments", level: "Standard", ai: 2.6, old: 3.3 },
+  { name: "Online fee payment", level: "Basic", ai: 1.1, old: 1.4 },
+  { name: "Mobile app", level: "Basic", ai: 3.0, old: 3.9 },
+  { name: "SMS reminders", level: "", ai: 0.9, old: 1.1 },
+];
+
+/** What an estimate looks like. */
 export function EstimateMockup({ className }: { className?: string }) {
-  const features = [
-    { name: "Bookings and appointments", level: "Standard", ai: 2.6, old: 3.3 },
-    { name: "Online fee payment", level: "Basic", ai: 1.1, old: 1.4 },
-    { name: "Mobile app", level: "Basic", ai: 3.0, old: 3.9 },
-    { name: "SMS reminders", level: "", ai: 0.9, old: 1.1 },
-  ];
   return (
-    <figure
-      className={cn(
-        "rounded-[22px] border bg-card p-5 shadow-[0_24px_60px_-28px_rgb(23_32_58/0.35)] sm:p-6",
-        className,
-      )}
-    >
+    <figure className={cn("panel rounded-[22px] p-5 sm:p-6", className)}>
       <figcaption className="flex items-start justify-between gap-3">
-        <span className="flex flex-col">
-          <span className="text-sm text-muted-foreground">
-            Example estimate
-          </span>
+        <span className="flex flex-col gap-1">
+          <span className="eyebrow">Example estimate</span>
           <span className="font-semibold">Clinic booking app</span>
         </span>
-        <span className="rounded-full bg-ai-soft px-2.5 py-1 text-xs font-semibold text-ai">
+        <span className="rounded-full border border-ai/30 bg-ai-soft px-2.5 py-1 text-xs font-semibold text-ai">
           {Math.round(100 * (1 - EXAMPLE.likely / EXAMPLE.withoutAi))}% less
           with AI tools
         </span>
@@ -112,14 +114,18 @@ export function EstimateMockup({ className }: { className?: string }) {
       />
       <table className="mt-4 w-full text-sm">
         <thead>
-          <tr className="text-left text-xs text-muted-foreground">
-            <th className="pb-2 font-medium">Feature</th>
-            <th className="pb-2 text-right font-medium">Without AI</th>
-            <th className="pb-2 text-right font-medium">With AI</th>
+          <tr className="text-left">
+            <th className="eyebrow pb-2 font-normal">Feature</th>
+            <th className="eyebrow pb-2 pl-3 text-right font-normal whitespace-nowrap">
+              Without AI
+            </th>
+            <th className="eyebrow pb-2 pl-3 text-right font-normal whitespace-nowrap">
+              With AI
+            </th>
           </tr>
         </thead>
         <tbody className="divide-y">
-          {features.map((f) => (
+          {EXAMPLE_FEATURES.map((f) => (
             <tr key={f.name}>
               <td className="py-2 pr-2">
                 {f.name}
@@ -129,17 +135,17 @@ export function EstimateMockup({ className }: { className?: string }) {
                   </span>
                 ) : null}
               </td>
-              <td className="py-2 text-right text-muted-foreground tabular-nums line-through decoration-muted-foreground/40">
+              <td className="py-2 text-right font-mono text-[13px] text-muted-foreground tabular-nums line-through decoration-muted-foreground/40">
                 ₹{f.old} L
               </td>
-              <td className="py-2 text-right font-semibold tabular-nums">
+              <td className="py-2 text-right font-mono text-[13px] font-medium tabular-nums">
                 ₹{f.ai} L
               </td>
             </tr>
           ))}
         </tbody>
       </table>
-      <div className="mt-4 flex items-center gap-3 rounded-xl bg-muted px-3 py-2.5 text-sm">
+      <div className="mt-4 flex items-center gap-3 rounded-xl bg-panel-2 px-3 py-2.5 text-sm">
         <PeopleIcons count={4} />
         <span>About 4 people for 3 months</span>
       </div>
@@ -154,10 +160,10 @@ export function PeopleIcons({ count }: { count: number }) {
         <svg
           key={i}
           viewBox="0 0 24 24"
-          className="size-6 rounded-full border-2 border-card bg-secondary p-0.5"
+          className="size-6 rounded-full border-2 border-card bg-[#2a2b31] p-0.5"
         >
-          <circle cx="12" cy="9" r="4" fill="#17203a" />
-          <path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6" fill="#17203a" />
+          <circle cx="12" cy="9" r="4" fill="#c9cad1" />
+          <path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6" fill="#c9cad1" />
         </svg>
       ))}
     </span>
@@ -167,34 +173,36 @@ export function PeopleIcons({ count }: { count: number }) {
 /** A page of a requirement document, with the line a feature was found in. */
 export function DocumentMockup({ className }: { className?: string }) {
   return (
-    <figure
-      className={cn(
-        "relative rounded-2xl border bg-card p-5 shadow-[0_16px_40px_-24px_rgb(23_32_58/0.35)]",
-        className,
-      )}
-    >
-      <figcaption className="text-xs text-muted-foreground">
-        requirement-document.pdf, page 4
+    <figure data-reveal className={cn(FIGURE, "relative", className)}>
+      <figcaption className="eyebrow">
+        requirement-document.pdf · page 4
       </figcaption>
       <div className="mt-3 flex flex-col gap-2" aria-hidden="true">
-        <div className="h-2 w-3/4 rounded bg-muted" />
-        <div className="h-2 w-full rounded bg-muted" />
-        <div className="h-2 w-5/6 rounded bg-muted" />
+        <div className="h-2 w-3/4 rounded bg-white/[0.07]" />
+        <div className="h-2 w-full rounded bg-white/[0.07]" />
+        <div className="h-2 w-5/6 rounded bg-white/[0.07]" />
       </div>
-      <p className="mt-3 rounded-md bg-tape-soft px-2 py-1.5 text-sm">
-        <span className="font-semibold">4.2</span> Patients shall book, move and
-        cancel appointments online, and receive an SMS reminder.
+      <p className="fig-mark mt-3 rounded-md px-2 py-1.5 text-sm">
+        <span className="font-mono font-medium text-tape">4.2</span> Patients
+        shall book, move and cancel appointments online, and receive an SMS
+        reminder.
       </p>
       <div className="mt-3 flex flex-col gap-2" aria-hidden="true">
-        <div className="h-2 w-full rounded bg-muted" />
-        <div className="h-2 w-2/3 rounded bg-muted" />
+        <div className="h-2 w-full rounded bg-white/[0.07]" />
+        <div className="h-2 w-2/3 rounded bg-white/[0.07]" />
       </div>
       <div className="mt-4 flex flex-wrap gap-2 text-xs">
-        <span className="rounded-full bg-foreground px-2.5 py-1 font-semibold text-primary-foreground">
-          Bookings found in clause 4.2
+        <span
+          className="fig-step lit rounded-full px-2.5 py-1 font-semibold"
+          style={step(2)}
+        >
+          Bookings · clause 4.2
         </span>
-        <span className="rounded-full border px-2.5 py-1 font-medium">
-          SMS reminders found in clause 4.2
+        <span
+          className="fig-step rounded-full border px-2.5 py-1 font-medium"
+          style={step(3)}
+        >
+          SMS reminders · clause 4.2
         </span>
       </div>
     </figure>
@@ -205,24 +213,19 @@ export function DocumentMockup({ className }: { className?: string }) {
 export function QuestionMockup({ className }: { className?: string }) {
   const options = ["Up to 100", "100 – 1,000", "1,000 – 10,000", "Not sure"];
   return (
-    <figure
-      className={cn(
-        "rounded-2xl border bg-card p-5 shadow-[0_16px_40px_-24px_rgb(23_32_58/0.35)]",
-        className,
-      )}
-    >
-      <figcaption className="text-xs text-muted-foreground">
-        Question 3 of 10
-      </figcaption>
+    <figure data-reveal className={cn(FIGURE, className)}>
+      <figcaption className="eyebrow">Question 3 of 10</figcaption>
       <p className="mt-2 font-semibold">How many people will use it?</p>
       <div className="mt-3 grid grid-cols-2 gap-2 text-sm">
         {options.map((o, i) => (
           <span
             key={o}
             className={cn(
-              "rounded-xl border px-3 py-2",
-              i === 2 && "border-foreground bg-foreground/[0.04] font-semibold",
+              "fig-step rounded-xl border px-3 py-2",
+              i === 2 &&
+                "border-tape/60 bg-tape-soft font-semibold shadow-[0_0_24px_-8px_rgb(255_107_107/0.6)]",
             )}
+            style={step(i)}
           >
             {o}
           </span>
@@ -235,26 +238,20 @@ export function QuestionMockup({ className }: { className?: string }) {
 /** The team behind the work, by role. */
 export function TeamMockup({ className }: { className?: string }) {
   const rows = [
-    { role: "Developer", people: 2, ai: true },
-    { role: "Senior developer (checks AI code)", people: 1, ai: true },
-    { role: "Tester", people: 1, ai: false },
-    { role: "Designer", people: 1, ai: false },
+    { role: "Developer", people: 2 },
+    { role: "Senior developer (checks AI code)", people: 1 },
+    { role: "Tester", people: 1 },
+    { role: "Designer", people: 1 },
   ];
   return (
-    <figure
-      className={cn(
-        "rounded-2xl border bg-card p-5 shadow-[0_16px_40px_-24px_rgb(23_32_58/0.35)]",
-        className,
-      )}
-    >
-      <figcaption className="text-xs text-muted-foreground">
-        Team needed, example
-      </figcaption>
+    <figure data-reveal className={cn(FIGURE, className)}>
+      <figcaption className="eyebrow">Team needed · example</figcaption>
       <ul className="mt-3 flex flex-col divide-y text-sm">
-        {rows.map((r) => (
+        {rows.map((r, i) => (
           <li
             key={r.role}
-            className="flex items-center justify-between gap-3 py-2"
+            className="fig-step flex items-center justify-between gap-3 py-2"
+            style={step(i)}
           >
             <span>{r.role}</span>
             <PeopleIcons count={r.people} />
@@ -267,21 +264,277 @@ export function TeamMockup({ className }: { className?: string }) {
 
 /** What the document asks for that the price leaves out. */
 export function NotPricedMockup({ className }: { className?: string }) {
+  const items = [
+    ["Penalties for delay", "page 12"],
+    ["One year of warranty", "page 13"],
+    ["Source code handover", "page 15"],
+  ];
   return (
     <figure
+      data-reveal
       className={cn(
-        "rounded-2xl border border-warning/30 bg-warning-muted p-5",
+        "rounded-2xl border border-warning/25 bg-warning-muted p-5",
         className,
       )}
     >
-      <figcaption className="font-semibold">
+      <figcaption className="flex items-center gap-2 font-semibold">
+        <span
+          className="pulse-dot size-2 rounded-full bg-warning"
+          aria-hidden="true"
+        />
         In the document, but not in this price
       </figcaption>
       <ul className="mt-3 flex flex-col gap-2 text-sm">
-        <li>Penalties for delay, page 12</li>
-        <li>One year of warranty, page 13</li>
-        <li>Source code handover, page 15</li>
+        {items.map(([what, page], i) => (
+          <li
+            key={what}
+            className="fig-step flex justify-between gap-3"
+            style={step(i)}
+          >
+            <span>{what}</span>
+            <span className="font-mono text-xs text-muted-foreground">
+              {page}
+            </span>
+          </li>
+        ))}
       </ul>
     </figure>
+  );
+}
+
+/**
+ * Traceability: a clause on a page, the feature it became, the rate and the cost line, joined
+ * by drawn lines.
+ */
+export function TraceFigure({ className }: { className?: string }) {
+  const chain = [
+    { label: "Clause 4.2, page 4", value: "“book, move and cancel…”" },
+    { label: "Feature", value: "Bookings · Standard" },
+    { label: "Work", value: "226 h, of which 38 h check AI work" },
+    { label: "Rate card v8", value: "₹1,150 / h, source listed" },
+    { label: "Cost line", value: "₹2.6 L" },
+  ];
+  return (
+    <figure data-reveal className={cn(FIGURE, "p-6", className)}>
+      <figcaption className="eyebrow">
+        Where one number comes from · example
+      </figcaption>
+      <ol className="relative mt-5 flex flex-col gap-4">
+        <span
+          aria-hidden="true"
+          className="fig-drop absolute top-3 bottom-3 left-[7px] w-0.5 rounded-full bg-tape/60"
+        />
+        {chain.map((c, i) => (
+          <li
+            key={c.label}
+            className="fig-step relative flex items-baseline gap-4 pl-7"
+            style={step(i)}
+          >
+            <span
+              aria-hidden="true"
+              className={cn(
+                "absolute top-1.5 left-0 size-4 rounded-full border-2 border-tape bg-background",
+                i === chain.length - 1 && "bg-tape",
+              )}
+            />
+            <span className="eyebrow w-28 shrink-0">{c.label}</span>
+            <span
+              className={cn(
+                "text-sm",
+                i === chain.length - 1 && "font-mono font-semibold text-tape",
+              )}
+            >
+              {c.value}
+            </span>
+          </li>
+        ))}
+      </ol>
+    </figure>
+  );
+}
+
+/** Each feature's cost with and without AI tools, as two bars. */
+export function FeatureBarsFigure({ className }: { className?: string }) {
+  const max = 4;
+  return (
+    <figure data-reveal className={cn(FIGURE, "p-6", className)}>
+      <figcaption className="flex items-center justify-between gap-3">
+        <span className="eyebrow">Each feature on its own line</span>
+        <span className="flex gap-3 text-[11px] text-muted-foreground">
+          <span className="flex items-center gap-1.5">
+            <span className="size-2 rounded-full bg-white/25" />
+            Without AI
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="size-2 rounded-full bg-tape" />
+            With AI
+          </span>
+        </span>
+      </figcaption>
+      <ul className="mt-5 flex flex-col gap-4">
+        {EXAMPLE_FEATURES.map((f, i) => (
+          <li key={f.name} className="flex flex-col gap-1.5">
+            <span className="flex justify-between gap-3 text-sm">
+              <span>{f.name}</span>
+              <span className="font-mono text-[13px] tabular-nums">
+                ₹{f.ai} L
+              </span>
+            </span>
+            <span className="relative h-2.5 overflow-hidden rounded-full bg-white/[0.05]">
+              <span
+                className="fig-bar absolute inset-y-0 left-0 rounded-full bg-white/20"
+                style={{ ...step(i), width: `${(100 * f.old) / max}%` }}
+              />
+              <span
+                className="fig-bar absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-tape to-tape-2 shadow-[0_0_16px_rgb(255_107_107/0.5)]"
+                style={{ ...step(i + 2), width: `${(100 * f.ai) / max}%` }}
+              />
+            </span>
+          </li>
+        ))}
+      </ul>
+    </figure>
+  );
+}
+
+/** The range widening when three answers are "not sure". */
+export function RangeWidenFigure({ className }: { className?: string }) {
+  const max = 3_300_000;
+  const at = (v: number) => (100 * v) / max;
+  const sure = { low: 1_500_000, high: 2_400_000 };
+  const unsure = { low: 1_200_000, high: 3_000_000 };
+  const likely = 1_900_000;
+  return (
+    <figure data-reveal className={cn(FIGURE, "group p-6", className)}>
+      <figcaption className="flex items-center justify-between gap-3">
+        <span className="eyebrow">The same app, answered twice</span>
+        <span className="relative text-xs">
+          <span className="fig-swap-old rounded-full border px-2.5 py-1">
+            All answered
+          </span>
+          <span className="fig-swap-new absolute top-0 right-0 rounded-full border border-warning/40 bg-warning-muted px-2.5 py-1 whitespace-nowrap text-warning">
+            3 × Not sure
+          </span>
+        </span>
+      </figcaption>
+      <div className="relative mt-10 mb-12">
+        <div className="tape-ticks relative h-8 overflow-hidden rounded-md bg-white/[0.06]" />
+        <div
+          className="fig-range absolute inset-y-0 rounded-md bg-tape/85 shadow-[0_0_40px_-4px_rgb(255_107_107/0.55)] group-[.is-in]:left-(--l2)! group-[.is-in]:w-(--w2)!"
+          style={
+            {
+              left: `${at(sure.low)}%`,
+              width: `${at(sure.high) - at(sure.low)}%`,
+              "--l2": `${at(unsure.low)}%`,
+              "--w2": `${at(unsure.high) - at(unsure.low)}%`,
+            } as CSSProperties
+          }
+        />
+        <div
+          className="absolute -top-7 flex -translate-x-1/2 flex-col items-center"
+          style={{ left: `${at(likely)}%` }}
+        >
+          <span className="font-mono text-[11px] whitespace-nowrap">
+            Likely {lakh(likely)}
+          </span>
+          <span className="h-[3.25rem] w-px bg-white" />
+        </div>
+        <div className="absolute inset-x-0 -bottom-3 font-mono text-[11px] text-muted-foreground tabular-nums">
+          <span className="fig-swap-old absolute inset-x-0">
+            <span
+              className="absolute -translate-x-1/2"
+              style={{ left: `${at(sure.low)}%` }}
+            >
+              {lakh(sure.low)}
+            </span>
+            <span
+              className="absolute -translate-x-1/2"
+              style={{ left: `${at(sure.high)}%` }}
+            >
+              {lakh(sure.high)}
+            </span>
+          </span>
+          <span className="fig-swap-new absolute inset-x-0">
+            <span
+              className="absolute -translate-x-1/2"
+              style={{ left: `${at(unsure.low)}%` }}
+            >
+              {lakh(unsure.low)}
+            </span>
+            <span
+              className="absolute -translate-x-1/2"
+              style={{ left: `${at(unsure.high)}%` }}
+            >
+              {lakh(unsure.high)}
+            </span>
+          </span>
+        </div>
+      </div>
+      <p className="text-sm text-muted-foreground">
+        Find out the answers and calculate again for a narrower range.
+      </p>
+    </figure>
+  );
+}
+
+const KEY_ROWS = [
+  ["7", "8", "9", "÷"],
+  ["4", "5", "6", "×"],
+  ["1", "2", "3", "−"],
+  ["0", ".", "%", "+"],
+];
+
+/** The sums a spreadsheet estimate makes you type, each pressed in turn. */
+const SUMS: Record<string, { label: string; order: number }> = {
+  "×": { label: "Hours", order: 0 },
+  "8": { label: "Rate", order: 1 },
+  "+": { label: "Risk", order: 2 },
+  "%": { label: "GST", order: 3 },
+  "−": { label: "AI saving", order: 4 },
+  "3": { label: "Years O&M", order: 5 },
+};
+
+/** The closing picture: a keypad whose sums press themselves, then "Estimate" lights up. */
+export function Keypad({ className }: { className?: string }) {
+  return (
+    <div
+      data-reveal
+      aria-hidden="true"
+      className={cn("keypad flex flex-col items-center gap-3", className)}
+    >
+      <div className="keypad-board grid grid-cols-4 gap-2 rounded-[22px] border bg-[#0b0c0f] p-3 shadow-[inset_0_1px_0_rgb(255_255_255/0.05),0_40px_100px_-30px_black] sm:gap-2.5 sm:p-4">
+        {KEY_ROWS.flat().map((k) => {
+          const sum = SUMS[k];
+          return (
+            <span
+              key={k}
+              className={cn(
+                "key flex size-14 flex-col items-center justify-center rounded-xl border border-white/[0.07] bg-gradient-to-b from-[#1b1c21] to-[#141519] font-mono text-lg text-white/85 shadow-[inset_0_1px_0_rgb(255_255_255/0.06),inset_0_-2px_0_rgb(0_0_0/0.45)] sm:size-16",
+                sum && "sum",
+              )}
+              style={sum ? step(sum.order) : undefined}
+            >
+              <b className="leading-none font-medium">{k}</b>
+              {sum ? (
+                <small className="mt-1 text-[9px] tracking-wide text-muted-foreground uppercase">
+                  {sum.label}
+                </small>
+              ) : null}
+            </span>
+          );
+        })}
+      </div>
+      <span className="keypad-auto flex items-center gap-2 rounded-xl border border-white/[0.08] bg-gradient-to-b from-[#1b1c21] to-[#141519] px-6 py-3 font-semibold text-white/80 shadow-[inset_0_1px_0_rgb(255_255_255/0.06),inset_0_-2px_0_rgb(0_0_0/0.45)]">
+        <svg viewBox="0 0 24 24" className="size-[18px]" fill="none">
+          <path
+            d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
+        </svg>
+        Estimate
+      </span>
+    </div>
   );
 }

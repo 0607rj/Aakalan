@@ -8,6 +8,7 @@ import {
   type QuestionImpact,
   type QuickQuestion,
   type QuickRequest,
+  type StandardBlock,
 } from "@/lib/api/client";
 import { formatPaise } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -58,7 +59,25 @@ type DependentQuestion = {
   key: string;
   default: Choice;
   default_by?: DefaultBy;
+  /** A decision asked on every estimate: nothing is pre-selected. */
+  must_choose?: boolean;
 };
+
+/** The answer shown as chosen: the user's, else the default (none for a must-choose question). */
+export function shownChoice(
+  q: DependentQuestion,
+  choices: Record<string, Choice>,
+): Choice | undefined {
+  return choices[q.key] ?? (q.must_choose ? undefined : q.default);
+}
+
+/** Must-choose questions among `questions` that have no answer yet. */
+export function unchosen<T extends DependentQuestion>(
+  questions: T[],
+  choices: Record<string, Choice>,
+): T[] {
+  return questions.filter((q) => q.must_choose && choices[q.key] === undefined);
+}
 
 /** A question's default given the other answers (e.g. size "small" for a startup client). */
 export function defaultFor(
@@ -92,15 +111,21 @@ export function setChoice(
   return next;
 }
 
-/** Starting answers: the given ones (fixed), then defaults that follow them. */
+/**
+ * Starting answers: the given ones (fixed), then defaults that follow them. Must-choose
+ * questions start unanswered.
+ */
 export function initialChoices(
   questions: DependentQuestion[],
   given: Record<string, Choice>,
 ): Record<string, Choice> {
-  const base: Record<string, Choice> = Object.fromEntries(
-    questions.map((q) => [q.key, given[q.key] ?? q.default]),
+  const asked = questions.filter(
+    (q) => !q.must_choose || given[q.key] !== undefined,
   );
-  for (const q of questions) {
+  const base: Record<string, Choice> = Object.fromEntries(
+    asked.map((q) => [q.key, given[q.key] ?? q.default]),
+  );
+  for (const q of asked) {
     if (given[q.key] === undefined) base[q.key] = defaultFor(q, base);
   }
   return base;
@@ -159,17 +184,47 @@ export function StepIndicator({
   );
 }
 
+/** Marks an unticked item "Not included": the quote then says it is not in the price. */
+export function NotIncludedToggle({
+  excluded,
+  onClick,
+}: {
+  excluded: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-pressed={excluded}
+      className={cn(
+        "w-fit rounded px-1.5 py-0.5 text-xs font-medium",
+        excluded
+          ? "bg-muted text-foreground"
+          : "text-muted-foreground hover:text-foreground hover:underline",
+      )}
+    >
+      {excluded ? "Not included ✕ (undo)" : "Mark as not included"}
+    </button>
+  );
+}
+
 export function FeatureCard({
   label,
   hint,
   checked,
   onToggle,
+  excluded = false,
+  onNotIncluded,
   children,
 }: {
   label: string;
   hint: string;
   checked: boolean;
   onToggle: () => void;
+  /** Marked "Not included" (not ticked, and printed as not in the price). */
+  excluded?: boolean;
+  onNotIncluded?: () => void;
   /** Extra content under the card (e.g. where the document says so). */
   children?: React.ReactNode;
 }) {
@@ -179,7 +234,9 @@ export function FeatureCard({
         "flex flex-col gap-2 rounded-xl border bg-card p-4 transition-colors",
         checked
           ? "border-primary bg-primary/5 ring-1 ring-primary"
-          : "hover:border-primary/40 hover:bg-muted/40",
+          : excluded
+            ? "border-dashed opacity-70"
+            : "hover:border-primary/40 hover:bg-muted/40",
       )}
     >
       <label className="flex cursor-pointer items-start gap-3">
@@ -195,6 +252,11 @@ export function FeatureCard({
         </span>
       </label>
       {children ? <div className="pl-7">{children}</div> : null}
+      {onNotIncluded && !checked ? (
+        <div className="pl-6">
+          <NotIncludedToggle excluded={excluded} onClick={onNotIncluded} />
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -231,6 +293,103 @@ export function useQuestionImpact(
   return impacts;
 }
 
+/**
+ * The standard building blocks of this project's size, included by default. Unticking one
+ * leaves it out of the price, and the quote says so. Asked from the API as the form changes
+ * (debounced; nothing is saved or priced).
+ */
+export function StandardBlocks({
+  body,
+  removed,
+  onToggle,
+}: {
+  body: QuickRequest | null;
+  removed: string[];
+  onToggle: (key: string) => void;
+}) {
+  const [blocks, setBlocks] = React.useState<StandardBlock[]>([]);
+  const key = body ? JSON.stringify(body) : null;
+  React.useEffect(() => {
+    if (key === null) return;
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => {
+      api
+        .standardBlocks(JSON.parse(key) as QuickRequest, controller.signal)
+        .then(setBlocks)
+        .catch(() => {
+          // Keep the previous list silently.
+        });
+    }, IMPACT_DEBOUNCE_MS);
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [key]);
+  if (blocks.length === 0) return null;
+  const kept = blocks.filter((b) => !removed.includes(b.key)).length;
+  return (
+    <section className="flex flex-col gap-3">
+      <SectionHeading
+        title="Included by default"
+        count={kept}
+        aside="untick if not needed"
+      />
+      <p className="text-sm text-muted-foreground">
+        A project of this size usually needs these. Untick any you do not need:
+        it is left out of the price, and the quote says so.
+      </p>
+      <div className="grid gap-2 sm:grid-cols-2">
+        {blocks.map((b) => (
+          <label
+            key={b.key}
+            className="flex cursor-pointer items-start gap-2 rounded-lg p-2 hover:bg-muted/40"
+          >
+            <input
+              type="checkbox"
+              checked={!removed.includes(b.key)}
+              onChange={() => onToggle(b.key)}
+              className="mt-1 size-4 accent-primary"
+            />
+            <span className="flex flex-col gap-0.5">
+              <span>{b.label}</span>
+              {b.hint ? (
+                <span className="text-sm text-muted-foreground">{b.hint}</span>
+              ) : null}
+            </span>
+          </label>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+/** A section heading of the features screen, with its count so the page reads at a glance. */
+export function SectionHeading({
+  title,
+  count,
+  aside,
+}: {
+  title: string;
+  count?: number;
+  aside?: string;
+}) {
+  return (
+    <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b pb-2">
+      <h2 className="text-sm font-semibold tracking-wide uppercase">
+        {title}
+        {count !== undefined ? (
+          <span className="ml-2 text-muted-foreground tabular-nums">
+            ({count})
+          </span>
+        ) : null}
+      </h2>
+      {aside ? (
+        <span className="text-sm text-muted-foreground">{aside}</span>
+      ) : null}
+    </div>
+  );
+}
+
 /** A question as the heading of its own screen, with how much it can move the price. */
 export function QuestionHeading({
   question,
@@ -264,7 +423,8 @@ export function QuestionGroup({
   currency = "INR",
 }: {
   question: QuickQuestion;
-  value: Choice;
+  /** undefined: nothing chosen yet (a must-choose question). */
+  value: Choice | undefined;
   onChange: (value: Choice) => void;
   hideLegend?: boolean;
   /** Price per option from the engine, when known. */

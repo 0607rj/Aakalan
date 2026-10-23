@@ -149,7 +149,7 @@ function Headline({ summary }: { summary: QuickSummary }) {
           </ul>
           {risk !== null && risk > 0 ? (
             <p>
-              Planned cost {approx(summary.planned_paise)} + allowance for risks{" "}
+              Planned cost {approx(summary.planned_paise)} + expected overrun{" "}
               {approx(risk)} = most likely {approx(summary.likely_paise)}.
               &quot;Building and launch only&quot; is the design, build, test
               and launch work before project management, support, margin and
@@ -210,11 +210,47 @@ function MarketBox({ summary }: { summary: QuickSummary }) {
   );
 }
 
+/** "AI saving identified: ₹X (Y%) — passed to client: Z%" (the rest is kept as margin). */
+function Passthrough({ summary }: { summary: QuickSummary }) {
+  const s = summary.ai_saving;
+  if (!s) return null;
+  return (
+    <span className="text-sm">
+      <span className="font-medium">
+        AI saving identified:{" "}
+        {formatApprox(s.identified_paise, summary.currency)} ({s.percent}%) —
+        passed to client: {s.passed_percent}%
+      </span>
+      {s.passed_percent < 100 ? (
+        <span className="text-muted-foreground">
+          {" "}
+          The rest is kept as margin; the cost of the work is the same.
+        </span>
+      ) : null}
+      {s.kept_paise ? (
+        <span className="mt-1 block font-medium">
+          AI saving kept: {formatApprox(s.kept_paise, summary.currency)} before
+          GST — your discount room.{" "}
+          <span className="font-normal text-muted-foreground">
+            Internal: shown only to people who can see margin.
+          </span>
+        </span>
+      ) : null}
+    </span>
+  );
+}
+
 /** The whole project with the team's AI tools and without them: price, build time, saving. */
 function AiSaving({ summary }: { summary: QuickSummary }) {
   const withAi = summary.likely_paise;
   const withoutAi = summary.traditional_paise;
-  if (withAi === null || withoutAi === null || withoutAi <= withAi) return null;
+  if (withAi === null || withoutAi === null || withoutAi <= withAi) {
+    return summary.ai_saving ? (
+      <div className="flex flex-col gap-2 rounded-xl border-2 border-primary/30 bg-primary/5 px-5 py-4">
+        <Passthrough summary={summary} />
+      </div>
+    ) : null;
+  }
   const money = (paise: number | null) => formatApprox(paise, summary.currency);
   const months = Number(summary.build_months);
   const oldMonths = summary.traditional_build_months
@@ -241,9 +277,15 @@ function AiSaving({ summary }: { summary: QuickSummary }) {
         {summary.ai_saving_percent ? ` (${summary.ai_saving_percent}%)` : ""}
         {monthsSaved >= 0.1 ? ` and ${monthsText(monthsSaved)}` : ""}.
       </span>
+      <Passthrough summary={summary} />
       <span className="text-xs text-muted-foreground">
-        Already in the price above, after the cost of the AI tools and of
-        checking what the AI wrote. Not a guaranteed saving.
+        {summary.ai_saving && summary.ai_saving.passed_percent < 100
+          ? "The price above passes on only part of it, "
+          : "Already in the price above, "}
+        after the cost of the AI tools and of checking what the AI wrote. It
+        compares the whole price, so it also counts the smaller support,
+        management, margin and GST that follow a smaller build. Not a guaranteed
+        saving.
       </span>
     </div>
   );
@@ -590,7 +632,7 @@ function MoneyBreakdown({ summary }: { summary: QuickSummary }) {
           <strong className="text-foreground">
             {money(summary.planned_paise)}
           </strong>{" "}
-          + allowance for risks{" "}
+          + expected overrun{" "}
           <strong className="text-foreground">{money(risk)}</strong> = most
           likely{" "}
           <strong className="text-foreground">

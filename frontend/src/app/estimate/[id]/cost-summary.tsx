@@ -258,10 +258,11 @@ export function CostSummary({ summary }: { summary: QuickSummary }) {
         {risk !== null && risk > 0 ? (
           <li className="flex flex-wrap items-start justify-between gap-x-6 gap-y-1 py-3">
             <span className="flex max-w-xl flex-col gap-1">
-              <span className="font-medium">Allowance for risks</span>
+              <span className="font-medium">Expected overrun (risk)</span>
               <span className="text-sm text-muted-foreground">
                 Work usually runs over the plan. This is how much, from
-                simulating the project thousands of times.
+                simulating the project thousands of times. It is not a cost
+                line, and it replaces a fixed contingency (that line is zero).
               </span>
             </span>
             <span className="font-semibold tabular-nums">{money(risk)}</span>

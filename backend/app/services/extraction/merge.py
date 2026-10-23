@@ -15,6 +15,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models import Document, Project
+from app.services.extraction.client_provided import find_client_provided
 from app.services.extraction.tender import FoundValue, TenderExtraction
 from app.services.quick.config import quick_config
 
@@ -130,6 +131,7 @@ def merge_extractions(
         if not (n.topic == "payment_terms" and merged.payment_terms is not None)
     ]
     _answers_from_topics(merged)
+    _client_provided(merged, [doc for doc, _ in docs])
     return merged, changes
 
 
@@ -148,6 +150,25 @@ def _answers_from_topics(merged: TenderExtraction) -> None:
         merged.choices[key] = FoundValue(
             value=option.value, label=option.label, evidence=list(topic.evidence)
         )
+
+
+def _client_provided(merged: TenderExtraction, docs: list[Document]) -> None:
+    """A sentence saying the client provides hosting, the web address or the SSL certificate
+    answers that question, citing the sentence (services/extraction/client_provided.py). It wins
+    over the reading's answer: the document says who pays, whatever platform it names."""
+    cfg = quick_config()
+    if cfg.client_provided is None:
+        return
+    for doc in docs:
+        pages = [(int(p["page"]), str(p["text"])) for p in (doc.page_texts or [])]
+        for key, (value, evidence) in find_client_provided(
+            cfg.client_provided, pages, doc.filename
+        ).items():
+            current = merged.choices.get(key)
+            if current is not None and current.value == value:
+                continue
+            option = cfg.questions[key].option(value)
+            merged.choices[key] = FoundValue(value=value, label=option.label, evidence=[evidence])
 
 
 def project_documents(db: Session, project: Project) -> list[Document]:

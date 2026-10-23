@@ -178,7 +178,22 @@ function changeRange(o: PricedOption, currency: QuickSummary["currency"]) {
   return `${signed(low, currency)} to ${signed(high, currency)}`;
 }
 
-/** Answers the document did not settle (or "Not sure"): what they were priced as, and what each other answer would change. */
+const NOT_INCLUDED_WHY: Record<
+  QuickSummary["not_included"][number]["why"],
+  string
+> = {
+  excluded_by_you: "marked not included",
+  removed_by_you: "standard part left out on request",
+  not_sure: "not decided yet, quoted separately",
+  document_excluded: "the document rules it out",
+  document_not_priced: "asked for in the document, not priced here",
+};
+
+/**
+ * What the price rests on and leaves out: answers nobody gave (assumed, to change if wrong),
+ * what is not included (with the "if required" price of what "Not sure" left out), and the
+ * open answers with what each other answer would change. The PDF and Excel print the same.
+ */
 export function OpenAnswers({ summary }: { summary: QuickSummary }) {
   const estimateId = summary.estimate_id;
   const loader = React.useCallback(
@@ -186,41 +201,121 @@ export function OpenAnswers({ summary }: { summary: QuickSummary }) {
     [estimateId],
   );
   const { state } = useLoad<PricedOption[]>(loader);
-  if (state.kind !== "ready" || state.data.length === 0) return null;
+  const options = state.kind === "ready" ? state.data : [];
+  const open = options.filter((o) => o.why !== "left_out");
+  const leftOut = new Map(
+    options.filter((o) => o.why === "left_out").map((o) => [o.key, o]),
+  );
   return (
-    <section className="flex flex-col gap-3 rounded-2xl border bg-card px-6 py-6 shadow-sm sm:px-8">
-      <div>
-        <h2 className="text-lg font-semibold">Open answers</h2>
-        <p className="text-sm text-muted-foreground">
-          Not settled by the document or answered “Not sure”. Each is priced at
-          the usual answer; the range is wider because of them.
-        </p>
-      </div>
-      <ul className="flex flex-col gap-2 text-sm">
-        {state.data.map((o) => (
-          <li key={o.key}>
-            <span className="font-medium">{o.question}</span>{" "}
-            <span className="text-muted-foreground">
-              ({o.why === "not_sure" ? "not sure" : "not in the document"}):
-              priced as {o.priced_as}.
-            </span>
-            {o.options.length > 0 ? (
-              <span>
-                {" "}
-                Other answers {changeRange(o, summary.currency)}:{" "}
-                {o.options
-                  .map((c) =>
-                    c.change_paise === null
-                      ? c.label
-                      : `${c.label} ${signed(c.change_paise, summary.currency)}`,
-                  )
-                  .join("; ")}
-                .
-              </span>
-            ) : null}
-          </li>
-        ))}
-      </ul>
-    </section>
+    <>
+      {summary.assumed.length > 0 ? (
+        <section className="flex flex-col gap-3 rounded-2xl border border-warning/30 bg-card px-6 py-6 shadow-sm sm:px-8">
+          <div>
+            <h2 className="text-lg font-semibold">
+              Assumed answers: change any that are wrong
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Nobody gave these answers, so the price uses the usual one. The
+              PDF and Excel list them too.
+            </p>
+          </div>
+          <ul className="flex flex-col gap-1.5 text-sm">
+            {summary.assumed.map((a) => (
+              <li key={a.key}>
+                <span className="text-muted-foreground">{a.question}</span>{" "}
+                <span className="font-medium">{a.answer}</span>
+                {a.detail ? (
+                  <span className="text-muted-foreground"> ({a.detail})</span>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+      {summary.not_included.length > 0 ? (
+        <section className="flex flex-col gap-3 rounded-2xl border bg-card px-6 py-6 shadow-sm sm:px-8">
+          <div>
+            <h2 className="text-lg font-semibold">
+              Not included in this price
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              The quote lists these as not included, so nobody assumes they are.
+            </p>
+          </div>
+          <ul className="flex flex-col gap-2 text-sm">
+            {summary.not_included.map((item) => {
+              const option = leftOut.get(item.question_key ?? "");
+              return (
+                <li key={item.label}>
+                  <span className="font-medium">{item.label}</span>{" "}
+                  <span className="text-muted-foreground">
+                    ({NOT_INCLUDED_WHY[item.why]})
+                  </span>
+                  {option && option.low_change_paise !== null ? (
+                    <span>
+                      {" "}
+                      If required: {changeRange(option, summary.currency)}
+                      {option.usual_change_paise !== null &&
+                      option.usual_change_paise !== undefined ? (
+                        <span className="text-muted-foreground">
+                          {" "}
+                          ({signed(
+                            option.usual_change_paise,
+                            summary.currency,
+                          )}{" "}
+                          at the usual size)
+                        </span>
+                      ) : null}
+                      .
+                    </span>
+                  ) : null}
+                  {item.quote ? (
+                    <span className="block text-muted-foreground">
+                      “{item.quote}”
+                    </span>
+                  ) : null}
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      ) : null}
+      {open.length > 0 ? (
+        <section className="flex flex-col gap-3 rounded-2xl border bg-card px-6 py-6 shadow-sm sm:px-8">
+          <div>
+            <h2 className="text-lg font-semibold">Open answers</h2>
+            <p className="text-sm text-muted-foreground">
+              Not settled by the document or answered “Not sure”. Each is priced
+              at the usual answer; the range is wider because of them.
+            </p>
+          </div>
+          <ul className="flex flex-col gap-2 text-sm">
+            {open.map((o) => (
+              <li key={o.key}>
+                <span className="font-medium">{o.question}</span>{" "}
+                <span className="text-muted-foreground">
+                  ({o.why === "not_sure" ? "not sure" : "not in the document"}
+                  ): priced as {o.priced_as}.
+                </span>
+                {o.options.length > 0 ? (
+                  <span>
+                    {" "}
+                    Other answers {changeRange(o, summary.currency)}:{" "}
+                    {o.options
+                      .map((c) =>
+                        c.change_paise === null
+                          ? c.label
+                          : `${c.label} ${signed(c.change_paise, summary.currency)}`,
+                      )
+                      .join("; ")}
+                    .
+                  </span>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+    </>
   );
 }

@@ -1,18 +1,25 @@
 import type { Metadata } from "next";
-import { Archivo, Public_Sans } from "next/font/google";
+import { Geist_Mono, Inter, Instrument_Serif } from "next/font/google";
 
 import "./globals.css";
 
-// Heavy Archivo for headlines (the "label on a measuring tape" voice); Public Sans for
-// everything people read and fill in.
-const display = Archivo({
+// Inter for everything people read and fill in; Instrument Serif for the few big statements;
+// Geist Mono for small labels and figures.
+const body = Inter({
   subsets: ["latin"],
-  variable: "--font-archivo",
+  variable: "--font-inter",
   display: "swap",
 });
-const body = Public_Sans({
+const serif = Instrument_Serif({
   subsets: ["latin"],
-  variable: "--font-public-sans",
+  weight: "400",
+  style: ["normal", "italic"],
+  variable: "--font-instrument-serif",
+  display: "swap",
+});
+const mono = Geist_Mono({
+  subsets: ["latin"],
+  variable: "--font-geist-mono",
   display: "swap",
 });
 
@@ -26,8 +33,17 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${display.variable} ${body.variable} h-full antialiased`}
+      className={`dark ${body.variable} ${serif.variable} ${mono.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
+      <head>
+        {/* hide [data-reveal] parts before the first paint; only when scripts run */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: "document.documentElement.classList.add('rv')",
+          }}
+        />
+      </head>
       <body className="flex min-h-full flex-col">{children}</body>
     </html>
   );

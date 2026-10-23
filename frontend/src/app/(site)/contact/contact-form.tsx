@@ -77,7 +77,7 @@ export function ContactForm() {
           aria-hidden="true"
           className="tape-ticks h-3 w-32 rounded-sm bg-tape"
         />
-        <h2 className="font-wide text-2xl font-extrabold">Message sent.</h2>
+        <h2 className="font-wide text-2xl font-semibold">Message sent.</h2>
         <p className="text-muted-foreground">
           We will reply to {form.email.trim()}. You can start an estimate in the
           meantime.
@@ -95,7 +95,7 @@ export function ContactForm() {
     <form
       onSubmit={submit}
       noValidate
-      className="flex flex-col gap-5 rounded-[22px] border bg-card p-6 shadow-[0_24px_60px_-34px_rgb(23_32_58/0.35)] sm:p-8"
+      className="flex flex-col gap-5 rounded-[22px] border bg-card p-6 shadow-[0_24px_60px_-34px_rgb(0_0_0/0.7)] sm:p-8"
     >
       <fieldset className="flex flex-col gap-2">
         <legend className="mb-2 text-sm font-semibold">
@@ -114,7 +114,7 @@ export function ContactForm() {
                 className={cn(
                   "rounded-full border px-4 py-2 text-sm font-medium transition-colors",
                   active
-                    ? "border-foreground bg-foreground text-primary-foreground"
+                    ? "border-tape/60 bg-tape-soft text-foreground"
                     : "hover:bg-muted",
                 )}
               >

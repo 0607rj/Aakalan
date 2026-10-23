@@ -458,8 +458,10 @@ def test_team_needed_by_role(client: TestClient, admin_headers: H) -> None:
     assert "role.ml_engineer" in team  # the chatbot needs an AI engineer
     total = sum(float(r["people"]) for r in s["team"])
     assert abs(float(s["team_people"]) - total) < 0.01
-    months = float(s["build_months"])
-    assert abs(float(dev["person_months"]) - float(dev["people"]) * months) < 0.2
+    months, people = float(s["build_months"]), float(dev["people"])
+    # each of the three is rounded to 0.1 on its own, so their product may be off by that much
+    rounding = 0.05 * months + 0.05 * people + 0.05 + 0.01
+    assert abs(float(dev["person_months"]) - people * months) < rounding
     assert s["support_team"] and all(float(r["person_months"]) > 0 for r in s["support_team"])
     assert s["traditional_build_months"] is not None
 
@@ -556,12 +558,12 @@ def test_scope_items_priced_and_shown(client: TestClient, admin_headers: H) -> N
     sso = next(v for k, v in costs.items() if k.startswith("Sign-in and user accounts: Single"))
     assert sso["amount_paise"] > 0
     form = costs["Online application or registration forms"]
-    assert (
-        form["amount_paise"]
-        == {c["label"]: c for c in base["feature_costs"]}[
-            "Online application or registration forms"
-        ]["amount_paise"]
-    )  # the feature itself costs the same; the item is its own row
+    before = {c["label"]: c for c in base["feature_costs"]}[
+        "Online application or registration forms"
+    ]["amount_paise"]
+    # the feature itself costs about the same; the item is its own row (parameters v20+: the
+    # review cap is a share of the whole build, so more blocks can loosen it a little)
+    assert abs(form["amount_paise"] - before) <= before * 0.05
     assert sum(c["amount_paise"] for c in more["feature_costs"]) > sum(
         c["amount_paise"] for c in base["feature_costs"]
     )
@@ -585,3 +587,33 @@ def test_typed_description_suggests_scope(client: TestClient, admin_headers: H) 
     scope = {s["key"]: s for s in r.json()["scope"]}
     assert "two_step_sign_in" in scope
     assert "two-factor authentication" in scope["two_step_sign_in"]["quote"]
+
+
+def test_ai_saving_passed_to_the_client_is_asked(client: TestClient, admin_headers: H) -> None:
+    """Asked on every estimate (nothing pre-selected on the form); the cost model is the same,
+    the share not passed on is kept as margin and shown as "AI saving identified"."""
+    options = client.get("/quick-estimate/options", headers=admin_headers).json()
+    question = next(q for q in options["questions"] if q["key"] == "ai_passthrough")
+    assert question["must_choose"] and question["group"] == "main"
+    passed = quick(client, admin_headers, choices={"ai_passthrough": "all"}).json()
+    kept = quick(client, admin_headers, choices={"ai_passthrough": "keep"}).json()
+    assert passed["ai_saving"]["passed_percent"] == 100 and kept["ai_saving"]["passed_percent"] == 0
+    saving = passed["ai_saving"]["identified_paise"]
+    assert saving > 0 and kept["ai_saving"]["identified_paise"] == saving
+    assert 0 < passed["ai_saving"]["percent"] < 100
+    assert kept["likely_paise"] > passed["likely_paise"]
+    assert kept["build_only_paise"] == passed["build_only_paise"]  # costs unchanged
+
+
+def test_ai_saving_kept_is_its_own_internal_item(
+    client: TestClient, admin_headers: H, viewer_headers: H
+) -> None:
+    """Kept AI saving shown apart from the profit margin (the estimator's discount room), and
+    only to people who may see margin."""
+    kept = quick(client, admin_headers, choices={"ai_passthrough": "keep"}).json()
+    assert kept["ai_saving"]["kept_paise"] > 0
+    items = {i["key"]: i for i in kept["cost_items"]}
+    assert items["ai_saving_kept"]["amount_paise"] == kept["ai_saving"]["kept_paise"]
+    seen = client.get(f"/estimates/{kept['estimate_id']}/summary", headers=viewer_headers).json()
+    assert seen["ai_saving"]["kept_paise"] is None
+    assert "ai_saving_kept" not in {i["key"] for i in seen["cost_items"]}
