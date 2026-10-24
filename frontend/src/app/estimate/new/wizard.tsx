@@ -15,7 +15,6 @@ import {
   type QuickRequest,
   type Suggestion,
   type Template,
-  type TenderDocument,
 } from "@/lib/api/client";
 import { currencySymbol, formatDate } from "@/lib/format";
 import { useLoad } from "@/lib/use-load";
@@ -298,420 +297,428 @@ function ManualForm({
       />
       <ErrorNotice message={notice} />
 
-      {current === "type" ? (
-        <section className="flex flex-col gap-6">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-              What do you want to build?
-            </h1>
-            <p className="mt-1 text-muted-foreground">
-              Give it a name and pick the closest kind. Next, you choose what it
-              should do.
-            </p>
-          </div>
-          <div className="flex max-w-xl flex-col gap-2">
-            <Label htmlFor="project-name" className="text-base">
-              Project name
-            </Label>
-            <Input
-              id="project-name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="e.g. Booking app for a clinic"
-              className="h-11 text-base"
-            />
-          </div>
-          <div
-            role="radiogroup"
-            aria-label="Kind of software"
-            className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
-          >
-            {options.project_types.map((t) => {
-              const active = t.key === projectType;
-              return (
-                <button
-                  key={t.key}
-                  type="button"
-                  role="radio"
-                  aria-checked={active}
-                  onClick={() => setProjectType(t.key)}
-                  className={cn(
-                    "flex flex-col gap-1 rounded-xl border bg-card p-4 text-left transition-colors",
-                    active
-                      ? "border-primary bg-primary/5 ring-1 ring-primary"
-                      : "hover:border-primary/40 hover:bg-muted/40",
-                  )}
-                >
-                  <span className="font-semibold">{t.label}</span>
-                  <span className="text-sm text-muted-foreground">
-                    {t.hint}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-          <StepButtons
-            onBack={onBack}
-            onNext={steps.next}
-            nextDisabled={!typeDone}
-            hint={typeDone ? null : "Enter a name and pick a kind to continue."}
-          />
-        </section>
-      ) : current === "features" ? (
-        <section className="flex flex-col gap-8">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-              What should it do?
-            </h1>
-            <p className="mt-1 text-muted-foreground">
-              Describe it and we find the features, or tick them yourself. Each
-              feature can be ticked, left out, or marked not included.
-            </p>
-          </div>
-          <DescribeBox
-            onSuggested={(s) => {
-              const tickable = new Set(
-                options.features.filter((f) => !f.hidden).map((f) => f.key),
-              );
-              const keys = s.features.map((f) => f.key);
-              setReasons(
-                Object.fromEntries(s.features.map((f) => [f.key, f.quote])),
-              );
-              setNotPriced(s.not_priced ?? []);
-              // what the words rule out ("no mobile app"): marked not included
-              const out: NotIncluded[] = [
-                ...(s.excluded ?? []).map((f) => ({
-                  kind: "feature" as const,
-                  key: f.key,
-                  quote: f.quote,
-                })),
-                ...(s.excluded_scope ?? []).map((i) => ({
-                  kind: "scope" as const,
-                  key: i.key,
-                  quote: i.quote,
-                })),
-              ];
-              const outKeys = new Set(out.map((o) => o.key));
-              setFeatures((now) => [
-                ...new Set([
-                  ...now.filter((k) => !outKeys.has(k)),
-                  ...keys.filter((k) => tickable.has(k)),
-                ]),
-              ]);
-              // a mobile app, other software or old data: answer those questions
-              const implied: Record<string, Choice> = {
-                ...presetFromFeatures(
-                  options,
-                  keys.filter((k) => !tickable.has(k)),
-                ),
-                ...s.choices,
-              };
-              // one ruled out that an answer adds (an app): the answer without it
-              for (const o of out) {
-                if (o.kind !== "feature" || tickable.has(o.key)) continue;
-                const q = options.questions.find((x) =>
-                  x.options.some((opt) => o.key in (opt.add_features ?? {})),
-                );
-                const keep = q?.options.find(
-                  (opt) => !(o.key in (opt.add_features ?? {})) && !opt.unsure,
-                );
-                if (q && keep) implied[q.key] = keep.value;
-              }
-              for (const key of Object.keys(implied)) answered.current.add(key);
-              setTouched((now) => [
-                ...new Set([...now, ...Object.keys(implied)]),
-              ]);
-              setChoices((now) => ({ ...now, ...implied }));
-              setScope((now) => now.filter((k) => !outKeys.has(k)));
-              setNotIncluded((now) => [
-                ...now.filter((n) => !outKeys.has(n.key)),
-                ...out,
-              ]);
-              const items = s.scope ?? [];
-              setScopeReasons(
-                Object.fromEntries(
-                  items.map((i) => [
-                    i.key,
-                    i.status === "explicit"
-                      ? i.quote
-                      : `${i.quote} (may be needed: please check)`,
-                  ]),
-                ),
-              );
-              // not in our list: priced as the user's own features, shown under "Found"
-              setCustomItems((now) => [
-                ...now.filter((i) => i.fromDescription === undefined),
-                ...s.other_features.map((o, i) => ({
-                  id: `described-${Date.now()}-${i}`,
-                  name: o.name,
-                  category: o.category,
-                  size: o.size as "S" | "M" | "L",
-                  foundIndex: null,
-                  description: o.description,
-                  evidence: [],
-                  included: true,
-                  fromDescription: o.evidence[0]?.quote ?? o.name,
-                })),
-              ]);
-            }}
-          />
-
-          <FeatureSections
-            options={options}
-            foundTitle="Found in your description"
-            foundKeys={foundKeys}
-            foundCount={foundKeys.length + described.length}
-            found={
-              <>
-                {foundKeys.map((key) => card(key))}
-                {described.map((item) => (
-                  <FeatureCard
-                    key={item.id}
-                    label={item.name}
-                    hint="Not in our list: priced as your own feature"
-                    checked={item.included}
-                    onToggle={() =>
-                      setCustomItems((now) =>
-                        now.map((i) =>
-                          i.id === item.id
-                            ? { ...i, included: !i.included }
-                            : i,
-                        ),
-                      )
-                    }
-                  >
-                    <FromWords quote={item.fromDescription} />
-                  </FeatureCard>
-                ))}
-              </>
-            }
-            foundNote={
-              notPriced.length > 0 ? (
-                <div className="rounded-xl border border-dashed px-4 py-3 text-sm">
-                  <span className="font-medium">
-                    Asked for, but not priced by this estimate:
-                  </span>{" "}
-                  {notPriced.join(", ")}. Price these separately if they are
-                  needed.
-                </div>
-              ) : null
-            }
-            emptyHint="Describe your project to find features, or browse all below."
-            card={card}
-            isTicked={ticks.isTicked}
-            kindFeatures={kind?.features ?? []}
-            blocksBody={
-              typeDone ? { ...request, not_included: [], answered: null } : null
-            }
-            removedBlocks={removedBlocks.map((n) => n.key)}
-            onToggleBlock={(key) => toggleOut("standard", key)}
-            customItems={customItems}
-            onCustomItems={setCustomItems}
-          />
-
-          <StepButtons
-            onBack={steps.prev}
-            onNext={steps.next}
-            nextDisabled={!canContinue}
-            hint={
-              canContinue
-                ? `${everything.length + customFeatures.length} selected`
-                : "Tick or add at least one feature to continue."
-            }
-          />
-        </section>
-      ) : current === "scope" ? (
-        <>
-          <ScopeStep
-            groups={scopeGroups}
-            chosen={scope}
-            suggested={Object.keys(scopeReasons)}
-            onTickSuggested={() =>
-              setScope((now) => [
-                ...new Set([...now, ...Object.keys(scopeReasons)]),
-              ])
-            }
-            notes={Object.fromEntries(
-              Object.entries(scopeReasons).map(([k, quote]) => [
-                k,
-                <FromWords key={k} quote={quote} />,
-              ]),
-            )}
-            onToggle={(key) => {
-              setScope((now) =>
-                now.includes(key)
-                  ? now.filter((k) => k !== key)
-                  : [...now, key],
-              );
-              unmark("scope", key);
-            }}
-            notIncluded={notIncluded
-              .filter((n) => n.kind === "scope")
-              .map((n) => n.key)}
-            onNotIncluded={(key) => toggleOut("scope", key)}
-          />
-          <StepButtons onBack={steps.prev} onNext={steps.next} />
-        </>
-      ) : current === "levels" ? (
-        <>
-          <LevelsStep
-            features={leveled}
-            levels={effective}
-            defaultLevel={options.default_level}
-            onChange={(key, level) =>
-              setLevels((now) => ({ ...now, [key]: level }))
-            }
-          />
-          <StepButtons onBack={steps.prev} onNext={steps.next} />
-        </>
-      ) : question ? (
-        <section className="flex flex-col gap-6">
-          <QuestionHeading
-            question={question}
-            impact={impacts.get(question.key)}
-            currency={currency}
-          />
-          <QuestionGroup
-            question={question}
-            value={shownChoice(question, choices)}
-            impact={impacts.get(question.key)}
-            currency={currency}
-            hideLegend
-            onChange={(value) => change(question.key, value)}
-          />
-          {question.key === VERSION && leveled.length > 0 ? (
-            <button
-              type="button"
-              className="w-fit text-sm font-medium text-primary hover:underline"
-              onClick={() => {
-                setCustomizing(true);
-                steps.goTo("levels");
-              }}
-            >
-              Want to set each feature yourself? Change levels →
-            </button>
-          ) : null}
-          <StepButtons
-            onBack={steps.prev}
-            onNext={steps.next}
-            nextDisabled={unchosen([question], choices).length > 0}
-            hint={
-              unchosen([question], choices).length > 0
-                ? "Pick an answer to continue."
-                : null
-            }
-          />
-        </section>
-      ) : current === "details" ? (
-        <>
-          <DetailsStep
-            questions={details}
-            choices={choices}
-            onChange={change}
-            impacts={impacts}
-            currency={currency}
-          />
-          <StepButtons onBack={steps.prev} onNext={steps.next} />
-        </>
-      ) : current === "deadline" ? (
-        <section className="flex flex-col gap-6">
-          <div>
-            <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-              Is there a deadline?
-            </h1>
-            <p className="mt-1 text-muted-foreground">
-              A tight deadline needs a bigger team, which costs more. Leave it
-              empty if there is no fixed date.
-            </p>
-          </div>
-          <div className="flex max-w-sm flex-col gap-2">
-            <Label htmlFor="deadline" className="text-base">
-              Months from start to launch
-            </Label>
-            <div className="flex items-center gap-2">
-              <Input
-                id="deadline"
-                type="number"
-                inputMode="numeric"
-                min={1}
-                max={60}
-                value={deadline}
-                onChange={(e) => setDeadline(e.target.value)}
-                className="h-11 w-28 text-base"
-              />
-              <span className="text-muted-foreground">months</span>
+      <div key={current} className="step-in flex flex-col gap-8">
+        {current === "type" ? (
+          <section className="flex flex-col gap-6">
+            <div>
+              <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+                What do you want to build?
+              </h1>
+              <p className="mt-1 text-muted-foreground">
+                Give it a name and pick the closest kind. Next, you choose what
+                it should do.
+              </p>
             </div>
-            {!deadlineValid ? (
-              <span className="text-sm text-destructive">
-                Enter a whole number of months between 1 and 60.
-              </span>
+            <div className="flex max-w-xl flex-col gap-2">
+              <Label htmlFor="project-name" className="text-base">
+                Project name
+              </Label>
+              <Input
+                id="project-name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="e.g. Booking app for a clinic"
+                className="h-11 text-base"
+              />
+            </div>
+            <div
+              role="radiogroup"
+              aria-label="Kind of software"
+              className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
+            >
+              {options.project_types.map((t) => {
+                const active = t.key === projectType;
+                return (
+                  <button
+                    key={t.key}
+                    type="button"
+                    role="radio"
+                    aria-checked={active}
+                    onClick={() => setProjectType(t.key)}
+                    className={cn(
+                      "flex flex-col gap-1 rounded-xl border bg-card p-4 text-left transition-colors",
+                      active
+                        ? "border-primary bg-primary/5 ring-1 ring-primary"
+                        : "hover:border-primary/40 hover:bg-muted/40",
+                    )}
+                  >
+                    <span className="font-semibold">{t.label}</span>
+                    <span className="text-sm text-muted-foreground">
+                      {t.hint}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+            <StepButtons
+              onBack={onBack}
+              onNext={steps.next}
+              nextDisabled={!typeDone}
+              hint={
+                typeDone ? null : "Enter a name and pick a kind to continue."
+              }
+            />
+          </section>
+        ) : current === "features" ? (
+          <section className="flex flex-col gap-8">
+            <div>
+              <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+                What should it do?
+              </h1>
+              <p className="mt-1 text-muted-foreground">
+                Describe it and we find the features, or tick them yourself.
+                Each feature can be ticked, left out, or marked not included.
+              </p>
+            </div>
+            <DescribeBox
+              onSuggested={(s) => {
+                const tickable = new Set(
+                  options.features.filter((f) => !f.hidden).map((f) => f.key),
+                );
+                const keys = s.features.map((f) => f.key);
+                setReasons(
+                  Object.fromEntries(s.features.map((f) => [f.key, f.quote])),
+                );
+                setNotPriced(s.not_priced ?? []);
+                // what the words rule out ("no mobile app"): marked not included
+                const out: NotIncluded[] = [
+                  ...(s.excluded ?? []).map((f) => ({
+                    kind: "feature" as const,
+                    key: f.key,
+                    quote: f.quote,
+                  })),
+                  ...(s.excluded_scope ?? []).map((i) => ({
+                    kind: "scope" as const,
+                    key: i.key,
+                    quote: i.quote,
+                  })),
+                ];
+                const outKeys = new Set(out.map((o) => o.key));
+                setFeatures((now) => [
+                  ...new Set([
+                    ...now.filter((k) => !outKeys.has(k)),
+                    ...keys.filter((k) => tickable.has(k)),
+                  ]),
+                ]);
+                // a mobile app, other software or old data: answer those questions
+                const implied: Record<string, Choice> = {
+                  ...presetFromFeatures(
+                    options,
+                    keys.filter((k) => !tickable.has(k)),
+                  ),
+                  ...s.choices,
+                };
+                // one ruled out that an answer adds (an app): the answer without it
+                for (const o of out) {
+                  if (o.kind !== "feature" || tickable.has(o.key)) continue;
+                  const q = options.questions.find((x) =>
+                    x.options.some((opt) => o.key in (opt.add_features ?? {})),
+                  );
+                  const keep = q?.options.find(
+                    (opt) =>
+                      !(o.key in (opt.add_features ?? {})) && !opt.unsure,
+                  );
+                  if (q && keep) implied[q.key] = keep.value;
+                }
+                for (const key of Object.keys(implied))
+                  answered.current.add(key);
+                setTouched((now) => [
+                  ...new Set([...now, ...Object.keys(implied)]),
+                ]);
+                setChoices((now) => ({ ...now, ...implied }));
+                setScope((now) => now.filter((k) => !outKeys.has(k)));
+                setNotIncluded((now) => [
+                  ...now.filter((n) => !outKeys.has(n.key)),
+                  ...out,
+                ]);
+                const items = s.scope ?? [];
+                setScopeReasons(
+                  Object.fromEntries(
+                    items.map((i) => [
+                      i.key,
+                      i.status === "explicit"
+                        ? i.quote
+                        : `${i.quote} (may be needed: please check)`,
+                    ]),
+                  ),
+                );
+                // not in our list: priced as the user's own features, shown under "Found"
+                setCustomItems((now) => [
+                  ...now.filter((i) => i.fromDescription === undefined),
+                  ...s.other_features.map((o, i) => ({
+                    id: `described-${Date.now()}-${i}`,
+                    name: o.name,
+                    category: o.category,
+                    size: o.size as "S" | "M" | "L",
+                    foundIndex: null,
+                    description: o.description,
+                    evidence: [],
+                    included: true,
+                    fromDescription: o.evidence[0]?.quote ?? o.name,
+                  })),
+                ]);
+              }}
+            />
+
+            <FeatureSections
+              options={options}
+              foundTitle="Found in your description"
+              foundKeys={foundKeys}
+              foundCount={foundKeys.length + described.length}
+              found={
+                <>
+                  {foundKeys.map((key) => card(key))}
+                  {described.map((item) => (
+                    <FeatureCard
+                      key={item.id}
+                      label={item.name}
+                      hint="Not in our list: priced as your own feature"
+                      checked={item.included}
+                      onToggle={() =>
+                        setCustomItems((now) =>
+                          now.map((i) =>
+                            i.id === item.id
+                              ? { ...i, included: !i.included }
+                              : i,
+                          ),
+                        )
+                      }
+                    >
+                      <FromWords quote={item.fromDescription} />
+                    </FeatureCard>
+                  ))}
+                </>
+              }
+              foundNote={
+                notPriced.length > 0 ? (
+                  <div className="rounded-xl border border-dashed px-4 py-3 text-sm">
+                    <span className="font-medium">
+                      Asked for, but not priced by this estimate:
+                    </span>{" "}
+                    {notPriced.join(", ")}. Price these separately if they are
+                    needed.
+                  </div>
+                ) : null
+              }
+              emptyHint="Describe your project to find features, or browse all below."
+              card={card}
+              isTicked={ticks.isTicked}
+              kindFeatures={kind?.features ?? []}
+              blocksBody={
+                typeDone
+                  ? { ...request, not_included: [], answered: null }
+                  : null
+              }
+              removedBlocks={removedBlocks.map((n) => n.key)}
+              onToggleBlock={(key) => toggleOut("standard", key)}
+              customItems={customItems}
+              onCustomItems={setCustomItems}
+            />
+
+            <StepButtons
+              onBack={steps.prev}
+              onNext={steps.next}
+              nextDisabled={!canContinue}
+              hint={
+                canContinue
+                  ? `${everything.length + customFeatures.length} selected`
+                  : "Tick or add at least one feature to continue."
+              }
+            />
+          </section>
+        ) : current === "scope" ? (
+          <>
+            <ScopeStep
+              groups={scopeGroups}
+              chosen={scope}
+              suggested={Object.keys(scopeReasons)}
+              onTickSuggested={() =>
+                setScope((now) => [
+                  ...new Set([...now, ...Object.keys(scopeReasons)]),
+                ])
+              }
+              notes={Object.fromEntries(
+                Object.entries(scopeReasons).map(([k, quote]) => [
+                  k,
+                  <FromWords key={k} quote={quote} />,
+                ]),
+              )}
+              onToggle={(key) => {
+                setScope((now) =>
+                  now.includes(key)
+                    ? now.filter((k) => k !== key)
+                    : [...now, key],
+                );
+                unmark("scope", key);
+              }}
+              notIncluded={notIncluded
+                .filter((n) => n.kind === "scope")
+                .map((n) => n.key)}
+              onNotIncluded={(key) => toggleOut("scope", key)}
+            />
+            <StepButtons onBack={steps.prev} onNext={steps.next} />
+          </>
+        ) : current === "levels" ? (
+          <>
+            <LevelsStep
+              features={leveled}
+              levels={effective}
+              defaultLevel={options.default_level}
+              onChange={(key, level) =>
+                setLevels((now) => ({ ...now, [key]: level }))
+              }
+            />
+            <StepButtons onBack={steps.prev} onNext={steps.next} />
+          </>
+        ) : question ? (
+          <section className="flex flex-col gap-6">
+            <QuestionHeading
+              question={question}
+              impact={impacts.get(question.key)}
+              currency={currency}
+            />
+            <QuestionGroup
+              question={question}
+              value={shownChoice(question, choices)}
+              impact={impacts.get(question.key)}
+              currency={currency}
+              hideLegend
+              onChange={(value) => change(question.key, value)}
+            />
+            {question.key === VERSION && leveled.length > 0 ? (
+              <button
+                type="button"
+                className="w-fit text-sm font-medium text-primary hover:underline"
+                onClick={() => {
+                  setCustomizing(true);
+                  steps.goTo("levels");
+                }}
+              >
+                Want to set each feature yourself? Change levels →
+              </button>
             ) : null}
-          </div>
-          <StepButtons
-            onBack={steps.prev}
-            onNext={steps.next}
-            nextDisabled={!deadlineValid}
-          />
-        </section>
-      ) : (
-        <>
-          <CheckStep
-            rows={[
-              { step: "type", label: "Project name", value: name.trim() },
-              {
-                step: "type",
-                label: "Kind of software",
-                value: kind?.label ?? "—",
-              },
-              {
-                step: "features",
-                label: "Features",
-                value: featureSummary(
-                  options,
-                  everything,
-                  effective,
-                  customFeatures.map((c) => c.name),
-                ),
-              },
-              ...questions.map((q) => ({
-                step: `q:${q.key}`,
-                label: q.label,
-                value: answerLabel(q, choices[q.key]),
-              })),
-              ...details.map((q) => ({
-                step: "details",
-                label: q.label,
-                value: answerLabel(q, choices[q.key]),
-              })),
-              {
-                step: "features",
-                label: "Not included",
-                value: notIncludedText(options, notIncluded),
-              },
-              {
-                step: "deadline",
-                label: "Deadline",
-                value: deadlineMonths ? `${deadlineMonths} months` : "None",
-              },
-            ]}
-            onChange={steps.goTo}
-          />
-          <ErrorNotice message={error} />
-          <StepButtons
-            onBack={steps.prev}
-            onNext={submit}
-            nextLabel="Calculate my cost"
-            nextDisabled={
-              !deadlineValid || unchosen(questions, choices).length > 0
-            }
-            hint={
-              unchosen(questions, choices).length > 0
-                ? `Answer: ${unchosen(questions, choices)[0].label}`
-                : null
-            }
-          />
-        </>
-      )}
+            <StepButtons
+              onBack={steps.prev}
+              onNext={steps.next}
+              nextDisabled={unchosen([question], choices).length > 0}
+              hint={
+                unchosen([question], choices).length > 0
+                  ? "Pick an answer to continue."
+                  : null
+              }
+            />
+          </section>
+        ) : current === "details" ? (
+          <>
+            <DetailsStep
+              questions={details}
+              choices={choices}
+              onChange={change}
+              impacts={impacts}
+              currency={currency}
+            />
+            <StepButtons onBack={steps.prev} onNext={steps.next} />
+          </>
+        ) : current === "deadline" ? (
+          <section className="flex flex-col gap-6">
+            <div>
+              <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+                Is there a deadline?
+              </h1>
+              <p className="mt-1 text-muted-foreground">
+                A tight deadline needs a bigger team, which costs more. Leave it
+                empty if there is no fixed date.
+              </p>
+            </div>
+            <div className="flex max-w-sm flex-col gap-2">
+              <Label htmlFor="deadline" className="text-base">
+                Months from start to launch
+              </Label>
+              <div className="flex items-center gap-2">
+                <Input
+                  id="deadline"
+                  type="number"
+                  inputMode="numeric"
+                  min={1}
+                  max={60}
+                  value={deadline}
+                  onChange={(e) => setDeadline(e.target.value)}
+                  className="h-11 w-28 text-base"
+                />
+                <span className="text-muted-foreground">months</span>
+              </div>
+              {!deadlineValid ? (
+                <span className="text-sm text-destructive">
+                  Enter a whole number of months between 1 and 60.
+                </span>
+              ) : null}
+            </div>
+            <StepButtons
+              onBack={steps.prev}
+              onNext={steps.next}
+              nextDisabled={!deadlineValid}
+            />
+          </section>
+        ) : (
+          <>
+            <CheckStep
+              rows={[
+                { step: "type", label: "Project name", value: name.trim() },
+                {
+                  step: "type",
+                  label: "Kind of software",
+                  value: kind?.label ?? "—",
+                },
+                {
+                  step: "features",
+                  label: "Features",
+                  value: featureSummary(
+                    options,
+                    everything,
+                    effective,
+                    customFeatures.map((c) => c.name),
+                  ),
+                },
+                ...questions.map((q) => ({
+                  step: `q:${q.key}`,
+                  label: q.label,
+                  value: answerLabel(q, choices[q.key]),
+                })),
+                ...details.map((q) => ({
+                  step: "details",
+                  label: q.label,
+                  value: answerLabel(q, choices[q.key]),
+                })),
+                {
+                  step: "features",
+                  label: "Not included",
+                  value: notIncludedText(options, notIncluded),
+                },
+                {
+                  step: "deadline",
+                  label: "Deadline",
+                  value: deadlineMonths ? `${deadlineMonths} months` : "None",
+                },
+              ]}
+              onChange={steps.goTo}
+            />
+            <ErrorNotice message={error} />
+            <StepButtons
+              onBack={steps.prev}
+              onNext={submit}
+              nextLabel="Calculate my cost"
+              nextDisabled={
+                !deadlineValid || unchosen(questions, choices).length > 0
+              }
+              hint={
+                unchosen(questions, choices).length > 0
+                  ? `Answer: ${unchosen(questions, choices)[0].label}`
+                  : null
+              }
+            />
+          </>
+        )}
+      </div>
     </div>
   );
 }
@@ -857,7 +864,7 @@ function StartChoice({
   onTemplate: (id: string) => void;
 }) {
   const card =
-    "flex flex-col gap-2 rounded-2xl border bg-card p-6 text-left shadow-sm transition-colors hover:border-primary/50 hover:bg-muted/40";
+    "group flex flex-col gap-2 rounded-xl border bg-card p-6 text-left shadow-xs transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-foreground/30 hover:shadow-md";
   return (
     <section className="flex flex-col gap-6">
       <div>
@@ -876,9 +883,18 @@ function StartChoice({
           onClick={onUpload}
           className={cn(card, "border-primary/40 ring-1 ring-primary/20")}
         >
-          <span className="text-3xl" aria-hidden>
-            📄
-          </span>
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 24 24"
+            className="size-8 text-primary"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinejoin="round"
+          >
+            <path d="M6 2.75h8.5L19.25 7.5v13.75H6z" />
+            <path d="M14.25 2.75V7.75h5M9 12h7M9 15.5h7M9 19h4" />
+          </svg>
           <span className="text-lg font-semibold">
             Upload the requirement document{" "}
             <span className="text-sm font-normal text-primary">
@@ -886,8 +902,7 @@ function StartChoice({
             </span>
           </span>
           <span className="text-muted-foreground">
-            PDF or Word. We find what it asks for and show the page each item
-            came from.
+            PDF or Word. Every item links to its page.
           </span>
         </button>
         <button type="button" onClick={onManual} className={card}>
@@ -1060,13 +1075,20 @@ function ReviewStep({
   docId: string;
   onBack: () => void;
 }) {
-  const loader = React.useCallback(() => api.getDocument(docId), [docId]);
+  // the document, and the form pre-filled from its reading (the backend's, so the
+  // back-test prices what this form sends)
+  const loader = React.useCallback(async () => {
+    const doc = await api.getDocument(docId);
+    const read = doc.status === "extracted" && doc.extraction !== null;
+    const form = read ? await api.reviewForm(docId, options.country) : null;
+    return { doc, form };
+  }, [docId, options.country]);
   const { state } = useLoad(loader);
   if (state.kind === "loading")
     return <Loading>Opening your document…</Loading>;
   if (state.kind === "error") return <ErrorNotice message={state.message} />;
-  const doc: TenderDocument = state.data;
-  if (doc.status !== "extracted" || !doc.extraction) {
+  const { doc, form } = state.data;
+  if (doc.status !== "extracted" || !doc.extraction || !form) {
     return (
       <ManualForm
         options={options}
@@ -1086,6 +1108,7 @@ function ReviewStep({
       options={options}
       doc={doc}
       extraction={doc.extraction}
+      prefill={form}
       onBack={onBack}
     />
   );

@@ -310,3 +310,64 @@ def test_architect_cap_grows_with_project_size(small: EstimateInput) -> None:
             p.path == "effort_caps.architecture_max_share_by_size.large"
             for p in line.trace.parameters
         )
+
+
+# --- parameters v22: round the clock on call, dedicated support staff (OPEN_QUESTIONS 157) ----
+
+
+@pytest.fixture
+def v22(golden: Callable[[str], EstimateInput], reference: ReferenceData) -> EstimateInput:
+    """The small golden project on parameters v22 and rate card v9, with a helpdesk."""
+    inp = tweak(
+        golden("small"),
+        taxonomy=reference.taxonomy,
+        catalog=reference.catalog_version("v5"),
+        rate_card=reference.rate_card("v9"),
+        parameters=reference.parameter_set("v22"),
+    )
+    return answer(inp, "helpdesk_in_scope", True)
+
+
+def support_pd(inp: EstimateInput, year: int = 1) -> dict[str, Decimal]:
+    """Person-days of the support lines in one support year, by label (without its year)."""
+    out: dict[str, Decimal] = {}
+    for ln in calculate(inp).lines:
+        if ln.stage == "run" and ln.year == year and ln.role_pd:
+            label = ln.label.split(" (year ")[0]
+            out[label] = out.get(label, D(0)) + sum(ln.role_pd.values(), D(0))
+    return out
+
+
+def test_round_the_clock_on_call_costs_less_than_shifts(v22: EstimateInput) -> None:
+    def helpdesk(sla: str) -> Decimal:
+        return support_pd(answer(v22, "support_sla", sla))["Helpdesk"]
+
+    office, on_call, shifts = helpdesk("8x5"), helpdesk("24x7_on_call"), helpdesk("24x7")
+    assert office < on_call < shifts
+    fte = v22.parameters.maintenance.helpdesk_coverage_fte
+    assert abs(on_call / office - fte["24x7_on_call"] / fte["8x5"]) < EPS
+
+
+def test_stated_support_staff_are_the_least_support_labour(v22: EstimateInput) -> None:
+    """They do the support work already priced, so only the shortfall is added."""
+    inp = answer(v22, "support_sla", "8x5")  # all of the helpdesk is office hours
+    base = support_pd(inp)
+    work = sum(base.get(label, D(0)) for label in SUPPORT_WORK)
+    pd_year = inp.parameters.calendar.pd_per_year
+    label = "Dedicated support staff (beyond the support work above)"
+    for count in (1, 5):
+        res = {"role": "role.developer", "count": count, "kind": "support"}
+        priced = support_pd(answer(inp, "onsite_resources", [res]))
+        shortfall = max(count * pd_year - work, D(0))
+        assert abs(priced.get(label, D(0)) - shortfall) < D("0.01")
+        # the support work itself is unchanged
+        assert {k: v for k, v in priced.items() if k != label} == base
+
+
+SUPPORT_WORK = (
+    "Helpdesk",
+    "Bug-fix support",
+    "Security patching",
+    "Platform upgrades",
+    "Change-request pool",
+)

@@ -60,6 +60,8 @@ backend/
       estimates/          # DB rows -> EstimateInput snapshot -> engine -> persisted Estimate
       seeding/            # seed YAML loading, DB seeding, demo data, golden fixtures
       quick/              # simple mode: plain features/questions -> project -> estimate -> summary
+                          #   prefill.py: the review form's pre-fill from a reading (GET
+                          #   /documents/{id}/form), also what the production-path back-test prices
                           #   reality.py: "does this price look real?" checks (explain only);
                           #   second_opinion.py: AI review of scope and levels (words, no numbers)
                           #   anchor.py: independent check, a build counted from the document's
@@ -83,7 +85,9 @@ backend/
                           #   merge of several files (corrigenda override), pre-bid queries;
                           #   inventory.py: AI lists quoted items for the independent check
                           #   client_provided.py: "hosting / domain / SSL provided by the
-                          #   department" sentences answer those questions (code, cited)
+                          #   department" (or by the client's own name) answers those questions
+                          #   (code, cited); support_terms.py: support hours and stated support
+                          #   staff, with a pre-bid query on a contradiction (OPEN_QUESTIONS 157)
       reports/            # PDF report (reportlab) + Excel BoQ (openpyxl) from one ReportData
       outcomes.py         # bid results + calibration report
       documents/ extraction/ retrieval/ mapping/ reports/ templates/   # later milestones
@@ -115,11 +119,19 @@ backend/
                           #   rest of the AI saving as margin, shown as its own internal item
                           #   parameters v21+: the range widens with project size
                           #   (model_spread_by_size, placeholder; OPEN_QUESTIONS 153)
+                          #   parameters v22+: support level 24x7_on_call (office hours +
+                          #   on call); stated support staff are the least support labour
+                          #   (maintenance.support_staff.v1, OPEN_QUESTIONS 157)
+                          #   parameters v23+ (OPEN_QUESTIONS 160): the shared model factor is
+                          #   centred on its median (widens, no P50 lift) and is a range driver;
+                          #   size-band values blend across band edges (size_band_blend_share)
                           #   catalog v7+: a tech-stack `section` per component (core, web,
                           #   mobile, ecommerce, ai_ml, security, ...) and a `url` per source
   migrations/             # Alembic
   tests/                  # api/, core/, engine/ (unit, property, golden/*.yaml + *.expected.json)
                           #   fixtures/srs/: synthetic requirement documents + expected-results manifests
+                          #   fixtures/readings/: saved tender readings (production-path back-test),
+                          #   fixtures/review_form/: what the review form sent for them (parity)
 frontend/                 # Next.js app (src/app, src/components, src/lib); see frontend/AGENTS.md
 data/                     # gitignored: app.db, huey.db, uploads/, reports/, models/
 ```
@@ -142,8 +154,9 @@ Run from the repo root. `make <target>` and `python scripts/tasks.py <target>` a
 | Regenerate OpenAPI JSON + TS types | `make openapi` |
 | Regenerate golden expectations (intentional engine change only) | `make golden` |
 | New migration after model change | `make migration m="describe change"` |
-| Back-test against real projects, priced as the app prices, with and without AI tools (contracts up to `pre_ai_until` judged without): error, bias (ours / published), P10-P90 coverage and band hits by size and client type, in one run / fit the smooth size curve (factor by feature points) | `cd backend && uv run python -m app.cli backtest --country india [--as-of YYYY-MM-DD] [--layers] [--calibrate]` |
+| Back-test against real projects. First the **production path** (headline): the 8 tenders with a saved reading in `backend/tests/fixtures/readings/` (stand-in model readings), priced through the review form's pre-fill as an upload is (OPEN_QUESTIONS 161). Then the **legacy path, not the production path** (the benchmark file's hand-mapped scope), with and without AI tools (contracts up to `pre_ai_until` judged without): error, bias (ours / published), P10-P90 coverage and band hits by size and client type, in one run / fit the smooth size curve (factor by feature points) | `cd backend && uv run python -m app.cli backtest --country india [--as-of YYYY-MM-DD] [--layers] [--calibrate]` |
 | Benchmark tender readings (round 3): `reading:` blocks and `onsite_staff` in `backend/seeds/benchmarks/india.yaml`; a project left out names its `exclude_rule` (rules at the top of each benchmark file, OPEN_QUESTIONS 155); the reading files and scripts in `data/benchmark_readings/` (not committed) | see OPEN_QUESTIONS 153, 155; PBD control log 156 |
+| The catalog as one plain table to read (a view only, never priced from): `docs/CATALOG.md` + `data/catalog.xlsx`; run again after a catalog change | `cd backend && uv run python -m app.cli catalog-table [--version v7]` |
 | Check the email (SMTP) settings: send one test email | `cd backend && uv run python -m app.cli test-email you@example.com` |
 | Show market prices (published contracts) on results again (off: they fluctuate too much, OPEN_QUESTIONS 127) | `show_market_prices:` in `backend/seeds/quick_estimate.yaml` |
 | Switch a country on/off in the app | `enabled:` under `countries:` in `backend/seeds/quick_estimate.yaml` (the US is off for now) |

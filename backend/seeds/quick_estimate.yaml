@@ -12,6 +12,12 @@ requirement_clarity: 3
 # same scope sells for up to 5x more or less (user's decision 2026-10-21, OPEN_QUESTIONS 127).
 # true brings back the market box and similar real projects on the results page and report.
 show_market_prices: false
+# How the pricing did in the latest production-path back-test (tenders read, the review form
+# accepted as it pre-fills, priced as an upload is), added to every estimate's accuracy note.
+# Rewrite after each production-path back-test (OPEN_QUESTIONS 161).
+backtest_note:
+  source: "docs/backtest-production-path.md: production-path back-test 2026-10-24 (parameters v23, rate card v9, catalog v7, seed 7, 200 runs, without AI tools); 8 GeM tenders read by a stand-in model, not the production claude-sonnet-5-5 call"
+  text: "Tested on 8 real government tenders, priced the way this app prices an uploaded tender. The tenders were read by a stand-in AI model, not the one the app uses, so treat these figures as provisional. Our likely price came to 1.49 times the published price for medium tenders and 0.47 times for large ones (median), and 3 of the 8 published prices fell inside our low-to-high range."
 
 # Every quick estimate starts from these answers; sizes, questions and features add to them.
 # No client-type extras by default: audits, reports and meetings, accessibility, languages and
@@ -459,7 +465,10 @@ questions:
     hide_when: {helpdesk_scope: ["no"], support_years: [0]}
     options:
       - {value: office, label: Office hours, hint: "8 hours a day, 5 days a week", answers: {support_sla: 8x5}}
-      - {value: always, label: Round the clock, hint: "24 hours, 7 days", answers: {support_sla: 24x7}}
+      # parameters v22+ (OPEN_QUESTIONS 157): round-the-clock technical support is usually a
+      # team in office hours and an engineer on call for urgent problems, not a desk in shifts
+      - {value: on_call, label: "Round the clock, on call", hint: "A team in office hours, an engineer on call at night and on holidays for urgent problems", answers: {support_sla: 24x7_on_call}}
+      - {value: always, label: "Round the clock, staffed in shifts", hint: "A helpdesk with people at it 24 hours, 7 days", answers: {support_sla: 24x7}}
   # --- optional details --------------------------------------------------------------------
   availability:
     label: If it stops working for an hour, how bad is that?
@@ -1087,6 +1096,7 @@ cost_items:
   - {key: tax, group: commercial, label: Tax, buckets: [commercial.gst]}
 
 plain_drivers:
+  model_error: how far projects of this size usually land from their estimate (the shared range for the project's size)
   run.ai_runtime: how much people use the AI features
   run.helpdesk: helpdesk staffing
   run.hosting: cloud hosting
@@ -1260,14 +1270,39 @@ keywords:
 # Licences and devices are left out: quick estimates never price them.
 client_provided:
   source: "Outside review of the PBD and clinic estimates (2026-10-23); phrase lists reasoned"
-  give: [will be provided, shall be provided, would be provided, to be provided, will provide, shall provide, provided by, provided from, will be made available, shall be made available, infrastructure provided by]
+  give: [will be provided, shall be provided, would be provided, to be provided, will provide, shall provide, provided by, provided from, will be made available, shall be made available, infrastructure provided by, provisioned by, be hosted on, hosted on, hosted in]
   by_client: [department, client, ministry, purchaser, employer]
   by_vendor: [by the agency, by the bidder, by the vendor, by the selected agency, by the successful bidder, by the contractor, by the system integrator, by the service provider, agency shall, agency will, bidder shall, bidder will, vendor shall, vendor will, contractor shall, contractor will]
   max_sentence_chars: 400
   items:
-    - {words: [hosting, server, servers, server space, cloud space, data centre, data center, infrastructure], question: hosting, value: existing}
+    - {words: [hosting, hosted, server, servers, server space, cloud, cloud space, data centre, data center, infrastructure], question: hosting, value: existing}
     - {words: [domain, domain name, web address, url], question: web_domain, value: client}
     - {words: [ssl, ssl certificate, tls certificate], question: ssl_certificate, value: client}
+  # The client by its own name (RailTel tender, OPEN_QUESTIONS 157): "The application shall be
+  # hosted on RailTel's cloud in DC-DR mode which shall be provisioned by RailTel."
+  own_words: [cloud, data centre, data center, data centres, data centers, servers, server, infrastructure, premises]
+  by_name: [provisioned by, hosted by, arranged by]
+  not_client: [bidder, bidders, vendor, agency, contractor, service provider, system integrator, msp, csp, aws, amazon, azure, microsoft, google, gcp, oracle, ibm, meity]
+
+# Support hours and dedicated support staff a document states, read in code on the page text
+# (OPEN_QUESTIONS 157; RailTel e-Empanelment tender p.30: "Minimum 2 offsite support resources
+# assigned to RailTel during business hours" and "Provide round-the-clock technical support").
+support_terms:
+  source: "RailTel e-Empanelment + Chatbot tender review (2026-10-23); phrase lists reasoned"
+  ignore: [e-tender, e-tendering, e-nivida, e-procurement, bid submission, tender portal, cppp, gem portal, gem helpdesk]
+  round_the_clock: [round-the-clock, round the clock, 24x7, "24 x 7", "24×7", "24*7", 24/7, 24x7x365, "24 x 7 x 365", 24 hours a day]
+  staffed: [helpdesk, help desk, help-desk, call centre, call center, contact centre, contact center, manned, shifts, shift]
+  office_hours: [business hours, office hours, working hours]
+  # an SLA response faster than this many hours, in a sentence about support, is answered on call
+  fast_response_hours: 4
+  support_words: [support, maintenance, o&m, helpdesk, help desk, operations, post go-live, post-go-live, after go-live, post-platform delivery]
+  staff_words: [resources, resource, engineers, engineer, staff, personnel, manpower, persons, executives, professionals]
+  dedicated: [dedicated, assigned, deployed, offsite, off-site, remote, minimum, at least, atleast]
+  onsite: [onsite, on-site, on site, resident, at the client's office, at client premises, client's premises, client location]
+  max_staff: 50
+  max_sentence_chars: 400
+  values: {office: office, on_call: on_call, always: always}
+  conflict_query: "The document asks for support round the clock (as quoted) but also states support staff during business or office hours (as quoted). Kindly confirm whether support outside business hours is on call for urgent (severity 1) issues only, or a staffed shift, and how many people are expected outside business hours."
 
 # Things a requirement document may ask for that this estimate does not price: shown to the
 # user with the page, so nothing is silently left out (basic reader: these words; AI reader:
@@ -1288,6 +1323,10 @@ not_priced_topics:
 # Staff the vendor must keep at the client's office, as stated in a document, are priced at
 # this role's day rate during support (the engine's onsite_resources).
 onsite_role: role.developer
+# Dedicated support staff a document states (offsite, or where they sit is not said) are priced
+# at this role's day rate every support year, and they cover the helpdesk's office hours
+# (engine maintenance.support_staff.v1 / maintenance.helpdesk.v3, OPEN_QUESTIONS 157).
+support_role: role.developer
 # Onsite staff needed only during an event or the launch (question onsite_period) when the
 # document gives no number of days: priced for this many working days each, once.
 onsite_event_days:

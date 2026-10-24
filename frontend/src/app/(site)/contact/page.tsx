@@ -30,7 +30,7 @@ export default function ContactPage() {
         Write to us with the form below. A person reads every message and
         replies by email.
       </PageIntro>
-      <Section className="grid gap-12 py-16 sm:py-20 lg:grid-cols-[1.2fr_0.8fr]">
+      <Section className="grid gap-12 py-12 sm:py-16 lg:grid-cols-[1.2fr_0.8fr]">
         <ContactForm />
         <aside className="flex flex-col gap-8">
           <h2 data-reveal className="font-wide text-2xl font-semibold">

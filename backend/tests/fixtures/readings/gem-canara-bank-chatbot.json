@@ -1,0 +1,2006 @@
+{
+ "benchmark_id": "gem-canara-bank-chatbot",
+ "reader_model": "stand-in: a Claude Code Sonnet subagent answering the app's own prompts (relayed), NOT the production claude-sonnet-5-5 API call",
+ "read_on": "2026-10-24",
+ "code_path": "production reading code: app parser, ai_read (extract_tender_v8 + gap_check_v3), verify_findings, merge_extractions; only the LLM call was relayed. No inventory (independent check) was read.",
+ "files_read": [
+  "att01.pdf",
+  "att02.pdf",
+  "att07.pdf",
+  "att03.pdf",
+  "att06.pdf",
+  "att08.docx",
+  "att04.pdf"
+ ],
+ "files_not_read": [],
+ "extraction": {
+  "reader": "ai",
+  "prompt_version": "extract_tender_v8",
+  "project_name": "Chatbot Solution for Canara Bank",
+  "summary": "The requirement document asks for a conversational AI chatbot and voice bot for a bank, delivered as a hosted service for 5 years. It must answer customers in several Indian languages on web, app and social channels, hand over to live agents, and carry out banking services inside the chat. It also asks for dashboards, integration with the bank's internal systems and strict security and compliance rules.",
+  "features": [
+   {
+    "key": "ai_chatbot",
+    "label": "AI chatbot that answers people's questions",
+    "evidence": [
+     {
+      "page": 1,
+      "clause_ref": "A",
+      "quote": "It should be a conversational AI platform with the following capabilities:",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 2,
+      "clause_ref": "3",
+      "quote": "The SME (Subject Matter Expert) shall share the information/FAQ and the solution shall convert the information ready for BOT conversation,",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 8,
+      "clause_ref": "34",
+      "quote": "Bot should be able to perform the task of spell checker/correction model, sentiment",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 8,
+      "clause_ref": "36",
+      "quote": "Admins should be able to add / update / delete/ modify responses of the",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 11,
+      "clause_ref": "61",
+      "quote": "The bot solution should be capable of having unlimited bot based on",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 12,
+      "clause_ref": "65",
+      "quote": "response using rich media templates.",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 1,
+      "clause_ref": "1.2.2",
+      "quote": "restricted to 10% of the cost of Chatbot Solution, inclusive of taxes.",
+      "document": "att03.pdf",
+      "checked": true
+     },
+     {
+      "page": 1,
+      "clause_ref": "2",
+      "quote": "The Conversational ChatBot and Voice Bot solution should be able to interact with the",
+      "document": "att06.pdf",
+      "checked": true
+     },
+     {
+      "page": 1,
+      "clause_ref": "2",
+      "quote": "identify user’s query/request/complaints and respond",
+      "document": "att06.pdf",
+      "checked": true
+     },
+     {
+      "page": 46,
+      "clause_ref": "A",
+      "quote": "It should be a conversational AI platform with the following capabilities:",
+      "document": "att08.docx",
+      "checked": true
+     },
+     {
+      "page": 46,
+      "clause_ref": "A",
+      "quote": "The SME (Subject Matter Expert) shall share the information/FAQ and the solution shall convert the information ready for BOT conversation,",
+      "document": "att08.docx",
+      "checked": true
+     },
+     {
+      "page": 50,
+      "clause_ref": "I",
+      "quote": "Bot should be able to perform the task of spell checker/correction model, sentiment prediction, profanity, affirmation and cancellation.",
+      "document": "att08.docx",
+      "checked": true
+     },
+     {
+      "page": 50,
+      "clause_ref": "J",
+      "quote": "Admins should be able to add / update / delete/ modify responses of the unanswered queries",
+      "document": "att08.docx",
+      "checked": true
+     },
+     {
+      "page": 52,
+      "clause_ref": "P",
+      "quote": "The bot solution should be capable of having unlimited bot based on",
+      "document": "att08.docx",
+      "checked": true
+     },
+     {
+      "page": 52,
+      "clause_ref": "P",
+      "quote": "BOT must have the support to provide response using rich media templates.",
+      "document": "att08.docx",
+      "checked": true
+     },
+     {
+      "page": 1,
+      "clause_ref": "",
+      "quote": "Report Name: Supply, Installation, Implementation and Maintenance of Chatbot Solution",
+      "document": "att04.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 6,
+    "suggested": true,
+    "stories": [
+     "As a customer, I can ask the bot questions in natural language and get answers",
+     "As a customer, I can switch between topics in one conversation without losing context",
+     "As a customer, I can get how-to help, product FAQs and on-boarding guidance from the bot",
+     "As a bank staff member, I can ask the bot about internal circulars and guidelines",
+     "As a subject matter expert, I can share documents and FAQs that the bot then uses to answer",
+     "Language understanding, spell check and sentiment",
+     "As a bank admin, I can add, update or delete responses to unanswered queries",
+     "Multiple bots for different purposes",
+     "Rich media replies"
+    ],
+    "story_level": "advanced",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "languages",
+    "label": "Available in Indian languages",
+    "evidence": [
+     {
+      "page": 3,
+      "clause_ref": "B",
+      "quote": "queries raised in regional languages like Hindi, Kannada, Telugu, Punjabi, Marathi,",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 2,
+      "clause_ref": "7",
+      "quote": "The product/solution should include a keypad (with both phonetic and native types",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 47,
+      "clause_ref": "B",
+      "quote": "regional languages like Hindi, Kannada, Telugu, Punjabi, Marathi, Tamil, Bengali, Malayalam, Gujarati, Odiya etc.,",
+      "document": "att08.docx",
+      "checked": true
+     },
+     {
+      "page": 47,
+      "clause_ref": "",
+      "quote": "The product/solution should include a keypad (with both phonetic and native types of typing) to support input in Indian languages",
+      "document": "att08.docx",
+      "checked": true
+     }
+    ],
+    "mentions": 2,
+    "suggested": true,
+    "stories": [
+     "As a customer, I can choose my preferred language and chat or speak with the bot in it",
+     "As a customer, I can type in an Indian language using a phonetic or native keypad"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "ai_voice",
+    "label": "Voice input or spoken answers",
+    "evidence": [
+     {
+      "page": 3,
+      "clause_ref": "C",
+      "quote": "The Conversational ChatBot and Voice Bot solution should be able to interact with the",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 4,
+      "clause_ref": "18",
+      "quote": "The Voice bot should acts like digital voice agents that can handle Personalized,",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 1,
+      "clause_ref": "2",
+      "quote": "The Conversational ChatBot and Voice Bot solution should be able to interact with the",
+      "document": "att06.pdf",
+      "checked": true
+     },
+     {
+      "page": 1,
+      "clause_ref": "2",
+      "quote": "Indian Language accents & dialects.",
+      "document": "att06.pdf",
+      "checked": true
+     },
+     {
+      "page": 47,
+      "clause_ref": "B",
+      "quote": "The Conversational ChatBot and Voice Bot solution should be able to interact with the user",
+      "document": "att08.docx",
+      "checked": true
+     },
+     {
+      "page": 47,
+      "clause_ref": "C",
+      "quote": "The Voice bot should acts like digital voice agents that can handle Personalized, empathetic and proactive conversation",
+      "document": "att08.docx",
+      "checked": true
+     }
+    ],
+    "mentions": 1,
+    "suggested": true,
+    "stories": [
+     "As a customer, I can speak to the bot and hear its spoken answers",
+     "As a website visitor, I can navigate to content by voice",
+     "As a contact centre caller, I can talk to a voice bot"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "notifications",
+    "label": "SMS, email and app notifications",
+    "evidence": [
+     {
+      "page": 5,
+      "clause_ref": "G",
+      "quote": "Automatically segmenting Push Notifications to customer by Bot:",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 8,
+      "clause_ref": "J",
+      "quote": "by broadcasting personalized reminders for payment, insurance dues, premium, update",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 5,
+      "clause_ref": "25",
+      "quote": "The solution should capable of generating, different cross-promotional messages that can be triggered based on the intent or",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 48,
+      "clause_ref": "G",
+      "quote": "Automatically segmenting Push Notifications to customer by Bot: Segmentation entails classifying your users into more specific audiences",
+      "document": "att08.docx",
+      "checked": true
+     },
+     {
+      "page": 50,
+      "clause_ref": "J",
+      "quote": "by broadcasting personalized reminders for payment, insurance dues, premium, update on complain status, policies, polls, surveys,",
+      "document": "att08.docx",
+      "checked": true
+     },
+     {
+      "page": 48,
+      "clause_ref": "G",
+      "quote": "The solution should capable of generating, different cross-promotional messages that can be triggered based on the intent or keywords",
+      "document": "att08.docx",
+      "checked": true
+     }
+    ],
+    "mentions": 2,
+    "suggested": true,
+    "stories": [
+     "As a bank admin, I can send push notifications to customer segments",
+     "As a customer, I can receive news, announcements and subscription messages from the bot",
+     "As a bank admin, I can broadcast personalised reminders and targeted messages to customers",
+     "Cross-promotional messages from chat intent"
+    ],
+    "story_level": "standard",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "payments",
+    "label": "Online fee payment",
+    "evidence": [
+     {
+      "page": 9,
+      "clause_ref": "K",
+      "quote": "The proposed solution must contain payment system that helps the end user to",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 9,
+      "clause_ref": "46",
+      "quote": "vii. Insurance schemes premium payment viii. Payment of Donations, Mobile/DTH Recharges",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 50,
+      "clause_ref": "K",
+      "quote": "The proposed solution must contain payment system that helps the end user to make payments in chat environment via various available payment options.",
+      "document": "att08.docx",
+      "checked": true
+     },
+     {
+      "page": 50,
+      "clause_ref": "K",
+      "quote": "vii. Insurance schemes premium payment | M viii. Payment of Donations, Mobile/DTH Recharges",
+      "document": "att08.docx",
+      "checked": true
+     }
+    ],
+    "mentions": 2,
+    "suggested": true,
+    "stories": [
+     "As a customer, I can make payments inside the chat using the available payment options",
+     "Insurance, donation and recharge payments"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "aadhaar_digilocker",
+    "label": "Login or verification with Aadhaar / DigiLocker",
+    "evidence": [
+     {
+      "page": 9,
+      "clause_ref": "",
+      "quote": "Account Number / MMID / VPA / AADHAAR based authentication and transaction processing",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 50,
+      "clause_ref": "K",
+      "quote": "ii. Account Number / MMID / VPA / AADHAAR based authentication and transaction processing",
+      "document": "att08.docx",
+      "checked": true
+     }
+    ],
+    "mentions": 1,
+    "suggested": true,
+    "stories": [
+     "As a customer, I can be authenticated with my account number, MMID, VPA or Aadhaar in the chat"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "staff_login",
+    "label": "Log in with existing accounts",
+    "evidence": [
+     {
+      "page": 8,
+      "clause_ref": "",
+      "quote": "Multi-factor authentication and support for Single Sign On (SSO), Security Assertion",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 50,
+      "clause_ref": "J",
+      "quote": "Multi-factor authentication and support for Single Sign On (SSO), Security Assertion Markup Language (SAML),",
+      "document": "att08.docx",
+      "checked": true
+     }
+    ],
+    "mentions": 1,
+    "suggested": true,
+    "stories": [
+     "As a user, I can sign in to the chatbot with single sign-on"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "connect_existing",
+    "label": "Connect to existing systems (SAP, old software)",
+    "evidence": [
+     {
+      "page": 4,
+      "clause_ref": "",
+      "quote": "The Bot should be able to Integrate with our Existing Internal Solutions like AD, SAS(Web",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 12,
+      "clause_ref": "70",
+      "quote": "Pre-built integration adaptors must be",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 13,
+      "clause_ref": "81",
+      "quote": "Integration option, Integration Connectors to popular CRMs, Databases, Search Engines, Live Chat Vendors, IVRS and ERP software.",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 3,
+      "clause_ref": "2.1",
+      "quote": "On the basis of the number of counts of the application/services (UI Based Menu",
+      "document": "att03.pdf",
+      "checked": true
+     },
+     {
+      "page": 48,
+      "clause_ref": "D",
+      "quote": "The Bot should be able to Integrate with our Existing Internal Solutions like AD, SAS(Web Based Single Sign on System connected with AD and HRMS",
+      "document": "att08.docx",
+      "checked": true
+     },
+     {
+      "page": 52,
+      "clause_ref": "P",
+      "quote": "Pre-built integration adaptors must be available for most of the backend systems.",
+      "document": "att08.docx",
+      "checked": true
+     },
+     {
+      "page": 53,
+      "clause_ref": "P",
+      "quote": "Integration Connectors to popular CRMs, Databases, Search Engines, Live Chat Vendors, IVRS and ERP software.",
+      "document": "att08.docx",
+      "checked": true
+     }
+    ],
+    "mentions": 2,
+    "suggested": true,
+    "stories": [
+     "As a bank staff member, I can use the bot to operate the menus of internal systems such as CBS",
+     "Integration adapters and APIs"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "dashboards",
+    "label": "Reports and dashboards",
+    "evidence": [
+     {
+      "page": 10,
+      "clause_ref": "",
+      "quote": "The solution shall contain a reporting/dashboard giving complete detailed overview of solution deployed with",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 11,
+      "clause_ref": "",
+      "quote": "forth. Solution should be capable of providing reports in different formats such as word, excel, CSV, PDF, etc.",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 13,
+      "clause_ref": "",
+      "quote": "Reports need to be customizable as per",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 13,
+      "clause_ref": "83",
+      "quote": "summary & detailed reports / MIS of messages or notification sent / received.",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 51,
+      "clause_ref": "",
+      "quote": "The solution shall contain a reporting/dashboard giving complete detailed overview of solution deployed with different metrics",
+      "document": "att08.docx",
+      "checked": true
+     },
+     {
+      "page": 51,
+      "clause_ref": "N",
+      "quote": "Solution should be capable of providing reports in different formats such as word, excel, CSV, PDF, etc. instantaneously",
+      "document": "att08.docx",
+      "checked": true
+     },
+     {
+      "page": 53,
+      "clause_ref": "Q",
+      "quote": "The reports thus generated in the portal should be downloadable / exportable.",
+      "document": "att08.docx",
+      "checked": true
+     },
+     {
+      "page": 53,
+      "clause_ref": "Q",
+      "quote": "The system should provide a console to view summary & detailed reports / MIS of messages or notification sent / received.",
+      "document": "att08.docx",
+      "checked": true
+     }
+    ],
+    "mentions": 2,
+    "suggested": true,
+    "stories": [
+     "As a bank admin, I can view usage metrics such as active users, sessions and ratings on a dashboard",
+     "As a bank admin, I can filter reports and dashboards by channel and product",
+     "As a bank admin, I can search conversations and see the demographic profile of users",
+     "As a bank admin, I can download and customise reports in Word, Excel, CSV or PDF",
+     "As a bank admin, I can view uptime and availability MIS",
+     "Message and notification report console"
+    ],
+    "story_level": "standard",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "chat",
+    "label": "Chat between users or with support",
+    "evidence": [
+     {
+      "page": 9,
+      "clause_ref": "L",
+      "quote": "BOT platform should provide for a live agent dashboard for seamless transfer of entire chat to the live agent.",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 51,
+      "clause_ref": "L",
+      "quote": "BOT platform should provide for a live agent dashboard for seamless transfer of entire chat to the live agent.",
+      "document": "att08.docx",
+      "checked": true
+     }
+    ],
+    "mentions": 1,
+    "suggested": true,
+    "stories": [
+     "As a live agent, I can take over a chat with its entire history on a live agent dashboard",
+     "As a customer, I am redirected to the relevant live agent based on my conversation type",
+     "As a frustrated customer, I am transferred to a live agent seamlessly"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "grievances",
+    "label": "Complaints and helpdesk tickets",
+    "evidence": [
+     {
+      "page": 10,
+      "clause_ref": "",
+      "quote": "If agent is not available, the BOT should be",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 51,
+      "clause_ref": "",
+      "quote": "If agent is not available, the BOT should be capable of raising a service ticket and tracking the same.",
+      "document": "att08.docx",
+      "checked": true
+     },
+     {
+      "page": 11,
+      "clause_ref": "",
+      "quote": "The bidder shall provide centralized complaint booking/lodging facility to the bank",
+      "document": "att08.docx",
+      "checked": true
+     },
+     {
+      "page": 11,
+      "clause_ref": "",
+      "quote": "The method of booking complaints shall be E-mail, Toll-free no, on line portal, web, etc.",
+      "document": "att08.docx",
+      "checked": true
+     }
+    ],
+    "mentions": 1,
+    "suggested": true,
+    "stories": [
+     "As a customer, I can have the bot raise a service ticket and track it"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "maps",
+    "label": "Maps and location",
+    "evidence": [
+     {
+      "page": 9,
+      "clause_ref": "",
+      "quote": "Real-time assistance in locating ATM/Branch location using GPS",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 50,
+      "clause_ref": "K",
+      "quote": "xii. Real-time assistance in locating ATM/Branch location using GPS",
+      "document": "att08.docx",
+      "checked": true
+     }
+    ],
+    "mentions": 1,
+    "suggested": true,
+    "stories": [
+     "As a customer, I can find the nearest ATM or branch using my location"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "search",
+    "label": "Search",
+    "evidence": [
+     {
+      "page": 11,
+      "clause_ref": "",
+      "quote": "BOT should be capable of supporting fuzzy",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 52,
+      "clause_ref": "P",
+      "quote": "BOT should be capable of supporting fuzzy search as well as search within documents for unstructured data or content.",
+      "document": "att08.docx",
+      "checked": true
+     }
+    ],
+    "mentions": 1,
+    "suggested": true,
+    "stories": [
+     "As a user, I can search within documents and unstructured content with fuzzy matching"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "ai_documents",
+    "label": "AI reads documents (OCR)",
+    "evidence": [
+     {
+      "page": 2,
+      "clause_ref": "",
+      "quote": "The ChatBot solution should have the capability to perform Cognitive Document Processing (CDP) & Cognitive Document Automation (CDA).",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 47,
+      "clause_ref": "",
+      "quote": "The ChatBot solution should have the capability to perform Cognitive Document Processing (CDP) & Cognitive Document Automation (CDA).",
+      "document": "att08.docx",
+      "checked": true
+     }
+    ],
+    "mentions": 1,
+    "suggested": true,
+    "stories": [
+     "As a user, I can have data extracted automatically from documents I provide"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "ai_text_sorting",
+    "label": "AI sorts messages or complaints",
+    "evidence": [
+     {
+      "page": 10,
+      "clause_ref": "",
+      "quote": "The BOT should be able to detect the emotional polarity of the subject the human is talking about.",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 51,
+      "clause_ref": "M",
+      "quote": "The BOT should be able to detect the emotional polarity of the subject the human is talking about.",
+      "document": "att08.docx",
+      "checked": true
+     }
+    ],
+    "mentions": 1,
+    "suggested": true,
+    "stories": [
+     "As a bank, I can have the bot detect whether a customer is angry, sad or happy"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "ai_training",
+    "label": "Train our own AI model",
+    "evidence": [
+     {
+      "page": 6,
+      "clause_ref": "",
+      "quote": "The selected bidder should analyses and train bot proactively on an on-going basis.",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 49,
+      "clause_ref": "H",
+      "quote": "The selected bidder should analyses and train bot proactively on an on-going basis.",
+      "document": "att08.docx",
+      "checked": true
+     }
+    ],
+    "mentions": 1,
+    "suggested": true,
+    "stories": [
+     "As a bank admin, I can have the bot retrained on new data on an ongoing basis"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "approval_workflow",
+    "label": "Files go from person to person for approval",
+    "evidence": [
+     {
+      "page": 13,
+      "clause_ref": "78",
+      "quote": "checker principle for activities like important business parameter updates that",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 52,
+      "clause_ref": "P",
+      "quote": "The application needs to implement maker-checker principle for activities like important business parameter updates",
+      "document": "att08.docx",
+      "checked": true
+     }
+    ],
+    "mentions": 1,
+    "suggested": true,
+    "stories": [
+     "As a bank admin, I can have important parameter changes made by one person and approved by another"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   }
+  ],
+  "other_features": [
+   {
+    "name": "Bank website crawling for bot knowledge",
+    "description": "The bot collects content from the bank's websites by scraping and crawling.",
+    "category": "integration",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 2,
+      "clause_ref": "4",
+      "quote": "The BOT should support Scrapping & 4. M Crawling of Canara Bank Websites.",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 46,
+      "clause_ref": "A",
+      "quote": "The BOT should support Scrapping & Crawling of Canara Bank Websites.",
+      "document": "att08.docx",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a bank admin, I can have the bot learn from the bank's websites"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Voice assistants and IVR deployment",
+    "description": "The bot is deployed out of the box on phone, IVR, SMS and smart assistants such as Alexa and Google Home.",
+    "category": "integration",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 12,
+      "clause_ref": "67",
+      "quote": "Out-of-box deployment to Phone, IVR, and SMS Smart Assistants (Alexa, Google Home,",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 52,
+      "clause_ref": "P",
+      "quote": "Out-of-box deployment to Phone, IVR, and SMS Smart Assistants (Alexa, Google Home,",
+      "document": "att08.docx",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a customer, I can use the bot through phone, IVR or a smart assistant"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Virtual personality and animated character",
+    "description": "The bot has a brand personality with a caricature and can run as a virtual robot or animated character on an external device.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 11,
+      "clause_ref": "59",
+      "quote": "Integration of caricature with ChatBot solution.",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 12,
+      "clause_ref": "68",
+      "quote": "Solution should be able to set up a virtual",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 51,
+      "clause_ref": "O",
+      "quote": "Integration of caricature with ChatBot solution.",
+      "document": "att08.docx",
+      "checked": true
+     },
+     {
+      "page": 52,
+      "clause_ref": "P",
+      "quote": "Solution should be able to set up a virtual ROBOT in external device (like an Animated Character).",
+      "document": "att08.docx",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a customer, I can talk to an animated character that represents the bank"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Chatbot on web, app and social channels",
+    "description": "The same bot is offered on the web, mobile apps and social media platforms.",
+    "category": "integration",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 4,
+      "clause_ref": "20",
+      "quote": "The Chat Bot should support various channels including Web, Mobile app (iOS and Android), Social Media platforms like",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 48,
+      "clause_ref": "D",
+      "quote": "The Chat Bot should support various channels including Web, Mobile app (iOS and Android), Social Media platforms like WhatsApp, Facebook Messenger,",
+      "document": "att08.docx",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a customer, I can chat with the bot on the website, mobile app and social media"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Data warehouse integration",
+    "description": "The bot sends statistics of customer interactions to the bank's enterprise data warehouse.",
+    "category": "integration",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 12,
+      "clause_ref": "71",
+      "quote": "enterprise data warehouse for stats of data",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 52,
+      "clause_ref": "P",
+      "quote": "enterprise data warehouse for stats of data created during customer interaction.",
+      "document": "att08.docx",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a bank analyst, I can have chat interaction data available in the data warehouse"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Commerce and booking services in chat",
+    "description": "The bot powers services such as recharges, bill payments and cab, event, travel and hotel bookings.",
+    "category": "integration",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 4,
+      "clause_ref": "23",
+      "quote": "Ecommerce BOT for powering services such as recharges, bill payments, cab, laundry,",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 48,
+      "clause_ref": "E",
+      "quote": "Ecommerce BOT for powering services such as recharges, bill payments, cab, laundry, events &movie booking,",
+      "document": "att08.docx",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a customer, I can book and pay for services such as recharges, travel and events in the chat"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Fund transfers through chat",
+    "description": "Customers transfer money within the bank and to other banks by NEFT, IMPS or UPI from the chat.",
+    "category": "integration",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 9,
+      "clause_ref": "46",
+      "quote": "Fund Transfers Within & External Bank (NEFT, IMPS, UPI) account",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 50,
+      "clause_ref": "K",
+      "quote": "i. Fund Transfers Within & External Bank (NEFT, IMPS, UPI) account",
+      "document": "att08.docx",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a customer, I can transfer funds by NEFT, IMPS or UPI in the chat"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Account opening through chat",
+    "description": "Customers open a bank account from the chat.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 9,
+      "clause_ref": "46",
+      "quote": "iii. Account opening iv. Account statement generation",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 50,
+      "clause_ref": "K",
+      "quote": "iii. Account opening | M iv. Account statement generation",
+      "document": "att08.docx",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a new customer, I can open an account in the chat"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Account statements through chat",
+    "description": "Customers get their account statement generated from the chat.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 9,
+      "clause_ref": "46",
+      "quote": "iv. Account statement generation v. Blocking of Debit/Credit card",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 50,
+      "clause_ref": "K",
+      "quote": "iv. Account statement generation | M v. Blocking of Debit/Credit card",
+      "document": "att08.docx",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a customer, I can get my account statement in the chat"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Card blocking and debit card request",
+    "description": "Customers block a debit or credit card and request a new debit card from the chat.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 9,
+      "clause_ref": "46",
+      "quote": "v. Blocking of Debit/Credit card vi. Debit card request",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 50,
+      "clause_ref": "K",
+      "quote": "v. Blocking of Debit/Credit card | M vi. Debit card request",
+      "document": "att08.docx",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a customer, I can block my card and request a debit card in the chat"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Interest rate, loan and deposit calculators",
+    "description": "The bot shows interest rates and loan eligibility and offers EMI and deposit calculators.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 9,
+      "clause_ref": "46",
+      "quote": "Facility to know Interest rates/Loan eligibility x. EMI calculator xi. Deposit calculator",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 50,
+      "clause_ref": "K",
+      "quote": "ix. Facility to know Interest rates/Loan eligibility | M x. EMI calculator | M xi. Deposit calculator",
+      "document": "att08.docx",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a customer, I can check interest rates and loan eligibility and use EMI and deposit calculators"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Marketing and advisory services in chat",
+    "description": "The bot offers marketing and advisory messages to acquire customers.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 9,
+      "clause_ref": "46",
+      "quote": "Marketing and advisory services for customer acquisition",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 50,
+      "clause_ref": "K",
+      "quote": "xiii. Marketing and advisory services for customer acquisition",
+      "document": "att08.docx",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a prospective customer, I can receive product advice from the bot"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Customer surveys and feedback",
+    "description": "The bot collects customer feedback and runs surveys when the bank requires.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 5,
+      "clause_ref": "25",
+      "quote": "Customer Survey as and when Bank requires.",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 48,
+      "clause_ref": "G",
+      "quote": "Customer Survey as and when Bank requires.",
+      "document": "att08.docx",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a customer, I can answer a survey or give feedback in the chat"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Personalised replies from past interactions",
+    "description": "The bot uses earlier conversations, such as a complaint, to personalise replies and ask for feedback.",
+    "category": "ai",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 10,
+      "clause_ref": "52",
+      "quote": "Based on the previous interactive data with the user, the BOT should be able to personalize with the emotional",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 51,
+      "clause_ref": "M",
+      "quote": "Based on the previous interactive data with the user, the BOT should be able to personalize with the emotional understanding and predictive analysis of the customer.",
+      "document": "att08.docx",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a customer, I get replies that take my earlier conversations and complaints into account"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Content management for bot content",
+    "description": "An integrated content management system supports the bot's content.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 10,
+      "clause_ref": "51",
+      "quote": "The BOT platform should have an integrated",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 51,
+      "clause_ref": "",
+      "quote": "The BOT platform should have an integrated content management system to support the above if required.",
+      "document": "att08.docx",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a bank admin, I can manage the content the bot uses"
+    ],
+    "units": 1
+   },
+   {
+    "name": "No-code bot builder with templates",
+    "description": "A no-code platform with templates and a workflow designer lets anyone build new bots and conversation journeys.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 13,
+      "clause_ref": "82",
+      "quote": "platform. No-code platform must have offer templates for different use cases",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 53,
+      "clause_ref": "P",
+      "quote": "ChatBot solution must have no-code platform. No-code platform must have offer templates for different use cases",
+      "document": "att08.docx",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a bank admin, I can build a new bot or journey from templates without writing code"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Digital avatar for the chatbot",
+    "description": "A new, human-like digital representation (avatar or caricature) that presents the chatbot to the user.",
+    "category": "ai",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 2,
+      "clause_ref": "7",
+      "quote": "New innovative human alike digital representation",
+      "document": "att06.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a bank customer, I can talk to a human-like digital avatar instead of a plain chat window"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Voice channel through IVR and outbound calls",
+    "description": "The bot works over voice through phone channels (outbound dialling and IVR) as well as live chat.",
+    "category": "integration",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 2,
+      "clause_ref": "7",
+      "quote": "Support over text and voice (Live chat + OBD/IVR)",
+      "document": "att06.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a bank customer, I can reach the bot by phone through IVR or an outbound call"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Bot and speech analytics",
+    "description": "Analytics for the chatbot and for speech interactions so the bank can see how the bot is used.",
+    "category": "report",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 2,
+      "clause_ref": "7",
+      "quote": "Analytics support for Bot, support",
+      "document": "att06.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a bank administrator, I can view analytics on chatbot and speech conversations"
+    ],
+    "units": 1
+   }
+  ],
+  "choices": {
+   "build_type": {
+    "value": "ready_product",
+    "label": "Set up a ready-made product",
+    "evidence": [
+     {
+      "page": 1,
+      "clause_ref": "a",
+      "quote": "readily available intelligent COTS(Commercially Off the shelf software) products/solutions",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "integrations": {
+    "value": "many",
+    "label": "Yes, several",
+    "evidence": [
+     {
+      "page": 4,
+      "clause_ref": "21",
+      "quote": "The Bot should be able to Integrate with our Existing Internal Solutions like AD, SAS(Web",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "availability": {
+    "value": "normal",
+    "label": "Some trouble",
+    "evidence": [
+     {
+      "page": 8,
+      "clause_ref": "40",
+      "quote": "ChatBot uptime of 99.50% on quarterly basis.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "disaster_site": {
+    "value": "yes",
+    "label": "Yes",
+    "evidence": [
+     {
+      "page": 12,
+      "clause_ref": "75",
+      "quote": "Continuity Plan. As part of BCP The system should have Data Center & Disaster Recovery Center in different seismic zone",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "security_audit": {
+    "value": "yes",
+    "label": "Yes",
+    "evidence": [
+     {
+      "page": 14,
+      "clause_ref": "93",
+      "quote": "audit (OWASP threats, code audit by CERT- in empaneled auditor, VAPT audit in the",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "penalties": {
+    "value": "yes",
+    "label": "Yes",
+    "evidence": [
+     {
+      "page": 4,
+      "clause_ref": "8.2.7",
+      "quote": "If deductions on account of liquidated Damages exceeds more than 10% of the total contract price.",
+      "document": "att02.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "chatbot_task": {
+    "value": "simple",
+    "label": "Common questions",
+    "evidence": [
+     {
+      "page": 1,
+      "clause_ref": "2",
+      "quote": "interact with the user and respond to various basic level queries raised in regional",
+      "document": "att06.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "hosting": {
+    "value": "aws",
+    "label": "Public cloud (Amazon, Microsoft or Google)",
+    "evidence": [
+     {
+      "page": 50,
+      "clause_ref": "J",
+      "quote": "Bidder to provide right to audit for the Services hosted in Dedicated Cloud (server to be located within India) provisioned for Canara Bank.",
+      "document": "att08.docx",
+      "checked": true
+     }
+    ]
+   },
+   "support_hours": {
+    "value": "on_call",
+    "label": "Round the clock, on call",
+    "evidence": [
+     {
+      "page": 57,
+      "clause_ref": "Page 57",
+      "quote": "The applicant shall have support office in Bengaluru and Mumbai for 24x7 supports.",
+      "document": "att08.docx",
+      "checked": true
+     }
+    ]
+   },
+   "onsite_period": {
+    "value": "support",
+    "label": "Throughout support",
+    "evidence": [
+     {
+      "page": 5,
+      "clause_ref": "",
+      "quote": "The onsite resource will also be responsible for complete day-to-day activities such as end to end management of the solution till the project tenure.",
+      "document": "att08.docx",
+      "checked": true
+     }
+    ]
+   },
+   "reporting": {
+    "value": "yes",
+    "label": "Yes",
+    "evidence": [
+     {
+      "page": 18,
+      "clause_ref": "",
+      "quote": "The bidder shall submit a Weekly progress report to the Bank as per format",
+      "document": "att08.docx",
+      "checked": true
+     }
+    ]
+   }
+  },
+  "numbers": {
+   "om_years": {
+    "value": 5,
+    "label": "om_years",
+    "evidence": [
+     {
+      "page": 1,
+      "clause_ref": "",
+      "quote": "RFP for Supply, Installation, Implementation and Maintenance of Chatbot Solution in Canara Bank for 5 years.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "peak_concurrent_users": {
+    "value": 1000,
+    "label": "peak_concurrent_users",
+    "evidence": [
+     {
+      "page": 8,
+      "clause_ref": "40",
+      "quote": "ChatBot solution should be able to handle minimum 1000 concurrent Chat Sessions,",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "languages": {
+    "value": 10,
+    "label": "languages",
+    "evidence": [
+     {
+      "page": 3,
+      "clause_ref": "B",
+      "quote": "queries raised in regional languages like Hindi, Kannada, Telugu, Punjabi, Marathi,",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "deadline_months": {
+    "value": 2,
+    "label": "deadline_months",
+    "evidence": [
+     {
+      "page": 1,
+      "clause_ref": "1.1.2",
+      "quote": "within six weeks from the date of the acceptance of the purchase order or seven weeks from the date of the",
+      "document": "att03.pdf",
+      "checked": true
+     }
+    ]
+   }
+  },
+  "unclear_points": [
+   {
+    "topic": "Collection management",
+    "why": "The requirement names a capability without saying what it covers.",
+    "page": 13,
+    "clause_ref": "79",
+    "quote": "The chatbot solution must have the M collection management capability.",
+    "prebid_query": "Ref. clause 79 of the Scope of Work: please clarify what is meant by collection management capability and which processes, screens or integrations it covers."
+   },
+   {
+    "topic": "Hosting model",
+    "why": "The services are to be a SaaS offering on a dedicated cloud, but the bidder must also be able to deploy on-premises.",
+    "page": 16,
+    "clause_ref": "114",
+    "quote": "Bidder should have capability to deploy the M solution on-premises.",
+    "prebid_query": "Ref. clauses 43 and 114 of the Scope of Work: please confirm whether the solution is to be delivered on a dedicated cloud as SaaS, on-premises, or both, and whether on-premises deployment is within the contract scope."
+   },
+   {
+    "topic": "Expected scale",
+    "why": "No user numbers or daily volumes are given, only that the system must scale to any incremental requirement.",
+    "page": 12,
+    "clause_ref": "76",
+    "quote": "The system should be scalable to meet any M incremental requirement.",
+    "prebid_query": "Ref. clause 76 of the Scope of Work: please state the expected number of users, average daily chat sessions and growth expected over the 5-year contract."
+   },
+   {
+    "topic": "Financial services list",
+    "why": "The list of services to be integrated is open-ended.",
+    "page": 9,
+    "clause_ref": "46",
+    "quote": "Following services are to be integrated with ChatBot which includes and not limited",
+    "prebid_query": "Ref. clause 46 of the Scope of Work: please provide the complete list of financial services and backend systems to be integrated with the chatbot at go-live."
+   },
+   {
+    "topic": "Number of languages",
+    "why": "The language list ends with etc., so the number of languages to deliver is not fixed.",
+    "page": 3,
+    "clause_ref": "9",
+    "quote": "Tamil, Bengali, Malayalam, Gujarati, Odiya etc., with Natural Language Processing",
+    "prebid_query": "Ref. clause 9 of the Scope of Work: please confirm the exact list of languages required at go-live for the chatbot and the voice bot."
+   },
+   {
+    "topic": "Penalties",
+    "why": "Penalties are mentioned in the dashboard requirement but no penalty terms are stated.",
+    "page": 8,
+    "clause_ref": "41",
+    "quote": "uptime, system availability, penalties (if any) etc.",
+    "prebid_query": "Ref. clause 41 of the Scope of Work: please provide the service levels and penalty terms that apply to uptime and availability."
+   },
+   {
+    "topic": "Scope of work",
+    "why": "The scope of work is not described in this document; it only refers to the Bank's requirement.",
+    "page": 2,
+    "clause_ref": "1",
+    "quote": "As per the requirement of the Bank.",
+    "prebid_query": "With reference to Clause 1 (Scope of Work) of the Draft Contract Agreement (Annexure-11), which states the scope is as per the requirement of the Bank, please confirm the RFP sections that define the complete functional and technical scope of work."
+   },
+   {
+    "topic": "Payment terms",
+    "why": "Payment terms are not stated here and are only referred to the RFP.",
+    "page": 3,
+    "clause_ref": "5",
+    "quote": "As specified in the RFP.",
+    "prebid_query": "With reference to Clause 5 (Payment Terms) of the Draft Contract Agreement (Annexure-11), please confirm the RFP clause that gives the payment milestones and the percentage of the contract value payable at each."
+   },
+   {
+    "topic": "Security deposit / performance bank guarantee",
+    "why": "The amount and validity of the security deposit or performance bank guarantee are not stated here.",
+    "page": 3,
+    "clause_ref": "3",
+    "quote": "As specified in the RFP.",
+    "prebid_query": "With reference to Clause 3 (Security Deposit / Performance of Bank Guarantee) of the Draft Contract Agreement (Annexure-11), please confirm the RFP clause that gives the percentage and validity period of the performance bank guarantee."
+   },
+   {
+    "topic": "Earnest money amount",
+    "why": "The pact says the earnest money amount is given in the RFP or tender documents, but no amount is stated in this document.",
+    "page": 4,
+    "clause_ref": "6.1",
+    "quote": "shall deposit an amount as specified in RFP/Tender Documents as Earnest",
+    "prebid_query": "With reference to clause 6.1 of the Integrity Pact, kindly confirm the Earnest Money Deposit amount and the instrument in which it is to be submitted, as it is not stated in the Pact."
+   },
+   {
+    "topic": "Solution being delivered",
+    "why": "Delivery penalties refer to a Co Lending solution, while the uptime penalty and payment stages refer to a chatbot solution.",
+    "page": 1,
+    "clause_ref": "1.1.2",
+    "quote": "on the invoice value of Co Lending solution (exclusive of Taxes)",
+    "prebid_query": "Clause 1.1.2 refers to the invoice value of a 'Co Lending solution' while clause 1.2.2 refers to the 'Chatbot Solution'. Kindly confirm whether the Co Lending solution is part of this bid and, if so, provide its scope and functional requirements."
+   },
+   {
+    "topic": "Payment terms",
+    "why": "The payment stages mix licence, implementation, hosting, support and integration items with separate percentages, so the share of each against the contract value is not clear.",
+    "page": 3,
+    "clause_ref": "2.1",
+    "quote": "Payment will be released after execution of Contract Agreement and the schedule will be as under:",
+    "prebid_query": "Clause 2.1 lists payment stages with percentages for licence, implementation, hosting, support and integration. Kindly clarify the percentage of the total contract value for each stage and the milestone that triggers it."
+   },
+   {
+    "topic": "AMC / ATS period",
+    "why": "The AMC/ATS is payable after a three-year warranty, but the number of years of AMC/ATS is not stated.",
+    "page": 3,
+    "clause_ref": "2.1",
+    "quote": "contract (AMC)/ The amount shall be payable quarterly in arrears after",
+    "prebid_query": "Clause 2.1 (item 6) provides for AMC/ATS payable quarterly after the three-year warranty period. Kindly state the number of years of AMC/ATS to be quoted and the scope it covers."
+   },
+   {
+    "topic": "Uptime penalty unit",
+    "why": "The uptime penalty is charged 'for every minutes or part thereof', and the unit is incomplete.",
+    "page": 1,
+    "clause_ref": "1.2.1",
+    "quote": "for every minutes or part thereof.",
+    "prebid_query": "Clause 1.2.1 states the uptime penalty is levied 'for every minutes or part thereof'. Kindly clarify the time unit (for example every 15 minutes or every hour) and how monthly uptime is measured."
+   },
+   {
+    "topic": "Hosting arrangement",
+    "why": "Hosting is charged monthly, but where it is hosted, the type of cloud and the sizing are not stated.",
+    "page": 3,
+    "clause_ref": "2.1",
+    "quote": "Service Hosting Monthly in arrears and sign off from the",
+    "prebid_query": "Clause 2.1 (item 3) provides monthly Service Hosting Charges. Kindly specify whether hosting is on the Bank's data centre or a vendor-provided cloud, and the expected users and resource sizing."
+   },
+   {
+    "topic": "Onsite resident resources",
+    "why": "Resident resource charges and absence penalties are mentioned, but the number of onsite staff and their roles are not stated.",
+    "page": 2,
+    "clause_ref": "1.3.1",
+    "quote": "Penalties/liquidated damages for Onsite resources: In case the resources goes on leave/absent",
+    "prebid_query": "Clause 1.3.1 refers to Onsite resources. Kindly state the number of resident resources required, their roles, qualifications and the period for which they are needed."
+   },
+   {
+    "topic": "Banking use cases to be integrated",
+    "why": "Twenty banking use cases are listed as experience for scoring, with contradictory marks (0 marks and 1 mark each); it is not clear which must be built in this project.",
+    "page": 2,
+    "clause_ref": "5",
+    "quote": "[Yes: 0 Marks No: 0 Marks] ( 1 Mark for each",
+    "prebid_query": "With reference to Annexure-2 item 5, please clarify which of the listed banking use cases (i) to (xx) the selected bidder must deliver and integrate in this project, and which are only considered as past experience for evaluation, and confirm the marks per use case."
+   },
+   {
+    "topic": "Languages required",
+    "why": "The list names nine languages followed by 'etc.' while the marking refers to 10 languages; the full list and whether English or Hindi count are not given.",
+    "page": 1,
+    "clause_ref": "2",
+    "quote": "Kannada, Telugu, Punjabi, Marathi, Tamil, Bengali, Malayalam, Gujarati, Odiya etc.,",
+    "prebid_query": "With reference to Annexure-2 item 2, please provide the complete list of the 10 languages the chatbot and voice bot must support, and state whether English and Hindi are included in that count."
+   },
+   {
+    "topic": "Uptime target",
+    "why": "The terms give a monthly uptime of 98.00% while the technical requirements give 99.50% on a quarterly basis.",
+    "page": 4,
+    "clause_ref": "Uptime",
+    "quote": "guarantee a 24x7x365 availability with monthly uptime of 98.00 % for the solution as specified in Annexure-1",
+    "prebid_query": "Ref. Uptime clause (page 4) and clause 40 of Annexure-1: the uptime is stated as 98.00% monthly in one place and 99.50% quarterly in the other. Please confirm which availability target and measurement period apply."
+   },
+   {
+    "topic": "Warranty and ATS period",
+    "why": "One clause gives three years of warranty followed by two years of ATS, another gives one year of warranty followed by four years of ATS.",
+    "page": 7,
+    "clause_ref": "Annual Technical Support (ATS)",
+    "quote": "the bidder has to quote ATS for Software and License Items for two (2) years after completion of three (3) year warranty period",
+    "prebid_query": "Ref. Warranty and ATS clauses (pages 6 to 8): please confirm whether the warranty is three years with two years of ATS, or one year with four years of ATS."
+   },
+   {
+    "topic": "Performance guarantee percentage",
+    "why": "The additional performance guarantee is 3 percent in one ATS clause and 10 percent in the other.",
+    "page": 8,
+    "clause_ref": "Annual Technical Support (ATS)",
+    "quote": "the Bank reserves the right to demand additional performance Bank Guarantee (as per annexure-13) to the tune of 10% of the value of the Purchase Order,",
+    "prebid_query": "Ref. ATS clauses on pages 7 and 8: the additional performance Bank Guarantee is stated as 3 percent and as 10 percent of the Purchase Order value. Please confirm the applicable percentage and the standard performance security percentage."
+   },
+   {
+    "topic": "Contract term",
+    "why": "The term is written as three (5 years, so the number of years is unclear.",
+    "page": 2,
+    "clause_ref": "Requirement details",
+    "quote": "The term of contract will be for a period of three (5 years with annual review at the sole discretion of the bank",
+    "prebid_query": "Ref. Requirement details (page 2): the contract term reads three (5 years. Please confirm the contract term and how it relates to the warranty and ATS periods."
+   },
+   {
+    "topic": "Number of onsite and offsite resources",
+    "why": "The number of resources is left to the bank's discretion.",
+    "page": 33,
+    "clause_ref": "Annexure-10 Table D",
+    "quote": "Bank can at its discretion decide the number of resources in case of Onsite/Offsite support.",
+    "prebid_query": "Ref. Annexure-10 Table D: please state the number of onsite and offsite resources, their roles and the shifts required over the contract period."
+   },
+   {
+    "topic": "Hosting model",
+    "why": "The services are to be a SaaS offering on a dedicated cloud, but the bidder must also be able to deploy on-premises.",
+    "page": 54,
+    "clause_ref": "U",
+    "quote": "Bidder should have capability to deploy the solution on-premises.",
+    "prebid_query": "Ref. clauses 43 and 114 of Annexure-1: please confirm whether the solution is to be delivered on a dedicated cloud as SaaS, on-premises, or both, and whether on-premises deployment is within the contract scope."
+   },
+   {
+    "topic": "Collection management",
+    "why": "The requirement names a capability without saying what it covers.",
+    "page": 52,
+    "clause_ref": "P",
+    "quote": "The chatbot solution must have the collection management capability.",
+    "prebid_query": "Ref. clause 79 of Annexure-1: please clarify what is meant by collection management capability and which processes, screens or integrations it covers."
+   },
+   {
+    "topic": "Expected scale",
+    "why": "No user numbers or daily volumes are given, only that the system must scale to any incremental requirement.",
+    "page": 52,
+    "clause_ref": "P",
+    "quote": "The system should be scalable to meet any incremental requirement.",
+    "prebid_query": "Ref. clause 76 of Annexure-1: please state the expected number of users, average daily chat sessions and growth expected over the contract."
+   },
+   {
+    "topic": "Financial services list",
+    "why": "The list of services to be integrated is open-ended.",
+    "page": 50,
+    "clause_ref": "K",
+    "quote": "Financial Services through ChatBot: Following services are to be integrated with ChatBot which includes and not limited",
+    "prebid_query": "Ref. clause 46 of Annexure-1: please provide the complete list of financial services and backend systems to be integrated with the chatbot at go-live."
+   },
+   {
+    "topic": "Number of languages",
+    "why": "The language list ends with etc., so the languages to deliver are not fixed.",
+    "page": 47,
+    "clause_ref": "B",
+    "quote": "Tamil, Bengali, Malayalam, Gujarati, Odiya etc., with Natural Language Processing (NLP) capabilities",
+    "prebid_query": "Ref. clause 9 of Annexure-1: please confirm the exact list of languages required at go-live for the chatbot and the voice bot."
+   },
+   {
+    "topic": "Scope of the chatbot solution",
+    "why": "The document only names the chatbot solution and gives no functional requirements, channels, languages, integrations or users.",
+    "page": 1,
+    "clause_ref": "",
+    "quote": "Search String: Supply, Installation, Implementation and Maintenance of Chatbot Solution",
+    "prebid_query": "Kindly provide the detailed scope of work and functional specifications for the Chatbot Solution, including expected users, channels, languages and integrations with existing systems."
+   },
+   {
+    "topic": "Maintenance period",
+    "why": "Maintenance is named but no duration or support terms are stated.",
+    "page": 1,
+    "clause_ref": "",
+    "quote": "Report Name: Supply, Installation, Implementation and Maintenance of Chatbot Solution",
+    "prebid_query": "Kindly specify the duration of the Maintenance period for the Chatbot Solution after go-live and the support hours and service levels expected."
+   }
+  ],
+  "dropped_findings": 0,
+  "not_priced": [
+   {
+    "topic": "data_rules",
+    "label": "Data protection and other rules to follow",
+    "note": "The solution must follow RBI, other regulator and IT Act requirements.",
+    "evidence": [
+     {
+      "page": 13,
+      "clause_ref": "87",
+      "quote": "abide to the security requirements of the RBI, respective Government/ other",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 53,
+      "clause_ref": "R",
+      "quote": "The solution proposed by the bidder should abide to the security requirements of the RBI, respective Government/ other regulatory agencies and the Bank.",
+      "document": "att08.docx",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "topic": "technology",
+    "label": "Required technology or software",
+    "note": "A cloud access security broker must be used for sensitive information in the cloud.",
+    "evidence": [
+     {
+      "page": 15,
+      "clause_ref": "108",
+      "quote": "security broker) for sensitive information reside in cloud infrastructure.",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 54,
+      "clause_ref": "U",
+      "quote": "Bidder has to comply CASB(Cloud access security broker) for sensitive information reside in cloud infrastructure.",
+      "document": "att08.docx",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "topic": "payment_terms",
+    "label": "Payment terms (when the vendor is paid)",
+    "note": "Billing is based on the summary report on the console, but no payment schedule is given.",
+    "evidence": [
+     {
+      "page": 13,
+      "clause_ref": "83",
+      "quote": "Billing will be done on basis of summary report available on the console.",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 3,
+      "clause_ref": "5",
+      "quote": "As specified in the RFP.",
+      "document": "att02.pdf",
+      "checked": true
+     },
+     {
+      "page": 3,
+      "clause_ref": "2.1",
+      "quote": "Payment will be released after execution of Contract Agreement and the schedule will be as under:",
+      "document": "att03.pdf",
+      "checked": true
+     },
+     {
+      "page": 10,
+      "clause_ref": "",
+      "quote": "The payment schedule will be as under and will be released after execution of contract agreement:",
+      "document": "att08.docx",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "topic": "penalties",
+    "label": "Penalties for delay or downtime (service levels)",
+    "note": "The contract allows liquidated damages for delay, with termination if they exceed 10% of the contract price.",
+    "evidence": [
+     {
+      "page": 4,
+      "clause_ref": "8.2.7",
+      "quote": "If deductions on account of liquidated Damages exceeds more than 10% of the total contract price.",
+      "document": "att02.pdf",
+      "checked": true
+     },
+     {
+      "page": 5,
+      "clause_ref": "7.1",
+      "quote": "To forfeit fully or partially the Earnest Money Deposit (in pre-contract stage) and/or Security Deposit/Performance Bond (after the contract is signed)",
+      "document": "att07.pdf",
+      "checked": true
+     },
+     {
+      "page": 1,
+      "clause_ref": "1.1.3",
+      "quote": "shall be restricted to 10% of the total value of the order",
+      "document": "att03.pdf",
+      "checked": true
+     },
+     {
+      "page": 9,
+      "clause_ref": "",
+      "quote": "However, the total Penalty/LD to be recovered under clause 19.1.1 & 19.1.2 shall be restricted to 10% of the total value of the order",
+      "document": "att08.docx",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "topic": "warranty",
+    "label": "Warranty period",
+    "note": "A three-year warranty period applies before the AMC/ATS begins.",
+    "evidence": [
+     {
+      "page": 3,
+      "clause_ref": "2.1",
+      "quote": "completion of three years warranty period",
+      "document": "att03.pdf",
+      "checked": true
+     },
+     {
+      "page": 6,
+      "clause_ref": "",
+      "quote": "The selected bidder has to provide comprehensive On-site warranty for three (3) year.",
+      "document": "att08.docx",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "topic": "team_qualifications",
+    "label": "Required team qualifications or CVs",
+    "note": "Onsite resources need OEM certification and at least five years of experience.",
+    "evidence": [
+     {
+      "page": 4,
+      "clause_ref": "",
+      "quote": "should have OEM Certification for the proposed solution with minimum 5 years of Implementation, Operations & Hands-on experience.",
+      "document": "att08.docx",
+      "checked": true
+     }
+    ]
+   }
+  ],
+  "payment_terms": null,
+  "scope": [
+   {
+    "key": "public_api",
+    "label": "Connections with other systems: An API or webhooks so other systems can use it",
+    "status": "explicit",
+    "note": "",
+    "evidence": [
+     {
+      "page": 12,
+      "clause_ref": "69",
+      "quote": "Platform must support integrations using",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 52,
+      "clause_ref": "P",
+      "quote": "Platform must support integrations using web hooks, REST APls, Web Services, ESB-integration, MQ and custom adapters .",
+      "document": "att08.docx",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "key": "whatsapp",
+    "label": "Notifications: Messages on WhatsApp",
+    "status": "explicit",
+    "note": "",
+    "evidence": [
+     {
+      "page": 12,
+      "clause_ref": "72",
+      "quote": "calls with WhatsApp services. System should ensure that only authorized application can invoke such APIs.",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 52,
+      "clause_ref": "P",
+      "quote": "System should provide support for integration of Bank’s Systems through API calls with WhatsApp services.",
+      "document": "att08.docx",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "key": "push",
+    "label": "Notifications: Push notifications on phones and browsers",
+    "status": "explicit",
+    "note": "",
+    "evidence": [
+     {
+      "page": 5,
+      "clause_ref": "25",
+      "quote": "Automatically segmenting Push Notifications to customer by Bot:",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 48,
+      "clause_ref": "G",
+      "quote": "Automatically segmenting Push Notifications to customer by Bot:",
+      "document": "att08.docx",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "key": "monitoring",
+    "label": "Security, compliance and monitoring: Monitoring, logs and alerts",
+    "status": "explicit",
+    "note": "",
+    "evidence": [
+     {
+      "page": 13,
+      "clause_ref": "77",
+      "quote": "documented mechanism, preferably a tool for application monitoring.",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 52,
+      "clause_ref": "P",
+      "quote": "The application needs to provide a documented mechanism, preferably a tool for application monitoring.",
+      "document": "att08.docx",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "key": "chatbot_records",
+    "label": "AI chatbot: Looks up the user's own records in your systems",
+    "status": "explicit",
+    "note": "",
+    "evidence": [
+     {
+      "page": 10,
+      "clause_ref": "52",
+      "quote": "regard to service. The BOT, after fetching the previous data, should share the status and request for user feedback.",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 51,
+      "clause_ref": "M",
+      "quote": "The BOT, after fetching the previous data, should share the status and request for user feedback.",
+      "document": "att08.docx",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "key": "chatbot_indian_languages",
+    "label": "AI chatbot: Answers in Indian languages (Bhashini translation)",
+    "status": "explicit",
+    "note": "The bot must answer in regional languages with NLP.",
+    "evidence": [
+     {
+      "page": 1,
+      "clause_ref": "2",
+      "quote": "Kannada, Telugu, Punjabi, Marathi, Tamil, Bengali, Malayalam, Gujarati, Odiya etc.,",
+      "document": "att06.pdf",
+      "checked": true
+     }
+    ]
+   }
+  ],
+  "scope_set_aside": [],
+  "inventory": null
+ }
+}

@@ -228,9 +228,9 @@ export function BidResultCard({
   const [editing, setEditing] = React.useState(false);
 
   return (
-    <section className="flex flex-col gap-4 rounded-2xl border bg-card px-6 py-6 shadow-sm sm:px-8">
+    <section className="sheet">
       <div>
-        <h2 className="text-lg font-semibold">Bid result</h2>
+        <h2 className="text-xl font-semibold">Bid result</h2>
         <p className="text-sm text-muted-foreground">
           Recording results teaches the tool to estimate closer to real prices.
         </p>

@@ -54,15 +54,15 @@ function draw(canvas: HTMLCanvasElement) {
   const xOf = (m: number) => left + across(m) * span;
   const topOf = (m: number) => base - (density(m) / peak) * amp;
 
-  ctx.fillStyle = "#07080a";
+  ctx.fillStyle = "#ffffff";
   ctx.fillRect(0, 0, w, h);
-  ctx.globalCompositeOperation = "lighter";
+  ctx.globalCompositeOperation = "multiply";
   const blob = (
     x: number,
     y: number,
     r: number,
     a: number,
-    rgb = "255,255,255",
+    rgb = "27,36,51",
   ) => {
     const g = ctx.createRadialGradient(x, y, 0, x, y, r);
     g.addColorStop(0, `rgba(${rgb},${a})`);
@@ -76,7 +76,7 @@ function draw(canvas: HTMLCanvasElement) {
     const m = LO + ((HI - LO) * i) / 40;
     blob(xOf(m), topOf(m) + 30 * k, 170 * k, 0.04);
   }
-  blob(xOf(1), topOf(1), 260 * k, 0.12, "255,107,107");
+  blob(xOf(1), topOf(1), 260 * k, 0.16, "11,120,184");
 
   // 30,000 possible costs: most fill the area under the curve, some crowd its edge
   for (let i = 0; i < 30000; i++) {
@@ -87,7 +87,7 @@ function draw(canvas: HTMLCanvasElement) {
     const v = edge ? 1 - Math.abs(gauss()) * 0.05 : Math.sqrt(rand());
     const y = base - (density(m) / peak) * amp * v + (rand() - 0.5) * 8 * k;
     const near = edge ? 0.55 : 0.12 + 0.3 * v;
-    ctx.fillStyle = `rgba(255,255,255,${0.03 + near * rand()})`;
+    ctx.fillStyle = `rgba(11,120,184,${0.03 + near * rand()})`;
     const r =
       (rand() < 0.985 ? 0.35 + 0.45 * rand() : 0.8 + 0.6 * rand()) * 1.3 * k;
     ctx.beginPath();
@@ -98,7 +98,7 @@ function draw(canvas: HTMLCanvasElement) {
 
   // stars behind
   for (let i = 0; i < 900; i++) {
-    ctx.fillStyle = `rgba(255,255,255,${0.1 + 0.45 * rand()})`;
+    ctx.fillStyle = `rgba(27,36,51,${0.04 + 0.12 * rand()})`;
     ctx.beginPath();
     ctx.arc(
       rand() * w,
@@ -111,21 +111,21 @@ function draw(canvas: HTMLCanvasElement) {
   }
 
   // the floor line and the low / likely / high marks
-  ctx.strokeStyle = "rgba(255,255,255,0.14)";
+  ctx.strokeStyle = "rgba(27,36,51,0.18)";
   ctx.lineWidth = 1 * dpr;
   ctx.beginPath();
   ctx.moveTo(left, base + 1);
   ctx.lineTo(left + span, base + 1);
   ctx.stroke();
   const mono =
-    getComputedStyle(canvas).getPropertyValue("--font-geist-mono").trim() ||
+    getComputedStyle(canvas).getPropertyValue("--font-plex-mono").trim() ||
     "monospace";
   ctx.font = `${Math.round(11 * dpr)}px ${mono}`;
   // labels sit beside their line, away from the curve: low to the left, high to the right
   const marks: [string, number, string, CanvasTextAlign, number][] = [
-    ["P10 · LOW", Z.low, "255,255,255", "right", -8],
-    ["P50 · LIKELY", Z.likely, "255,135,135", "center", 0],
-    ["P90 · HIGH", Z.high, "255,255,255", "left", 8],
+    ["P10 · LOW", Z.low, "27,36,51", "right", -8],
+    ["P50 · LIKELY", Z.likely, "217,122,31", "center", 0],
+    ["P90 · HIGH", Z.high, "27,36,51", "left", 8],
   ];
   for (const [label, z, rgb, align, dx] of marks) {
     const m = Math.exp(SPREAD * z);

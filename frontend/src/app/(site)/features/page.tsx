@@ -100,7 +100,7 @@ export default function FeaturesPage() {
         piece of work with the rates and sources shown. Here is what it does.
       </PageIntro>
 
-      <Section className="flex flex-col gap-20 py-16 sm:gap-28 sm:py-24">
+      <Section className="flex flex-col gap-14 py-12 sm:gap-20 sm:py-16">
         {FEATURES.map((f, i) => (
           <article
             key={f.title}

@@ -19,6 +19,8 @@ import {
 import { useLoad } from "@/lib/use-load";
 import { cn } from "@/lib/utils";
 
+import { Disclosure } from "./cost-summary";
+
 /** True while the independent check asks for a look before the report can be exported. */
 export function exportBlocked(summary: QuickSummary): boolean {
   const check = summary.independent_check;
@@ -29,7 +31,7 @@ function Months({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex flex-col">
       <span className="text-sm text-muted-foreground">{label}</span>
-      <span className="text-2xl font-semibold tabular-nums">{value}</span>
+      <span className="text-xl font-semibold tabular-nums">{value}</span>
     </div>
   );
 }
@@ -66,13 +68,10 @@ export function IndependentCheckCard({
 
   return (
     <section
-      className={cn(
-        "flex flex-col gap-4 rounded-2xl border bg-card px-6 py-6 shadow-sm sm:px-8",
-        warn && "border-amber-400 dark:border-amber-700",
-      )}
+      className={cn("sheet", warn && "slab border-warning/50 px-6 pb-6")}
     >
       <div>
-        <h2 className="text-lg font-semibold">Independent check</h2>
+        <h2 className="text-xl font-semibold">Independent check</h2>
         <p className="text-sm text-muted-foreground">{check.note}</p>
       </div>
       <div className="flex flex-wrap gap-x-10 gap-y-3">
@@ -109,7 +108,7 @@ export function IndependentCheckCard({
         </div>
       ) : null}
       <details className="text-sm">
-        <summary className="cursor-pointer text-primary hover:underline">
+        <summary className="w-fit cursor-pointer list-none font-medium text-muted-foreground hover:text-foreground [&::-webkit-details-marker]:hidden">
           What was counted
         </summary>
         <ul className="mt-2 flex flex-col gap-1.5">
@@ -144,14 +143,12 @@ export function IndependentCheckCard({
       {check.needs_confirmation ? (
         check.confirmed_at ? (
           <p className="text-sm text-muted-foreground">
-            ✓ Gap checked on {formatDate(check.confirmed_at)}. The report can be
-            downloaded.
+            Gap checked on {formatDate(check.confirmed_at)}.
           </p>
         ) : (
           <div className="flex flex-wrap items-center gap-3 border-t pt-4">
             <p className="text-sm">
-              The report and bill of quantities can be downloaded once someone
-              has looked at this gap.
+              Downloads open once someone checks this gap.
             </p>
             <Button size="sm" onClick={confirm} disabled={busy}>
               {busy ? "Saving…" : "I have checked the gap"}
@@ -170,7 +167,10 @@ function signed(paise: number, currency: QuickSummary["currency"]): string {
   return paise > 0 ? `+${amount}` : amount;
 }
 
-function changeRange(o: PricedOption, currency: QuickSummary["currency"]) {
+export function changeRange(
+  o: PricedOption,
+  currency: QuickSummary["currency"],
+) {
   const low = o.low_change_paise;
   const high = o.high_change_paise;
   if (low === null || high === null) return "";
@@ -194,14 +194,31 @@ const NOT_INCLUDED_WHY: Record<
  * what is not included (with the "if required" price of what "Not sure" left out), and the
  * open answers with what each other answer would change. The PDF and Excel print the same.
  */
-export function OpenAnswers({ summary }: { summary: QuickSummary }) {
-  const estimateId = summary.estimate_id;
+/** The open answers priced as options (loaded once for the page; empty until ready). */
+export function usePricedOptions(estimateId: string): PricedOption[] {
   const loader = React.useCallback(
     () => api.getPricedOptions(estimateId),
     [estimateId],
   );
   const { state } = useLoad<PricedOption[]>(loader);
-  const options = state.kind === "ready" ? state.data : [];
+  return state.kind === "ready" ? state.data : [];
+}
+
+/** The open answer whose other answers move the price furthest past the range, if any
+ * (options come largest swing first). */
+export function biggestOpenAnswer(
+  options: PricedOption[],
+): PricedOption | undefined {
+  return options.find((o) => o.beyond_range);
+}
+
+export function OpenAnswers({
+  summary,
+  options,
+}: {
+  summary: QuickSummary;
+  options: PricedOption[];
+}) {
   const open = options.filter((o) => o.why !== "left_out");
   const leftOut = new Map(
     options.filter((o) => o.why === "left_out").map((o) => [o.key, o]),
@@ -209,16 +226,10 @@ export function OpenAnswers({ summary }: { summary: QuickSummary }) {
   return (
     <>
       {summary.assumed.length > 0 ? (
-        <section className="flex flex-col gap-3 rounded-2xl border border-warning/30 bg-card px-6 py-6 shadow-sm sm:px-8">
-          <div>
-            <h2 className="text-lg font-semibold">
-              Assumed answers: change any that are wrong
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              Nobody gave these answers, so the price uses the usual one. The
-              PDF and Excel list them too.
-            </p>
-          </div>
+        <Disclosure
+          title="Assumed answers"
+          hint={`${summary.assumed.length} answers nobody gave: check them`}
+        >
           <ul className="flex flex-col gap-1.5 text-sm">
             {summary.assumed.map((a) => (
               <li key={a.key}>
@@ -230,18 +241,13 @@ export function OpenAnswers({ summary }: { summary: QuickSummary }) {
               </li>
             ))}
           </ul>
-        </section>
+        </Disclosure>
       ) : null}
       {summary.not_included.length > 0 ? (
-        <section className="flex flex-col gap-3 rounded-2xl border bg-card px-6 py-6 shadow-sm sm:px-8">
-          <div>
-            <h2 className="text-lg font-semibold">
-              Not included in this price
-            </h2>
-            <p className="text-sm text-muted-foreground">
-              The quote lists these as not included, so nobody assumes they are.
-            </p>
-          </div>
+        <Disclosure
+          title="Not included in this price"
+          hint={`${summary.not_included.length} items`}
+        >
           <ul className="flex flex-col gap-2 text-sm">
             {summary.not_included.map((item) => {
               const option = leftOut.get(item.question_key ?? "");
@@ -278,17 +284,13 @@ export function OpenAnswers({ summary }: { summary: QuickSummary }) {
               );
             })}
           </ul>
-        </section>
+        </Disclosure>
       ) : null}
       {open.length > 0 ? (
-        <section className="flex flex-col gap-3 rounded-2xl border bg-card px-6 py-6 shadow-sm sm:px-8">
-          <div>
-            <h2 className="text-lg font-semibold">Open answers</h2>
-            <p className="text-sm text-muted-foreground">
-              Not settled by the document or answered “Not sure”. Each is priced
-              at the usual answer; the range is wider because of them.
-            </p>
-          </div>
+        <Disclosure
+          title="Open answers"
+          hint={`${open.length} priced at the usual answer`}
+        >
           <ul className="flex flex-col gap-2 text-sm">
             {open.map((o) => (
               <li key={o.key}>
@@ -314,7 +316,7 @@ export function OpenAnswers({ summary }: { summary: QuickSummary }) {
               </li>
             ))}
           </ul>
-        </section>
+        </Disclosure>
       ) : null}
     </>
   );

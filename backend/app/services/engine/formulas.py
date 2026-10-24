@@ -46,6 +46,7 @@ FORMULAS: dict[str, str] = {
     # market check (not a cost line): real contracts of this size against this estimate
     "market_check.v1": "P50 × market_by_size[project_size].{low, mid, high}",
     # go-live
+    # OPEN_QUESTIONS 160:  [size_band] values blend across band edges from parameters v23 (band_mix)
     "golive.cert_in_audit.v1": "audit_fee[size_band]",
     "golive.cert_in_reaudit.v1": "reaudit_fee[size_band]",
     "golive.stqc.v1": "stqc_fee",
@@ -155,6 +156,12 @@ FORMULAS: dict[str, str] = {
     "maintenance.upgrades.v1": "build_pd × upgrade_share × rate × (1 + escalation_labour)^year",
     "maintenance.change_requests.v1": "cr_pd_per_year × rate × (1 + escalation_labour)^year",
     "maintenance.onsite.v1": "count × pd_per_year × rate(role) × (1 + escalation_labour)^year",
+    # OPEN_QUESTIONS 157: stated support staff are the least support labour, not more of it
+    "maintenance.support_staff.v1": (
+        "max(count × pd_per_year − support pd priced that year (office-hours helpdesk, bug-fix,"
+        " patching, upgrades, change requests), 0) × rate(support_role)"
+        " × (1 + escalation_labour)^year"
+    ),
     "maintenance.onsite_days.v1": (
         "count × days × rate(role) × (1 + escalation_labour), year 1 only"
     ),

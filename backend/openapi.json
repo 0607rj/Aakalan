@@ -1827,7 +1827,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/QuickRequest"
+                "$ref": "#/components/schemas/QuickRequest-Input"
               }
             }
           },
@@ -2114,7 +2114,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/QuickRequest"
+                "$ref": "#/components/schemas/QuickRequest-Input"
               }
             }
           },
@@ -2165,7 +2165,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/QuickRequest"
+                "$ref": "#/components/schemas/QuickRequest-Input"
               }
             }
           },
@@ -2380,6 +2380,64 @@
                     "$ref": "#/components/schemas/PrebidQuery"
                   },
                   "title": "Response Get Prebid Queries Documents  Document Id  Prebid Queries Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/documents/{document_id}/form": {
+      "get": {
+        "tags": [
+          "documents"
+        ],
+        "summary": "Get Review Form",
+        "description": "The review form's starting state for the project's reading, and the request it sends\nwhen everything is accepted (services/quick/prefill: the production-path back-test prices\nthat same request).",
+        "operationId": "get_review_form_documents__document_id__form_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "document_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Document Id"
+            }
+          },
+          {
+            "name": "country",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "default": "india",
+              "title": "Country"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReviewPrefill"
                 }
               }
             }
@@ -5621,6 +5679,91 @@
         ],
         "title": "EstimateSummary"
       },
+      "FactValue": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "unit": {
+            "type": "string",
+            "enum": [
+              "count",
+              "rupees",
+              "percent"
+            ],
+            "title": "Unit"
+          },
+          "min": {
+            "type": "integer",
+            "title": "Min"
+          },
+          "max": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max"
+          },
+          "integer": {
+            "type": "boolean",
+            "title": "Integer"
+          },
+          "needs_feature": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Needs Feature"
+          },
+          "only_if_found": {
+            "type": "boolean",
+            "title": "Only If Found",
+            "default": false
+          },
+          "india_term": {
+            "type": "boolean",
+            "title": "India Term",
+            "default": false
+          },
+          "value": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "label",
+          "unit",
+          "min",
+          "integer",
+          "value"
+        ],
+        "title": "FactValue"
+      },
       "Factor": {
         "properties": {
           "label": {
@@ -7230,7 +7373,7 @@
         ],
         "title": "ParameterSetSummary"
       },
-      "PaymentMilestone": {
+      "PaymentMilestone-Input": {
         "properties": {
           "at_build_fraction": {
             "anyOf": [
@@ -7269,6 +7412,30 @@
                 "type": "string"
               }
             ],
+            "title": "Percent"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "at_build_fraction",
+          "percent"
+        ],
+        "title": "PaymentMilestone"
+      },
+      "PaymentMilestone-Output": {
+        "properties": {
+          "at_build_fraction": {
+            "type": "string",
+            "title": "At Build Fraction"
+          },
+          "offset_months": {
+            "type": "string",
+            "title": "Offset Months",
+            "default": "0"
+          },
+          "percent": {
+            "type": "string",
             "title": "Percent"
           }
         },
@@ -7466,6 +7633,11 @@
               }
             ],
             "title": "Usual Change Paise"
+          },
+          "beyond_range": {
+            "type": "boolean",
+            "title": "Beyond Range",
+            "default": false
           }
         },
         "type": "object",
@@ -8022,7 +8194,7 @@
         ],
         "title": "QuickOptions"
       },
-      "QuickRequest": {
+      "QuickRequest-Input": {
         "properties": {
           "name": {
             "type": "string",
@@ -8141,7 +8313,182 @@
             "anyOf": [
               {
                 "items": {
-                  "$ref": "#/components/schemas/PaymentMilestone"
+                  "$ref": "#/components/schemas/PaymentMilestone-Input"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payment Schedule"
+          },
+          "scope": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Scope",
+            "default": []
+          },
+          "mode": {
+            "type": "string",
+            "enum": [
+              "vendor",
+              "client"
+            ],
+            "title": "Mode",
+            "default": "vendor"
+          },
+          "not_included": {
+            "items": {
+              "$ref": "#/components/schemas/NotIncluded"
+            },
+            "type": "array",
+            "title": "Not Included",
+            "default": []
+          },
+          "answered": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Answered"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name"
+        ],
+        "title": "QuickRequest"
+      },
+      "QuickRequest-Output": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 300,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "project_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Project Type"
+          },
+          "country": {
+            "type": "string",
+            "title": "Country",
+            "default": "india"
+          },
+          "features": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Features",
+            "default": []
+          },
+          "feature_levels": {
+            "additionalProperties": {
+              "type": "string",
+              "enum": [
+                "basic",
+                "standard",
+                "advanced"
+              ]
+            },
+            "type": "object",
+            "title": "Feature Levels",
+            "default": {}
+          },
+          "feature_units": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "type": "object",
+            "title": "Feature Units",
+            "default": {}
+          },
+          "custom_features": {
+            "items": {
+              "$ref": "#/components/schemas/CustomFeature"
+            },
+            "type": "array",
+            "title": "Custom Features",
+            "default": []
+          },
+          "choices": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "object",
+            "title": "Choices",
+            "default": {}
+          },
+          "deadline_months": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 60.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deadline Months"
+          },
+          "document_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Document Id"
+          },
+          "overrides": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "integer"
+                },
+                {
+                  "type": "number"
+                }
+              ]
+            },
+            "type": "object",
+            "title": "Overrides",
+            "default": {}
+          },
+          "payment_schedule": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/PaymentMilestone-Output"
                 },
                 "type": "array"
               },
@@ -9481,6 +9828,112 @@
           "new_password"
         ],
         "title": "ResetPasswordRequest"
+      },
+      "ReviewPrefill": {
+        "properties": {
+          "country": {
+            "type": "string",
+            "title": "Country"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "features": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Features"
+          },
+          "choices": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "type": "object",
+            "title": "Choices"
+          },
+          "answered": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Answered"
+          },
+          "levels": {
+            "additionalProperties": {
+              "type": "string",
+              "enum": [
+                "basic",
+                "standard",
+                "advanced"
+              ]
+            },
+            "type": "object",
+            "title": "Levels"
+          },
+          "facts": {
+            "items": {
+              "$ref": "#/components/schemas/FactValue"
+            },
+            "type": "array",
+            "title": "Facts"
+          },
+          "custom_features": {
+            "items": {
+              "$ref": "#/components/schemas/CustomFeature"
+            },
+            "type": "array",
+            "title": "Custom Features"
+          },
+          "scope": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Scope"
+          },
+          "payment_schedule": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/PaymentMilestone-Output"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Payment Schedule"
+          },
+          "request": {
+            "$ref": "#/components/schemas/QuickRequest-Output"
+          }
+        },
+        "type": "object",
+        "required": [
+          "country",
+          "name",
+          "features",
+          "choices",
+          "answered",
+          "levels",
+          "facts",
+          "custom_features",
+          "scope",
+          "payment_schedule",
+          "request"
+        ],
+        "title": "ReviewPrefill",
+        "description": "The review form's starting state, and what it sends when everything is accepted."
       },
       "Role": {
         "type": "string",

@@ -86,14 +86,14 @@ export function StartBand({
   title?: string;
 }) {
   return (
-    <Section className="py-16 sm:py-24">
+    <Section className="py-12 sm:py-16">
       <div
         data-reveal
-        className="panel relative overflow-hidden rounded-[28px] px-6 py-14 text-center sm:px-12"
+        className="panel relative overflow-hidden rounded-[28px] px-6 py-10 text-center sm:px-12"
       >
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_80%_at_50%_120%,rgb(255_107_107/0.22),transparent_70%)]"
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_80%_at_50%_120%,rgb(11_120_184/0.22),transparent_70%)]"
         />
         <h2 className="font-display relative mx-auto max-w-3xl text-4xl leading-[1.05] sm:text-6xl">
           {title}

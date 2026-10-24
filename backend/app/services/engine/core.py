@@ -44,7 +44,7 @@ from app.services.engine.third_party import (
     third_party_lines,
     translation_lines,
 )
-from app.services.engine.timeline import build_timeline, phased_plan, size_band
+from app.services.engine.timeline import build_timeline, phased_plan
 from app.services.hosting.sizing import hosting_lines
 
 ENGINE_VERSION = "1.0.0"
@@ -114,7 +114,6 @@ def _calculate(inp: EstimateInput) -> EstimateResult:
         )
 
     m = timeline.compression_multiplier
-    _, band = size_band(ctx, timeline.build_effort_pd)
     base: list[CostLineOut] = [component_line(ctx, e, m) for e in efforts]
     base += ai_review_line(ctx, efforts, m)
     base += dev_tools_lines(ctx, base)
@@ -123,7 +122,7 @@ def _calculate(inp: EstimateInput) -> EstimateResult:
     base += hosting_lines(ctx)
     base += ai_runtime_lines(ctx)
     base += third_party_lines(ctx)
-    base += maintenance_lines(ctx, timeline.build_effort_pd, band.audit_band)
+    base += maintenance_lines(ctx, timeline.build_effort_pd)
     base += programme_lines(ctx, timeline)
     base += base_commercial_lines(ctx, timeline)
     derived, factors = derived_lines(ctx, timeline, base, ai_saving_kept(ctx, efforts, m, base))
@@ -137,8 +136,17 @@ def _calculate(inp: EstimateInput) -> EstimateResult:
         raise AssertionError("duplicate line keys")
 
     spread = _model_spread(ctx)
+    centre = p.calibration.model_spread_centre if p.calibration else "mode"
     sim = simulate(
-        lines, factors, inp.seed, runs, inp.taxonomy, (spread.down, spread.up) if spread else None
+        lines,
+        factors,
+        inp.seed,
+        runs,
+        inp.taxonomy,
+        (spread.down, spread.up) if spread else None,
+        centre,
+        # a range driver of its own from v23, so older estimates reprice identically
+        f"Shared: {spread.name}" if spread and centre == "median" else "",
     )
     client_paid = client_paid_lines(ctx)
     notes = client_paid_notes(ctx)

@@ -313,7 +313,7 @@ Yes, in three places. Each is a coverage limit, not a calculation error:
   - The four smaller projects sit above the median published price of similar-size projects
     (26.7 L) but inside their wide middle range (12.7–114.9 L).
   - The ERP sits below the medium group's P25 (297.5 L).
-  - This is the known pattern from the back-test. Contract prices cannot say which is right.
+  - This is the known pattern from the back-test (the legacy back-test, not the production path). Contract prices cannot say which is right.
 
 ## 4. Findings: proven, and what needs data
 

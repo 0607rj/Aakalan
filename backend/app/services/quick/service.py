@@ -43,6 +43,7 @@ from app.services.engine.inputs import (
     SourceRef,
 )
 from app.services.engine.reference import Complexity, Size
+from app.services.engine.simulation import MODEL_DRIVER
 from app.services.estimates import service as estimates
 from app.services.estimates.reference_store import (
     catalog_for,
@@ -82,6 +83,7 @@ from app.services.settings import (
 FORM_DOCUMENT = "Quick estimate form"
 SCOPE = "scope"  # requirement category of a chosen scope item
 ONSITE_STAFF = "onsite_staff"
+SUPPORT_STAFF = "support_staff"
 ONSITE_DAYS = "onsite_days"
 ONSITE_PERIOD = "onsite_period"
 FEW_BENCHMARKS = 5
@@ -130,6 +132,7 @@ OVERRIDABLE = frozenset(
         "pbg_percent",
         "onsite_staff",  # people at the client's office during support (onsite_role)
         "onsite_days",  # only for these days in all (e.g. an event), not every support year
+        "support_staff",  # dedicated support staff the document states (support_role)
     }
 )
 
@@ -793,7 +796,12 @@ def plan_quick(
                 if days_found is not None and days_found["value"] == onsite_days:
                     reqs = [*reqs, *cited(days_found, "Onsite days")]
             staff = [{"role": cfg.onsite_role, "count": v, **limit}] if v > 0 else []
-            plan.answers["onsite_resources"] = (staff, reqs)
+            _add_staff(plan, staff, reqs)
+        elif k == SUPPORT_STAFF:
+            if cfg.support_role is None:
+                raise _unprocessable("Dedicated support staff cannot be priced.")
+            staff = [{"role": cfg.support_role, "count": v, "kind": "support"}] if v > 0 else []
+            _add_staff(plan, staff, reqs)
         else:
             plan.answers[k] = (v, reqs)
     if req.payment_schedule is not None:
@@ -1066,6 +1074,12 @@ SIZE_RANK = {Size.S: 0, Size.M: 1, Size.L: 2}
 
 def _bigger(a: Size, b: Size) -> Size:
     return a if SIZE_RANK[a] >= SIZE_RANK[b] else b
+
+
+def _add_staff(plan: QuickPlan, staff: list[dict[str, Any]], reqs: list[str]) -> None:
+    """Onsite and dedicated support staff share the engine's onsite_resources answer."""
+    current, current_reqs = plan.answers.get("onsite_resources", ([], []))
+    plan.answers["onsite_resources"] = ([*current, *staff], [*current_reqs, *reqs])
 
 
 def _smaller(cfg: QuickConfig, a: LevelKey, b: LevelKey) -> LevelKey:
@@ -1397,6 +1411,9 @@ class PricedOption(BaseModel):
     options: list[OptionChange]
     # left_out: the item at the usual size, as "Not sure" priced it before (OPEN_QUESTIONS 147)
     usual_change_paise: int | None = None
+    # another answer moves the most likely price past the range's low or high end (P10 / P90):
+    # a bigger unknown than the range itself (OPEN_QUESTIONS 160)
+    beyond_range: bool = False
 
 
 def priced_options(
@@ -1473,20 +1490,30 @@ def priced_options(
             except HTTPException:  # e.g. the item is also marked "Not included"
                 with_it = None
             usual = None if with_it is None else with_it - base
+        low_change, high_change = (min(known), max(known)) if known else (None, None)
         out.append(
             PricedOption(
                 key=key,
                 question=question.label,
                 priced_as=current.label,
                 why=why,
-                low_change_paise=min(known) if known else None,
-                high_change_paise=max(known) if known else None,
+                low_change_paise=low_change,
+                high_change_paise=high_change,
                 options=changes,
                 usual_change_paise=usual,
+                beyond_range=why != "left_out" and _beyond_range(estimate, low_change, high_change),
             )
         )
     out.sort(key=lambda o: -max((abs(c.change_paise or 0) for c in o.options), default=0))
     return out
+
+
+def _beyond_range(estimate: Estimate, low: int | None, high: int | None) -> bool:
+    """high > P90 − P50 or low < P10 − P50: an answer moves the price out of the range."""
+    p10, p50, p90 = estimate.p10_paise, estimate.p50_paise, estimate.p90_paise
+    if p10 is None or p50 is None or p90 is None:
+        return False
+    return (high is not None and high > p90 - p50) or (low is not None and low < p10 - p50)
 
 
 def confirm_check(db: Session, user: User, estimate: Estimate) -> None:
@@ -1550,10 +1577,15 @@ def summarise(
     client_pays = _client_pays(result)
     drivers = result["top_drivers"]
     biggest = None
-    if drivers:
-        top = drivers[0]
-        phrase = cfg.plain_drivers.get(top["bucket"], top["name"])
+    own = [d for d in drivers if d["bucket"] != MODEL_DRIVER]
+    if own:
+        phrase = cfg.plain_drivers.get(own[0]["bucket"], own[0]["name"])
         biggest = f"The biggest unknown is {phrase}."
+    if drivers and drivers[0]["bucket"] == MODEL_DRIVER:  # OPEN_QUESTIONS 160
+        shared = cfg.plain_drivers.get(MODEL_DRIVER, drivers[0]["name"])
+        biggest = f"Most of the range is {shared}." + (
+            f" Of this project's own parts, the biggest unknown is {phrase}." if own else ""
+        )
     infeasible = result.get("infeasibility")
     timeline = result["timeline"]
     summary = QuickSummary(
@@ -1589,7 +1621,7 @@ def summarise(
             if r.category == SCOPE
         ],
         indicative=estimate.calibration_status == "uncalibrated",
-        accuracy_note=_accuracy_note(estimate),
+        accuracy_note=_accuracy_note(cfg, estimate),
         traditional_paise=traditional.get("p50_paise"),
         traditional_build_only_paise=traditional.get("build_only_paise"),
         ai_saving_percent=_saving(estimate.p50_paise, traditional.get("p50_paise")),
@@ -2497,10 +2529,11 @@ def _should_cost_note(estimate: Estimate) -> str:
     return SHOULD_COST_NOTE + RANGE_NOTE.format(below=below, above=above)
 
 
-def _accuracy_note(estimate: Estimate) -> str | None:
+def _accuracy_note(cfg: QuickConfig, estimate: Estimate) -> str | None:
     cal = _calibration_of(estimate)
     if cal.get("should_cost"):
-        return _should_cost_note(estimate)
+        tested = f" {cfg.backtest_note.text}" if cfg.backtest_note else ""
+        return _should_cost_note(estimate) + tested
     n, err = cal.get("backtest_projects", 0), cal.get("median_abs_error_percent")
     if not n or err is None:
         return None

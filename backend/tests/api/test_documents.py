@@ -342,6 +342,27 @@ def test_prebid_queries(client: TestClient, admin_headers: H, no_override: None)
     assert [q["number"] for q in queries] == list(range(1, len(queries) + 1))
 
 
+def test_review_form_prefill(client: TestClient, admin_headers: H, no_override: None) -> None:
+    """The form starts from the backend's pre-fill; accepted as it is, its request prices."""
+    doc = upload(client, admin_headers, "tender.pdf", make_pdf(TENDER_PAGES)).json()
+    r = client.get(f"/documents/{doc['id']}/form?country=india", headers=admin_headers)
+    assert r.status_code == 200, r.text
+    form = r.json()
+    request = form["request"]
+    assert request["document_id"] == doc["id"]
+    assert request["name"] == doc["project_name"]
+    ticked = {f["key"] for f in doc["extraction"]["features"] if f["suggested"]}
+    assert {"online_forms", "approval_workflow", "payments", "ai_chatbot"} <= set(form["features"])
+    assert set(form["features"]) <= ticked
+    assert request["overrides"]["om_years"] == 3 and request["overrides"]["emd_paise"] == 50_000_000
+    assert request["overrides"]["pbg_percent"] == 0.03
+    assert request["choices"]["availability"] == "high"
+    facts = {f["key"]: f for f in form["facts"]}
+    assert facts["deadline_months"]["value"] == 6 and facts["onsite_staff"]["value"] is None
+    s = client.post("/quick-estimates", json=request, headers=admin_headers)
+    assert s.status_code == 201, s.text
+
+
 @pytest.mark.parametrize(
     ("name", "data", "message"),
     [
@@ -378,6 +399,7 @@ def test_upload_is_org_scoped(
     spy = login(client, "docs-spy@other.local")
     assert client.get(f"/documents/{doc['id']}", headers=spy).status_code == 404
     assert client.get(f"/documents/{doc['id']}", headers=admin_headers).status_code == 200
+    assert client.get(f"/documents/{doc['id']}/form", headers=spy).status_code == 404
 
 
 def test_corrigendum_overrides_rfp(client: TestClient, admin_headers: H, no_override: None) -> None:
@@ -400,6 +422,9 @@ def test_corrigendum_overrides_rfp(client: TestClient, admin_headers: H, no_over
     merged = client.get(f"/projects/{rfp['project_id']}/extraction", headers=admin_headers).json()
     assert [d["kind"] for d in merged["documents"]] == ["rfp", "corrigendum"]
     assert merged["extraction"]["numbers"]["deadline_months"]["value"] == 7
+    # the review form pre-fills from the RFP's page, which shows the reading the price uses
+    form = client.get(f"/documents/{rfp['id']}", headers=admin_headers).json()["extraction"]
+    assert form == merged["extraction"]
     assert merged["changes"] == [
         {
             "field": "deadline_months",

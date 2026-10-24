@@ -7,7 +7,7 @@ from app.services.engine import spreads
 from app.services.engine.context import LineBuilder, PricingContext
 from app.services.engine.money import ONE, ZERO, ceil
 from app.services.engine.outputs import CostLineOut, Timeline
-from app.services.engine.timeline import size_band
+from app.services.engine.timeline import band_fee, band_value, size_band
 
 
 def _band(t: LineBuilder, timeline: Timeline) -> int:
@@ -30,10 +30,9 @@ def golive_lines(ctx: PricingContext, timeline: Timeline) -> list[CostLineOut]:
         formula_id="golive.cert_in_audit.v1",
     )
     if t.driver("cert_in_audit"):
-        idx = _band(t, timeline)
-        audit_band: str = t.param("timeline", "size_bands", idx, "audit_band")
+        _band(t, timeline)
         prefix: str = t.param("go_live", "cert_in_audit_rate_prefix")
-        fee = t.rate_local(f"{prefix}.{audit_band}")
+        fee = band_fee(t, timeline.build_effort_pd, prefix)
         spreads.fixed(t, "fixed_fee")
         lines.append(t.finish(fee))
 
@@ -44,7 +43,7 @@ def golive_lines(ctx: PricingContext, timeline: Timeline) -> list[CostLineOut]:
         )
         re_prefix: str = r.param("go_live", "cert_in_reaudit_rate_prefix")
         spreads.fixed(r, "fixed_fee")
-        lines.append(r.finish(r.rate_local(f"{re_prefix}.{audit_band}")))
+        lines.append(r.finish(band_fee(r, timeline.build_effort_pd, re_prefix)))
 
     t = ctx.builder(
         line_key="go_live.certification/stqc",
@@ -163,8 +162,8 @@ def programme_lines(ctx: PricingContext, timeline: Timeline) -> list[CostLineOut
         return t
 
     t = base("pm", "programme.project_management", "Project management (build)", "programme.pm.v1")
-    idx = _band(t, timeline)
-    fte: Decimal = t.param("timeline", "size_bands", idx, "pm_fte")
+    _band(t, timeline)
+    fte = band_value(t, timeline.build_effort_pd, "pm_fte")
     pd_month: Decimal = t.param("calendar", "pd_per_month")
     pm_role: str = t.param("programme", "pm_role")
     pd = t.step("PM person-days", f"{fte} FTE × {months} × {pd_month}", fte * months * pd_month)
@@ -236,7 +235,7 @@ def programme_lines(ctx: PricingContext, timeline: Timeline) -> list[CostLineOut
         )
         t.follows_build = True  # by the project's size band (or a share of the build, lean)
         t.driver("om_years")
-        fte = t.param("timeline", "size_bands", idx, "om_pm_fte")
+        fte = band_value(t, timeline.build_effort_pd, "om_pm_fte")
         pd_year: Decimal = t.param("calendar", "pd_per_year")
         pd = fte * pd_year
         if t.lean():

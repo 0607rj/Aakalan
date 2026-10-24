@@ -1,0 +1,1792 @@
+{
+ "benchmark_id": "gem-meghalaya-citizen-services-bms",
+ "reader_model": "stand-in: a Claude Code Sonnet subagent answering the app's own prompts (relayed), NOT the production claude-sonnet-5-5 API call",
+ "read_on": "2026-10-24",
+ "code_path": "production reading code: app parser, ai_read (extract_tender_v8 + gap_check_v3), verify_findings, merge_extractions; only the LLM call was relayed. No inventory (independent check) was read.",
+ "files_read": [
+  "att13.pdf",
+  "att05.pdf",
+  "att03.pdf",
+  "att09.pdf",
+  "att07.pdf",
+  "att04.pdf",
+  "att06.pdf",
+  "att08.pdf",
+  "att02.pdf",
+  "att12.pdf",
+  "att10.pdf",
+  "att11.pdf"
+ ],
+ "files_not_read": [
+  {
+   "file": "att01.xlsx",
+   "not_read": "the app refuses the upload: Please upload a PDF or a Word (.docx) file."
+  }
+ ],
+ "extraction": {
+  "reader": "ai",
+  "prompt_version": "extract_tender_v8",
+  "project_name": "Selection of Implementation Agency for Digital Citizen Services and Beneficiary Management System (ONE Meghalaya)",
+  "summary": "The requirement document is a request for proposals for a unified digital services platform for the citizens of Meghalaya, reached through a web portal, a citizen mobile app, a WhatsApp and web chatbot, and an app for village facilitators that also works offline. Officers resolve service requests through a low-code workflow back end, and a Beneficiary Management System builds one master record and family ID for every citizen from existing state databases. It also asks for dashboards and analytics, security services, a phased rollout of services and two years of on-site support.",
+  "features": [
+   {
+    "key": "mobile_app",
+    "label": "Mobile app (Android / iOS)",
+    "evidence": [
+     {
+      "page": 43,
+      "clause_ref": "5.1",
+      "quote": "Mobile App (Occasionally online mode) for VCFs (Village Community Facilitators)",
+      "document": "att13.pdf",
+      "checked": true
+     },
+     {
+      "page": 1,
+      "clause_ref": "5.1",
+      "quote": "Mobile App (Occasionally online mode) for VCFs (Village Community Facilitators)",
+      "document": "att05.pdf",
+      "checked": true
+     },
+     {
+      "page": 3,
+      "clause_ref": "",
+      "quote": "Mobile App – citizen facing",
+      "document": "att09.pdf",
+      "checked": true
+     },
+     {
+      "page": 1,
+      "clause_ref": "",
+      "quote": "Finalized wireframes of all apps (Citizen,",
+      "document": "att07.pdf",
+      "checked": true
+     },
+     {
+      "page": 1,
+      "clause_ref": "",
+      "quote": "through the digital medium of Mobile App and Web platforms, from which the citizens can select the services",
+      "document": "att02.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 1,
+    "suggested": true,
+    "stories": [
+     "As a citizen, I can use the citizen-facing mobile app",
+     "As a village facilitator, I can use the app in occasionally online mode",
+     "As a village facilitator, I can propose new services to eligible citizens"
+    ],
+    "story_level": "advanced",
+    "story_units": 2,
+    "covers": [
+     "online_forms",
+     "approval_workflow",
+     "documents",
+     "dashboards",
+     "ai_chatbot",
+     "search",
+     "languages",
+     "accessibility",
+     "offline_app",
+     "notifications",
+     "grievances",
+     "ai_recommend"
+    ]
+   },
+   {
+    "key": "online_forms",
+    "label": "Online application or registration forms",
+    "evidence": [
+     {
+      "page": 53,
+      "clause_ref": "5.7.2",
+      "quote": "Post selection of service, form must be available to the user on click of apply to service.",
+      "document": "att13.pdf",
+      "checked": true
+     },
+     {
+      "page": 11,
+      "clause_ref": "2.7.2",
+      "quote": "Post selection of service, form must be available to the user on click of apply to service.",
+      "document": "att05.pdf",
+      "checked": true
+     },
+     {
+      "page": 4,
+      "clause_ref": "",
+      "quote": "Cost of Service form 200",
+      "document": "att09.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 1,
+    "suggested": true,
+    "stories": [
+     "As a citizen, I can apply for a service through its online form, pre-filled from my beneficiary profile",
+     "As a village facilitator, I can fill and save a service form offline"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "approval_workflow",
+    "label": "Files go from person to person for approval",
+    "evidence": [
+     {
+      "page": 54,
+      "clause_ref": "5.7.3",
+      "quote": "Post application of service by the citizen, the service request must be tagged to the concerned department and the officer of the department, as per the identified workflow.",
+      "document": "att13.pdf",
+      "checked": true
+     },
+     {
+      "page": 12,
+      "clause_ref": "2.7.3",
+      "quote": "Post application of service by the citizen, the service request must be tagged to the concerned department and the officer of the department, as per the identified workflow.",
+      "document": "att05.pdf",
+      "checked": true
+     },
+     {
+      "page": 4,
+      "clause_ref": "",
+      "quote": "Develop workflow based back-end systems on No Code Low Code platform to enable department officers",
+      "document": "att09.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 1,
+    "suggested": true,
+    "stories": [
+     "As a government officer, I can view a service request and its documents and add notes",
+     "As a government officer, I can forward a request to another officer or department, or resolve and close it",
+     "As a citizen, I can view the status of my service request"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "documents",
+    "label": "Store and manage documents",
+    "evidence": [
+     {
+      "page": 55,
+      "clause_ref": "5.7.4",
+      "quote": "State Locker, a certificate repository, enabled to be updated and stored with documents of the citizens, is to be integrated with the citizen profile.",
+      "document": "att13.pdf",
+      "checked": true
+     },
+     {
+      "page": 13,
+      "clause_ref": "2.7.4",
+      "quote": "State Locker, a certificate repository, enabled to be updated and stored with documents of the citizens, is to be integrated with the citizen profile.",
+      "document": "att05.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 1,
+    "suggested": true,
+    "stories": [
+     "As a citizen, I can view all my documents in the State Locker securely"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "dashboards",
+    "label": "Reports and dashboards",
+    "evidence": [
+     {
+      "page": 43,
+      "clause_ref": "5.1",
+      "quote": "Component 4: Develop analytics-based dashboard for review and monitoring above components",
+      "document": "att13.pdf",
+      "checked": true
+     },
+     {
+      "page": 1,
+      "clause_ref": "5.1",
+      "quote": "Component 4: Develop analytics-based dashboard for review and monitoring above components",
+      "document": "att05.pdf",
+      "checked": true
+     },
+     {
+      "page": 6,
+      "clause_ref": "",
+      "quote": "Service Status dashboard 2. VCF performance dashboard",
+      "document": "att09.pdf",
+      "checked": true
+     },
+     {
+      "page": 5,
+      "clause_ref": "",
+      "quote": "9. Analytical Tools 10. Any others",
+      "document": "att09.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 1,
+    "suggested": true,
+    "stories": [
+     "As an officer, I can monitor scheme performance against chosen KPIs",
+     "As an officer, I can reconcile similar schemes using machine-learning analysis",
+     "As an officer, I can run scenario analysis on amounts to be disbursed and potential beneficiaries",
+     "As an officer, I can analyse fund utilization for a selected period",
+     "As an officer, I can use standard and customized pre-built reports and dashboards"
+    ],
+    "story_level": "standard",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "ai_chatbot",
+    "label": "AI chatbot that answers people's questions",
+    "evidence": [
+     {
+      "page": 43,
+      "clause_ref": "5.1",
+      "quote": "platform includes access channels such as mobile app, web portal, WhatsApp chatbot and Mobile",
+      "document": "att13.pdf",
+      "checked": true
+     },
+     {
+      "page": 1,
+      "clause_ref": "5.1",
+      "quote": "access channels such as mobile app, web portal, WhatsApp chatbot and Mobile",
+      "document": "att05.pdf",
+      "checked": true
+     },
+     {
+      "page": 3,
+      "clause_ref": "",
+      "quote": "access channels such as mobile app, web portal, WhatsApp",
+      "document": "att09.pdf",
+      "checked": true
+     },
+     {
+      "page": 1,
+      "clause_ref": "",
+      "quote": "Finalized wireframes of all apps (Citizen,",
+      "document": "att07.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 1,
+    "suggested": true,
+    "stories": [
+     "As a citizen, I can ask the chatbot on WhatsApp for help",
+     "As a citizen, I can ask the chatbot on the web platform for help"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "search",
+    "label": "Search",
+    "evidence": [
+     {
+      "page": 51,
+      "clause_ref": "5.7.1",
+      "quote": "Citizens must have the ability to search services through semantic search, navigation-based search, eligibility-based search and persona-based search.",
+      "document": "att13.pdf",
+      "checked": true
+     },
+     {
+      "page": 9,
+      "clause_ref": "2.7.1",
+      "quote": "Citizens must have the ability to search services through semantic search, navigation-based search, eligibility-based search and persona-based search.",
+      "document": "att05.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 1,
+    "suggested": true,
+    "stories": [
+     "As a citizen, I can search for services by meaning, navigation, eligibility or persona"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "languages",
+    "label": "Available in Indian languages",
+    "evidence": [
+     {
+      "page": 51,
+      "clause_ref": "5.7.1",
+      "quote": "Garo, Khasi, Pnar and English are the required languages.",
+      "document": "att13.pdf",
+      "checked": true
+     },
+     {
+      "page": 9,
+      "clause_ref": "2.7.1",
+      "quote": "Garo, Khasi, Pnar and English are the required languages.",
+      "document": "att05.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 1,
+    "suggested": true,
+    "stories": [
+     "As a user, I can choose my preferred language and have it remembered"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "accessibility",
+    "label": "Accessible to people with disabilities (GIGW / WCAG)",
+    "evidence": [
+     {
+      "page": 53,
+      "clause_ref": "5.7.1",
+      "quote": "Web platform must be compliant to all Government of India Standards – namely GIGW Standards,",
+      "document": "att13.pdf",
+      "checked": true
+     },
+     {
+      "page": 11,
+      "clause_ref": "2.7.1",
+      "quote": "Web platform must be compliant to all Government of India Standards – namely GIGW Standards,",
+      "document": "att05.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 1,
+    "suggested": true,
+    "stories": [
+     "As a user with a disability, I can use the web platform that follows GIGW standards"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "offline_app",
+    "label": "Works without internet",
+    "evidence": [
+     {
+      "page": 51,
+      "clause_ref": "5.7.1",
+      "quote": "The app must work for services in no or poor internet zone",
+      "document": "att13.pdf",
+      "checked": true
+     },
+     {
+      "page": 9,
+      "clause_ref": "2.7.1",
+      "quote": "The app must work for services in no or poor internet zone",
+      "document": "att05.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 1,
+    "suggested": true,
+    "stories": [
+     "As a village facilitator, I can use the app with no or poor internet and have it update when the network returns"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "notifications",
+    "label": "SMS, email and app notifications",
+    "evidence": [
+     {
+      "page": 63,
+      "clause_ref": "5.8.7",
+      "quote": "The solution should integrate with mail, WhatsApp and SMS gateway through APIs",
+      "document": "att13.pdf",
+      "checked": true
+     },
+     {
+      "page": 21,
+      "clause_ref": "2.8.7",
+      "quote": "The solution should integrate with mail, WhatsApp and SMS gateway through APIs",
+      "document": "att05.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 1,
+    "suggested": true,
+    "stories": [
+     "As a citizen, I can receive SMS, WhatsApp or email messages about new schemes and service status"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "connect_existing",
+    "label": "Connect to existing systems (SAP, old software)",
+    "evidence": [
+     {
+      "page": 59,
+      "clause_ref": "",
+      "quote": "The solution should connect to internal and external data sources like relational databases, CSV, APIs",
+      "document": "att13.pdf",
+      "checked": true
+     },
+     {
+      "page": 17,
+      "clause_ref": "",
+      "quote": "The solution should connect to internal and external data sources like relational databases, CSV, APIs",
+      "document": "att05.pdf",
+      "checked": true
+     },
+     {
+      "page": 5,
+      "clause_ref": "",
+      "quote": "API based integration with 20 State Systems",
+      "document": "att09.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 1,
+    "suggested": true,
+    "stories": [
+     "As an administrator, I can connect departmental databases to the platform in batches or in real time"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "grievances",
+    "label": "Complaints and helpdesk tickets",
+    "evidence": [
+     {
+      "page": 46,
+      "clause_ref": "5.1",
+      "quote": "SI shall deploy custom made solution for helpdesk ticket tracking",
+      "document": "att13.pdf",
+      "checked": true
+     },
+     {
+      "page": 4,
+      "clause_ref": "5.1",
+      "quote": "SI shall deploy custom made solution for helpdesk ticket tracking",
+      "document": "att05.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 1,
+    "suggested": true,
+    "stories": [
+     "As a helpdesk agent, I can track user queries as tickets"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "ai_recommend",
+    "label": "Recommendations",
+    "evidence": [
+     {
+      "page": 52,
+      "clause_ref": "5.7.1",
+      "quote": "The platform must identify users based on their behavior on the website and Mobile App with the help of analytics platform",
+      "document": "att13.pdf",
+      "checked": true
+     },
+     {
+      "page": 10,
+      "clause_ref": "2.7.1",
+      "quote": "The platform must identify users based on their behavior on the website and Mobile App with the help of analytics platform",
+      "document": "att05.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 1,
+    "suggested": true,
+    "stories": [
+     "As a citizen, I am shown services that suit my behaviour on the platform"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "aadhaar_digilocker",
+    "label": "Login or verification with Aadhaar / DigiLocker",
+    "evidence": [
+     {
+      "page": 5,
+      "clause_ref": "",
+      "quote": "API based integration with Aadhar Data Vault",
+      "document": "att09.pdf",
+      "checked": true
+     },
+     {
+      "page": 1,
+      "clause_ref": "",
+      "quote": "the Digital Service Delivery ecosystem will incorporate Aadhar integration as well.",
+      "document": "att02.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 1,
+    "suggested": true,
+    "stories": [
+     "As a citizen, I can be verified through the Aadhaar Data Vault"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "old_data",
+    "label": "Move data from the old system",
+    "evidence": [
+     {
+      "page": 2,
+      "clause_ref": "",
+      "quote": "Cleansed data of existing beneficiary databases",
+      "document": "att07.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 1,
+    "suggested": true,
+    "stories": [
+     "As an administrator, I can combine cleansed data from existing beneficiary databases into one database"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   }
+  ],
+  "other_features": [
+   {
+    "name": "Beneficiary Management System master record",
+    "description": "A platform that builds a master record and unique beneficiary ID for every citizen from many state databases, with citizen self-registration.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 57,
+      "clause_ref": "5.8.1",
+      "quote": "The System Integrator (SI) must design, develop, deploy and maintain a data integration and data exchange platform called the Beneficiary Management System (BMS)",
+      "document": "att13.pdf",
+      "checked": true
+     },
+     {
+      "page": 15,
+      "clause_ref": "2.8.1",
+      "quote": "The System Integrator (SI) must design, develop, deploy and maintain a data integration and data exchange platform called the Beneficiary Management System (BMS)",
+      "document": "att05.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As an administrator, I can maintain a unique master record for each citizen through entity resolution",
+     "As a citizen, I can register myself and create a BMS ID",
+     "As a citizen, I can log in with my BMS ID or registered mobile number and see my data pre-filled"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Family and household ID creation",
+    "description": "Families are formed from existing databases or by citizens adding family members who accept the relation, and a family ID is assigned.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 58,
+      "clause_ref": "",
+      "quote": "The system will assign a family id to these families in the beneficiary record, after their convergence.",
+      "document": "att13.pdf",
+      "checked": true
+     },
+     {
+      "page": 16,
+      "clause_ref": "",
+      "quote": "The system will assign a family id to these families in the beneficiary record, after their convergence.",
+      "document": "att05.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a citizen, I can create my family profile by entering the details of family members",
+     "As a family member, I can accept a relation so a family ID is assigned"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Consent management for citizens",
+    "description": "A consent pop-up and records that let citizens approve and revoke sharing of their personal data with departments.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 59,
+      "clause_ref": "",
+      "quote": "it must trigger a pop up that seeks the citizen consent, enabling them to approve and revoke",
+      "document": "att13.pdf",
+      "checked": true
+     },
+     {
+      "page": 17,
+      "clause_ref": "",
+      "quote": "it must trigger a pop up that seeks the citizen consent, enabling them to approve and revoke",
+      "document": "att05.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a citizen, I can approve or revoke consent to share my personal data with departments"
+    ],
+    "units": 1
+   },
+   {
+    "name": "BMS data management and quality",
+    "description": "Loading, cleansing, profiling and validating data from many sources into one unified database, including transliteration of local languages.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 60,
+      "clause_ref": "",
+      "quote": "The solution should identify and correct duplicate records, non-standard data representation and",
+      "document": "att13.pdf",
+      "checked": true
+     },
+     {
+      "page": 18,
+      "clause_ref": "",
+      "quote": "The solution should identify and correct duplicate records, non-standard data representation and other data quality issues.",
+      "document": "att05.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As an administrator, I can load and clean data from department sources into one unified database"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Direct Benefit Transfer system",
+    "description": "A system through which welfare benefits are transferred into citizens' bank accounts.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 55,
+      "clause_ref": "5.7.4",
+      "quote": "Direct Benefit Transfer (DBT) System has to be developed by SI, through which the financial",
+      "document": "att13.pdf",
+      "checked": true
+     },
+     {
+      "page": 13,
+      "clause_ref": "2.7.4",
+      "quote": "Direct Benefit Transfer (DBT) System has to be developed by SI, through which the financial incentives/ welfare benefits are transferred into the bank accounts of the citizens.",
+      "document": "att05.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As an officer, I can transfer welfare benefits to a citizen's bank account"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Beneficiary lists and eligibility suggestions",
+    "description": "Generate lists of beneficiaries and excluded people, and suggest applicable schemes from eligibility criteria.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 62,
+      "clause_ref": "5.8.5",
+      "quote": "BMS should enable the GoM to monitor the end-to-end Lifecyle of a beneficiary.",
+      "document": "att13.pdf",
+      "checked": true
+     },
+     {
+      "page": 20,
+      "clause_ref": "2.8.5",
+      "quote": "BMS should enable the GoM to monitor the end-to-end Lifecyle of a beneficiary.",
+      "document": "att05.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As an officer, I can generate a list of beneficiaries and schemes applicable to them"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Fraud and anomaly alerts",
+    "description": "Analytics that detect anomalies, duplicate registrations and suspicious payments and alert departments.",
+    "category": "ai",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 62,
+      "clause_ref": "5.8.6",
+      "quote": "The solution should be able to detect various anomalies and report it to the department such as",
+      "document": "att13.pdf",
+      "checked": true
+     },
+     {
+      "page": 20,
+      "clause_ref": "2.8.6",
+      "quote": "The solution should be able to detect various anomalies and report it to the department such as",
+      "document": "att05.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As an officer, I can receive alerts about anomalies, duplicate registrations and stuck payments"
+    ],
+    "units": 1
+   },
+   {
+    "name": "BMS data and business APIs",
+    "description": "APIs for authentication, scheme eligibility, citizen data read and write, data upload, de-duplication and data exchange.",
+    "category": "integration",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 63,
+      "clause_ref": "5.8.8",
+      "quote": "The SI should provision data / business APIs needed for the BMS Platform.",
+      "document": "att13.pdf",
+      "checked": true
+     },
+     {
+      "page": 21,
+      "clause_ref": "2.8.8",
+      "quote": "The SI should provision data / business APIs needed for the BMS Platform.",
+      "document": "att05.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a department application, I can read and update citizen data through the BMS APIs"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Scheduled data jobs and reports",
+    "description": "Scheduling of data integration jobs and reports.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 63,
+      "clause_ref": "5.8.7",
+      "quote": "The solution should have capability to schedule data integration jobs and reports.",
+      "document": "att13.pdf",
+      "checked": true
+     },
+     {
+      "page": 21,
+      "clause_ref": "2.8.7",
+      "quote": "The solution should have capability to schedule data integration jobs and reports.",
+      "document": "att05.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As an administrator, I can schedule data integration jobs and reports"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Gamification features",
+    "description": "Personalized gamification features on the citizen platform.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 51,
+      "clause_ref": "5.7.1",
+      "quote": "Platform must have required gamification features.",
+      "document": "att13.pdf",
+      "checked": true
+     },
+     {
+      "page": 9,
+      "clause_ref": "2.7.1",
+      "quote": "Platform must have required gamification features.",
+      "document": "att05.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a citizen, I can take part in gamification features on the platform"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Beneficiary Management System",
+    "description": "A system that provides a state specific beneficiary ID for all citizens to apply to services.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 5,
+      "clause_ref": "",
+      "quote": "Implementation of Beneficiary Management System",
+      "document": "att09.pdf",
+      "checked": true
+     },
+     {
+      "page": 2,
+      "clause_ref": "",
+      "quote": "Identification & implementation of database integration algorithm",
+      "document": "att07.pdf",
+      "checked": true
+     },
+     {
+      "page": 1,
+      "clause_ref": "",
+      "quote": "the GoM envisaged to issue a new beneficiary id to the citizens of the state through implementation of Beneficiary Management System (BMS)",
+      "document": "att02.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a citizen, I can get a state specific beneficiary ID"
+    ],
+    "units": 1
+   },
+   {
+    "name": "State Digital Locker",
+    "description": "A state digital locker where citizens keep their documents.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 5,
+      "clause_ref": "",
+      "quote": "7. State Digital Locker implementation",
+      "document": "att09.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a citizen, I can keep my documents in the state digital locker"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Phased rollout of citizen services",
+    "description": "Digital services are implemented and taken live in four phases covering 50, 100, 150 and 200 services.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 2,
+      "clause_ref": "",
+      "quote": "Implementation of Phase – 1",
+      "document": "att07.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a citizen, I can use each service as it goes live"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Unified digital services portal",
+    "description": "A portal where citizens select government services as per their eligibility and choice.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 1,
+      "clause_ref": "",
+      "quote": "design and implement the Meghalaya One portal (Unified Digital Services portal)",
+      "document": "att02.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a citizen, I can select the services I am eligible for"
+    ],
+    "units": 1
+   }
+  ],
+  "choices": {
+   "platforms": {
+    "value": "web_mobile",
+    "label": "Website and app",
+    "evidence": [
+     {
+      "page": 43,
+      "clause_ref": "5.1",
+      "quote": "platform includes access channels such as mobile app, web portal, WhatsApp chatbot and Mobile",
+      "document": "att13.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "integrations": {
+    "value": "many",
+    "label": "Yes, several",
+    "evidence": [
+     {
+      "page": 58,
+      "clause_ref": "",
+      "quote": "EPIC, Food & Civil Supplies (FCS), MHIS, MGNREGS Job Card databases will be the databases to be collated.",
+      "document": "att13.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "build_type": {
+    "value": "framework",
+    "label": "On a framework with ready admin screens",
+    "evidence": [
+     {
+      "page": 54,
+      "clause_ref": "5.7.2",
+      "quote": "The platfor must be built in low-code/no-code principle and following micro service architecture",
+      "document": "att13.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "hosting": {
+    "value": "indian_cloud",
+    "label": "Government-approved Indian cloud",
+    "evidence": [
+     {
+      "page": 45,
+      "clause_ref": "5.1",
+      "quote": "The environment of cloud shall comply with the requirements",
+      "document": "att13.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "helpdesk_scope": {
+    "value": "yes",
+    "label": "Yes",
+    "evidence": [
+     {
+      "page": 46,
+      "clause_ref": "5.1",
+      "quote": "The SI shall select & arrange for the skilled and qualified manpower required for running the Helpdesk to respond to queries",
+      "document": "att13.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "disaster_site": {
+    "value": "yes",
+    "label": "Yes",
+    "evidence": [
+     {
+      "page": 65,
+      "clause_ref": "5.9",
+      "quote": "Responsible for the replication of data between the proposed Cloud Solution site and DR Site.",
+      "document": "att13.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "security_audit": {
+    "value": "yes",
+    "label": "Yes",
+    "evidence": [
+     {
+      "page": 64,
+      "clause_ref": "5.8.10",
+      "quote": "CERT-IN Audit needs to be done at completion of the development phase and once every year during the support phase.",
+      "document": "att13.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "penalties": {
+    "value": "yes",
+    "label": "Yes",
+    "evidence": [
+     {
+      "page": 73,
+      "clause_ref": "5.15.1",
+      "quote": "In case SLA is not met as required by this RFP, respective penalty would be imposed by deducting a certain",
+      "document": "att13.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "design": {
+    "value": "custom",
+    "label": "No, we want a special design",
+    "evidence": [
+     {
+      "page": 52,
+      "clause_ref": "5.7.1",
+      "quote": "SI must choose high-quality graphics, photography, and illustrations to be used across the website,",
+      "document": "att13.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "launch_help": {
+    "value": "usual",
+    "label": "The usual",
+    "evidence": [
+     {
+      "page": 48,
+      "clause_ref": "5.4",
+      "quote": "Two Training sessions for each department should be there with a batch of 20 officers without having",
+      "document": "att13.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "onsite_period": {
+    "value": "support",
+    "label": "Throughout support",
+    "evidence": [
+     {
+      "page": 74,
+      "clause_ref": "5.17",
+      "quote": "The bids must include a minimum two-year on-site (within the premises of the Client (Department)) Annual",
+      "document": "att13.pdf",
+      "checked": true
+     }
+    ]
+   }
+  },
+  "numbers": {
+   "om_years": {
+    "value": 2,
+    "label": "om_years",
+    "evidence": [
+     {
+      "page": 50,
+      "clause_ref": "5.6",
+      "quote": "The SI is expected to provide the mandatory support services for a period of two year, after the declaration of",
+      "document": "att13.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "languages": {
+    "value": 4,
+    "label": "languages",
+    "evidence": [
+     {
+      "page": 51,
+      "clause_ref": "5.7.1",
+      "quote": "Garo, Khasi, Pnar and English are the required languages.",
+      "document": "att13.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "emd_paise": {
+    "value": 50000000,
+    "label": "emd_rupees",
+    "evidence": [
+     {
+      "page": 7,
+      "clause_ref": "2.5",
+      "quote": "Bidders are required to submit an Earnest Money Deposit (EMD) of Rs. 5,00,000 (Rupees Five Lakhs only, in",
+      "document": "att13.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "pbg_percent": {
+    "value": 0.05,
+    "label": "pbg_percent",
+    "evidence": [
+     {
+      "page": 24,
+      "clause_ref": "ITB 2.17.2",
+      "quote": "Amount of Performance Bank Guarantee shall be 5% of the value of contract.",
+      "document": "att13.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "onsite_staff": {
+    "value": 5,
+    "label": "onsite_staff",
+    "evidence": [
+     {
+      "page": 66,
+      "clause_ref": "5.10",
+      "quote": "Note: All the resources have to be deployed onsite i.e at the location of procuring entity",
+      "document": "att13.pdf",
+      "checked": true
+     }
+    ]
+   }
+  },
+  "unclear_points": [
+   {
+    "topic": "Gamification features not specified",
+    "why": "The document requires gamification but gives no list of features.",
+    "page": 51,
+    "clause_ref": "5.7.1",
+    "quote": "Platform must have required gamification features.",
+    "prebid_query": "Ref clause 5.7.1 (item 7): Please provide the list and scope of the gamification features required, as the details are deferred to the FRS."
+   },
+   {
+    "topic": "Notification content not defined",
+    "why": "Notifications on service delivery are left to be defined later in the FRS.",
+    "page": 55,
+    "clause_ref": "5.7.4",
+    "quote": "Notifications to be sent on the service",
+    "prebid_query": "Ref clause 5.7.4 (item 2): Please share the FRS or list the notification events and channels required on service delivery."
+   },
+   {
+    "topic": "Peak load not stated",
+    "why": "Performance testing refers to an envisaged peak load with a multiplier, but no figure for concurrent users or the multiplier is given.",
+    "page": 46,
+    "clause_ref": "5.1",
+    "quote": "Performance testing of the solution would be carried out using the envisaged peak load with a multiplier",
+    "prebid_query": "Ref clause 5.1 (Implementation, Testing and Go Live): Please state the expected peak concurrent users and the load multiplier to be used for performance testing."
+   },
+   {
+    "topic": "Start of post implementation support",
+    "why": "Support is said to start after three months of user adoption services, while a two-year on-site support period is counted from acceptance after go-live.",
+    "page": 50,
+    "clause_ref": "5.6",
+    "quote": "The post implementation support services will start after the completion of three months of user",
+    "prebid_query": "Ref clauses 5.6 and 5.17: Please clarify the start date of the two-year support period and whether the three months of user adoption services fall inside or outside it."
+   },
+   {
+    "topic": "Go-live timeline differs between payment schedule and SLA",
+    "why": "The payment schedule counts the last go-live in months from the work order, while the SLA counts delivery phases in weeks from the work order, and the two do not match.",
+    "page": 70,
+    "clause_ref": "5.13",
+    "quote": "T6+ 2 Month = T7",
+    "prebid_query": "Ref clauses 5.13 and 5.14.1: Please confirm the final go-live date from the work order, as the payment schedule is in months and the SLA phases are in weeks."
+   },
+   {
+    "topic": "Onsite deployment period of Database Administrator",
+    "why": "The Database Administrator is to be deployed at the client location for the first six months only, while another note says all resources are to be deployed onsite.",
+    "page": 66,
+    "clause_ref": "5.10",
+    "quote": "Note: Resource has to be deployed at the client location, for at least first 6 months since the start of the project",
+    "prebid_query": "Ref clause 5.10: Please clarify whether the Database Administrator is to be onsite only for the first six months, or throughout the project like the other resources."
+   },
+   {
+    "topic": "Gamification features not specified",
+    "why": "The document requires gamification but gives no list of features.",
+    "page": 9,
+    "clause_ref": "2.7.1",
+    "quote": "Platform must have required gamification features.",
+    "prebid_query": "Ref clause 2.7.1 (item 7): Please provide the list and scope of the gamification features required, as the details are deferred to the FRS."
+   },
+   {
+    "topic": "Notification content not defined",
+    "why": "Notifications on service delivery are left to be defined later in the FRS.",
+    "page": 13,
+    "clause_ref": "2.7.4",
+    "quote": "Notifications to be sent on the service delivery (to be defined in FRS).",
+    "prebid_query": "Ref clause 2.7.4 (item 2): Please share the FRS or list the notification events and channels required on service delivery."
+   },
+   {
+    "topic": "Peak load not stated",
+    "why": "Performance testing refers to an envisaged peak load with a multiplier, but no figure for concurrent users or the multiplier is given.",
+    "page": 4,
+    "clause_ref": "5.1",
+    "quote": "Performance testing of the solution would be carried out using the envisaged peak load with a multiplier",
+    "prebid_query": "Ref clause 5.1 (Implementation, Testing and Go Live): Please state the expected peak concurrent users and the load multiplier to be used for performance testing."
+   },
+   {
+    "topic": "Start of post implementation support",
+    "why": "Support is said to start after three months of user adoption services, while a two-year support period is counted from acceptance after go-live.",
+    "page": 8,
+    "clause_ref": "2.6",
+    "quote": "The post implementation support services will start after the completion of three months of user adoption services.",
+    "prebid_query": "Ref clause 2.6: Please clarify the start date of the two-year support period and whether the three months of user adoption services fall inside or outside it."
+   },
+   {
+    "topic": "Delivery deadline",
+    "why": "The completion date is left to the Terms of Reference, which is not part of the document, so the time allowed to go-live is unknown.",
+    "page": 19,
+    "clause_ref": "ITB 2.4",
+    "quote": "The Intended Completion Date is as defined in the Terms of Reference.",
+    "prebid_query": "Please refer to ITB 2.4 of the Data Sheet. Kindly provide the Terms of Reference (Section 5) and confirm the Intended Completion Date, in months from the date of the work order or LOI."
+   },
+   {
+    "topic": "Scope of work and requirements",
+    "why": "The scope of work is said to be in Section 5, Terms of Reference, but no functional requirements are included in the document.",
+    "page": 2,
+    "clause_ref": "2.4",
+    "quote": "Refer Section 5 for detailed description of the assignment/ “Terms of Reference”.",
+    "prebid_query": "Please refer to ITB 2.4(a). Kindly share Section 5, Terms of Reference, giving the detailed scope of work, modules, user counts and deliverables for the Digital Citizen Services and Beneficiary Management System."
+   },
+   {
+    "topic": "Payment terms",
+    "why": "The payment schedule is only referred to as Schedule V and no milestones or percentages are given.",
+    "page": 12,
+    "clause_ref": "2.27",
+    "quote": "decided in accordance with the Terms of Payment Schedule set out as Schedule V of this Agreement.",
+    "prebid_query": "Please refer to clause 2.27(c). Kindly provide Schedule V, Terms of Payment Schedule, with the milestones and the percentage of contract value payable at each."
+   },
+   {
+    "topic": "Procuring entity",
+    "why": "The procuring entity is named differently in the general definitions and in the data sheet.",
+    "page": 1,
+    "clause_ref": "2.2",
+    "quote": "Procuring Entity” means Finance Department through Directorate of Audit, Government of Meghalaya",
+    "prebid_query": "Please refer to ITB 2.2(k) and Data Sheet ITB 2.3(a), which name different Procuring Entities (Finance Department, Directorate of Audit, and the Planning, Investment Promotion and Sustainable Development Department). Kindly confirm which department is the Procuring Entity and signs the Contract."
+   },
+   {
+    "topic": "Key experts and resources",
+    "why": "The required experts are left to the Terms of Reference and the data sheet, which do not list them.",
+    "page": 3,
+    "clause_ref": "2.11",
+    "quote": "Selected Agency shall ensure availability of requested experts/ resources as indicated in the TOR and as",
+    "prebid_query": "Please refer to ITB 2.11. Kindly list the key experts and resources required, with their number, qualifications and period of deployment, including the number of on-site staff for the two-year Annual Technical Support."
+   }
+  ],
+  "dropped_findings": 0,
+  "not_priced": [
+   {
+    "topic": "penalties",
+    "label": "Penalties for delay or downtime (service levels)",
+    "note": "Delay penalties for each implementation phase, service-level penalties on quarterly payments and liquidated damages before go-live.",
+    "evidence": [
+     {
+      "page": 73,
+      "clause_ref": "5.15.1",
+      "quote": "In case SLA is not met as required by this RFP, respective penalty would be imposed by deducting a certain",
+      "document": "att13.pdf",
+      "checked": true
+     },
+     {
+      "page": 11,
+      "clause_ref": "2.26",
+      "quote": "if the penalty cap of 10% is exhausted because of delay in project",
+      "document": "att03.pdf",
+      "checked": true
+     },
+     {
+      "page": 1,
+      "clause_ref": "b)",
+      "quote": "Payments shall be subject to the application of liquidated damages (for period prior to “Go Live”) or SLA",
+      "document": "att07.pdf",
+      "checked": true
+     },
+     {
+      "page": 2,
+      "clause_ref": "",
+      "quote": "The overall penalty for a service performance period should be limited to <10%> of the value of services",
+      "document": "att06.pdf",
+      "checked": true
+     },
+     {
+      "page": 1,
+      "clause_ref": "",
+      "quote": "Time is the essence of the Agreement, and the delivery dates are binding on the Implementation Agency.",
+      "document": "att08.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "topic": "technology",
+    "label": "Required technology or software",
+    "note": "The design must use open-source systems and avoid proprietary software or libraries.",
+    "evidence": [
+     {
+      "page": 53,
+      "clause_ref": "5.7.1",
+      "quote": "The design should be developed on open-source systems. Proprietary software or proprietary library",
+      "document": "att13.pdf",
+      "checked": true
+     },
+     {
+      "page": 11,
+      "clause_ref": "2.7.1",
+      "quote": "The design should be developed on open-source systems. Proprietary software or proprietary library",
+      "document": "att05.pdf",
+      "checked": true
+     },
+     {
+      "page": 15,
+      "clause_ref": "2.34",
+      "quote": "Policy on adoption of Open Source Software for Government of India.",
+      "document": "att03.pdf",
+      "checked": true
+     },
+     {
+      "page": 4,
+      "clause_ref": "",
+      "quote": "Develop workflow based back-end systems on No Code Low Code platform to enable department officers",
+      "document": "att09.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "topic": "data_rules",
+    "label": "Data protection and other rules to follow",
+    "note": "The solution must comply with the cyber security norms and information security policy of the state government.",
+    "evidence": [
+     {
+      "page": 53,
+      "clause_ref": "5.7.1",
+      "quote": "The solution should comply with Cyber Security norms and information security policy of GoM, as is",
+      "document": "att13.pdf",
+      "checked": true
+     },
+     {
+      "page": 11,
+      "clause_ref": "2.7.1",
+      "quote": "The solution should comply with Cyber Security norms and information security policy of GoM, as is",
+      "document": "att05.pdf",
+      "checked": true
+     },
+     {
+      "page": 14,
+      "clause_ref": "2.32",
+      "quote": "The SI shall comply with the technical requirements of the relevant security, safety and other",
+      "document": "att03.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "topic": "team_qualifications",
+    "label": "Required team qualifications or CVs",
+    "note": "Project Manager, System Analysts, Database Administrator and UI/UX Designer with stated qualifications and experience.",
+    "evidence": [
+     {
+      "page": 66,
+      "clause_ref": "5.10",
+      "quote": "Mandatory Deployment throughout the duration of the project",
+      "document": "att13.pdf",
+      "checked": true
+     },
+     {
+      "page": 3,
+      "clause_ref": "2.11",
+      "quote": "substitution request. In such case, a replacement Key Expert shall have equal or better qualifications and",
+      "document": "att03.pdf",
+      "checked": true
+     },
+     {
+      "page": 1,
+      "clause_ref": "2.3",
+      "quote": "Please refer Resource and qualification requirements section",
+      "document": "att12.pdf",
+      "checked": true
+     },
+     {
+      "page": 1,
+      "clause_ref": "",
+      "quote": "Mandatory Deployment throughout the duration of the project",
+      "document": "att11.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "topic": "source_code",
+    "label": "Source code and ownership handover",
+    "note": "Source code and IPR of customized solutions are to be handed over, and source code is to be placed in escrow.",
+    "evidence": [
+     {
+      "page": 14,
+      "clause_ref": "2.22",
+      "quote": "BIDDER is expected to provide source code, transfer IPR and ownership right of only those solutions",
+      "document": "att13.pdf",
+      "checked": true
+     },
+     {
+      "page": 10,
+      "clause_ref": "2.22",
+      "quote": "BIDDER is expected to provide source code, transfer IPR and ownership right of only those solutions",
+      "document": "att03.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "topic": "multi_tenancy",
+    "label": "Several client organisations on one system (multi-tenant)",
+    "note": "The platform is to onboard other departments without disruption.",
+    "evidence": [
+     {
+      "page": 57,
+      "clause_ref": "5.8",
+      "quote": "To build a Platform that can on-board other department without any disruptions.",
+      "document": "att13.pdf",
+      "checked": true
+     },
+     {
+      "page": 15,
+      "clause_ref": "2.8",
+      "quote": "To build a Platform that can on-board other department without any disruptions.",
+      "document": "att05.pdf",
+      "checked": true
+     }
+    ]
+   }
+  ],
+  "payment_terms": {
+   "payments": [
+    {
+     "percent": "0.05",
+     "at_build_fraction": "0.5",
+     "offset_months": "0",
+     "label": "5% during build"
+    },
+    {
+     "percent": "0.05",
+     "at_build_fraction": "0.5",
+     "offset_months": "0",
+     "label": "5% during build"
+    },
+    {
+     "percent": "0.1",
+     "at_build_fraction": "0.5",
+     "offset_months": "0",
+     "label": "10% during build"
+    },
+    {
+     "percent": "0.1",
+     "at_build_fraction": "1",
+     "offset_months": "0",
+     "label": "10% go live"
+    },
+    {
+     "percent": "0.1",
+     "at_build_fraction": "0.5",
+     "offset_months": "0",
+     "label": "10% during build"
+    },
+    {
+     "percent": "0.1",
+     "at_build_fraction": "1",
+     "offset_months": "0",
+     "label": "10% go live"
+    },
+    {
+     "percent": "0.0625",
+     "at_build_fraction": "1",
+     "offset_months": "3.0",
+     "label": "6.25% after go live + 3 months"
+    },
+    {
+     "percent": "0.0625",
+     "at_build_fraction": "1",
+     "offset_months": "6.0",
+     "label": "6.25% after go live + 6 months"
+    },
+    {
+     "percent": "0.0625",
+     "at_build_fraction": "1",
+     "offset_months": "9.0",
+     "label": "6.25% after go live + 9 months"
+    },
+    {
+     "percent": "0.0625",
+     "at_build_fraction": "1",
+     "offset_months": "12.0",
+     "label": "6.25% after go live + 12 months"
+    },
+    {
+     "percent": "0.0625",
+     "at_build_fraction": "1",
+     "offset_months": "15.0",
+     "label": "6.25% after go live + 15 months"
+    },
+    {
+     "percent": "0.0625",
+     "at_build_fraction": "1",
+     "offset_months": "18.0",
+     "label": "6.25% after go live + 18 months"
+    },
+    {
+     "percent": "0.0625",
+     "at_build_fraction": "1",
+     "offset_months": "21.0",
+     "label": "6.25% after go live + 21 months"
+    },
+    {
+     "percent": "0.0625",
+     "at_build_fraction": "1",
+     "offset_months": "24.0",
+     "label": "6.25% after go live + 24 months"
+    }
+   ],
+   "evidence": [
+    {
+     "page": 69,
+     "clause_ref": "5.13",
+     "quote": "Below is the proposed implementation timeline and payment would be as below",
+     "document": "att13.pdf",
+     "checked": true
+    }
+   ]
+  },
+  "scope": [
+   {
+    "key": "audit_log",
+    "label": "Sign-in and user accounts: A record of who did what (audit log)",
+    "status": "explicit",
+    "note": "",
+    "evidence": [
+     {
+      "page": 47,
+      "clause_ref": "5.3",
+      "quote": "The solution should provide for maintaining an audit trail of all the transactions.",
+      "document": "att13.pdf",
+      "checked": true
+     },
+     {
+      "page": 5,
+      "clause_ref": "2.3",
+      "quote": "The solution should provide for maintaining an audit trail of all the transactions.",
+      "document": "att05.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "key": "public_api",
+    "label": "Connections with other systems: An API or webhooks so other systems can use it",
+    "status": "explicit",
+    "note": "",
+    "evidence": [
+     {
+      "page": 57,
+      "clause_ref": "5.8.1",
+      "quote": "The unique identification should be available to all the databases through API / Webservices.",
+      "document": "att13.pdf",
+      "checked": true
+     },
+     {
+      "page": 15,
+      "clause_ref": "2.8.1",
+      "quote": "The unique identification should be available to all the databases through API / Webservices.",
+      "document": "att05.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "key": "data_import",
+    "label": "Connections with other systems: Regular data import or sync from another system",
+    "status": "explicit",
+    "note": "",
+    "evidence": [
+     {
+      "page": 63,
+      "clause_ref": "5.8.9",
+      "quote": "that would feed in data into the BMS database as regular batch uploads.",
+      "document": "att13.pdf",
+      "checked": true
+     },
+     {
+      "page": 21,
+      "clause_ref": "2.8.9",
+      "quote": "that would feed in data into the BMS database as regular batch uploads.",
+      "document": "att05.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "key": "whatsapp",
+    "label": "Notifications: Messages on WhatsApp",
+    "status": "explicit",
+    "note": "",
+    "evidence": [
+     {
+      "page": 63,
+      "clause_ref": "5.8.7",
+      "quote": "The solution should integrate with mail, WhatsApp and SMS gateway through APIs",
+      "document": "att13.pdf",
+      "checked": true
+     },
+     {
+      "page": 21,
+      "clause_ref": "2.8.7",
+      "quote": "The solution should integrate with mail, WhatsApp and SMS gateway through APIs",
+      "document": "att05.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "key": "privacy_rights",
+    "label": "Sign-in and user accounts: Privacy rights: consent, delete my account, download my data (DPDP Act)",
+    "status": "explicit",
+    "note": "Consent can be approved and revoked.",
+    "evidence": [
+     {
+      "page": 63,
+      "clause_ref": "5.8.9",
+      "quote": "The service should enable citizen to provision and revoke consent of sharing personal data to departments.",
+      "document": "att13.pdf",
+      "checked": true
+     },
+     {
+      "page": 21,
+      "clause_ref": "2.8.9",
+      "quote": "The service should enable citizen to provision and revoke consent of sharing personal data to departments.",
+      "document": "att05.pdf",
+      "checked": true
+     },
+     {
+      "page": 5,
+      "clause_ref": "",
+      "quote": "8. Consent Manager 9. Analytical Tools",
+      "document": "att09.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "key": "otp_codes",
+    "label": "Sign-in and user accounts: One-time codes by SMS or email (sign-in or password reset)",
+    "status": "inferred",
+    "note": "Login by registered mobile number is asked for, which usually needs a one-time code.",
+    "evidence": [
+     {
+      "page": 52,
+      "clause_ref": "5.7.1",
+      "quote": "Citizens must be able to login into the Website or Mobile App, using the registered mobile",
+      "document": "att13.pdf",
+      "checked": true
+     },
+     {
+      "page": 10,
+      "clause_ref": "2.7.1",
+      "quote": "Citizens must be able to login into the Website or Mobile App, using the registered mobile",
+      "document": "att05.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "key": "enterprise_sso",
+    "label": "Sign-in and user accounts: Single sign-on with the organisation's own login (SAML / OIDC, Active Directory)",
+    "status": "inferred",
+    "note": "Single sign-on is asked for, but not tied to an organisation directory.",
+    "evidence": [
+     {
+      "page": 47,
+      "clause_ref": "5.3",
+      "quote": "The solution should provide Single-Sign-On features with password encryption using standard protocol",
+      "document": "att13.pdf",
+      "checked": true
+     },
+     {
+      "page": 5,
+      "clause_ref": "2.3",
+      "quote": "The solution should provide Single-Sign-On features with password encryption using standard protocol",
+      "document": "att05.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "key": "monitoring",
+    "label": "Security, compliance and monitoring: Monitoring, logs and alerts",
+    "status": "explicit",
+    "note": "",
+    "evidence": [
+     {
+      "page": 65,
+      "clause_ref": "5.9",
+      "quote": "Access to monitoring tools for measuring the service levels, application performance,",
+      "document": "att13.pdf",
+      "checked": true
+     },
+     {
+      "page": 23,
+      "clause_ref": "2.9",
+      "quote": "Access to monitoring tools for measuring the service levels, application performance,",
+      "document": "att05.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "key": "siem",
+    "label": "Security, compliance and monitoring: Security monitoring (SIEM)",
+    "status": "explicit",
+    "note": "",
+    "evidence": [
+     {
+      "page": 64,
+      "clause_ref": "5.8.10",
+      "quote": "Comprehensive IT security log monitoring service (24x7x365) delivered remotely by leveraging AI / ML",
+      "document": "att13.pdf",
+      "checked": true
+     },
+     {
+      "page": 22,
+      "clause_ref": "2.8.10",
+      "quote": "Comprehensive IT security log monitoring service (24x7x365) delivered remotely by leveraging AI / ML",
+      "document": "att05.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "key": "security_scans",
+    "label": "Security, compliance and monitoring: Automatic security scans of the code",
+    "status": "explicit",
+    "note": "",
+    "evidence": [
+     {
+      "page": 64,
+      "clause_ref": "5.8.10",
+      "quote": "Vulnerability Scan, Network Penetration Test, API / Application Penetration Test, Secure Code Review.",
+      "document": "att13.pdf",
+      "checked": true
+     },
+     {
+      "page": 22,
+      "clause_ref": "2.8.10",
+      "quote": "Vulnerability Scan, Network Penetration Test, API / Application Penetration Test, Secure Code Review.",
+      "document": "att05.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "key": "data_masking",
+    "label": "Security, compliance and monitoring: Masking personal data",
+    "status": "explicit",
+    "note": "",
+    "evidence": [
+     {
+      "page": 64,
+      "clause_ref": "5.8.10",
+      "quote": "The framework should provision data masking of sensitive",
+      "document": "att13.pdf",
+      "checked": true
+     },
+     {
+      "page": 22,
+      "clause_ref": "2.8.10",
+      "quote": "The framework should provision data masking of sensitive",
+      "document": "att05.pdf",
+      "checked": true
+     }
+    ]
+   }
+  ],
+  "scope_set_aside": [],
+  "inventory": null
+ }
+}

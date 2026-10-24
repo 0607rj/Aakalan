@@ -43,3 +43,15 @@ def test_ssl_from_the_client() -> None:
 def test_sentences_split_on_bullets_and_numbers() -> None:
     text = f"{PDF_BULLET} First item.\n{PDF_BULLET} Second item\n1. Third\na) Fourth; fifth"
     assert sentences(text) == ["First item.", "Second item", "Third", "Fourth;", "fifth"]
+
+
+def test_the_client_by_its_own_name() -> None:
+    """The RailTel tender (p.26): the client named, not called "the department"."""
+    quote = (
+        "The application shall be hosted on RailTel’s cloud in DC-DR mode which shall be "
+        "provisioned by RailTel."
+    )
+    assert found(quote) == {"hosting": ("existing", quote, 1)}
+    # a cloud brand or the bidder is not the client
+    assert found("The application shall be hosted on AWS's cloud provisioned by AWS.") == {}
+    assert found("The portal shall be hosted on the bidder's cloud.") == {}

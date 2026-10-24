@@ -1,0 +1,1943 @@
+{
+ "recorded_on": "2026-10-24",
+ "how": "frontend/src/app/estimate/new/review.tsx (before it used the backend pre-fill) server-rendered on each saved reading in tests/fixtures/readings with the India form options; the request it sends when everything is accepted (document_id left out)",
+ "requests": {
+  "gem-canara-bank-chatbot": {
+   "mode": "vendor",
+   "name": "Chatbot Solution for Canara Bank",
+   "country": "india",
+   "features": [
+    "approval_workflow",
+    "dashboards",
+    "ai_chatbot",
+    "payments",
+    "aadhaar_digilocker",
+    "staff_login",
+    "languages",
+    "grievances",
+    "maps",
+    "notifications",
+    "search",
+    "chat",
+    "ai_documents",
+    "ai_voice",
+    "ai_text_sorting",
+    "ai_training"
+   ],
+   "feature_levels": {
+    "ai_chatbot": "advanced",
+    "payments": "basic",
+    "connect_existing": "basic",
+    "dashboards": "standard",
+    "chat": "basic",
+    "grievances": "basic",
+    "maps": "basic",
+    "approval_workflow": "basic"
+   },
+   "feature_units": {},
+   "custom_features": [
+    {
+     "name": "Bank website crawling for bot knowledge",
+     "category": "integration",
+     "size": "S",
+     "found_index": 0,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Voice assistants and IVR deployment",
+     "category": "integration",
+     "size": "S",
+     "found_index": 1,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Virtual personality and animated character",
+     "category": "module",
+     "size": "S",
+     "found_index": 2,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Chatbot on web, app and social channels",
+     "category": "integration",
+     "size": "S",
+     "found_index": 3,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Data warehouse integration",
+     "category": "integration",
+     "size": "S",
+     "found_index": 4,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Commerce and booking services in chat",
+     "category": "integration",
+     "size": "S",
+     "found_index": 5,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Fund transfers through chat",
+     "category": "integration",
+     "size": "S",
+     "found_index": 6,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Account opening through chat",
+     "category": "module",
+     "size": "S",
+     "found_index": 7,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Account statements through chat",
+     "category": "module",
+     "size": "S",
+     "found_index": 8,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Card blocking and debit card request",
+     "category": "module",
+     "size": "S",
+     "found_index": 9,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Interest rate, loan and deposit calculators",
+     "category": "module",
+     "size": "S",
+     "found_index": 10,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Marketing and advisory services in chat",
+     "category": "module",
+     "size": "S",
+     "found_index": 11,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Customer surveys and feedback",
+     "category": "module",
+     "size": "S",
+     "found_index": 12,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Personalised replies from past interactions",
+     "category": "ai",
+     "size": "S",
+     "found_index": 13,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Content management for bot content",
+     "category": "module",
+     "size": "S",
+     "found_index": 14,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "No-code bot builder with templates",
+     "category": "module",
+     "size": "S",
+     "found_index": 15,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Digital avatar for the chatbot",
+     "category": "ai",
+     "size": "S",
+     "found_index": 16,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Voice channel through IVR and outbound calls",
+     "category": "integration",
+     "size": "S",
+     "found_index": 17,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Bot and speech analytics",
+     "category": "report",
+     "size": "S",
+     "found_index": 18,
+     "catalog_key": null,
+     "units": 1
+    }
+   ],
+   "choices": {
+    "version": "full",
+    "platforms": "web",
+    "scale": "up_to_10k",
+    "integrations": "many",
+    "old_data": "no",
+    "build_type": "ready_product",
+    "hosting": "aws",
+    "support_years": "per_year",
+    "helpdesk_scope": "no",
+    "support_hours": "on_call",
+    "availability": "normal",
+    "disaster_site": "yes",
+    "penalties": "yes",
+    "web_domain": "commercial",
+    "ssl_certificate": "free",
+    "security_audit": "yes",
+    "reporting": "yes",
+    "design": "some",
+    "chatbot_task": "simple",
+    "chatbot_volume": "by_users",
+    "launch_help": "usual",
+    "onsite_period": "support"
+   },
+   "scope": [
+    "public_api",
+    "whatsapp",
+    "push",
+    "monitoring",
+    "chatbot_records",
+    "chatbot_indian_languages"
+   ],
+   "overrides": {
+    "peak_concurrent_users": 1000,
+    "om_years": 5,
+    "deadline_months": 2,
+    "languages": 10
+   },
+   "not_included": [],
+   "answered": [
+    "integrations",
+    "build_type",
+    "hosting",
+    "support_hours",
+    "availability",
+    "disaster_site",
+    "penalties",
+    "security_audit",
+    "reporting",
+    "chatbot_task",
+    "onsite_period"
+   ],
+   "payment_schedule": null
+  },
+  "gem-cpcb-epr-battery-portal": {
+   "mode": "vendor",
+   "name": "Battery EPR Portal for CPCB",
+   "country": "india",
+   "features": [
+    "online_forms",
+    "approval_workflow",
+    "documents",
+    "dashboards",
+    "payments",
+    "languages",
+    "public_website",
+    "notifications"
+   ],
+   "feature_levels": {
+    "online_forms": "basic",
+    "approval_workflow": "standard",
+    "documents": "basic",
+    "dashboards": "standard",
+    "payments": "basic",
+    "connect_existing": "basic",
+    "public_website": "basic",
+    "mobile_app": "standard"
+   },
+   "feature_units": {},
+   "custom_features": [
+    {
+     "name": "KYC validation through APIs",
+     "category": "integration",
+     "size": "S",
+     "found_index": 0,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Recycler battery collection entry",
+     "category": "module",
+     "size": "S",
+     "found_index": 1,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Recycler EPR certificate generation",
+     "category": "module",
+     "size": "S",
+     "found_index": 2,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "EPR certificate wallet and exchange",
+     "category": "module",
+     "size": "M",
+     "found_index": 3,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Data sharing with trading platform",
+     "category": "integration",
+     "size": "S",
+     "found_index": 4,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Dynamic annual EPR target calculation",
+     "category": "module",
+     "size": "S",
+     "found_index": 5,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Annual and quarterly returns filing",
+     "category": "module",
+     "size": "S",
+     "found_index": 6,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Environmental compensation calculation",
+     "category": "module",
+     "size": "S",
+     "found_index": 7,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Third-party audit management",
+     "category": "module",
+     "size": "S",
+     "found_index": 8,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Annual audit details submission",
+     "category": "module",
+     "size": "S",
+     "found_index": 9,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Battery waste EPR portal modules",
+     "category": "module",
+     "size": "S",
+     "found_index": 10,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "API connections to validate applicant information",
+     "category": "integration",
+     "size": "S",
+     "found_index": 11,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "KYC API integration",
+     "category": "integration",
+     "size": "S",
+     "found_index": 12,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "EPR certificate generation and exchange",
+     "category": "module",
+     "size": "S",
+     "found_index": 13,
+     "catalog_key": null,
+     "units": 1
+    }
+   ],
+   "choices": {
+    "version": "full",
+    "platforms": "web_mobile",
+    "scale": "up_to_10k",
+    "integrations": "many",
+    "old_data": "no",
+    "build_type": "framework",
+    "hosting": "existing",
+    "support_years": "per_year",
+    "helpdesk_scope": "yes",
+    "support_hours": "always",
+    "availability": "basic",
+    "disaster_site": "yes",
+    "penalties": "yes",
+    "web_domain": "commercial",
+    "ssl_certificate": "free",
+    "security_audit": "yes",
+    "reporting": "yes",
+    "design": "some",
+    "chatbot_task": "simple",
+    "chatbot_volume": "by_users",
+    "launch_help": "usual",
+    "onsite_period": "support"
+   },
+   "scope": [
+    "otp_codes",
+    "data_import",
+    "documents_esign"
+   ],
+   "overrides": {
+    "users_total": 3500,
+    "om_years": 5,
+    "deadline_months": 6,
+    "onsite_staff": 2,
+    "emd_paise": 150000000,
+    "pbg_percent": 0.1
+   },
+   "not_included": [],
+   "answered": [
+    "platforms",
+    "scale",
+    "integrations",
+    "build_type",
+    "hosting",
+    "helpdesk_scope",
+    "support_hours",
+    "availability",
+    "disaster_site",
+    "penalties",
+    "security_audit",
+    "reporting",
+    "launch_help",
+    "onsite_period"
+   ],
+   "payment_schedule": [
+    {
+     "at_build_fraction": "0.5",
+     "offset_months": "0",
+     "percent": "0.1"
+    },
+    {
+     "at_build_fraction": "1",
+     "offset_months": "0",
+     "percent": "0.3"
+    },
+    {
+     "at_build_fraction": "1",
+     "offset_months": "0",
+     "percent": "0.3"
+    },
+    {
+     "at_build_fraction": "0.5",
+     "offset_months": "0",
+     "percent": "0.1"
+    },
+    {
+     "at_build_fraction": "1",
+     "offset_months": "0.0",
+     "percent": "0.1"
+    },
+    {
+     "at_build_fraction": "1",
+     "offset_months": "0.0",
+     "percent": "0.05"
+    },
+    {
+     "at_build_fraction": "1",
+     "offset_months": "60.0",
+     "percent": "0.05"
+    }
+   ]
+  },
+  "gem-cpcb-epr-ewaste-portal": {
+   "mode": "vendor",
+   "name": "Development of Extended Producers Responsibility (EPR) Portal under E-Waste (Management) Rules 2022",
+   "country": "india",
+   "features": [
+    "online_forms",
+    "approval_workflow",
+    "dashboards",
+    "ai_chatbot",
+    "payments",
+    "languages",
+    "public_website",
+    "notifications"
+   ],
+   "feature_levels": {
+    "online_forms": "basic",
+    "approval_workflow": "basic",
+    "dashboards": "standard",
+    "payments": "basic",
+    "connect_existing": "basic",
+    "public_website": "basic",
+    "mobile_app": "advanced",
+    "ai_chatbot": "basic",
+    "old_data": "basic"
+   },
+   "feature_units": {
+    "mobile_app": 2
+   },
+   "custom_features": [
+    {
+     "name": "EPR obligations for producers",
+     "category": "module",
+     "size": "S",
+     "found_index": 0,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "EPR and refurbishing certificate generation",
+     "category": "module",
+     "size": "M",
+     "found_index": 1,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Certificate transfer and obligation adjustment",
+     "category": "module",
+     "size": "S",
+     "found_index": 2,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Environmental compensation",
+     "category": "module",
+     "size": "S",
+     "found_index": 3,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Third-party audit of EPR compliance",
+     "category": "module",
+     "size": "M",
+     "found_index": 4,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Quarterly waste reports collection",
+     "category": "report",
+     "size": "S",
+     "found_index": 5,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Data-fetch APIs for SPCBs and stakeholders",
+     "category": "integration",
+     "size": "S",
+     "found_index": 6,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "E-waste knowledge base",
+     "category": "module",
+     "size": "S",
+     "found_index": 7,
+     "catalog_key": null,
+     "units": 1
+    }
+   ],
+   "choices": {
+    "version": "full",
+    "platforms": "web_mobile",
+    "scale": "up_to_10k",
+    "integrations": "many",
+    "old_data": "little",
+    "build_type": "custom",
+    "hosting": "existing",
+    "support_years": "per_year",
+    "helpdesk_scope": "yes",
+    "support_hours": "always",
+    "availability": "basic",
+    "disaster_site": "yes",
+    "penalties": "yes",
+    "web_domain": "client",
+    "ssl_certificate": "free",
+    "security_audit": "yes",
+    "reporting": "yes",
+    "design": "some",
+    "chatbot_task": "simple",
+    "chatbot_volume": "by_users",
+    "launch_help": "usual",
+    "onsite_period": "support"
+   },
+   "scope": [],
+   "overrides": {
+    "om_years": 5,
+    "onsite_staff": 1,
+    "support_staff": 1,
+    "emd_paise": 150000000,
+    "pbg_percent": 0.1
+   },
+   "not_included": [],
+   "answered": [
+    "platforms",
+    "integrations",
+    "hosting",
+    "helpdesk_scope",
+    "support_hours",
+    "availability",
+    "disaster_site",
+    "penalties",
+    "web_domain",
+    "security_audit",
+    "reporting",
+    "chatbot_task",
+    "onsite_period",
+    "old_data"
+   ],
+   "payment_schedule": null
+  },
+  "gem-cpcb-epr-waste-tyre-portal": {
+   "mode": "vendor",
+   "name": "Development of Portal for Management of Waste Tyre through the Extended Producers Responsibility (EPR) Regime",
+   "country": "india",
+   "features": [
+    "online_forms",
+    "approval_workflow",
+    "dashboards",
+    "ai_chatbot",
+    "payments",
+    "languages",
+    "public_website",
+    "notifications"
+   ],
+   "feature_levels": {
+    "online_forms": "standard",
+    "approval_workflow": "basic",
+    "dashboards": "basic",
+    "ai_chatbot": "basic",
+    "payments": "basic",
+    "connect_existing": "basic",
+    "public_website": "basic",
+    "mobile_app": "advanced"
+   },
+   "feature_units": {},
+   "custom_features": [
+    {
+     "name": "Geo-tagged locations, photos and videos",
+     "category": "module",
+     "size": "S",
+     "found_index": 0,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "EPR obligations for producers",
+     "category": "module",
+     "size": "S",
+     "found_index": 1,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "EPR certificates for recyclers",
+     "category": "module",
+     "size": "S",
+     "found_index": 2,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Retreading certificates for retreaders",
+     "category": "module",
+     "size": "S",
+     "found_index": 3,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Certificate trading and obligation adjustment",
+     "category": "module",
+     "size": "M",
+     "found_index": 4,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Activity sheets",
+     "category": "module",
+     "size": "S",
+     "found_index": 5,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Returns and statistical reports",
+     "category": "report",
+     "size": "M",
+     "found_index": 6,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Environmental compensation",
+     "category": "module",
+     "size": "S",
+     "found_index": 7,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Audit of EPR compliance",
+     "category": "module",
+     "size": "M",
+     "found_index": 8,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Integration with government data sources",
+     "category": "integration",
+     "size": "S",
+     "found_index": 9,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Auto-fill tools such as iBOT",
+     "category": "module",
+     "size": "S",
+     "found_index": 10,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Waste tyre knowledge base",
+     "category": "module",
+     "size": "S",
+     "found_index": 11,
+     "catalog_key": null,
+     "units": 1
+    }
+   ],
+   "choices": {
+    "version": "full",
+    "platforms": "web_mobile",
+    "scale": "up_to_10k",
+    "integrations": "many",
+    "old_data": "no",
+    "build_type": "custom",
+    "hosting": "existing",
+    "support_years": "per_year",
+    "helpdesk_scope": "yes",
+    "support_hours": "office",
+    "availability": "basic",
+    "disaster_site": "yes",
+    "penalties": "yes",
+    "web_domain": "client",
+    "ssl_certificate": "free",
+    "security_audit": "yes",
+    "reporting": "yes",
+    "design": "some",
+    "chatbot_task": "simple",
+    "chatbot_volume": "by_users",
+    "launch_help": "usual",
+    "onsite_period": "support"
+   },
+   "scope": [
+    "workflow_audit",
+    "data_import",
+    "chatbot_indian_languages"
+   ],
+   "overrides": {
+    "om_years": 6,
+    "deadline_months": 3,
+    "onsite_staff": 3,
+    "emd_paise": 150000000,
+    "pbg_percent": 0.1
+   },
+   "not_included": [],
+   "answered": [
+    "platforms",
+    "integrations",
+    "hosting",
+    "helpdesk_scope",
+    "availability",
+    "disaster_site",
+    "penalties",
+    "web_domain",
+    "security_audit",
+    "reporting",
+    "onsite_period"
+   ],
+   "payment_schedule": [
+    {
+     "at_build_fraction": "0.5",
+     "offset_months": "0",
+     "percent": "0.1"
+    },
+    {
+     "at_build_fraction": "1",
+     "offset_months": "0",
+     "percent": "0.3"
+    },
+    {
+     "at_build_fraction": "1",
+     "offset_months": "0",
+     "percent": "0.3"
+    },
+    {
+     "at_build_fraction": "1",
+     "offset_months": "0.0",
+     "percent": "0.2"
+    },
+    {
+     "at_build_fraction": "1",
+     "offset_months": "72.0",
+     "percent": "0.05"
+    },
+    {
+     "at_build_fraction": "1",
+     "offset_months": "72.0",
+     "percent": "0.05"
+    }
+   ]
+  },
+  "gem-iob-chatbot-whatsapp-banking": {
+   "mode": "vendor",
+   "name": "Supply, Implementation and Maintenance of Chatbot & WhatsApp Banking",
+   "country": "india",
+   "features": [
+    "approval_workflow",
+    "dashboards",
+    "ai_chatbot",
+    "aadhaar_digilocker",
+    "staff_login",
+    "languages",
+    "grievances",
+    "maps",
+    "notifications",
+    "chat",
+    "ai_documents",
+    "ai_voice",
+    "ai_text_sorting"
+   ],
+   "feature_levels": {
+    "ai_chatbot": "advanced",
+    "chat": "standard",
+    "dashboards": "standard",
+    "connect_existing": "basic",
+    "maps": "basic",
+    "approval_workflow": "basic",
+    "grievances": "basic"
+   },
+   "feature_units": {},
+   "custom_features": [
+    {
+     "name": "WhatsApp Business account set-up and API",
+     "category": "integration",
+     "size": "M",
+     "found_index": 0,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "WhatsApp banking conversation journeys",
+     "category": "module",
+     "size": "M",
+     "found_index": 1,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "WhatsApp push campaign manager",
+     "category": "module",
+     "size": "M",
+     "found_index": 2,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "WhatsApp opt-in, opt-out and block list",
+     "category": "module",
+     "size": "S",
+     "found_index": 3,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "WhatsApp messaging API and console",
+     "category": "integration",
+     "size": "S",
+     "found_index": 4,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Account enquiries and statements",
+     "category": "module",
+     "size": "M",
+     "found_index": 5,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Card services",
+     "category": "module",
+     "size": "M",
+     "found_index": 6,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Service requests and profile updates",
+     "category": "module",
+     "size": "M",
+     "found_index": 7,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Fund transfers, bill payments and recharges",
+     "category": "integration",
+     "size": "M",
+     "found_index": 8,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Commerce services through the bot",
+     "category": "integration",
+     "size": "S",
+     "found_index": 9,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Product applications and on-boarding",
+     "category": "module",
+     "size": "L",
+     "found_index": 10,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Calculators and rate information",
+     "category": "module",
+     "size": "S",
+     "found_index": 11,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Customer surveys, feedback and offers",
+     "category": "module",
+     "size": "M",
+     "found_index": 12,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Multi-channel deployment of the bot",
+     "category": "integration",
+     "size": "M",
+     "found_index": 13,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Voice biometric authentication",
+     "category": "integration",
+     "size": "S",
+     "found_index": 14,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Employee assistant (B2E)",
+     "category": "module",
+     "size": "S",
+     "found_index": 15,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Low-code designer for bot flows and forms",
+     "category": "module",
+     "size": "S",
+     "found_index": 16,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Welcome kit delivery for new accounts",
+     "category": "module",
+     "size": "S",
+     "found_index": 17,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Disable copy-paste and screen capture",
+     "category": "module",
+     "size": "S",
+     "found_index": 18,
+     "catalog_key": null,
+     "units": 1
+    }
+   ],
+   "choices": {
+    "version": "full",
+    "platforms": "web",
+    "scale": "up_to_10k",
+    "integrations": "many",
+    "old_data": "no",
+    "build_type": "ready_product",
+    "hosting": "existing",
+    "support_years": "per_year",
+    "helpdesk_scope": "yes",
+    "support_hours": "always",
+    "availability": "normal",
+    "disaster_site": "yes",
+    "penalties": "yes",
+    "web_domain": "commercial",
+    "ssl_certificate": "free",
+    "security_audit": "yes",
+    "reporting": "no",
+    "design": "some",
+    "chatbot_task": "advanced",
+    "chatbot_volume": "by_users",
+    "launch_help": "usual",
+    "onsite_period": "support"
+   },
+   "scope": [
+    "otp_codes",
+    "two_step_sign_in",
+    "audit_log",
+    "whatsapp",
+    "push",
+    "chatbot_indian_languages",
+    "chatbot_records",
+    "monitoring",
+    "siem",
+    "security_scans",
+    "data_masking",
+    "secrets",
+    "compliance"
+   ],
+   "overrides": {
+    "om_years": 5,
+    "deadline_months": 3,
+    "languages": 11,
+    "onsite_staff": 1,
+    "pbg_percent": 0.05
+   },
+   "not_included": [],
+   "answered": [
+    "integrations",
+    "build_type",
+    "hosting",
+    "helpdesk_scope",
+    "support_hours",
+    "availability",
+    "disaster_site",
+    "penalties",
+    "security_audit",
+    "chatbot_task"
+   ],
+   "payment_schedule": null
+  },
+  "gem-iob-corporate-website": {
+   "mode": "vendor",
+   "name": "Corporate website revamp for Indian Overseas Bank (iob.in)",
+   "country": "india",
+   "features": [
+    "online_forms",
+    "approval_workflow",
+    "documents",
+    "dashboards",
+    "languages",
+    "accessibility",
+    "public_website",
+    "maps",
+    "notifications",
+    "search"
+   ],
+   "feature_levels": {
+    "public_website": "advanced",
+    "maps": "basic",
+    "approval_workflow": "standard",
+    "documents": "basic",
+    "dashboards": "basic",
+    "online_forms": "standard",
+    "connect_existing": "basic",
+    "old_data": "basic"
+   },
+   "feature_units": {},
+   "custom_features": [
+    {
+     "name": "Loan and financial calculators with charts",
+     "category": "module",
+     "size": "S",
+     "found_index": 0,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Social media integration and sharing",
+     "category": "integration",
+     "size": "S",
+     "found_index": 1,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Bank chatbot integration",
+     "category": "integration",
+     "size": "S",
+     "found_index": 2,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Visitor personalisation and tracking",
+     "category": "module",
+     "size": "S",
+     "found_index": 3,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Visitor counter and last visited page",
+     "category": "module",
+     "size": "S",
+     "found_index": 4,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Ongoing SEO service and ranking reports",
+     "category": "module",
+     "size": "S",
+     "found_index": 5,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "DDoS, WAF and bot protection",
+     "category": "module",
+     "size": "S",
+     "found_index": 6,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Privileged access control for servers",
+     "category": "module",
+     "size": "S",
+     "found_index": 7,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Visual and HTML page editor",
+     "category": "module",
+     "size": "S",
+     "found_index": 8,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Content versions, rollback and recovery",
+     "category": "module",
+     "size": "M",
+     "found_index": 9,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Scheduled publishing and expiry",
+     "category": "module",
+     "size": "S",
+     "found_index": 10,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Page templates and reusable components",
+     "category": "module",
+     "size": "S",
+     "found_index": 11,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Grammar, spelling and keyword checks",
+     "category": "module",
+     "size": "S",
+     "found_index": 12,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Bulk import and export of content",
+     "category": "module",
+     "size": "S",
+     "found_index": 13,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "CMS events, FAQ, glossary, polls and RSS",
+     "category": "module",
+     "size": "M",
+     "found_index": 14,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Fine-grained user and permission management",
+     "category": "module",
+     "size": "S",
+     "found_index": 15,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Tender, empanelment and e-auction section",
+     "category": "module",
+     "size": "S",
+     "found_index": 16,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Card hotlisting request module",
+     "category": "module",
+     "size": "S",
+     "found_index": 17,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Take over and maintain the current website",
+     "category": "module",
+     "size": "S",
+     "found_index": 18,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Theme customisation (optional)",
+     "category": "module",
+     "size": "S",
+     "found_index": 19,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Scanned document warning (optional)",
+     "category": "module",
+     "size": "S",
+     "found_index": 20,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Online support request logging",
+     "category": "module",
+     "size": "S",
+     "found_index": 21,
+     "catalog_key": null,
+     "units": 1
+    }
+   ],
+   "choices": {
+    "version": "full",
+    "platforms": "web",
+    "scale": "up_to_10k",
+    "integrations": "one_two",
+    "old_data": "little",
+    "build_type": "cms",
+    "hosting": "aws",
+    "support_years": "per_year",
+    "helpdesk_scope": "yes",
+    "support_hours": "on_call",
+    "availability": "critical",
+    "disaster_site": "yes",
+    "penalties": "yes",
+    "web_domain": "commercial",
+    "ssl_certificate": "free",
+    "security_audit": "yes",
+    "reporting": "no",
+    "design": "custom",
+    "chatbot_task": "simple",
+    "chatbot_volume": "by_users",
+    "launch_help": "usual",
+    "onsite_period": "support"
+   },
+   "scope": [
+    "audit_log",
+    "seo",
+    "monitoring",
+    "siem",
+    "security_scans",
+    "data_masking",
+    "compliance",
+    "public_api",
+    "push",
+    "workflow_audit",
+    "workflow_alerts"
+   ],
+   "overrides": {
+    "om_years": 5,
+    "deadline_months": 4,
+    "languages": 2,
+    "onsite_staff": 1,
+    "emd_paise": 240000000,
+    "pbg_percent": 0.05
+   },
+   "not_included": [],
+   "answered": [
+    "platforms",
+    "build_type",
+    "helpdesk_scope",
+    "support_hours",
+    "availability",
+    "disaster_site",
+    "penalties",
+    "security_audit",
+    "design",
+    "launch_help",
+    "onsite_period",
+    "integrations",
+    "old_data"
+   ],
+   "payment_schedule": [
+    {
+     "at_build_fraction": "1",
+     "offset_months": "0",
+     "percent": "0.6"
+    },
+    {
+     "at_build_fraction": "1",
+     "offset_months": "3.0",
+     "percent": "0.4"
+    }
+   ]
+  },
+  "gem-iob-trade-finance-portal": {
+   "mode": "vendor",
+   "name": "Trade Finance Customer Portal",
+   "country": "india",
+   "features": [
+    "online_forms",
+    "approval_workflow",
+    "documents",
+    "dashboards",
+    "ai_chatbot",
+    "staff_login",
+    "notifications"
+   ],
+   "feature_levels": {
+    "online_forms": "standard",
+    "approval_workflow": "standard",
+    "documents": "standard",
+    "dashboards": "standard",
+    "connect_existing": "standard",
+    "ai_chatbot": "basic"
+   },
+   "feature_units": {},
+   "custom_features": [
+    {
+     "name": "Letters of credit requests and life cycle",
+     "category": "module",
+     "size": "M",
+     "found_index": 0,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Bank guarantees and undertakings",
+     "category": "module",
+     "size": "S",
+     "found_index": 1,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Bills, collections and bill financing",
+     "category": "module",
+     "size": "M",
+     "found_index": 2,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Trade remittances",
+     "category": "module",
+     "size": "S",
+     "found_index": 3,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Trade loans, buyer's credit and export finance",
+     "category": "module",
+     "size": "S",
+     "found_index": 4,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Compliance and sanction screening",
+     "category": "integration",
+     "size": "M",
+     "found_index": 5,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "SWIFT messaging interface",
+     "category": "integration",
+     "size": "S",
+     "found_index": 6,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Workflow and rule designer",
+     "category": "module",
+     "size": "S",
+     "found_index": 7,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Queue management and turn-around-time monitoring",
+     "category": "module",
+     "size": "M",
+     "found_index": 8,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Online document examination and discrepancy handling",
+     "category": "module",
+     "size": "M",
+     "found_index": 9,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Customer groups and multi-client access",
+     "category": "module",
+     "size": "S",
+     "found_index": 10,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Credit limit hierarchy",
+     "category": "module",
+     "size": "S",
+     "found_index": 11,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Charges customization",
+     "category": "module",
+     "size": "S",
+     "found_index": 12,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Templates, static data and clause library",
+     "category": "module",
+     "size": "S",
+     "found_index": 13,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Calendar, due dates and reminders",
+     "category": "module",
+     "size": "S",
+     "found_index": 14,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Real-time transaction tracking",
+     "category": "module",
+     "size": "S",
+     "found_index": 15,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Electronic guarantee and letter of credit generation",
+     "category": "module",
+     "size": "S",
+     "found_index": 16,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Advices, letters and message generation",
+     "category": "module",
+     "size": "S",
+     "found_index": 17,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Duplicate check",
+     "category": "module",
+     "size": "S",
+     "found_index": 18,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Bulk and file upload of requests",
+     "category": "module",
+     "size": "S",
+     "found_index": 19,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Document and data extraction and signature verification",
+     "category": "ai",
+     "size": "S",
+     "found_index": 20,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Advanced login security checks",
+     "category": "module",
+     "size": "S",
+     "found_index": 21,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Multi-country and multi-currency handling",
+     "category": "module",
+     "size": "S",
+     "found_index": 22,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Home page for bank products and trade information",
+     "category": "module",
+     "size": "S",
+     "found_index": 23,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "FAQ repository with suggestions",
+     "category": "module",
+     "size": "S",
+     "found_index": 24,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Branch observations, trade memo and deviation tracking",
+     "category": "module",
+     "size": "S",
+     "found_index": 25,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Branch-initiated requests for customers",
+     "category": "module",
+     "size": "S",
+     "found_index": 26,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Document preparation and e-presentment",
+     "category": "module",
+     "size": "S",
+     "found_index": 27,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Session logs and security activity reports",
+     "category": "report",
+     "size": "S",
+     "found_index": 28,
+     "catalog_key": null,
+     "units": 1
+    }
+   ],
+   "choices": {
+    "version": "full",
+    "platforms": "web",
+    "scale": "up_to_10k",
+    "integrations": "many",
+    "old_data": "no",
+    "build_type": "ready_product",
+    "hosting": "existing",
+    "support_years": "per_year",
+    "helpdesk_scope": "yes",
+    "support_hours": "on_call",
+    "availability": "high",
+    "disaster_site": "yes",
+    "penalties": "yes",
+    "web_domain": "commercial",
+    "ssl_certificate": "free",
+    "security_audit": "yes",
+    "reporting": "no",
+    "design": "some",
+    "chatbot_task": "simple",
+    "chatbot_volume": "by_users",
+    "launch_help": "usual",
+    "onsite_period": "support"
+   },
+   "scope": [
+    "otp_codes",
+    "two_step_sign_in",
+    "audit_log",
+    "public_api",
+    "workflow_audit",
+    "workflow_reports",
+    "documents_audit",
+    "documents_esign",
+    "monitoring"
+   ],
+   "overrides": {
+    "om_years": 5,
+    "onsite_staff": 4,
+    "emd_paise": 250000000,
+    "pbg_percent": 0.05
+   },
+   "not_included": [],
+   "answered": [
+    "platforms",
+    "integrations",
+    "build_type",
+    "hosting",
+    "helpdesk_scope",
+    "support_hours",
+    "availability",
+    "disaster_site",
+    "penalties",
+    "security_audit",
+    "onsite_period"
+   ],
+   "payment_schedule": null
+  },
+  "gem-meghalaya-citizen-services-bms": {
+   "mode": "vendor",
+   "name": "Selection of Implementation Agency for Digital Citizen Services and Beneficiary Management System (ONE Meghalaya)",
+   "country": "india",
+   "features": [
+    "online_forms",
+    "approval_workflow",
+    "documents",
+    "dashboards",
+    "ai_chatbot",
+    "aadhaar_digilocker",
+    "languages",
+    "accessibility",
+    "grievances",
+    "notifications",
+    "search",
+    "offline_app",
+    "ai_recommend"
+   ],
+   "feature_levels": {
+    "mobile_app": "advanced",
+    "online_forms": "basic",
+    "approval_workflow": "basic",
+    "documents": "basic",
+    "dashboards": "standard",
+    "ai_chatbot": "basic",
+    "connect_existing": "basic",
+    "grievances": "basic",
+    "ai_recommend": "basic",
+    "old_data": "basic"
+   },
+   "feature_units": {
+    "mobile_app": 2
+   },
+   "custom_features": [
+    {
+     "name": "Beneficiary Management System master record",
+     "category": "module",
+     "size": "S",
+     "found_index": 0,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Family and household ID creation",
+     "category": "module",
+     "size": "S",
+     "found_index": 1,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Consent management for citizens",
+     "category": "module",
+     "size": "S",
+     "found_index": 2,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "BMS data management and quality",
+     "category": "module",
+     "size": "S",
+     "found_index": 3,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Direct Benefit Transfer system",
+     "category": "module",
+     "size": "S",
+     "found_index": 4,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Beneficiary lists and eligibility suggestions",
+     "category": "module",
+     "size": "S",
+     "found_index": 5,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Fraud and anomaly alerts",
+     "category": "ai",
+     "size": "S",
+     "found_index": 6,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "BMS data and business APIs",
+     "category": "integration",
+     "size": "S",
+     "found_index": 7,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Scheduled data jobs and reports",
+     "category": "module",
+     "size": "S",
+     "found_index": 8,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Gamification features",
+     "category": "module",
+     "size": "S",
+     "found_index": 9,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Beneficiary Management System",
+     "category": "module",
+     "size": "S",
+     "found_index": 10,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "State Digital Locker",
+     "category": "module",
+     "size": "S",
+     "found_index": 11,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Phased rollout of citizen services",
+     "category": "module",
+     "size": "S",
+     "found_index": 12,
+     "catalog_key": null,
+     "units": 1
+    },
+    {
+     "name": "Unified digital services portal",
+     "category": "module",
+     "size": "S",
+     "found_index": 13,
+     "catalog_key": null,
+     "units": 1
+    }
+   ],
+   "choices": {
+    "version": "full",
+    "platforms": "web_mobile",
+    "scale": "up_to_10k",
+    "integrations": "many",
+    "old_data": "little",
+    "build_type": "framework",
+    "hosting": "indian_cloud",
+    "support_years": "per_year",
+    "helpdesk_scope": "yes",
+    "support_hours": "office",
+    "availability": "normal",
+    "disaster_site": "yes",
+    "penalties": "yes",
+    "web_domain": "commercial",
+    "ssl_certificate": "free",
+    "security_audit": "yes",
+    "reporting": "no",
+    "design": "custom",
+    "chatbot_task": "simple",
+    "chatbot_volume": "by_users",
+    "launch_help": "usual",
+    "onsite_period": "support"
+   },
+   "scope": [
+    "audit_log",
+    "public_api",
+    "data_import",
+    "whatsapp",
+    "privacy_rights",
+    "monitoring",
+    "siem",
+    "security_scans",
+    "data_masking"
+   ],
+   "overrides": {
+    "om_years": 2,
+    "languages": 4,
+    "onsite_staff": 5,
+    "emd_paise": 50000000,
+    "pbg_percent": 0.05
+   },
+   "not_included": [],
+   "answered": [
+    "platforms",
+    "integrations",
+    "build_type",
+    "hosting",
+    "helpdesk_scope",
+    "disaster_site",
+    "penalties",
+    "security_audit",
+    "design",
+    "launch_help",
+    "onsite_period",
+    "old_data"
+   ],
+   "payment_schedule": [
+    {
+     "at_build_fraction": "0.5",
+     "offset_months": "0",
+     "percent": "0.05"
+    },
+    {
+     "at_build_fraction": "0.5",
+     "offset_months": "0",
+     "percent": "0.05"
+    },
+    {
+     "at_build_fraction": "0.5",
+     "offset_months": "0",
+     "percent": "0.1"
+    },
+    {
+     "at_build_fraction": "1",
+     "offset_months": "0",
+     "percent": "0.1"
+    },
+    {
+     "at_build_fraction": "0.5",
+     "offset_months": "0",
+     "percent": "0.1"
+    },
+    {
+     "at_build_fraction": "1",
+     "offset_months": "0",
+     "percent": "0.1"
+    },
+    {
+     "at_build_fraction": "1",
+     "offset_months": "3.0",
+     "percent": "0.0625"
+    },
+    {
+     "at_build_fraction": "1",
+     "offset_months": "6.0",
+     "percent": "0.0625"
+    },
+    {
+     "at_build_fraction": "1",
+     "offset_months": "9.0",
+     "percent": "0.0625"
+    },
+    {
+     "at_build_fraction": "1",
+     "offset_months": "12.0",
+     "percent": "0.0625"
+    },
+    {
+     "at_build_fraction": "1",
+     "offset_months": "15.0",
+     "percent": "0.0625"
+    },
+    {
+     "at_build_fraction": "1",
+     "offset_months": "18.0",
+     "percent": "0.0625"
+    },
+    {
+     "at_build_fraction": "1",
+     "offset_months": "21.0",
+     "percent": "0.0625"
+    },
+    {
+     "at_build_fraction": "1",
+     "offset_months": "24.0",
+     "percent": "0.0625"
+    }
+   ]
+  }
+ }
+}

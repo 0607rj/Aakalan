@@ -140,9 +140,9 @@ export function CompareOptions({
   const baseline = results?.[0];
 
   return (
-    <section className="flex flex-col gap-5 rounded-2xl border bg-card px-6 py-6 shadow-sm sm:px-8">
+    <section className="sheet">
       <div>
-        <h2 className="text-lg font-semibold">Compare options</h2>
+        <h2 className="text-xl font-semibold">Compare options</h2>
         <p className="text-sm text-muted-foreground">
           See how the price changes if you choose differently. Your estimate is
           not changed.

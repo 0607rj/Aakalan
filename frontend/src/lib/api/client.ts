@@ -46,7 +46,7 @@ export type ScenariosOut = Schemas["ScenariosOut"];
 export type GroupTotal = Schemas["GroupTotal"];
 export type QuickOptions = Schemas["QuickOptions"];
 export type QuickQuestion = Schemas["QuestionOut"];
-export type QuickRequest = Schemas["QuickRequest"];
+export type QuickRequest = Schemas["QuickRequest-Input"];
 export type Suggestion = Schemas["Suggestion"];
 export type ContactIn = Schemas["ContactIn"];
 export type QuickSummary = Schemas["QuickSummary"];
@@ -59,6 +59,8 @@ export type Researched = Schemas["ResearchedOut"];
 export type PlainPart = Schemas["PlainPart"];
 export type TenderDocument = Schemas["DocumentOut"];
 export type TenderExtraction = Schemas["TenderExtraction"];
+export type ReviewPrefill = Schemas["ReviewPrefill"];
+export type FactValue = Schemas["FactValue"];
 export type FoundFeature = Schemas["FoundFeature"];
 export type FoundValue = Schemas["FoundValue"];
 export type FoundOtherFeature = Schemas["FoundOtherFeature"];
@@ -291,6 +293,10 @@ export const api = {
   },
   getDocument: (documentId: string) =>
     request<TenderDocument>(`/documents/${encodeURIComponent(documentId)}`),
+  reviewForm: (documentId: string, country: string) =>
+    request<ReviewPrefill>(
+      `/documents/${encodeURIComponent(documentId)}/form?country=${encodeURIComponent(country)}`,
+    ),
   prebidQueries: (documentId: string) =>
     request<PrebidQuery[]>(`/documents/${documentId}/prebid-queries`),
 

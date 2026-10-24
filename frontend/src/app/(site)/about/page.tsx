@@ -35,7 +35,7 @@ export default function AboutPage() {
         guess, buyers guess, and the gap between bids grows.
       </PageIntro>
 
-      <Section className="grid gap-12 py-16 sm:py-24 lg:grid-cols-[1fr_1fr]">
+      <Section className="grid gap-12 py-12 sm:py-16 lg:grid-cols-[1fr_1fr]">
         <div className="flex flex-col gap-5 text-lg">
           <h2
             data-reveal
@@ -91,7 +91,7 @@ export default function AboutPage() {
       </Section>
 
       <div className="border-y bg-card">
-        <Section className="py-16 sm:py-20">
+        <Section className="py-12 sm:py-16">
           <h2 data-reveal className="font-wide text-3xl font-semibold">
             What we hold to
           </h2>
@@ -112,7 +112,7 @@ export default function AboutPage() {
         </Section>
       </div>
 
-      <Section className="py-16 sm:py-20">
+      <Section className="py-12 sm:py-16">
         <h2 data-reveal className="font-wide text-3xl font-semibold">
           Who it is for
         </h2>

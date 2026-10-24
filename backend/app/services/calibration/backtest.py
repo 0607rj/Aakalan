@@ -22,6 +22,13 @@ the AI saving is passed on (`ai_passthrough`). Each column has its own P10-P90 c
 A published price band (e.g. a review site's 10k–50k band) counts as exact when our price falls
 inside it; otherwise the ratio is taken against the nearer edge.
 
+Two paths (OPEN_QUESTIONS 161). The PRODUCTION PATH prices a tender the way the app does: its
+saved reading (tests/fixtures/readings, read by a stand-in model, not the production API call),
+then the review form accepted as it pre-fills (`prefill.review_prefill`), then the engine with
+the reading passed in. It covers only the tenders with a saved reading. The LEGACY path below
+(`benchmark_request`) is not the production path: the app never prices this way. It prices the
+scope hand-mapped in the benchmark file, at fixed levels, with fixed answers.
+
 The price follows what is built, not who orders it. Projects are priced the way the app prices
 them: features at the level of the project's size class, and the size factor from the feature
 points. Calibration (`fit_points_curve`) fits one smooth build-effort factor, a × points^b, on
@@ -47,8 +54,16 @@ from pydantic import BaseModel, Field, model_validator
 
 from app.services.engine.core import calculate
 from app.services.engine.reference import Calibration, ParameterSet, version_key
+from app.services.extraction.tender import TenderExtraction
 from app.services.quick.config import LevelKey, QuickConfig
-from app.services.quick.service import CustomFeature, QuickRequest, plan_quick, plan_to_input
+from app.services.quick.prefill import review_prefill
+from app.services.quick.service import (
+    CustomFeature,
+    QuickPlan,
+    QuickRequest,
+    plan_quick,
+    plan_to_input,
+)
 from app.services.seeding.reference import ReferenceData
 
 BACKTEST_SEED = 7
@@ -227,6 +242,8 @@ class BacktestRow(BaseModel):
     ratio_ai_target: float | None = None
     inside_range_pre_ai: bool | None = None
     inside_range_ai_target: bool | None = None
+    # production path: the stated deadline cannot be met, so it is priced without it
+    infeasible_deadline: int | None = None
 
 
 class SegmentMetrics(BaseModel):
@@ -266,8 +283,14 @@ def segment_metrics(rows: list[BacktestRow], key: str) -> list[SegmentMetrics]:
     return out
 
 
+BacktestPath = Literal["production", "legacy"]
+
+
 class BacktestReport(BaseModel):
     country: str
+    # production: reading -> review form -> engine (saved readings only); legacy: the benchmark
+    # file's hand-mapped scope, a path the app never uses
+    path: BacktestPath = "legacy"
     effort_multiplier: Decimal
     run_multiplier: Decimal
     projects_used: int
@@ -402,9 +425,21 @@ def estimate_range_for(
     req = benchmark_request(cfg, b, reference["rate_card"].region, ai_level)
     size = b.model.size or "medium"
     plan = plan_quick(cfg, req, None, "benchmark", project_size=size if pin_size else None)
+    return priced_range(plan, b.title, reference, tax_included, as_of)
+
+
+def priced_range(
+    plan: QuickPlan,
+    title: str,
+    reference: dict[str, Any],
+    tax_included: bool,
+    as_of: date | None,
+) -> tuple[int, int, int] | None:
+    """The plan's (P10, P50, P90) at the back-test's seed and runs, with or without tax to
+    match the published value (None: the stated deadline cannot be met)."""
     inp = plan_to_input(
         plan,
-        b.title[:300],
+        title[:300],
         reference,
         as_of or datetime.now(UTC).date(),
         BACKTEST_SEED,
@@ -468,7 +503,6 @@ def backtest(
     escalation = params.escalation.labour
     as_of = as_of or datetime.now(UTC).date()  # pin it for a reproducible report
     with_ai_level = str(cfg.questions[AI_USE].default)  # how the app prices today
-    this_year = as_of.year
     rows = []
     for b in bench.projects:
         if used_only and not b.use:
@@ -479,12 +513,7 @@ def backtest(
             continue
         if build_type is not None and (b.model.build_type or "custom") != build_type:
             continue
-        tax_included = (
-            b.value_includes_tax
-            if b.value_includes_tax is not None
-            else bench.tax_included_when_unknown
-        )
-        pre_ai = bench.is_pre_ai(b)
+        tax_included = gst_matched(bench, b)
         try:
             with_ai = estimate_range_for(
                 cfg, b, ref, tax_included, with_ai_level, pin_size=pin_size, as_of=as_of
@@ -495,60 +524,91 @@ def backtest(
             sized: str | None = derived_size(cfg, b, ref["rate_card"].region)
         except HTTPException:  # scope too thin to model (e.g. no features known)
             with_ai, without_ai, sized = None, None, None
-        found = without_ai if pre_ai else with_ai
-        ours = found[1] if found else None
-        low = today_value(b.value_minor, b.award_year, this_year, escalation)
-        high = (
-            today_value(b.value_high_minor, b.award_year, this_year, escalation)
-            if b.value_high_minor
-            else None
-        )
-        ratio = band_ratio(ours, low, high) if ours else None
-        ratio_with = band_ratio(with_ai[1], low, high) if with_ai else None
-        ratio_pre = band_ratio(without_ai[1], low, high) if without_ai else None
-        # inside the range: our P10-P90 overlaps the published price (or its band)
-        inside = overlaps(found, low, high) if found else None
-        # round 3: with AI tools against published × the expected AI saving (a band)
-        target = bench.ai_price_target
-        t_low = scaled(low, target.low) if target else None
-        t_high = scaled(high or low, target.high) if target else None
-        ratio_target = band_ratio(with_ai[1], t_low, t_high) if with_ai and t_low else None
-        rows.append(
-            BacktestRow(
-                id=b.id,
-                title=b.title,
-                use=b.use,
-                buyer=b.model.buyer,
-                published_minor=low,
-                published_high_minor=high,
-                estimate_minor=ours,
-                estimate_low_minor=found[0] if found else None,
-                estimate_high_minor=found[2] if found else None,
-                inside_range=inside,
-                ratio=round(ratio, 3) if ratio else None,
-                error_percent=round((ratio - 1) * PERCENT, 1) if ratio else None,
-                size=b.model.size,
-                derived_size=sized,
-                award_year=b.award_year,
-                band=b.value_high_minor is not None,
-                gst_inclusive=tax_included,
-                gst_stated=b.value_includes_tax is not None,
-                pre_ai=pre_ai,
-                estimate_with_ai_minor=with_ai[1] if with_ai else None,
-                estimate_pre_ai_minor=without_ai[1] if without_ai else None,
-                ratio_with_ai=round(ratio_with, 3) if ratio_with else None,
-                ratio_pre_ai=round(ratio_pre, 3) if ratio_pre else None,
-                ratio_ai_target=round(ratio_target, 3) if ratio_target else None,
-                inside_range_pre_ai=overlaps(without_ai, low, high) if without_ai else None,
-                inside_range_ai_target=overlaps(with_ai, t_low, t_high)
-                if with_ai and t_low
-                else None,
-            )
-        )
+        rows.append(scored_row(bench, b, with_ai, without_ai, sized, as_of, escalation))
+    return report_of(bench, effort, run, rows, "legacy")
+
+
+def gst_matched(bench: BenchmarkSet, b: Benchmark) -> bool:
+    """Whether the published value includes GST (as stated, else the file's assumption)."""
+    if b.value_includes_tax is not None:
+        return b.value_includes_tax
+    return bench.tax_included_when_unknown
+
+
+def scored_row(
+    bench: BenchmarkSet,
+    b: Benchmark,
+    with_ai: tuple[int, int, int] | None,
+    without_ai: tuple[int, int, int] | None,
+    sized: str | None,
+    as_of: date,
+    escalation: Decimal,
+    infeasible_deadline: int | None = None,
+) -> BacktestRow:
+    """One project's prices against its published value in today's money."""
+    pre_ai = bench.is_pre_ai(b)
+    found = without_ai if pre_ai else with_ai
+    ours = found[1] if found else None
+    low = today_value(b.value_minor, b.award_year, as_of.year, escalation)
+    high = (
+        today_value(b.value_high_minor, b.award_year, as_of.year, escalation)
+        if b.value_high_minor
+        else None
+    )
+    ratio = band_ratio(ours, low, high) if ours else None
+    ratio_with = band_ratio(with_ai[1], low, high) if with_ai else None
+    ratio_pre = band_ratio(without_ai[1], low, high) if without_ai else None
+    # inside the range: our P10-P90 overlaps the published price (or its band)
+    inside = overlaps(found, low, high) if found else None
+    # round 3: with AI tools against published × the expected AI saving (a band)
+    target = bench.ai_price_target
+    t_low = scaled(low, target.low) if target else None
+    t_high = scaled(high or low, target.high) if target else None
+    ratio_target = band_ratio(with_ai[1], t_low, t_high) if with_ai and t_low else None
+    return BacktestRow(
+        id=b.id,
+        title=b.title,
+        use=b.use,
+        buyer=b.model.buyer,
+        published_minor=low,
+        published_high_minor=high,
+        estimate_minor=ours,
+        estimate_low_minor=found[0] if found else None,
+        estimate_high_minor=found[2] if found else None,
+        inside_range=inside,
+        ratio=round(ratio, 3) if ratio else None,
+        error_percent=round((ratio - 1) * PERCENT, 1) if ratio else None,
+        size=b.model.size,
+        derived_size=sized,
+        award_year=b.award_year,
+        band=b.value_high_minor is not None,
+        gst_inclusive=gst_matched(bench, b),
+        gst_stated=b.value_includes_tax is not None,
+        pre_ai=pre_ai,
+        estimate_with_ai_minor=with_ai[1] if with_ai else None,
+        estimate_pre_ai_minor=without_ai[1] if without_ai else None,
+        ratio_with_ai=round(ratio_with, 3) if ratio_with else None,
+        ratio_pre_ai=round(ratio_pre, 3) if ratio_pre else None,
+        ratio_ai_target=round(ratio_target, 3) if ratio_target else None,
+        inside_range_pre_ai=overlaps(without_ai, low, high) if without_ai else None,
+        inside_range_ai_target=overlaps(with_ai, t_low, t_high) if with_ai and t_low else None,
+        infeasible_deadline=infeasible_deadline,
+    )
+
+
+def report_of(
+    bench: BenchmarkSet,
+    effort: Decimal,
+    run: Decimal,
+    rows: list[BacktestRow],
+    path: BacktestPath,
+) -> BacktestReport:
+    """The rows with their overall and per-segment figures (used projects only)."""
     used = [r for r in rows if r.use and r.ratio]
     errors = [abs(r.error_percent or 0) for r in used]
     return BacktestReport(
         country=bench.country,
+        path=path,
         effort_multiplier=effort,
         run_multiplier=run,
         projects_used=len(used),
@@ -567,6 +627,105 @@ def backtest(
         ),
         ai_price_target=bench.ai_price_target,
     )
+
+
+# ---------------------------------------------------------------- production path
+
+
+class SavedReading(BaseModel):
+    """A tender's reading saved for the production-path back-test (tests/fixtures/readings):
+    who read it and when, the files read, and the merged reading the app would store."""
+
+    benchmark_id: str
+    reader_model: str  # e.g. a stand-in model, not the production API call
+    read_on: date
+    code_path: str
+    files_read: list[str] = Field(min_length=1)  # the first is uploaded as the RFP
+    files_not_read: list[dict[str, str]] = []
+    extraction: TenderExtraction
+
+
+def load_readings(folder: Path) -> dict[str, SavedReading]:
+    """The saved readings in `folder`, by benchmark id."""
+    out: dict[str, SavedReading] = {}
+    for f in sorted(folder.glob("*.json")):
+        r = SavedReading.model_validate_json(f.read_text(encoding="utf-8"))
+        out[r.benchmark_id] = r
+    return out
+
+
+def reading_request(
+    cfg: QuickConfig, reading: SavedReading, country: str, ai_level: str
+) -> QuickRequest:
+    """What the review form sends for the reading when the user accepts everything, with the
+    back-test's AI use (a company setting, not asked on the form)."""
+    req = review_prefill(cfg, reading.extraction, country).request
+    return req.model_copy(update={"choices": {**req.choices, AI_USE: ai_level}})
+
+
+def reading_range_for(
+    cfg: QuickConfig,
+    reading: SavedReading,
+    reference: dict[str, Any],
+    tax_included: bool,
+    ai_level: str,
+    *,
+    country: str,
+    as_of: date | None = None,
+) -> tuple[tuple[int, int, int] | None, str, int | None]:
+    """Our (P10, P50, P90) for a tender priced as the app prices it: the review form's request
+    for its reading, planned with the reading passed in (as POST /quick-estimates does), the
+    project size it gets, and a stated deadline that could not be met (dropped and priced
+    again without it; the app would show the plan as not feasible, with no price)."""
+    req = reading_request(cfg, reading, country, ai_level)
+    extraction = reading.extraction.model_dump(mode="json")
+    filename = reading.files_read[0]
+    plan = plan_quick(cfg, req, extraction, filename)
+    found = priced_range(plan, req.name, reference, tax_included, as_of)
+    deadline = req.overrides.get("deadline_months")
+    if found is not None or deadline is None:
+        return found, plan.project_size, None
+    over = {k: v for k, v in req.overrides.items() if k != "deadline_months"}
+    plan = plan_quick(cfg, req.model_copy(update={"overrides": over}), extraction, filename)
+    found = priced_range(plan, req.name, reference, tax_included, as_of)
+    return found, plan.project_size, int(deadline)
+
+
+def backtest_production(
+    cfg: QuickConfig,
+    bench: BenchmarkSet,
+    reference: dict[str, Any],
+    effort: Decimal,
+    run: Decimal,
+    readings: dict[str, SavedReading],
+    *,
+    as_of: date | None = None,
+) -> BacktestReport:
+    """The production-path back-test: every benchmark with a saved reading, priced as the app
+    prices an uploaded tender whose review form is accepted as it pre-fills."""
+    params: ParameterSet = reference["parameters"]
+    ref = {
+        **reference,
+        "parameters": with_dials(params, effort, run),
+        "clarity": cfg.requirement_clarity,
+    }
+    as_of = as_of or datetime.now(UTC).date()  # pin it for a reproducible report
+    with_ai_level = str(cfg.questions[AI_USE].default)  # how the app prices today
+    rows = []
+    for b in bench.projects:
+        reading = readings.get(b.id)
+        if reading is None:
+            continue
+        tax_included = gst_matched(bench, b)
+        with_ai, _, _ = reading_range_for(
+            cfg, reading, ref, tax_included, with_ai_level, country=bench.country, as_of=as_of
+        )
+        without_ai, sized, dropped = reading_range_for(
+            cfg, reading, ref, tax_included, NO_AI, country=bench.country, as_of=as_of
+        )
+        escalation = params.escalation.labour
+        rows.append(scored_row(bench, b, with_ai, without_ai, sized, as_of, escalation, dropped))
+    return report_of(bench, effort, run, rows, "production")
 
 
 KEYS = ("all", "size", "derived_size", "buyer")

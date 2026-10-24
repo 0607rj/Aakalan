@@ -60,13 +60,21 @@ BUYER_TITLES = {
 }
 
 
+LEGACY = (
+    "=== LEGACY, NOT THE PRODUCTION PATH === the benchmark file's hand-mapped scope at fixed "
+    "levels with fixed answers (benchmark_request); the app never prices a tender this way."
+)
+
+
 def cmd_backtest(args: argparse.Namespace) -> None:
     from app.services.calibration.backtest import (
         BacktestReport,
         backtest,
+        backtest_production,
         fit_points_curve,
         layer_shares,
         load_benchmarks,
+        load_readings,
         reference_for,
     )
     from app.services.engine.reference import Calibration
@@ -97,13 +105,20 @@ def cmd_backtest(args: argparse.Namespace) -> None:
                 f"  GST {'incl' if row.gst_inclusive else 'excl'}"
                 f"{'' if row.gst_stated else ' (assumed)'}"
                 f"  {'pre-AI' if row.pre_ai else 'with AI'}"
-                f" (with AI x{row.ratio_with_ai}, without x{row.ratio_pre_ai})\n"
+                f" (with AI x{row.ratio_with_ai}, without x{row.ratio_pre_ai})"
+                + (
+                    f"  [{row.infeasible_deadline}-month deadline cannot be met: priced without it]"
+                    if row.infeasible_deadline
+                    else ""
+                )
+                + "\n"
             )
 
     dials = reference["parameters"].calibration or Calibration(source="none")
     effort, run = dials.effort_multiplier, dials.run_multiplier
     if args.calibrate:
         # one smooth size factor by feature points, on all client types (as the app prices)
+        sys.stdout.write(f"\n{LEGACY}\n")
         fit = fit_points_curve(cfg, bench, reference)
         sys.stdout.write(
             f"\nsize factor = {fit.a} x points^{fit.b} | {fit.projects} projects | "
@@ -118,16 +133,38 @@ def cmd_backtest(args: argparse.Namespace) -> None:
     elif args.layers:
         as_of = date.fromisoformat(args.as_of) if args.as_of else None
         sys.stdout.write(
-            "\nShare of the planned cost by layer (median per hand-set size), priced as the app "
-            "prices. A diagnostic of how size changes the mix, not a fit.\n"
+            f"\n{LEGACY}\nShare of the planned cost by layer (median per hand-set size). "
+            "A diagnostic of how size changes the mix, not a fit.\n"
         )
         for size, layers in layer_shares(cfg, bench, reference, as_of=as_of).items():
             parts = ", ".join(f"{k} {v:.0%}" for k, v in layers.items())
             sys.stdout.write(f"  {size:14} {parts}\n")
     else:
         as_of = date.fromisoformat(args.as_of) if args.as_of else None
+        readings = load_readings(Path(args.readings)) if Path(args.readings).is_dir() else {}
+        if readings:
+            prod = backtest_production(cfg, bench, reference, effort, run, readings, as_of=as_of)
+            readers = "; ".join(sorted({r.reader_model for r in readings.values()}))
+            dates = ", ".join(sorted({str(r.read_on) for r in readings.values()}))
+            sys.stdout.write(
+                "\n=== PRODUCTION PATH (headline): reading -> review form -> engine ===\n"
+                f"{len(prod.rows)} tenders with a saved reading ({args.readings}), read on "
+                f"{dates} by: {readers}. Each is priced as the app prices an uploaded tender "
+                "whose review form is accepted as it pre-fills. Not covered: custom features are "
+                "priced by their generic block (the app may match a catalog or researched block), "
+                "and no independent check is read.\n"
+            )
+            show("PRODUCTION PATH", prod)
+            sys.stdout.write("WITHOUT AI TOOLS vs published (target 1.0x), by size (set by hand)\n")
+            for m in prod.segments_pre_ai["size"]:
+                sys.stdout.write(
+                    f"  {m.segment:28} n={m.projects:3}  median |error| "
+                    f"{m.median_abs_error_percent:6.1f}%  bias x{m.bias:<6}  within 25%: "
+                    f"{m.within_25_percent:3}  in P10-P90: {m.inside_range:3}\n"
+                )
         report = backtest(cfg, bench, reference, effort, run, as_of=as_of)
-        show("ALL PROJECTS", report)
+        sys.stdout.write(f"\n{LEGACY}\n")
+        show("LEGACY ALL PROJECTS", report)
         params = reference["parameters"]
         sys.stdout.write(
             f"\nparameter set {params.version}, catalog {reference['catalog'].version}. Published "
@@ -193,6 +230,19 @@ def cmd_test_email(args: argparse.Namespace) -> None:
     sys.stdout.write(f"Sent a test email to {args.to}.\n")
 
 
+def cmd_catalog_table(args: argparse.Namespace) -> None:
+    from app.services.quick.config import quick_config
+    from app.services.seeding.catalog_table import rows, write_excel, write_markdown
+    from app.services.seeding.reference import load_reference
+
+    reference = load_reference(get_settings().seeds_dir)
+    catalog = reference.catalog_version(args.version) if args.version else reference.catalog
+    table = rows(catalog, quick_config())
+    write_markdown(catalog, table, Path(args.md))
+    write_excel(catalog, table, Path(args.xlsx))
+    sys.stdout.write(f"Catalog {catalog.version}: {len(table)} blocks -> {args.md}, {args.xlsx}\n")
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(prog="app.cli")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -217,7 +267,17 @@ def main(argv: list[str] | None = None) -> None:
         "--layers", action="store_true", help="show how the cost splits into layers, by size"
     )
     p_bt.add_argument("--as-of", help="price as of this date (YYYY-MM-DD) for a repeatable report")
+    p_bt.add_argument(
+        "--readings",
+        default=str(BACKEND_DIR / "tests" / "fixtures" / "readings"),
+        help="saved tender readings for the production-path back-test",
+    )
     p_bt.set_defaults(func=cmd_backtest)
+    p_cat = sub.add_parser("catalog-table", help="write the catalog as a plain table to read")
+    p_cat.add_argument("--version", help="catalog version (default: the newest)")
+    p_cat.add_argument("--md", default=str(BACKEND_DIR.parent / "docs" / "CATALOG.md"))
+    p_cat.add_argument("--xlsx", default=str(BACKEND_DIR.parent / "data" / "catalog.xlsx"))
+    p_cat.set_defaults(func=cmd_catalog_table)
     args = parser.parse_args(argv)
     args.func(args)
 

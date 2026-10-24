@@ -221,7 +221,7 @@ bid results (`POST /projects/{id}/outcome`) and builds the calibration report (`
 
 Reference data is per country (`region` on rate cards and parameter sets; currency on the rate
 card). `services/settings.py` applies the company's margin / buffer / effort multipliers to a
-copy of the parameter set before pricing. `services/calibration/backtest.py` prices the
+copy of the parameter set before pricing. The headline back-test is the **production path** (`backtest_production`, OPEN_QUESTIONS 161): each benchmark with a saved reading (`tests/fixtures/readings`) is priced as an upload is, through the review form's pre-fill (`services/quick/prefill.review_prefill`, which the form itself loads from `GET /documents/{id}/form`) and `plan_quick` with the reading passed in. The rest of this paragraph describes the **legacy path, not the production path**: `services/calibration/backtest.py` prices the
 benchmark contracts in `seeds/benchmarks/<country>.yaml` with the same quick-estimate mapping
 (features at the level matching each project's size class, the size pinned to that class,
 government projects above small with the audit and formal reporting asked for). From

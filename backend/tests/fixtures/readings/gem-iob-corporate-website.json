@@ -1,0 +1,1472 @@
+{
+ "benchmark_id": "gem-iob-corporate-website",
+ "reader_model": "stand-in: a Claude Code Sonnet subagent answering the app's own prompts (relayed), NOT the production claude-sonnet-5-5 API call",
+ "read_on": "2026-10-24",
+ "code_path": "production reading code: app parser, ai_read (extract_tender_v8 + gap_check_v3), verify_findings, merge_extractions; only the LLM call was relayed. No inventory (independent check) was read.",
+ "files_read": [
+  "att01.pdf",
+  "att07.pdf",
+  "att06.pdf"
+ ],
+ "files_not_read": [],
+ "extraction": {
+  "reader": "ai",
+  "prompt_version": "extract_tender_v8",
+  "project_name": "Corporate website revamp for Indian Overseas Bank (iob.in)",
+  "summary": "The requirement document asks a service provider to redesign, build on a content management system, host (with a disaster recovery site), secure and maintain the Bank's corporate website for several years. It covers a bilingual public website with calculators, a branch and ATM locator, search, SEO, strict security and accessibility rules, and an editing system with approval steps for the Bank's staff.",
+  "features": [
+   {
+    "key": "public_website",
+    "label": "Public website with notices and news",
+    "evidence": [
+     {
+      "page": 56,
+      "clause_ref": "6.1 A.2",
+      "quote": "Website to have sections for static information, dynamic promotional content / banner, product information including demo, online application form etc.,",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 74,
+      "clause_ref": "6.1 G.24",
+      "quote": "Latest Banking News, Media Coverage of Bank, Director’s Info, Annual Reports, Latest Announcement, banking Glossary",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 63,
+      "clause_ref": "6.1 C.9",
+      "quote": "CMS should support on demand creation of a \"ready to print\" copy of the content pages.",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 60,
+      "clause_ref": "6.1 A.30",
+      "quote": "Links of PlayStore, AppStore, and other such stores should be present for any",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 57,
+      "clause_ref": "6.1 A.11",
+      "quote": "The web pages must be designed to easily incorporate streaming of videos,",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 1,
+      "clause_ref": "1",
+      "quote": "Selection of Service Provider for Design, development, customization, hosting, and maintenance of corporate website of the Bank",
+      "document": "att07.pdf",
+      "checked": false
+     },
+     {
+      "page": 1,
+      "clause_ref": "",
+      "quote": "Design, development, customization, hosting, and maintenance of corporate website of the Bank",
+      "document": "att06.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 5,
+    "suggested": true,
+    "stories": [
+     "As a visitor, I can read product information with demos and the Bank's static pages",
+     "As a visitor, I can take part in an online contest",
+     "As a visitor, I can view the photo and video gallery",
+     "As a visitor, I can send a request for additional information or an enquiry",
+     "As a visitor, I can download, print and share brochures, application forms and guidelines",
+     "As a visitor, I can read the latest banking news, media coverage, annual reports and announcements",
+     "As a visitor, I can see product promotions, offers and campaigns",
+     "As a visitor, I can get a ready-to-print copy of a content page",
+     "As a visitor, I can follow Play Store and App Store links from the website",
+     "As a visitor, I can watch streaming videos, animations and slideshows on pages"
+    ],
+    "story_level": "advanced",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "accessibility",
+    "label": "Accessible to people with disabilities (GIGW / WCAG)",
+    "evidence": [
+     {
+      "page": 57,
+      "clause_ref": "6.1 A.13",
+      "quote": "The designed website must be compliant with W3C Accessibility Guidelines (WCAG) 3.0, Guidelines for Indian Government website (GIGW 3.0) guidelines",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 81,
+      "clause_ref": "7.1 Sl 18",
+      "quote": "Website should also provide accessibility options for the Blind and Visually Impaired users",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 2,
+    "suggested": true,
+    "stories": [
+     "As a blind or visually impaired visitor, I can use accessibility options on the website"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "search",
+    "label": "Search",
+    "evidence": [
+     {
+      "page": 60,
+      "clause_ref": "6.1 A.31",
+      "quote": "A universal search bar/search option (preferably Ajax based Search to prompt users to get results while typing)",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 78,
+      "clause_ref": "7.1 Sl 3",
+      "quote": "Full Text Search Functionality (Including the PDF/DOC contents) on the website without using external search engines.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 2,
+    "suggested": true,
+    "stories": [
+     "As a visitor, I can search from any page and see suggestions while I type",
+     "As a visitor, I can run a full-text search that also reads PDF and DOC contents"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "languages",
+    "label": "Available in Indian languages",
+    "evidence": [
+     {
+      "page": 57,
+      "clause_ref": "6.1 A.12",
+      "quote": "option of Language selector pop-up while the website loads at first place with Hindi and English as the options for now.",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 73,
+      "clause_ref": "6.1 G.10",
+      "quote": "Website to support multiple languages with English and Hindi being essential for the Go-Live.",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 83,
+      "clause_ref": "7.1 Sl 41",
+      "quote": "Web & mobile pages / content to be mapped with",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 3,
+    "suggested": true,
+    "stories": [
+     "As a visitor, I can choose Hindi or English when the website first loads",
+     "As a visitor, I can change the language from any page",
+     "As an author, I can manage the site's content in multiple languages",
+     "As an author, I am prompted when content in a mapped language is pending update",
+     "As an admin, I can see a table of pages and the update status of each mapped language"
+    ],
+    "story_level": "standard",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "maps",
+    "label": "Maps and location",
+    "evidence": [
+     {
+      "page": 72,
+      "clause_ref": "6.1 G.4",
+      "quote": "The bidder has to provide services like ATM/Branch/Service Outlet locator services using maps",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 72,
+      "clause_ref": "6.1 G.5",
+      "quote": "The locator may also ask permission from visitor/s to detect its location and accordingly detect the current location of the visitor",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 2,
+    "suggested": true,
+    "stories": [
+     "As a visitor, I can search for a branch or ATM by name, city or pin code on a map",
+     "As a visitor, I can find the nearest branch or ATM from my current location with directions"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "notifications",
+    "label": "SMS, email and app notifications",
+    "evidence": [
+     {
+      "page": 85,
+      "clause_ref": "7.1 Sl 57",
+      "quote": "Provision to send custom as well as automated Push",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 64,
+      "clause_ref": "6.1 C.20",
+      "quote": "Admins to receive E-mail alerts immediately in case of any emergency or unauthorized access.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 2,
+    "suggested": true,
+    "stories": [
+     "As a Bank officer, I can send custom or automated push notifications to all or targeted website visitors",
+     "As an admin, I receive immediate e-mail alerts on any emergency or unauthorized access"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "approval_workflow",
+    "label": "Files go from person to person for approval",
+    "evidence": [
+     {
+      "page": 63,
+      "clause_ref": "6.1 C.7",
+      "quote": "Workflow must support automation from within including e-mail on due items and actions pending at various levels including appropriate escalations.",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 85,
+      "clause_ref": "7.1 Sl 59",
+      "quote": "Any changes shall be visible in the site (new or modification or deletion) after checker authorises the same and while it",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 2,
+    "suggested": true,
+    "stories": [
+     "As an author (maker), I can submit a content change for approval while the old content stays visible",
+     "As a checker, I can authorise a content change before it goes live",
+     "As an admin, I receive reminders twice a day about changes pending authorisation",
+     "As a Bank officer, I get e-mail on due items and escalations when actions are pending"
+    ],
+    "story_level": "standard",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "documents",
+    "label": "Store and manage documents",
+    "evidence": [
+     {
+      "page": 83,
+      "clause_ref": "7.1 Sl 39",
+      "quote": "The solution should accommodate various content types (such as .txt, HTML, PDF, MS-Word, XML, graphics, audio,",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 64,
+      "clause_ref": "6.1 C.10",
+      "quote": "Download and upload features to be supported. The file type must be clearly displayed in the form of icons",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 2,
+    "suggested": true,
+    "stories": [
+     "As an author, I can upload and manage files of many types, within an upload size limit",
+     "As a visitor, I can download files with the file type shown as an icon"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "dashboards",
+    "label": "Reports and dashboards",
+    "evidence": [
+     {
+      "page": 64,
+      "clause_ref": "6.1 C.11",
+      "quote": "Usage statistics, high/low, peak traffic etc. should be supported.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 1,
+    "suggested": true,
+    "stories": [
+     "As an admin, I can view usage statistics such as high, low and peak traffic"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "online_forms",
+    "label": "Online application or registration forms",
+    "evidence": [
+     {
+      "page": 85,
+      "clause_ref": "7.1 Sl 55",
+      "quote": "Provision to create engaging Forms & Surveys and collect visitor’s non-confidential data with auto generated and",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 74,
+      "clause_ref": "6.1 G.21",
+      "quote": "Survey option should be available on website for Bank to publish and conduct periodical surveys of its visitors.",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 65,
+      "clause_ref": "6.1 C.24",
+      "quote": "Form data should be collected in Database and can be shared with relevant people in various formats such as excel, word. Pdf etc.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 3,
+    "suggested": true,
+    "stories": [
+     "As an admin, I can create forms and surveys for open or closed groups",
+     "As a visitor, I can fill in a form or survey on the website",
+     "As a Bank officer, I can share collected form data as Excel, Word or PDF",
+     "As a Bank officer, I receive a survey report at the end of every survey"
+    ],
+    "story_level": "standard",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "connect_existing",
+    "label": "Connect to existing systems (SAP, old software)",
+    "evidence": [
+     {
+      "page": 81,
+      "clause_ref": "7.1 Sl 22",
+      "quote": "Ability to be Integrated with third party application like Market tracker, tax planner, online IT filing, selected external",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 1,
+    "suggested": true,
+    "stories": [
+     "As a visitor, I can reach third-party services such as a market tracker or tax planner linked from the website"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "old_data",
+    "label": "Move data from the old system",
+    "evidence": [
+     {
+      "page": 58,
+      "clause_ref": "6.1 A.14",
+      "quote": "Migrate existing content in various formats and databases to the new proposed corporate website in a SEO friendly manner.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 1,
+    "suggested": true,
+    "stories": [
+     "As an admin, I can have all existing website content migrated into the new site",
+     "As a visitor, I can open old data kept in an Archive folder"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   }
+  ],
+  "other_features": [
+   {
+    "name": "Loan and financial calculators with charts",
+    "description": "EMI calculators for home, car and personal loans with graphs, plus further planners such as retirement and savings calculators if the Bank asks.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 74,
+      "clause_ref": "6.1 G.19",
+      "quote": "Calculators such as EMI Calculator for Home Loan, Car Loan, Personal Loan or any other products as and when required by the Bank",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a visitor, I can use an EMI calculator for home, car and personal loans with a graph",
+     "As a visitor, I can use further planners such as a retirement planner or savings calculator, if the Bank wants them"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Social media integration and sharing",
+    "description": "Show the Bank's social media handles and let visitors share pages through social plugins.",
+    "category": "integration",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 73,
+      "clause_ref": "6.1 G.11",
+      "quote": "The bidder should facilitate social media integration with the website.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a visitor, I can open the Bank's social media pages from the website",
+     "As a visitor, I can share pages and articles on social media",
+     "As a Bank officer, I can track visitors through a Facebook pixel on the website"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Bank chatbot integration",
+    "description": "Connect the Bank's existing chatbot to the website when the Bank asks.",
+    "category": "integration",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 73,
+      "clause_ref": "6.1 G.12",
+      "quote": "Integration of Bank's Chatbot as and when required by the Bank also forms a part of the project",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a visitor, I can open the Bank's existing chatbot from the website"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Visitor personalisation and tracking",
+    "description": "Capture visitor behaviour and show content based on each regular visitor's interests.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 59,
+      "clause_ref": "6.1 A.28",
+      "quote": "Personalization of website for regular visitors/users should be included as an important module",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a Bank officer, I can capture visits, time spent, time of day and device for each visitor",
+     "As a regular visitor, I see content based on my interest area",
+     "As a regular visitor, I receive e-mail based on my interests"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Visitor counter and last visited page",
+    "description": "A visitor counter for the Bank and a prompt showing each visitor their last visited page.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 60,
+      "clause_ref": "6.1 A.29",
+      "quote": "Visitor counter should be provided to the Bank and website should prompt the visitor its last visited page on website.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a Bank officer, I can see a visitor counter",
+     "As a returning visitor, I am prompted with my last visited page"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Ongoing SEO service and ranking reports",
+    "description": "Search engine optimisation throughout the contract with monthly keyword ranking and analytics reports.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 60,
+      "clause_ref": "6.1 B.2",
+      "quote": "Search Engine Optimization of the website must be ensured at all times throughout the contract period.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a Bank officer, I receive a monthly report of keyword rankings compared with the previous month",
+     "As a Bank officer, I receive traffic analytics and offsite promotion reports"
+    ],
+    "units": 1
+   },
+   {
+    "name": "DDoS, WAF and bot protection",
+    "description": "Protect the website against DDoS, bots and other attacks with web application firewall and geo rules.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 66,
+      "clause_ref": "6.1 D.8",
+      "quote": "Website must have DDOS protection and must be able to prevent from Application layer with capability of atleast 10 Gbps of load",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a visitor, I can keep using the website while DDoS and bot attacks are filtered out"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Privileged access control for servers",
+    "description": "A privileged access management tool so only authorised users reach the servers.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 66,
+      "clause_ref": "6.1 D.13",
+      "quote": "Bidder must also implement PAM to allow access only to authorized users to the server.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a server administrator, I can reach the servers only through privileged access control"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Visual and HTML page editor",
+    "description": "A drag-and-drop WYSIWYG and HTML editor with auto-save and preview for content authors.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 65,
+      "clause_ref": "6.1 C.23",
+      "quote": "CMS should provide with a Visual and HTML editor in editing environment.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As an author, I can edit pages with a drag-and-drop WYSIWYG editor and an HTML editor",
+     "As an author, I can rely on auto-save while I edit",
+     "As an author, I can preview a page before publishing it"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Content versions, rollback and recovery",
+    "description": "Keep versions of content, compare them, roll back, recover deleted content and archive pages.",
+    "category": "module",
+    "size": "M",
+    "evidence": [
+     {
+      "page": 64,
+      "clause_ref": "6.1 C.12",
+      "quote": "It should be possible to restore pages and contents from backups or previous versions.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As an author, I can restore a page to a previous version",
+     "As an author, I can compare versions and see the version history and tracked changes",
+     "As an admin, I can roll back the site",
+     "As an admin, I can recover deleted or expired content",
+     "As an admin, I can archive content, sections and pages and filter them by date"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Scheduled publishing and expiry",
+    "description": "Schedule when a content component appears and when it expires.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 65,
+      "clause_ref": "6.1 C.27",
+      "quote": "Ability to schedule content publishing & expiration date/time i.e. single piece of content component should be",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As an author, I can schedule content to appear and expire at set times in different places"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Page templates and reusable components",
+    "description": "Predefined themes, templates and reusable components with configurable fields to build pages quickly and consistently.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 82,
+      "clause_ref": "7.1 Sl 25",
+      "quote": "Provide ability to enforce the use of pre-defined themes, templates, and style guidelines to ensure a consistent look",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As an author, I can build new pages from predefined templates and reusable components",
+     "As an admin, I can rename, move or switch off fields and add custom-defined fields on pages"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Grammar, spelling and keyword checks",
+    "description": "Check content for grammar and spelling and flag objectionable keywords before it goes live.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 84,
+      "clause_ref": "7.1 Sl 42",
+      "quote": "All content published via proposed solution should go through a grammar check as well as spelling check.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As an author, I get a grammar and spelling check, with British or American English set by the admin",
+     "As an author, I am warned about inappropriate or objectionable keywords before publishing"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Bulk import and export of content",
+    "description": "Import and export content in bulk.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 84,
+      "clause_ref": "7.1 Sl 51",
+      "quote": "Support bulk import and export of content",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As an admin, I can import and export content in bulk"
+    ],
+    "units": 1
+   },
+   {
+    "name": "CMS events, FAQ, glossary, polls and RSS",
+    "description": "Built-in content facilities: event calendar and event management, FAQs, glossary, polls and RSS feeds.",
+    "category": "module",
+    "size": "M",
+    "evidence": [
+     {
+      "page": 64,
+      "clause_ref": "6.1 C.14",
+      "quote": "CMS should be able to offer the following built-in facilities: Document Management, Event Calendar, Event Management, FAQ Management, Glossary, Polls, and Syndicated Content (RSS).",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a visitor, I can see an event calendar and event details",
+     "As a visitor, I can read FAQs and a glossary",
+     "As a visitor, I can answer a poll",
+     "As a visitor, I can subscribe to an RSS feed of content"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Fine-grained user and permission management",
+    "description": "Manage users, groups and departments with page, section and component level rights and an authorization matrix.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 83,
+      "clause_ref": "7.1 Sl 34",
+      "quote": "Define user specific Roles & Permissions i.e. assign users page-wise, microsite-wise, section-wise, component-wise,",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As an admin, I can create and manage users, user groups and departments",
+     "As an admin, I can give create, update, delete, view, review and publish rights page-wise, section-wise or component-wise",
+     "As an admin, I can map users to roles through an authorization matrix"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Tender, empanelment and e-auction section",
+    "description": "Dedicated sections for tenders, empanelment and e-auctions with search filters.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 74,
+      "clause_ref": "6.1 G.23",
+      "quote": "Dedicated tender, empanelment, e-auction sections with search options based on tender title, location, amount, etc.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a visitor, I can search tenders, empanelments and e-auctions by title, location or amount"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Card hotlisting request module",
+    "description": "Carry over the existing request to hotlist a debit or credit card and place it prominently on the home page.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 56,
+      "clause_ref": "6.1 A.2",
+      "quote": "already available on the existing website like submission of request for hotlisting of Debit / Credit Cards",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a customer, I can submit a request to hotlist my debit or credit card from the home page"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Take over and maintain the current website",
+    "description": "Take over the existing iob.in website immediately and maintain it until the new site launches.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 77,
+      "clause_ref": "6.2",
+      "quote": "Takeover of existing IOB Website has to be done by the successful bidder immediately and the bidder has to maintain the site until the launch of the new",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a Bank officer, I have the current website maintained by the new provider until the new site goes live"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Theme customisation (optional)",
+    "description": "Day mode, night mode, colour customisation and festive themes; marked optional.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 79,
+      "clause_ref": "7.1 Sl 5",
+      "quote": "Website should have customizable theme which include",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a visitor, I can switch between day and night mode"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Scanned document warning (optional)",
+    "description": "Detect scanned documents on upload and warn the maker and checker that search engines cannot read them; marked optional.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 85,
+      "clause_ref": "7.1 Sl 56",
+      "quote": "Solution shall detect scanned documents (unreadable by",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As an author, I am warned when an uploaded document is a scan that search cannot read"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Online support request logging",
+    "description": "A way for the Bank to log website support requests online as part of the 24x7 support service.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 71,
+      "clause_ref": "6.1 E",
+      "quote": "24*7 support for website related malfunctions as defined in the RFP, SLAs and ability to log requests online.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a Bank officer, I can log a website support request online"
+    ],
+    "units": 1
+   }
+  ],
+  "choices": {
+   "platforms": {
+    "value": "web",
+    "label": "Website",
+    "evidence": [
+     {
+      "page": 56,
+      "clause_ref": "6.1 A.7",
+      "quote": "Website should be mobile, tablet and cross device compatible (mobile first strategy to be adopted).",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "build_type": {
+    "value": "cms",
+    "label": "On a CMS with custom parts added",
+    "evidence": [
+     {
+      "page": 58,
+      "clause_ref": "6.1 A.14",
+      "quote": "The bidder must develop the revamped website in a Content Management System (CMS) conforming to the latest industry standards",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "helpdesk_scope": {
+    "value": "yes",
+    "label": "Yes",
+    "evidence": [
+     {
+      "page": 75,
+      "clause_ref": "6.1 H",
+      "quote": "Provide solution helpdesk. iv. Provide Annual Technical Support (ATS/ Warranty support) of the",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "support_hours": {
+    "value": "on_call",
+    "label": "Round the clock, on call",
+    "evidence": [
+     {
+      "page": 71,
+      "clause_ref": "Page 71",
+      "quote": "➢ Program updates, patches, fixes and critical security alerts as and when required ➢ Documentation updates ➢ 24*7 support for website related malfunctions as defined in the RFP, SLAs and ability to log requests online.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "availability": {
+    "value": "critical",
+    "label": "It must never stop",
+    "evidence": [
+     {
+      "page": 148,
+      "clause_ref": "Part 9",
+      "quote": "The successful bidder has to guarantee a minimum uptime of 99.95% on monthly",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "disaster_site": {
+    "value": "yes",
+    "label": "Yes",
+    "evidence": [
+     {
+      "page": 65,
+      "clause_ref": "6.1 D.2",
+      "quote": "Service Provider must ensure DC and DR set up.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "penalties": {
+    "value": "yes",
+    "label": "Yes",
+    "evidence": [
+     {
+      "page": 77,
+      "clause_ref": "6.3",
+      "quote": "a penalty of half percent (0.5%) of order value for each week or part thereof of the delay",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "security_audit": {
+    "value": "yes",
+    "label": "Yes",
+    "evidence": [
+     {
+      "page": 66,
+      "clause_ref": "6.1 D.4",
+      "quote": "should conduct VA at least on a half-yearly basis & PT shall be conducted at least on a yearly basis from CERT-IN empanelled auditor.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "design": {
+    "value": "custom",
+    "label": "No, we want a special design",
+    "evidence": [
+     {
+      "page": 58,
+      "clause_ref": "6.1 A.19",
+      "quote": "Through this RFP bank expects a completely new look and feel for the website (www.iob.in)",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "launch_help": {
+    "value": "usual",
+    "label": "The usual",
+    "evidence": [
+     {
+      "page": 75,
+      "clause_ref": "6.1 H.vi",
+      "quote": "Provide hand-holding support during roll-out of the revamped website.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "onsite_period": {
+    "value": "support",
+    "label": "Throughout support",
+    "evidence": [
+     {
+      "page": 71,
+      "clause_ref": "6.1 F",
+      "quote": "The Facility Management Services i.e Onsite Technical Support is required for the entire duration of the project.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   }
+  },
+  "numbers": {
+   "deadline_months": {
+    "value": 4,
+    "label": "deadline_months",
+    "evidence": [
+     {
+      "page": 77,
+      "clause_ref": "6.2",
+      "quote": "LIVE within 4 months from the date of acceptance of Purchase order.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "om_years": {
+    "value": 5,
+    "label": "om_years",
+    "evidence": [
+     {
+      "page": 73,
+      "clause_ref": "6.1 G.16",
+      "quote": "The warranty period will be of one year duration. Maintenance of the website will be for 4 years post warranty period",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "languages": {
+    "value": 2,
+    "label": "languages",
+    "evidence": [
+     {
+      "page": 73,
+      "clause_ref": "6.1 G.10",
+      "quote": "Website to support multiple languages with English and Hindi being essential for the Go-Live.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "emd_paise": {
+    "value": 240000000,
+    "label": "emd_rupees",
+    "evidence": [
+     {
+      "page": 16,
+      "clause_ref": "3.7",
+      "quote": "(refundable) of Rs. 24,00,000/- (Rupees Twenty-Four Lakhs Only).",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "pbg_percent": {
+    "value": 0.05,
+    "label": "pbg_percent",
+    "evidence": [
+     {
+      "page": 17,
+      "clause_ref": "3.8",
+      "quote": "bank guarantee for a value equivalent to 5% of the order value for a duration of 62 months",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "onsite_staff": {
+    "value": 1,
+    "label": "onsite_staff",
+    "evidence": [
+     {
+      "page": 71,
+      "clause_ref": "6.1 F",
+      "quote": "On-Site support team - 1 resource must be available at the Bank premises at all times",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   }
+  },
+  "unclear_points": [
+   {
+    "topic": "CMS licence type",
+    "why": "The document says the CMS must be licensed and also a freeware, and later says freeware CMS will not be considered.",
+    "page": 56,
+    "clause_ref": "6.1 A.1",
+    "quote": "The CMS must be a licensed version and should be a freeware.",
+    "prebid_query": "Clause 6.1 A.1 says the CMS must be a licensed version and should be a freeware, while clause 6.1 C.3 says the Bank will not consider any freeware CMS. Kindly clarify whether a licensed commercial CMS or an open-source CMS is acceptable."
+   },
+   {
+    "topic": "Uptime requirement",
+    "why": "Clause D.7 asks for 100% server uptime while the SLA part sets 99.95% monthly uptime.",
+    "page": 66,
+    "clause_ref": "6.1 D.7",
+    "quote": "The bidder must ensure continuous uptime at all times i.e server uptime has to be 100%.",
+    "prebid_query": "Clause 6.1 D.7 requires 100% server uptime while Part 9 guarantees 99.95% monthly uptime. Kindly confirm which availability target applies and how it is measured."
+   },
+   {
+    "topic": "Existing functionality to be retained",
+    "why": "All functions of the current site must be kept whether or not they are listed, so the scope cannot be sized.",
+    "page": 78,
+    "clause_ref": "7.1 Sl 1",
+    "quote": "must contain all the functionalities present in current website irrespective of any mention in this document.",
+    "prebid_query": "Table A, Sl 1 requires all functionalities of the current website irrespective of mention in the tender. Kindly share the list of modules and functions of the current iob.in website, with their integrations, that must be carried over."
+   },
+   {
+    "topic": "Onsite resource timing",
+    "why": "One clause asks for an onsite resource from 8:00 AM to 10:00 PM on all days, another says Bank timings, normally 9 AM to 7 PM.",
+    "page": 71,
+    "clause_ref": "6.1 E",
+    "quote": "One onsite resource must be available from 8:00 AM to 10:00 PM on all days.",
+    "prebid_query": "Clause 6.1 E asks for one onsite resource from 8:00 AM to 10:00 PM on all days, while clause 6.1 F says onsite timings follow Bank timings, normally 9 AM to 7 PM. Kindly clarify the onsite hours and the number of onsite resources."
+   },
+   {
+    "topic": "Contract and support period",
+    "why": "The contract runs 5 years from the purchase order, while warranty of one year plus 4 years of maintenance starts after go-live, which is due 4 months after the order.",
+    "page": 11,
+    "clause_ref": "3.3",
+    "quote": "The tenure of the Contract will be for a period of 5 (Five) years effective from the acceptance of Purchase Order.",
+    "prebid_query": "Clause 3.3 sets a contract tenure of 5 years from acceptance of the Purchase Order, while clause 6.1 G.16 sets a one-year warranty and 4 years of maintenance after warranty. Kindly clarify whether the 5 years include the 4-month implementation period and from which date the warranty starts."
+   },
+   {
+    "topic": "Hosting model",
+    "why": "The website must run on dedicated servers at two seismic zones but also be deployable on public or private cloud; it is not clear who provides the data centres.",
+    "page": 58,
+    "clause_ref": "6.1 A.17",
+    "quote": "The SB has to host the Bank's Website on dedicated servers in high availability mode at two different Seismic Zones.",
+    "prebid_query": "Clause 6.1 A.17 requires hosting on dedicated servers in two seismic zones, while clause 6.1 C.5 requires deployability on public or private cloud. Kindly clarify whether the bidder must supply the data centres or may use cloud services, and any empanelment required."
+   },
+   {
+    "topic": "Expected traffic and capacity",
+    "why": "The solution must have no limit on users or transactions, but no visitor or concurrent user numbers are given for sizing.",
+    "page": 75,
+    "clause_ref": "6.1 H.ii",
+    "quote": "The proposed solution should not have any restriction in terms of number of users or volume of transactions in either way.",
+    "prebid_query": "Clause 6.1 H.ii asks for no restriction on users or transactions. Kindly provide the current monthly visitors, page views and peak concurrent users of iob.in to size the infrastructure."
+   },
+   {
+    "topic": "Volume of content to migrate",
+    "why": "All current data must be fully migrated, but the amount of pages, documents and databases is not given.",
+    "page": 58,
+    "clause_ref": "6.1 A.14",
+    "quote": "Current Data on the website has to be fully migrated and kept for each section/module on the new website.",
+    "prebid_query": "Clause 6.1 A.14(c) requires full migration of current data. Kindly share the approximate number of pages, documents, media files and databases to be migrated and their formats."
+   },
+   {
+    "topic": "Bundled login",
+    "why": "It is not clear whether this is a single sign-on with internet banking and other portals or only a page of links.",
+    "page": 74,
+    "clause_ref": "6.1 G.26",
+    "quote": "Bundled Login Feature needs to be enabled i.e. all options with login must be bundled under a single login.",
+    "prebid_query": "Clause 6.1 G.26 asks for all logins to be bundled under a single login. Kindly clarify whether a single sign-on across internet banking, Fastag, credit card and staff portals is expected or only consolidated links, and which authentication services the Bank will provide."
+   },
+   {
+    "topic": "Number of calculators",
+    "why": "Calculators are required as and when needed and a long list is given with no count.",
+    "page": 74,
+    "clause_ref": "6.1 G.20",
+    "quote": "Expenditure Manager, Retirement Planner, Financial Planner, Savings Calculator, Investment Planning Calculator, Mortgage Calculator etc. should also be provided in the website at a proper place if desired by the Bank.",
+    "prebid_query": "Clauses 6.1 G.19 and G.20 require loan and other calculators as and when required. Kindly state the number of calculators to be delivered at go-live and whether further calculators are change requests."
+   },
+   {
+    "topic": "Third-party integrations",
+    "why": "The systems to be integrated are named only by example and the interfaces are not described.",
+    "page": 81,
+    "clause_ref": "7.1 Sl 22",
+    "quote": "Ability to be Integrated with third party application like Market tracker, tax planner, online IT filing, selected external",
+    "prebid_query": "Table A, Sl 22 requires integration with third-party applications such as market tracker, tax planner and online IT filing. Kindly list the systems to be integrated at go-live and the interface type for each."
+   }
+  ],
+  "dropped_findings": 0,
+  "not_priced": [
+   {
+    "topic": "penalties",
+    "label": "Penalties for delay or downtime (service levels)",
+    "note": "Delay penalty and monthly uptime penalties on invoice value apply, with liquidated damages capped at a share of contract value.",
+    "evidence": [
+     {
+      "page": 77,
+      "clause_ref": "6.3",
+      "quote": "a penalty of half percent (0.5%) of order value for each week or part thereof of the delay",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 148,
+      "clause_ref": "Part 9",
+      "quote": "Level of Uptime monthly Penalty Charges",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "topic": "warranty",
+    "label": "Warranty period",
+    "note": "One year of warranty followed by 4 years of maintenance, with a possible 2-year extension.",
+    "evidence": [
+     {
+      "page": 73,
+      "clause_ref": "6.1 G.16",
+      "quote": "The warranty period will be of one year duration.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "topic": "data_rules",
+    "label": "Data protection and other rules to follow",
+    "note": "RBI outsourcing directions, data stored only in India, IT Act compliance, secure data deletion and portability, and certification to STQC, WCAG and GIGW apply.",
+    "evidence": [
+     {
+      "page": 32,
+      "clause_ref": "3.11 i",
+      "quote": "which storage shall be done only in India",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "topic": "technology",
+    "label": "Required technology or software",
+    "note": "IPv6 compliance, DITA and Unicode compliance, upgrade to the latest .net framework and a preference for enterprise CMS products.",
+    "evidence": [
+     {
+      "page": 63,
+      "clause_ref": "6.1 C.2",
+      "quote": "Bank would preferable CMS like: Adobe, Liferay, Sitecore or similar CMS.",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 55,
+      "clause_ref": "6.1",
+      "quote": "website of the Bank is in .net framework, so the Bank is exploring upgrade its website to the latest version of .net framework.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "topic": "team_qualifications",
+    "label": "Required team qualifications or CVs",
+    "note": "An off-site team of at least 5 people in named roles is required after go-live.",
+    "evidence": [
+     {
+      "page": 71,
+      "clause_ref": "6.1 F",
+      "quote": "Off-Site team - Team of not less than 5 people consisting of developer, designer, hosting / server admin, tester and quality assurer.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "topic": "source_code",
+    "label": "Source code and ownership handover",
+    "note": "The Bank may appoint an escrow agent for the source code, and the business logic of developed software is the Bank's property.",
+    "evidence": [
+     {
+      "page": 76,
+      "clause_ref": "6.1 I",
+      "quote": "may choose to appoint an escrow agent to provide escrow mechanism for the deposit of the source code",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "topic": "multi_tenancy",
+    "label": "Several client organisations on one system (multi-tenant)",
+    "note": "The CMS must support many micro-sites from one instance without extra licences.",
+    "evidence": [
+     {
+      "page": 82,
+      "clause_ref": "7.1 Sl 29",
+      "quote": "Support multi-tenancy and should allow department to",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   }
+  ],
+  "payment_terms": {
+   "payments": [
+    {
+     "percent": "0.6",
+     "at_build_fraction": "1",
+     "offset_months": "0",
+     "label": "60% go live"
+    },
+    {
+     "percent": "0.4",
+     "at_build_fraction": "1",
+     "offset_months": "3.0",
+     "label": "40% after go live + 3 months"
+    }
+   ],
+   "evidence": [
+    {
+     "page": 53,
+     "clause_ref": "5.23",
+     "quote": "60% of cost shall be Go-live sign off duly",
+     "document": "att01.pdf",
+     "checked": true
+    }
+   ]
+  },
+  "scope": [
+   {
+    "key": "audit_log",
+    "label": "Sign-in and user accounts: A record of who did what (audit log)",
+    "status": "explicit",
+    "note": "Audit logs at application and database level, in non-editable form.",
+    "evidence": [
+     {
+      "page": 83,
+      "clause_ref": "7.1 Sl 36",
+      "quote": "System should have capability to capture audit logs for modifications done at application level as well as database",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "key": "seo",
+    "label": "Public website: Search engine set-up (SEO)",
+    "status": "explicit",
+    "note": "",
+    "evidence": [
+     {
+      "page": 60,
+      "clause_ref": "6.1 B.1",
+      "quote": "special care must be taken that the design and structure is SEO friendly",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "key": "monitoring",
+    "label": "Security, compliance and monitoring: Monitoring, logs and alerts",
+    "status": "explicit",
+    "note": "Continuous monitoring with firewall, IPS and a SOC team.",
+    "evidence": [
+     {
+      "page": 66,
+      "clause_ref": "6.1 D.10",
+      "quote": "Bidder must have a strong Firewall & IPS in place to prevent any unwanted activity on the website with continuous monitoring.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "key": "siem",
+    "label": "Security, compliance and monitoring: Security monitoring (SIEM)",
+    "status": "explicit",
+    "note": "",
+    "evidence": [
+     {
+      "page": 66,
+      "clause_ref": "6.1 D.15",
+      "quote": "Bidder must also have a SIEM solution for log monitoring and incident handling.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "key": "security_scans",
+    "label": "Security, compliance and monitoring: Automatic security scans of the code",
+    "status": "explicit",
+    "note": "Static analysis of libraries and code.",
+    "evidence": [
+     {
+      "page": 69,
+      "clause_ref": "6.1 D.36c",
+      "quote": "All such libraries/code should undergo SAST.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "key": "data_masking",
+    "label": "Security, compliance and monitoring: Masking personal data",
+    "status": "explicit",
+    "note": "",
+    "evidence": [
+     {
+      "page": 68,
+      "clause_ref": "6.1 D.33",
+      "quote": "SB shall ensure encryption and masking features wherever necessary as per Bank’s requirement.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "key": "compliance",
+    "label": "Security, compliance and monitoring: Compliance controls (ISO 27001, SOC 2)",
+    "status": "explicit",
+    "note": "Adherence to OWASP, SANS, ISO/IEC 27000 family and NIST standards.",
+    "evidence": [
+     {
+      "page": 68,
+      "clause_ref": "6.1 D.28",
+      "quote": "SB must adhere to compliance standards such as OWASP, SANS, ISO/IEC 27000 family security standards, NIST standards,",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "key": "public_api",
+    "label": "Connections with other systems: An API or webhooks so other systems can use it",
+    "status": "explicit",
+    "note": "Provide content to third parties in XML, JSON or similar format.",
+    "evidence": [
+     {
+      "page": 84,
+      "clause_ref": "7.1 Sl 52",
+      "quote": "Ability to Provide content to third parties in a standard",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "key": "push",
+    "label": "Notifications: Push notifications on phones and browsers",
+    "status": "explicit",
+    "note": "",
+    "evidence": [
+     {
+      "page": 85,
+      "clause_ref": "7.1 Sl 57",
+      "quote": "Provision to send custom as well as automated Push",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "key": "workflow_audit",
+    "label": "Approvals: Record every decision and who made it (audit trail)",
+    "status": "explicit",
+    "note": "",
+    "evidence": [
+     {
+      "page": 85,
+      "clause_ref": "7.1 Sl 58",
+      "quote": "Solution shall maintain audit trail for all the activities with",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "key": "workflow_alerts",
+    "label": "Approvals: SMS or email alerts at each step",
+    "status": "explicit",
+    "note": "",
+    "evidence": [
+     {
+      "page": 85,
+      "clause_ref": "7.1 Sl 60",
+      "quote": "Automated alerts shall be sent to admin and all the users regarding such changes pending authorisation twice daily",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   }
+  ],
+  "scope_set_aside": [],
+  "inventory": null
+ }
+}

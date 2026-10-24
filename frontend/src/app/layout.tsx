@@ -1,10 +1,16 @@
 import type { Metadata } from "next";
-import { Geist_Mono, Inter, Instrument_Serif } from "next/font/google";
+import {
+  Geist_Mono,
+  IBM_Plex_Mono,
+  IBM_Plex_Sans,
+  Inter,
+  Instrument_Serif,
+} from "next/font/google";
 
 import "./globals.css";
 
-// Inter for everything people read and fill in; Instrument Serif for the few big statements;
-// Geist Mono for small labels and figures.
+// IBM Plex Sans for everything people read and fill in, Plex Mono for small figures (the
+// theme in globals.css points the font tokens at them); the older faces stay loaded for now.
 const body = Inter({
   subsets: ["latin"],
   variable: "--font-inter",
@@ -15,6 +21,18 @@ const serif = Instrument_Serif({
   weight: "400",
   style: ["normal", "italic"],
   variable: "--font-instrument-serif",
+  display: "swap",
+});
+const plex = IBM_Plex_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-plex",
+  display: "swap",
+});
+const plexMono = IBM_Plex_Mono({
+  subsets: ["latin"],
+  weight: ["400", "500"],
+  variable: "--font-plex-mono",
   display: "swap",
 });
 const mono = Geist_Mono({
@@ -33,7 +51,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`dark ${body.variable} ${serif.variable} ${mono.variable} h-full antialiased`}
+      className={`${body.variable} ${serif.variable} ${mono.variable} ${plex.variable} ${plexMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>

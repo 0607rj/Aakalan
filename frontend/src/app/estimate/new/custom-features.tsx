@@ -49,18 +49,26 @@ function asSize(value: string): Size {
   return value === "S" || value === "L" ? value : "M";
 }
 
-export function itemsFromDocument(found: FoundOtherFeature[]): CustomItem[] {
-  return found.map((f, i) => ({
-    id: `found-${i}`,
-    name: f.name,
-    category: f.category,
-    size: asSize(f.size),
-    foundIndex: i,
-    description: f.description,
-    evidence: f.evidence,
-    included: true,
-    units: f.units,
-  }));
+/** Editable items from the document's other features, as the backend pre-fills them
+ * (`custom`, each pointing at its finding), with the finding's words and pages. */
+export function itemsFromDocument(
+  custom: CustomFeature[],
+  found: FoundOtherFeature[],
+): CustomItem[] {
+  return custom.map((c, i) => {
+    const f = c.found_index != null ? found[c.found_index] : undefined;
+    return {
+      id: `found-${c.found_index ?? i}`,
+      name: c.name,
+      category: c.category,
+      size: c.size,
+      foundIndex: c.found_index ?? null,
+      description: f?.description ?? "",
+      evidence: f?.evidence ?? [],
+      included: true,
+      units: c.units,
+    };
+  });
 }
 
 /** Editable items from a saved template's extra features. */

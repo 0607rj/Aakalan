@@ -149,7 +149,7 @@ export function StepIndicator({
   current: number;
 }) {
   return (
-    <ol className="flex flex-wrap items-center gap-2 text-sm">
+    <ol className="flex flex-wrap items-center gap-x-1 gap-y-2 text-sm">
       {labels.map((label, i) => {
         const n = i + 1;
         const done = n < current;
@@ -158,13 +158,28 @@ export function StepIndicator({
           <li key={label} className="flex items-center gap-2">
             <span
               className={cn(
-                "flex size-7 items-center justify-center rounded-full border text-xs font-semibold",
+                "flex size-6 items-center justify-center rounded-full border text-xs font-semibold tabular-nums transition-colors duration-300",
                 active && "border-primary bg-primary text-primary-foreground",
-                done && "border-primary text-primary",
+                done && "border-primary/40 bg-tape-soft text-primary",
                 !active && !done && "text-muted-foreground",
               )}
             >
-              {done ? "✓" : n}
+              {done ? (
+                <svg
+                  aria-label="done"
+                  viewBox="0 0 16 16"
+                  className="size-3"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.25"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M3.5 8.5 6.5 11.5 12.5 4.5" />
+                </svg>
+              ) : (
+                n
+              )}
             </span>
             <span
               className={cn(
@@ -204,7 +219,7 @@ export function NotIncludedToggle({
           : "text-muted-foreground hover:text-foreground hover:underline",
       )}
     >
-      {excluded ? "Not included ✕ (undo)" : "Mark as not included"}
+      {excluded ? "Not included (undo)" : "Mark as not included"}
     </button>
   );
 }
@@ -231,12 +246,12 @@ export function FeatureCard({
   return (
     <div
       className={cn(
-        "flex flex-col gap-2 rounded-xl border bg-card p-4 transition-colors",
+        "flex flex-col gap-2 rounded-lg border bg-card p-4 transition-[border-color,background-color,box-shadow] duration-200",
         checked
-          ? "border-primary bg-primary/5 ring-1 ring-primary"
+          ? "border-primary bg-tape-soft/50 shadow-[0_0_0_1px_var(--primary)]"
           : excluded
-            ? "border-dashed opacity-70"
-            : "hover:border-primary/40 hover:bg-muted/40",
+            ? "border-dashed bg-transparent opacity-60"
+            : "hover:border-foreground/30",
       )}
     >
       <label className="flex cursor-pointer items-start gap-3">
@@ -375,7 +390,7 @@ export function SectionHeading({
 }) {
   return (
     <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b pb-2">
-      <h2 className="text-sm font-semibold tracking-wide uppercase">
+      <h2 className="text-base font-semibold">
         {title}
         {count !== undefined ? (
           <span className="ml-2 text-muted-foreground tabular-nums">
@@ -402,13 +417,13 @@ export function QuestionHeading({
 }) {
   return (
     <div>
-      <h1 className="text-2xl font-semibold tracking-tight text-balance sm:text-3xl">
+      <h1 className="text-3xl font-semibold tracking-tight text-balance">
         {question.label}
       </h1>
       <p className="mt-1 text-muted-foreground">
         {impact && impact.impact_paise > 0
           ? `This answer can change the price by about ${formatPaise(impact.impact_paise, currency)}.`
-          : "We have picked the usual answer. Change it if it does not fit."}
+          : "The usual answer is picked. Change it if it does not fit."}
       </p>
     </div>
   );
@@ -455,10 +470,10 @@ export function QuestionGroup({
             <label
               key={String(option.value)}
               className={cn(
-                "flex cursor-pointer flex-col gap-1 rounded-xl border bg-card p-4 transition-colors",
+                "flex cursor-pointer flex-col gap-1 rounded-lg border bg-card p-4 transition-[border-color,background-color,box-shadow] duration-200",
                 selected
-                  ? "border-primary bg-primary/5 ring-1 ring-primary"
-                  : "hover:border-primary/40 hover:bg-muted/40",
+                  ? "border-primary bg-tape-soft/50 shadow-[0_0_0_1px_var(--primary)]"
+                  : "hover:border-foreground/30",
               )}
             >
               <span className="flex items-center gap-2">
@@ -509,18 +524,13 @@ export function Citation({
     .join(" · ");
   return (
     <details className="group text-sm">
-      <summary className="cursor-pointer list-none text-primary hover:underline">
-        <span aria-hidden className="mr-1">
-          📄
-        </span>
+      <summary className="w-fit cursor-pointer list-none text-muted-foreground transition-colors hover:text-foreground">
         {first.checked === false
           ? `From a scanned page — please verify on ${where.charAt(0).toLowerCase()}${where.slice(1)}`
-          : `Found in the document: ${where}`}
-        <span className="ml-1 text-muted-foreground group-open:hidden">
-          (show text)
-        </span>
+          : where}
+        <span className="ml-1 text-primary group-open:hidden">show text</span>
       </summary>
-      <blockquote className="mt-2 border-l-2 border-primary/40 pl-3 text-muted-foreground italic">
+      <blockquote className="mt-2 rounded-md bg-panel-2 px-3 py-2 text-muted-foreground">
         “{first.quote}”
       </blockquote>
     </details>
@@ -531,9 +541,10 @@ export function Calculating({ labels }: { labels: string[] }) {
   return (
     <div className="flex flex-col items-center gap-4 py-24 text-center">
       <StepIndicator labels={labels} current={3} />
-      <div className="mt-8 size-10 animate-spin rounded-full border-4 border-muted border-t-primary" />
+      <div className="mt-10 h-1 w-48 overflow-hidden rounded-full bg-muted">
+        <div className="h-full w-1/3 animate-[measure_1.4s_cubic-bezier(0.65,0,0.35,1)_infinite] rounded-full bg-primary" />
+      </div>
       <p className="text-lg font-medium">Working out your cost…</p>
-      <p className="text-sm text-muted-foreground">This takes a few seconds.</p>
     </div>
   );
 }

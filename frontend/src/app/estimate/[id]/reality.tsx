@@ -13,6 +13,8 @@ import {
 import { useLoad } from "@/lib/use-load";
 import { cn } from "@/lib/utils";
 
+import { Disclosure } from "./cost-summary";
+
 const KIND_LABEL: Record<string, string> = {
   level_too_high: "Level may be too high",
   level_too_low: "Level may be too low",
@@ -27,9 +29,7 @@ function Verdict({ ok, text }: { ok: boolean; text: string }) {
     <span
       className={cn(
         "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-medium",
-        ok
-          ? "bg-emerald-100 text-emerald-900 dark:bg-emerald-950 dark:text-emerald-200"
-          : "bg-amber-100 text-amber-900 dark:bg-amber-950 dark:text-amber-200",
+        ok ? "bg-ai-soft text-ai" : "bg-warning-muted text-warning",
       )}
     >
       <span aria-hidden>{ok ? "✓" : "!"}</span>
@@ -124,32 +124,26 @@ export function RealityCheck({ summary }: { summary: QuickSummary }) {
   if (!reality) return null;
   const ok = reality.verdict === "realistic";
   return (
-    <section className="flex flex-col gap-4 rounded-2xl border bg-card px-6 py-6 shadow-sm sm:px-8">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h2 className="text-lg font-semibold">Does this price look real?</h2>
-          <p className="text-sm text-muted-foreground">
-            Common-sense checks of the estimate against itself, not against
-            market prices.
-          </p>
-        </div>
-        <Verdict
-          ok={ok}
-          text={ok ? "Looks realistic" : "Worth a second look"}
-        />
-      </div>
+    <Disclosure
+      title="Does this price look real?"
+      hint={
+        <span className={ok ? "text-success" : "text-warning"}>
+          {ok ? "Looks realistic" : "Worth a second look"} ·{" "}
+          {reality.checks.filter((c) => c.ok).length} of {reality.checks.length}{" "}
+          checks pass
+        </span>
+      }
+    >
       <ul className="flex flex-col gap-2">
         {reality.checks.map((c) => (
           <li key={c.key} className="flex gap-2 text-sm">
             <span
               aria-hidden
               className={cn(
-                "mt-0.5 font-semibold",
-                c.ok ? "text-emerald-600" : "text-amber-600",
+                "mt-[0.5em] size-1.5 shrink-0 rounded-full",
+                c.ok ? "bg-success" : "bg-warning",
               )}
-            >
-              {c.ok ? "✓" : "!"}
-            </span>
+            />
             <span>
               <span className="font-medium">{c.title}.</span>{" "}
               <span className="text-muted-foreground">{c.detail}</span>
@@ -158,6 +152,6 @@ export function RealityCheck({ summary }: { summary: QuickSummary }) {
         ))}
       </ul>
       <SecondOpinion estimateId={summary.estimate_id} />
-    </section>
+    </Disclosure>
   );
 }

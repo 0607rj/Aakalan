@@ -480,6 +480,40 @@ class ClientProvided(Frozen):
     by_vendor: list[str]
     max_sentence_chars: int = Field(ge=20)
     items: list[ClientProvidedItem]
+    # The client by its own name (OPEN_QUESTIONS 157): "hosted on RailTel's cloud", "provisioned
+    # by RailTel". A capitalised name before 's + one of `own_words`, or after one of `by_name`,
+    # counts as a `by_client` word unless it is a vendor or a cloud brand (`not_client`).
+    own_words: list[str] = []
+    by_name: list[str] = []
+    not_client: list[str] = []
+
+
+class SupportTerms(Frozen):
+    """Support hours and support staff a document states, found in code on the page text
+    (OPEN_QUESTIONS 157). A sentence about the bidding portal's own helpdesk (`ignore`) never
+    counts. Support hours: a `round_the_clock` phrase answers round the clock, staffed in shifts
+    when the sentence names a `staffed` desk, else on call; without one, an `office_hours`
+    phrase in a sentence about support answers office hours; else an SLA response faster than
+    `fast_response_hours` (in a sentence about support) answers on call. Support staff: a stated
+    number of `staff_words` in a sentence about support (`support_words`) with a `dedicated`
+    word and no `onsite` word (people at the client's office are onsite_staff). When the hours
+    are round the clock and another support sentence says office hours, the two are listed as a
+    pre-bid query (`conflict_query`), not resolved silently."""
+
+    source: str
+    ignore: list[str]
+    round_the_clock: list[str]
+    staffed: list[str]
+    office_hours: list[str]
+    fast_response_hours: int = Field(ge=1)
+    support_words: list[str]
+    staff_words: list[str]
+    dedicated: list[str]
+    onsite: list[str]
+    max_staff: int = Field(ge=1)
+    max_sentence_chars: int = Field(ge=20)
+    values: dict[Literal["office", "on_call", "always"], str]  # support_hours option values
+    conflict_query: str
 
 
 class CmsBuiltIn(Frozen):
@@ -501,11 +535,21 @@ class CmsBuiltIn(Frozen):
         return any(re.search(rf"\b{re.escape(w.lower())}\b", text) for w in self.extra_words)
 
 
+class BacktestNote(Frozen):
+    """The latest production-path back-test in plain words (OPEN_QUESTIONS 161), shown at the end
+    of every estimate's accuracy note. Rewritten after each production-path back-test."""
+
+    source: str
+    text: str
+
+
 class QuickConfig(Frozen):
     version: str
     source: str
     requirement_clarity: int = Field(ge=1, le=5)
     show_market_prices: bool = True  # show published contract prices beside the estimate
+    # how the pricing did in the latest production-path back-test, added to the accuracy note
+    backtest_note: BacktestNote | None = None
     # Answers every quick estimate starts from (before sizes, questions and features).
     base_answers: dict[str, Any] = {}
     project_types: list[ProjectType] = []
@@ -525,6 +569,9 @@ class QuickConfig(Frozen):
     not_sure: NotSure | None = None
     not_priced_topics: dict[str, NotPricedTopic] = {}
     onsite_role: str | None = None  # rate-card role for staff at the client's office
+    # rate-card role for dedicated support staff a document states (offsite or not said)
+    support_role: str | None = None
+    support_terms: SupportTerms | None = None  # support hours and staff read in code
     onsite_event_days: OnsiteEventDays | None = None  # onsite only for an event, no days given
     payment_points: PaymentPoints | None = None
     cost_item_groups: list[CostItemGroup] = []
@@ -560,6 +607,15 @@ class QuickConfig(Frozen):
         unknown = set(self.commonly_needed) - {f.key for f in self.features}
         if unknown:
             raise ValueError(f"commonly_needed: unknown features {sorted(unknown)}")
+        return self
+
+    @model_validator(mode="after")
+    def _support_terms(self) -> "QuickConfig":
+        terms = self.support_terms
+        if terms is None:
+            return self
+        for value in terms.values.values():
+            self.questions["support_hours"].option(value)  # raises when it does not exist
         return self
 
     @model_validator(mode="after")

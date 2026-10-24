@@ -1,0 +1,1018 @@
+{
+ "benchmark_id": "gem-cpcb-epr-waste-tyre-portal",
+ "reader_model": "stand-in: a Claude Code Sonnet subagent answering the app's own prompts (relayed), NOT the production claude-sonnet-5-5 API call",
+ "read_on": "2026-10-24",
+ "code_path": "production reading code: app parser, ai_read (extract_tender_v8 + gap_check_v3), verify_findings, merge_extractions; only the LLM call was relayed. No inventory (independent check) was read.",
+ "files_read": [
+  "att01.pdf",
+  "att06.pdf",
+  "att12.pdf",
+  "att05.pdf"
+ ],
+ "files_not_read": [],
+ "extraction": {
+  "reader": "ai",
+  "prompt_version": "extract_tender_v8",
+  "project_name": "Development of Portal for Management of Waste Tyre through the Extended Producers Responsibility (EPR) Regime",
+  "summary": "The requirement document asks for a portal where tyre producers, recyclers and retreaders register, report their data, and generate and trade EPR certificates, with regulators monitoring compliance. It also asks for reports, environmental compensation, audits, a mobile app, a chatbot and training, followed by six years of warranty and maintenance on a government server.",
+  "features": [
+   {
+    "key": "online_forms",
+    "label": "Online application or registration forms",
+    "evidence": [
+     {
+      "page": 7,
+      "clause_ref": "1.1",
+      "quote": "The portal should facilitate sign-up and registration of Producers, Recycles and Retreaders.",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 8,
+      "clause_ref": "1.2",
+      "quote": "Provision for entering manufacturing /import data by Producer, recycling /retreading data by",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 13,
+      "clause_ref": "6.1",
+      "quote": "The Software should be flexible to capture the required fields and also expand the fields as",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 4,
+    "suggested": true,
+    "stories": [
+     "As a producer, recycler or retreader, I can sign up with my KYC details on a form made for my type of stakeholder",
+     "As a producer, recycler or retreader, I can submit the registration form with KYC documents and get an application number",
+     "As a producer, I can enter my manufacturing, sales, procurement or import data regularly",
+     "As a producer, I can enter the quantity of waste tyre generated and handled by my captive treatment facilities",
+     "As a recycler, I can submit my waste tyre purchase, end product production and end product sales data with supporting invoices",
+     "As a retreader, I can submit my retreading data",
+     "Flexible registration fields"
+    ],
+    "story_level": "standard",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "approval_workflow",
+    "label": "Files go from person to person for approval",
+    "evidence": [
+     {
+      "page": 8,
+      "clause_ref": "1.4",
+      "quote": "Provision for movement of checklist across various officials such as Competent Authority,",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 8,
+      "clause_ref": "1.5",
+      "quote": "User to be provided Registration along with registration certificate after approval of the Competent",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 2,
+    "suggested": true,
+    "stories": [
+     "As an evaluating officer, I can examine the documents submitted by an applicant against a checklist",
+     "As a CPCB official, I can move the checklist across the Divisional Head, Review Officer and Competent Authority",
+     "As the Competent Authority, I can approve a registration so the applicant gets a registration certificate and a unique registration number"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "dashboards",
+    "label": "Reports and dashboards",
+    "evidence": [
+     {
+      "page": 18,
+      "clause_ref": "9.0",
+      "quote": "Development of dashboard for all users.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 2,
+    "suggested": true,
+    "stories": [
+     "As a stakeholder, I can see a dashboard made for my role",
+     "As a CPCB or SPCB official, I can see the inventory of waste tyres, EPR targets and recycling capacity on a dashboard"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "ai_chatbot",
+    "label": "AI chatbot that answers people's questions",
+    "evidence": [
+     {
+      "page": 11,
+      "clause_ref": "7.1",
+      "quote": "7.1 Sub Module: Creation of Chat Bot",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 2,
+    "suggested": true,
+    "stories": [
+     "As a stakeholder, I can ask the chatbot questions in English, Hindi or a regional language and get contextual answers based on FAQs",
+     "As a stakeholder, I can use live chat for support"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "payments",
+    "label": "Online fee payment",
+    "evidence": [
+     {
+      "page": 8,
+      "clause_ref": "1.3",
+      "quote": "The System to create payment gateway for charging registration fee.",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 11,
+      "clause_ref": "5.1",
+      "quote": "Provision for submission of Environmental Compensation (EC) through payment gateway",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 8,
+      "clause_ref": "1.3",
+      "quote": "Balance fee module in case less fee paid and fee return module in case excess fee charged",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 3,
+    "suggested": true,
+    "stories": [
+     "As an applicant, I can pay the registration fee online through the payment gateway",
+     "As a producer, I can pay environmental compensation online through the payment gateway",
+     "Balance fee and fee refund"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "connect_existing",
+    "label": "Connect to existing systems (SAP, old software)",
+    "evidence": [
+     {
+      "page": 7,
+      "clause_ref": "",
+      "quote": "EPR Portal for Waste Tyre shall integrate with the existing in-house portal developed by CPCB for",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 14,
+      "clause_ref": "6.1",
+      "quote": "The software should be provision for linkage with Central Portal of CPCB for Waste Management.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 2,
+    "suggested": true,
+    "stories": [
+     "As CPCB, I can have the data of already registered producers, recyclers and retreaders brought in from the existing in-house portal",
+     "As CPCB, I can have the portal linked with the central portal of CPCB for waste management"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "languages",
+    "label": "Available in Indian languages",
+    "evidence": [
+     {
+      "page": 13,
+      "clause_ref": "6.1",
+      "quote": "The Software should have provision for multi-lingual usage. Such as English, Hindi and Regional",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 2,
+    "suggested": true,
+    "stories": [
+     "As a user, I can use the portal in English, Hindi or a regional language"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "public_website",
+    "label": "Public website with notices and news",
+    "evidence": [
+     {
+      "page": 15,
+      "clause_ref": "6.5",
+      "quote": "Upload and publish latest information as received from CPCB/MoEF&CC on the portal.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 1,
+    "suggested": true,
+    "stories": [
+     "As CPCB staff, I can publish documents, news, best practices and awareness pages on the portal"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "mobile_app",
+    "label": "Mobile app (Android / iOS)",
+    "evidence": [
+     {
+      "page": 11,
+      "clause_ref": "Module-7",
+      "quote": "Mobile Application should be developed for Android, and IOS Operating system.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 1,
+    "suggested": true,
+    "stories": [
+     "As a producer, I can enter the monthly tyres manufactured, procured or imported in the app",
+     "As a recycler or retreader, I can enter the monthly waste tyre processed in the app"
+    ],
+    "story_level": "advanced",
+    "story_units": 1,
+    "covers": [
+     "online_forms",
+     "dashboards"
+    ]
+   },
+   {
+    "key": "notifications",
+    "label": "SMS, email and app notifications",
+    "evidence": [
+     {
+      "page": 7,
+      "clause_ref": "1.1",
+      "quote": "Generation of login credentials and its conveyance to stakeholders through email and SMS",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 9,
+      "clause_ref": "2.1",
+      "quote": "Generate Alert Messages for timely submission of manufacturing /sales/procurement/ Import data",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 3,
+    "suggested": true,
+    "stories": [
+     "As a new stakeholder, I receive my login credentials by email and SMS",
+     "As a producer, recycler or retreader, I get alert messages for timely submission of data and for non-compliance"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   }
+  ],
+  "other_features": [
+   {
+    "name": "Geo-tagged locations, photos and videos",
+    "description": "Applicants tag their locations and upload videos and pictures with the registration.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 8,
+      "clause_ref": "1.2",
+      "quote": "Provision for geo-tagging of the locations, live videos, uploading videos & pictures.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As an applicant, I can geo-tag my location and upload videos and pictures"
+    ],
+    "units": 1
+   },
+   {
+    "name": "EPR obligations for producers",
+    "description": "The portal calculates each producer's EPR obligation from its manufacturing, sales, procurement or import data and assigns it.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 8,
+      "clause_ref": "2.1",
+      "quote": "Auto calculate EPR Obligations based on manufacturing/sales /procurement/ Import data.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a producer, I can see my EPR obligation calculated from my manufacturing, sales, procurement or import data",
+     "As CPCB, I can assign EPR obligations to producers on the portal"
+    ],
+    "units": 1
+   },
+   {
+    "name": "EPR certificates for recyclers",
+    "description": "The portal generates EPR certificates for recyclers from their sales data and the formula in the Rules, and shows the certificates available.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 9,
+      "clause_ref": "3.1",
+      "quote": "System to auto generate EPR certificates based on sales information provided by it and formula",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a recycler, I get EPR certificates generated automatically in denominations of 100, 200, 500 and 1000 metric tonnes",
+     "As a producer, I can see the EPR certificates available with all registered recyclers"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Retreading certificates for retreaders",
+    "description": "The portal generates retreading certificates for retreaders from the quantity of retreaded tyres sold, and shows the certificates available.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 9,
+      "clause_ref": "3.2",
+      "quote": "System to auto generate Retreading certificates based on quantity of retreaded tyres sold formula",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a retreader, I get retreading certificates generated automatically in denominations of 100, 200, 500 and 1000 metric tonnes",
+     "As a producer, I can see the retreading certificates available with all registered retreaders"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Certificate trading and obligation adjustment",
+    "description": "Producers, recyclers and retreaders buy, sell, transfer and exchange EPR and retreading certificates, and producer obligations are adjusted automatically.",
+    "category": "module",
+    "size": "M",
+    "evidence": [
+     {
+      "page": 10,
+      "clause_ref": "3.3",
+      "quote": "Transaction, exchange/transfer, Sale & Purchase of EPR Certificate between Recycler/",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a producer, I can buy EPR or retreading certificates from recyclers and retreaders",
+     "As a recycler or retreader, I can sell or transfer my certificates to producers",
+     "As a producer, I can exchange certificates with other producers",
+     "As a producer, I can see my EPR obligation adjusted automatically after I buy certificates"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Activity sheets",
+    "description": "An activity sheet records the sale and purchase of raw material, finished products and end products for producers, recyclers and retreaders.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 10,
+      "clause_ref": "3.3",
+      "quote": "Development of the Activity Sheet of Producers, Recyclers & Retreaders for the activity of sale",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a producer, recycler or retreader, I can keep an activity sheet of my purchases and sales"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Returns and statistical reports",
+    "description": "Monthly, quarterly and annual returns are generated for each stakeholder type, with state-wise and national statistics.",
+    "category": "report",
+    "size": "M",
+    "evidence": [
+     {
+      "page": 10,
+      "clause_ref": "Module-4",
+      "quote": "System to auto-generate Monthly, Quarterly & Annual Returns/Reports of Producer based on",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a producer, I get monthly, quarterly and annual returns generated from my data",
+     "As a recycler, I get monthly, quarterly and annual returns generated from my data",
+     "As a retreader, I get monthly, quarterly and annual returns generated from my data",
+     "As an official, I can look up annual reports archived year-wise",
+     "As an official, I can see state-wise recyclers and retreaders with their installed capacity",
+     "As an official, I can see state-wise producers with their recycling targets",
+     "As an official, I can see national statistics on recycled and retreaded tyres",
+     "As an official, I can see yearly tyre imports and yearly waste tyre generation"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Environmental compensation",
+    "description": "The portal calculates environmental compensation for non-compliance, issues notices, takes payment and returns it once compliance is met.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 11,
+      "clause_ref": "Module-5",
+      "quote": "This module will generate Environmental Compensation (EC) for non-compliance as per CPCB",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As CPCB, I can have environmental compensation calculated automatically for a non-compliant producer",
+     "As CPCB, I can issue an environmental compensation notice for non-compliance",
+     "As a producer, I can have the compensation returned after I fulfil the non-compliance"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Audit of EPR compliance",
+    "description": "Third-party auditors are registered, assigned audits, carry out online audits with geo-tagged reports and are paid through the portal.",
+    "category": "module",
+    "size": "M",
+    "evidence": [
+     {
+      "page": 11,
+      "clause_ref": "Module-6",
+      "quote": "To conduct third-party audits of Producers, Recyclers & Retreaders for verification of compliance",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As an auditor, I can register on the portal",
+     "As CPCB, I can assign an audit duty to an auditor",
+     "As an auditor, I can carry out an online audit and submit a geo-tagged report",
+     "As an auditor, I can manage my profile and have my payments processed"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Integration with government data sources",
+    "description": "APIs to fetch and validate data from GST, income tax, PAN, DGFT, Customs, SPCBs and similar authorities.",
+    "category": "integration",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 7,
+      "clause_ref": "1.1",
+      "quote": "The system to integrate APIs of other authorities such as GST, SPCBs/PCCs, Income Tax, PAN,",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a stakeholder, I have my GST, PAN and similar details checked against the issuing authority's data"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Auto-fill tools such as iBOT",
+    "description": "Up to two small tools that fill in sales data automatically.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 14,
+      "clause_ref": "6.3",
+      "quote": "Developing up to 2 minor software tools / applications such as iBOT to facilitate auto filling of sales",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a producer, I can have my sales data filled in automatically by a tool"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Waste tyre knowledge base",
+    "description": "A knowledge base on utilisation and management of waste tyre and new recycling technologies.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 15,
+      "clause_ref": "6.4",
+      "quote": "Develop knowledge base w.r.t Utilization & Management of Waste Tyre including new technologies",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a stakeholder, I can read the knowledge base on waste tyre management"
+    ],
+    "units": 1
+   }
+  ],
+  "choices": {
+   "platforms": {
+    "value": "web_mobile",
+    "label": "Website and app",
+    "evidence": [
+     {
+      "page": 11,
+      "clause_ref": "Module-7",
+      "quote": "Mobile Application should be developed for Android, and IOS Operating system.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "integrations": {
+    "value": "many",
+    "label": "Yes, several",
+    "evidence": [
+     {
+      "page": 7,
+      "clause_ref": "1.1",
+      "quote": "The system to integrate APIs of other authorities such as GST, SPCBs/PCCs, Income Tax, PAN,",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "hosting": {
+    "value": "existing",
+    "label": "Servers you already have",
+    "evidence": [
+     {
+      "page": 14,
+      "clause_ref": "6.2",
+      "quote": "The vendor should deploy portal on NIC Server",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "helpdesk_scope": {
+    "value": "yes",
+    "label": "Yes",
+    "evidence": [
+     {
+      "page": 15,
+      "clause_ref": "6.4",
+      "quote": "Provide support through a help desk to stakeholders to manage its connectivity.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "availability": {
+    "value": "basic",
+    "label": "Not a problem",
+    "evidence": [
+     {
+      "page": 25,
+      "clause_ref": "12.0",
+      "quote": "The service of the application should be available with at least 95% availability.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "disaster_site": {
+    "value": "yes",
+    "label": "Yes",
+    "evidence": [
+     {
+      "page": 14,
+      "clause_ref": "6.2",
+      "quote": "System should have facility to switch over from production to standby and DR or vice-versa with",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "penalties": {
+    "value": "yes",
+    "label": "Yes",
+    "evidence": [
+     {
+      "page": 25,
+      "clause_ref": "12.0",
+      "quote": "If the service provider fails to maintain guaranteed uptime of 95% on quarterly basis, CPCB shall",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "web_domain": {
+    "value": "client",
+    "label": "The client provides it",
+    "evidence": [
+     {
+      "page": 18,
+      "clause_ref": "8.0",
+      "quote": "Procurement of NIC domain for hosting application",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "security_audit": {
+    "value": "yes",
+    "label": "Yes",
+    "evidence": [
+     {
+      "page": 16,
+      "clause_ref": "6.6",
+      "quote": "security audit of the system as per government regulations",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "reporting": {
+    "value": "yes",
+    "label": "Yes",
+    "evidence": [
+     {
+      "page": 16,
+      "clause_ref": "6.5",
+      "quote": "Provide status updates in the required format before the review meetings of CPCB. The meetings",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "onsite_period": {
+    "value": "support",
+    "label": "Throughout support",
+    "evidence": [
+     {
+      "page": 17,
+      "clause_ref": "6.8",
+      "quote": "Three persons (programmer cum coordinator) has to be deployed at CPCB on five days a week",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   }
+  },
+  "numbers": {
+   "om_years": {
+    "value": 6,
+    "label": "om_years",
+    "evidence": [
+     {
+      "page": 35,
+      "clause_ref": "16.0",
+      "quote": "Total project duration 06 (Six) years after GO Live!",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "deadline_months": {
+    "value": 3,
+    "label": "deadline_months",
+    "evidence": [
+     {
+      "page": 35,
+      "clause_ref": "16.0",
+      "quote": "System Go Live! within 03 Months.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "emd_paise": {
+    "value": 150000000,
+    "label": "emd_rupees",
+    "evidence": [
+     {
+      "page": 3,
+      "clause_ref": "",
+      "quote": "EMD Value (in Rs.) 1500000",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "pbg_percent": {
+    "value": 0.1,
+    "label": "pbg_percent",
+    "evidence": [
+     {
+      "page": 26,
+      "clause_ref": "14.0",
+      "quote": "Performance Security should be for an amount of 10% of total Project cost.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "onsite_staff": {
+    "value": 3,
+    "label": "onsite_staff",
+    "evidence": [
+     {
+      "page": 17,
+      "clause_ref": "6.8",
+      "quote": "Three persons (programmer cum coordinator) has to be deployed at CPCB on five days a week",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   }
+  },
+  "unclear_points": [
+   {
+    "topic": "Peak concurrent users",
+    "why": "One clause says 5000 and above concurrent users, another says 100 to 150.",
+    "page": 7,
+    "clause_ref": "Module-1",
+    "quote": "EPR Portal for waste tyre should able to handle 5000 and above concurrent users.",
+    "prebid_query": "Module-1 asks for 5000 and above concurrent users while clause 6.1 says 100 to 150 concurrent users. Please confirm the peak concurrent users the portal must support."
+   },
+   {
+    "topic": "Total number of users",
+    "why": "User numbers are given as wide ranges and elsewhere as about 2000.",
+    "page": 7,
+    "clause_ref": "Module-1",
+    "quote": "1500 producer, 1500 to 2000 recyclers, 1500 to 2000 Retreader and by users from authorities. The",
+    "prebid_query": "Module-1 gives ranges for producers, recyclers and retreaders while clause 6.1 says users will be around 2000. Please state the expected number of registered users."
+   },
+   {
+    "topic": "Delivery timeline",
+    "why": "The penalty table gives 24 weeks and 4 months from SRS sign-off, while the project duration gives 3 months.",
+    "page": 24,
+    "clause_ref": "12.0",
+    "quote": "04 months from SRS sign-off.",
+    "prebid_query": "Clause 12.0 gives 24 weeks and 4 months from SRS sign-off for the full portal, while clause 16.0 gives 3 months to go-live. Please confirm the delivery timeline and the date from which it is counted."
+   },
+   {
+    "topic": "Support hours",
+    "why": "Round-the-clock operation is stated, but staff are deployed on five days a week in office hours.",
+    "page": 17,
+    "clause_ref": "7.0",
+    "quote": "to ensure 24 x 7 operations.",
+    "prebid_query": "Clause 7.0 asks for 24 x 7 operations while clause 6.8 asks for staff five days a week in office hours. Please state the required support hours and who must be available outside office hours."
+   },
+   {
+    "topic": "Trading platform integration",
+    "why": "Which trading platforms are meant is not named.",
+    "page": 13,
+    "clause_ref": "6.1",
+    "quote": "The software developed should be compatible to integrate with trading platforms",
+    "prebid_query": "Clause 6.1 says the software should be compatible to integrate with trading platforms. Please name the platforms and say whether the integration is in scope."
+   },
+   {
+    "topic": "Blockchain",
+    "why": "Blockchain is listed in the financial form with no description of what it must do.",
+    "page": 37,
+    "clause_ref": "Annexure-II",
+    "quote": "Block chain technology to be",
+    "prebid_query": "Item 11 of the financial bid form lists block chain technology. Please describe the functions it must support and whether it is in scope."
+   },
+   {
+    "topic": "Payment milestones",
+    "why": "Milestone 4 is missing and payment is said to be quarterly.",
+    "page": 25,
+    "clause_ref": "13.0",
+    "quote": "Payment will be made on quarterly basis. Any payment to be released under the project will be",
+    "prebid_query": "Clause 13.0 lists milestones 1 to 3 and 5 to 7 and says payment is quarterly. Please confirm the milestones, their percentages and how quarterly payment applies."
+   },
+   {
+    "topic": "EMD",
+    "why": "An EMD value is stated, but later clauses say EMD is not applicable.",
+    "page": 33,
+    "clause_ref": "15.13",
+    "quote": "RETURN OF EMD: Not applicable",
+    "prebid_query": "The important dates sheet states an EMD value while clause 15.13 says EMD forfeiture and return are not applicable. Please confirm whether EMD is payable."
+   },
+   {
+    "topic": "Languages",
+    "why": "Regional languages are not named or counted.",
+    "page": 13,
+    "clause_ref": "6.1",
+    "quote": "The Software should have provision for multi-lingual usage. Such as English, Hindi and Regional",
+    "prebid_query": "Clause 6.1 asks for English, Hindi and regional languages. Please list the regional languages required."
+   },
+   {
+    "topic": "Modules in the mobile application",
+    "why": "Only some modules must work in the app and they are not listed.",
+    "page": 11,
+    "clause_ref": "Module-7",
+    "quote": "Selected modules must be working in mobile application for varies stakeholders such as to enter",
+    "prebid_query": "Module-7 says selected modules must work in the mobile application. Please list the modules and features required in the app."
+   }
+  ],
+  "dropped_findings": 0,
+  "not_priced": [
+   {
+    "topic": "warranty",
+    "label": "Warranty period",
+    "note": "One year of warranty from go-live.",
+    "evidence": [
+     {
+      "page": 16,
+      "clause_ref": "6.6",
+      "quote": "Warranty period of 01 Year from the Go Live",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "topic": "technology",
+    "label": "Required technology or software",
+    "note": "Open source technology is preferred, the software must suit NIC hosting, and blockchain is listed.",
+    "evidence": [
+     {
+      "page": 26,
+      "clause_ref": "14.0",
+      "quote": "open source based technology is preferred.",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 37,
+      "clause_ref": "Annexure-II",
+      "quote": "Block chain technology to be",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "topic": "data_rules",
+    "label": "Data protection and other rules to follow",
+    "note": "Development must follow the security audit requirements of NIC.",
+    "evidence": [
+     {
+      "page": 15,
+      "clause_ref": "6.4",
+      "quote": "All IT development work must be in accordance with the security audit requirements of the National",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "topic": "team_qualifications",
+    "label": "Required team qualifications or CVs",
+    "note": "Programmers must hold a B.Tech. in IT with experience.",
+    "evidence": [
+     {
+      "page": 17,
+      "clause_ref": "6.8",
+      "quote": "Programmer: B.Tech., IT with at least",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "topic": "source_code",
+    "label": "Source code and ownership handover",
+    "note": "The software and work products are owned by CPCB.",
+    "evidence": [
+     {
+      "page": 27,
+      "clause_ref": "14.0",
+      "quote": "Complete Software developed under this project,",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   }
+  ],
+  "payment_terms": {
+   "payments": [
+    {
+     "percent": "0.1",
+     "at_build_fraction": "0.5",
+     "offset_months": "0",
+     "label": "10% during build"
+    },
+    {
+     "percent": "0.3",
+     "at_build_fraction": "1",
+     "offset_months": "0",
+     "label": "30% go live"
+    },
+    {
+     "percent": "0.3",
+     "at_build_fraction": "1",
+     "offset_months": "0",
+     "label": "30% go live"
+    },
+    {
+     "percent": "0.2",
+     "at_build_fraction": "1",
+     "offset_months": "0.0",
+     "label": "20% after go live"
+    },
+    {
+     "percent": "0.05",
+     "at_build_fraction": "1",
+     "offset_months": "72.0",
+     "label": "5% after go live + 72 months"
+    },
+    {
+     "percent": "0.05",
+     "at_build_fraction": "1",
+     "offset_months": "72.0",
+     "label": "5% after go live + 72 months"
+    }
+   ],
+   "evidence": [
+    {
+     "page": 25,
+     "clause_ref": "13.0",
+     "quote": "Milestone 2: Software GO Live! & Ready for launch: 30% Payment",
+     "document": "att01.pdf",
+     "checked": true
+    }
+   ]
+  },
+  "scope": [
+   {
+    "key": "workflow_audit",
+    "label": "Approvals: Record every decision and who made it (audit trail)",
+    "status": "explicit",
+    "note": "",
+    "evidence": [
+     {
+      "page": 8,
+      "clause_ref": "1.4",
+      "quote": "Maintaing trail of all submission by the applicant and the trails of noting done by the officials and",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "key": "data_import",
+    "label": "Connections with other systems: Regular data import or sync from another system",
+    "status": "explicit",
+    "note": "",
+    "evidence": [
+     {
+      "page": 7,
+      "clause_ref": "",
+      "quote": "fetching data of already registered Producers/Manufacturers, Recyclers or Retreaders.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "key": "chatbot_indian_languages",
+    "label": "AI chatbot: Answers in Indian languages (Bhashini translation)",
+    "status": "explicit",
+    "note": "",
+    "evidence": [
+     {
+      "page": 11,
+      "clause_ref": "7.1",
+      "quote": "Multilingual capabilities (English & Hindi and other regional languages)",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   }
+  ],
+  "scope_set_aside": [],
+  "inventory": null
+ }
+}

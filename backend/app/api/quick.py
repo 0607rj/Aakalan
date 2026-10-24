@@ -11,6 +11,7 @@ from app.models import Estimate, Project, ResearchedComponent, SharedResearchedC
 from app.services.extraction.describe import Suggestion, suggest_features
 from app.services.quick import second_opinion
 from app.services.quick.config import quick_config
+from app.services.quick.prefill import form_country, form_questions
 from app.services.quick.second_opinion import SecondOpinionOut
 from app.services.quick.service import (
     AI_USE,
@@ -169,9 +170,7 @@ def options(db: DbSession, user: CurrentUser, country: str = "india") -> QuickOp
     cfg = quick_config()
     ai_level = company_settings(db, user.org_id).team_ai_maturity
     enabled = {k: c for k, c in cfg.countries.items() if c.enabled}
-    if country not in enabled:
-        country = next(iter(enabled))
-    allowed = enabled[country].hosting_options
+    country = form_country(cfg, country)
     return QuickOptions(
         country=country,
         countries=[
@@ -212,15 +211,7 @@ def options(db: DbSession, user: CurrentUser, country: str = "india") -> QuickOp
             QuestionOut(
                 key=key,
                 label=q.label,
-                default=ai_level
-                if key == AI_USE and ai_level is not None
-                else q.default
-                if key != "hosting"
-                or q.default
-                in [o.value for o in q.options if o.answers.get("hosting_provider") in allowed]
-                else next(
-                    o.value for o in q.options if o.answers.get("hosting_provider") in allowed
-                ),
+                default=ai_level if key == AI_USE and ai_level is not None else q.default,
                 options=[
                     OptionOut(
                         value=o.value,
@@ -233,7 +224,6 @@ def options(db: DbSession, user: CurrentUser, country: str = "india") -> QuickOp
                         max_users=o.max_users,
                     )
                     for o in q.options
-                    if key != "hosting" or o.answers.get("hosting_provider") in allowed
                 ],
                 only_with_features=q.only_with_features,
                 only_with_custom_types=q.only_with_custom_types,
@@ -244,8 +234,7 @@ def options(db: DbSession, user: CurrentUser, country: str = "india") -> QuickOp
                 answered_by_number=q.answered_by_number,
                 must_choose=q.must_choose,
             )
-            for key, q in cfg.questions.items()
-            if q.group != "hidden"
+            for key, q in form_questions(cfg, country).items()
         ],
         custom_feature_types=[
             CustomTypeOut(key=k, label=t.label) for k, t in cfg.custom_feature_types.items()

@@ -39,7 +39,8 @@ def test_quick_estimate_summary(client: TestClient, admin_headers: H) -> None:
     assert s["risk_allowance_paise"] == s["likely_paise"] - s["planned_paise"]
     run = next(p for p in s["parts"] if p["key"] == "run")
     assert s["support_years"] == 3 and "3 years" in run["label"]
-    assert s["biggest_uncertainty"].startswith("The biggest unknown is")
+    # the shared range for the project's size first, then its own biggest unknown (v23+)
+    assert "the biggest unknown is" in s["biggest_uncertainty"].lower()
     assert s["features"][0].startswith("Online application")
     # the detailed estimate is the same engine output, with ticked features as requirements
     detail = client.get(f"/estimates/{s['estimate_id']}", headers=admin_headers).json()
@@ -218,6 +219,10 @@ def test_no_market_prices_are_shown(client: TestClient, admin_headers: H) -> Non
         "not yet been checked against what finished projects really cost"
         in (small["accuracy_note"])
     )
+    # the production-path back-test, with who read the tenders (OPEN_QUESTIONS 161)
+    assert "8 real government tenders" in small["accuracy_note"]
+    assert "stand-in AI model" in small["accuracy_note"]
+    assert "3 of the 8 published prices" in small["accuracy_note"]
 
 
 def test_ai_usage_shown_apart_from_support(client: TestClient, admin_headers: H) -> None:

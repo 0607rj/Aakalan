@@ -50,9 +50,9 @@ export function RangeTape({
         <span className="h-3 w-px bg-foreground" />
       </div>
       {/* tape */}
-      <div className="tape-ticks relative h-8 overflow-hidden rounded-md bg-tape shadow-[inset_0_1px_0_rgb(255_255_255/0.4),0_0_40px_-6px_rgb(255_107_107/0.5)]">
+      <div className="tape-ticks relative h-8 overflow-hidden rounded-md bg-tape shadow-[inset_0_1px_0_rgb(255_255_255/0.4),0_0_40px_-6px_rgb(11_120_184/0.5)]">
         <div
-          className="absolute inset-y-0 bg-black/25"
+          className="absolute inset-y-0 bg-foreground/15"
           style={{ left: at(low), width: `calc(${at(high)} - ${at(low)})` }}
         />
         <div
@@ -160,10 +160,10 @@ export function PeopleIcons({ count }: { count: number }) {
         <svg
           key={i}
           viewBox="0 0 24 24"
-          className="size-6 rounded-full border-2 border-card bg-[#2a2b31] p-0.5"
+          className="size-6 rounded-full border-2 border-card bg-muted p-0.5"
         >
-          <circle cx="12" cy="9" r="4" fill="#c9cad1" />
-          <path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6" fill="#c9cad1" />
+          <circle cx="12" cy="9" r="4" fill="#8a94a3" />
+          <path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6" fill="#8a94a3" />
         </svg>
       ))}
     </span>
@@ -178,9 +178,9 @@ export function DocumentMockup({ className }: { className?: string }) {
         requirement-document.pdf · page 4
       </figcaption>
       <div className="mt-3 flex flex-col gap-2" aria-hidden="true">
-        <div className="h-2 w-3/4 rounded bg-white/[0.07]" />
-        <div className="h-2 w-full rounded bg-white/[0.07]" />
-        <div className="h-2 w-5/6 rounded bg-white/[0.07]" />
+        <div className="h-2 w-3/4 rounded bg-foreground/[0.07]" />
+        <div className="h-2 w-full rounded bg-foreground/[0.07]" />
+        <div className="h-2 w-5/6 rounded bg-foreground/[0.07]" />
       </div>
       <p className="fig-mark mt-3 rounded-md px-2 py-1.5 text-sm">
         <span className="font-mono font-medium text-tape">4.2</span> Patients
@@ -188,8 +188,8 @@ export function DocumentMockup({ className }: { className?: string }) {
         reminder.
       </p>
       <div className="mt-3 flex flex-col gap-2" aria-hidden="true">
-        <div className="h-2 w-full rounded bg-white/[0.07]" />
-        <div className="h-2 w-2/3 rounded bg-white/[0.07]" />
+        <div className="h-2 w-full rounded bg-foreground/[0.07]" />
+        <div className="h-2 w-2/3 rounded bg-foreground/[0.07]" />
       </div>
       <div className="mt-4 flex flex-wrap gap-2 text-xs">
         <span
@@ -223,7 +223,7 @@ export function QuestionMockup({ className }: { className?: string }) {
             className={cn(
               "fig-step rounded-xl border px-3 py-2",
               i === 2 &&
-                "border-tape/60 bg-tape-soft font-semibold shadow-[0_0_24px_-8px_rgb(255_107_107/0.6)]",
+                "border-tape/60 bg-tape-soft font-semibold shadow-[0_0_24px_-8px_rgb(11_120_184/0.6)]",
             )}
             style={step(i)}
           >
@@ -362,7 +362,7 @@ export function FeatureBarsFigure({ className }: { className?: string }) {
         <span className="eyebrow">Each feature on its own line</span>
         <span className="flex gap-3 text-[11px] text-muted-foreground">
           <span className="flex items-center gap-1.5">
-            <span className="size-2 rounded-full bg-white/25" />
+            <span className="size-2 rounded-full bg-foreground/25" />
             Without AI
           </span>
           <span className="flex items-center gap-1.5">
@@ -380,13 +380,13 @@ export function FeatureBarsFigure({ className }: { className?: string }) {
                 ₹{f.ai} L
               </span>
             </span>
-            <span className="relative h-2.5 overflow-hidden rounded-full bg-white/[0.05]">
+            <span className="relative h-2.5 overflow-hidden rounded-full bg-foreground/[0.05]">
               <span
-                className="fig-bar absolute inset-y-0 left-0 rounded-full bg-white/20"
+                className="fig-bar absolute inset-y-0 left-0 rounded-full bg-foreground/20"
                 style={{ ...step(i), width: `${(100 * f.old) / max}%` }}
               />
               <span
-                className="fig-bar absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-tape to-tape-2 shadow-[0_0_16px_rgb(255_107_107/0.5)]"
+                className="fig-bar absolute inset-y-0 left-0 rounded-full bg-gradient-to-r from-tape to-tape-2 shadow-[0_0_16px_rgb(11_120_184/0.5)]"
                 style={{ ...step(i + 2), width: `${(100 * f.ai) / max}%` }}
               />
             </span>
@@ -418,9 +418,9 @@ export function RangeWidenFigure({ className }: { className?: string }) {
         </span>
       </figcaption>
       <div className="relative mt-10 mb-12">
-        <div className="tape-ticks relative h-8 overflow-hidden rounded-md bg-white/[0.06]" />
+        <div className="tape-ticks relative h-8 overflow-hidden rounded-md bg-foreground/[0.06]" />
         <div
-          className="fig-range absolute inset-y-0 rounded-md bg-tape/85 shadow-[0_0_40px_-4px_rgb(255_107_107/0.55)] group-[.is-in]:left-(--l2)! group-[.is-in]:w-(--w2)!"
+          className="fig-range absolute inset-y-0 rounded-md bg-tape/85 shadow-[0_0_40px_-4px_rgb(11_120_184/0.55)] group-[.is-in]:left-(--l2)! group-[.is-in]:w-(--w2)!"
           style={
             {
               left: `${at(sure.low)}%`,
@@ -474,67 +474,5 @@ export function RangeWidenFigure({ className }: { className?: string }) {
         Find out the answers and calculate again for a narrower range.
       </p>
     </figure>
-  );
-}
-
-const KEY_ROWS = [
-  ["7", "8", "9", "÷"],
-  ["4", "5", "6", "×"],
-  ["1", "2", "3", "−"],
-  ["0", ".", "%", "+"],
-];
-
-/** The sums a spreadsheet estimate makes you type, each pressed in turn. */
-const SUMS: Record<string, { label: string; order: number }> = {
-  "×": { label: "Hours", order: 0 },
-  "8": { label: "Rate", order: 1 },
-  "+": { label: "Risk", order: 2 },
-  "%": { label: "GST", order: 3 },
-  "−": { label: "AI saving", order: 4 },
-  "3": { label: "Years O&M", order: 5 },
-};
-
-/** The closing picture: a keypad whose sums press themselves, then "Estimate" lights up. */
-export function Keypad({ className }: { className?: string }) {
-  return (
-    <div
-      data-reveal
-      aria-hidden="true"
-      className={cn("keypad flex flex-col items-center gap-3", className)}
-    >
-      <div className="keypad-board grid grid-cols-4 gap-2 rounded-[22px] border bg-[#0b0c0f] p-3 shadow-[inset_0_1px_0_rgb(255_255_255/0.05),0_40px_100px_-30px_black] sm:gap-2.5 sm:p-4">
-        {KEY_ROWS.flat().map((k) => {
-          const sum = SUMS[k];
-          return (
-            <span
-              key={k}
-              className={cn(
-                "key flex size-14 flex-col items-center justify-center rounded-xl border border-white/[0.07] bg-gradient-to-b from-[#1b1c21] to-[#141519] font-mono text-lg text-white/85 shadow-[inset_0_1px_0_rgb(255_255_255/0.06),inset_0_-2px_0_rgb(0_0_0/0.45)] sm:size-16",
-                sum && "sum",
-              )}
-              style={sum ? step(sum.order) : undefined}
-            >
-              <b className="leading-none font-medium">{k}</b>
-              {sum ? (
-                <small className="mt-1 text-[9px] tracking-wide text-muted-foreground uppercase">
-                  {sum.label}
-                </small>
-              ) : null}
-            </span>
-          );
-        })}
-      </div>
-      <span className="keypad-auto flex items-center gap-2 rounded-xl border border-white/[0.08] bg-gradient-to-b from-[#1b1c21] to-[#141519] px-6 py-3 font-semibold text-white/80 shadow-[inset_0_1px_0_rgb(255_255_255/0.06),inset_0_-2px_0_rgb(0_0_0/0.45)]">
-        <svg viewBox="0 0 24 24" className="size-[18px]" fill="none">
-          <path
-            d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-          />
-        </svg>
-        Estimate
-      </span>
-    </div>
   );
 }

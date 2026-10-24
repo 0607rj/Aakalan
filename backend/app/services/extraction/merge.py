@@ -15,8 +15,14 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models import Document, Project
-from app.services.extraction.client_provided import find_client_provided
-from app.services.extraction.tender import FoundValue, TenderExtraction
+from app.services.extraction.client_provided import client_provides, find_client_provided
+from app.services.extraction.support_terms import find_support_hours, find_support_staff
+from app.services.extraction.tender import (
+    FoundValue,
+    TenderExtraction,
+    UnclearPoint,
+    VerifiedEvidence,
+)
 from app.services.quick.config import quick_config
 
 OVERRIDING_KINDS = frozenset({"corrigendum", "prebid_reply"})
@@ -130,9 +136,19 @@ def merge_extractions(
         for n in not_priced.values()
         if not (n.topic == "payment_terms" and merged.payment_terms is not None)
     ]
-    _answers_from_topics(merged)
-    _client_provided(merged, [doc for doc, _ in docs])
+    apply_code_checks(merged, [doc for doc, _ in docs])
     return merged, changes
+
+
+def apply_code_checks(extraction: TenderExtraction, docs: list[Document]) -> TenderExtraction:
+    """The answers found in code on the documents' page text rather than by the reader
+    (answers from not-priced topics, items the client provides, support hours and staff),
+    applied in place. The review form pre-fills from the same merged reading the price uses
+    (GET /documents/{id}), so the two agree (OPEN_QUESTIONS 159)."""
+    _answers_from_topics(extraction)
+    _client_provided(extraction, docs)
+    _support_terms(extraction, docs)
+    return extraction
 
 
 YES = "yes"
@@ -159,16 +175,64 @@ def _client_provided(merged: TenderExtraction, docs: list[Document]) -> None:
     cfg = quick_config()
     if cfg.client_provided is None:
         return
+    found: dict[str, tuple[str, VerifiedEvidence]] = {}
     for doc in docs:
         pages = [(int(p["page"]), str(p["text"])) for p in (doc.page_texts or [])]
-        for key, (value, evidence) in find_client_provided(
-            cfg.client_provided, pages, doc.filename
-        ).items():
-            current = merged.choices.get(key)
-            if current is not None and current.value == value:
-                continue
-            option = cfg.questions[key].option(value)
-            merged.choices[key] = FoundValue(value=value, label=option.label, evidence=[evidence])
+        for key, hit in find_client_provided(cfg.client_provided, pages, doc.filename).items():
+            found.setdefault(key, hit)
+    # Hard check (OPEN_QUESTIONS 157): an answer whose own quote says the client provides the
+    # item is the client's, whatever the reading answered, so no line cites a client-provided
+    # clause and still charges for it.
+    for answer in list(merged.choices.values()):
+        for evidence in answer.evidence:
+            for item in client_provides(cfg.client_provided, evidence.quote):
+                found.setdefault(item.question, (item.value, evidence))
+    for key, (value, evidence) in found.items():
+        current = merged.choices.get(key)
+        if current is not None and current.value == value:
+            continue
+        option = cfg.questions[key].option(value)
+        merged.choices[key] = FoundValue(value=value, label=option.label, evidence=[evidence])
+
+
+def _support_terms(merged: TenderExtraction, docs: list[Document]) -> None:
+    """Support hours and dedicated support staff the document states answer the support
+    hours question and the support_staff number, citing the sentence
+    (services/extraction/support_terms.py); they win over the reading's answer. Round the
+    clock with another sentence saying office hours becomes a pre-bid query, not a silent
+    choice (OPEN_QUESTIONS 157)."""
+    cfg = quick_config()
+    terms = cfg.support_terms
+    if terms is None:
+        return
+    hours = None
+    staff = None
+    for doc in docs:
+        pages = [(int(p["page"]), str(p["text"])) for p in (doc.page_texts or [])]
+        hours = hours or find_support_hours(terms, pages, doc.filename)
+        staff = staff or find_support_staff(terms, pages, doc.filename)
+    if hours is not None:
+        option = cfg.questions["support_hours"].option(hours.value)
+        merged.choices["support_hours"] = FoundValue(
+            value=hours.value, label=option.label, evidence=[hours.evidence]
+        )
+        if hours.conflict is not None:
+            merged.unclear_points.append(
+                UnclearPoint(
+                    topic="Support hours",
+                    why=f"Round the clock on page {hours.evidence.page}, business or office "
+                    f"hours on page {hours.conflict.page}.",
+                    page=hours.conflict.page,
+                    clause_ref=hours.conflict.clause_ref,
+                    quote=hours.conflict.quote,
+                    prebid_query=terms.conflict_query,
+                )
+            )
+    if staff is not None and cfg.support_role is not None:
+        count, evidence = staff
+        merged.numbers["support_staff"] = FoundValue(
+            value=count, label=f"{count} dedicated support staff", evidence=[evidence]
+        )
 
 
 def project_documents(db: Session, project: Project) -> list[Document]:

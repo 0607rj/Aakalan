@@ -791,6 +791,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/documents/{document_id}/form": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Get Review Form
+         * @description The review form's starting state for the project's reading, and the request it sends
+         *     when everything is accepted (services/quick/prefill: the production-path back-test prices
+         *     that same request).
+         */
+        get: operations["get_review_form_documents__document_id__form_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/projects/{project_id}/extraction": {
         parameters: {
             query?: never;
@@ -1873,6 +1895,38 @@ export interface components {
             /** Parent Estimate Id */
             parent_estimate_id: string | null;
         };
+        /** FactValue */
+        FactValue: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /**
+             * Unit
+             * @enum {string}
+             */
+            unit: "count" | "rupees" | "percent";
+            /** Min */
+            min: number;
+            /** Max */
+            max?: number | null;
+            /** Integer */
+            integer: boolean;
+            /** Needs Feature */
+            needs_feature?: string | null;
+            /**
+             * Only If Found
+             * @default false
+             */
+            only_if_found: boolean;
+            /**
+             * India Term
+             * @default false
+             */
+            india_term: boolean;
+            /** Value */
+            value: number | null;
+        };
         /** Factor */
         Factor: {
             /** Label */
@@ -2549,7 +2603,7 @@ export interface components {
             status: string;
         };
         /** PaymentMilestone */
-        PaymentMilestone: {
+        "PaymentMilestone-Input": {
             /** At Build Fraction */
             at_build_fraction: number | string;
             /**
@@ -2559,6 +2613,18 @@ export interface components {
             offset_months: number | string;
             /** Percent */
             percent: number | string;
+        };
+        /** PaymentMilestone */
+        "PaymentMilestone-Output": {
+            /** At Build Fraction */
+            at_build_fraction: string;
+            /**
+             * Offset Months
+             * @default 0
+             */
+            offset_months: string;
+            /** Percent */
+            percent: string;
         };
         /** PhaseSuggestion */
         PhaseSuggestion: {
@@ -2638,6 +2704,11 @@ export interface components {
             options: components["schemas"]["OptionChange"][];
             /** Usual Change Paise */
             usual_change_paise?: number | null;
+            /**
+             * Beyond Range
+             * @default false
+             */
+            beyond_range: boolean;
         };
         /** ProjectCreate */
         ProjectCreate: {
@@ -2853,7 +2924,7 @@ export interface components {
             commonly_needed: string[];
         };
         /** QuickRequest */
-        QuickRequest: {
+        "QuickRequest-Input": {
             /** Name */
             name: string;
             /** Project Type */
@@ -2906,7 +2977,81 @@ export interface components {
                 [key: string]: number;
             };
             /** Payment Schedule */
-            payment_schedule?: components["schemas"]["PaymentMilestone"][] | null;
+            payment_schedule?: components["schemas"]["PaymentMilestone-Input"][] | null;
+            /**
+             * Scope
+             * @default []
+             */
+            scope: string[];
+            /**
+             * Mode
+             * @default vendor
+             * @enum {string}
+             */
+            mode: "vendor" | "client";
+            /**
+             * Not Included
+             * @default []
+             */
+            not_included: components["schemas"]["NotIncluded"][];
+            /** Answered */
+            answered?: string[] | null;
+        };
+        /** QuickRequest */
+        "QuickRequest-Output": {
+            /** Name */
+            name: string;
+            /** Project Type */
+            project_type?: string | null;
+            /**
+             * Country
+             * @default india
+             */
+            country: string;
+            /**
+             * Features
+             * @default []
+             */
+            features: string[];
+            /**
+             * Feature Levels
+             * @default {}
+             */
+            feature_levels: {
+                [key: string]: "basic" | "standard" | "advanced";
+            };
+            /**
+             * Feature Units
+             * @default {}
+             */
+            feature_units: {
+                [key: string]: number;
+            };
+            /**
+             * Custom Features
+             * @default []
+             */
+            custom_features: components["schemas"]["CustomFeature"][];
+            /**
+             * Choices
+             * @default {}
+             */
+            choices: {
+                [key: string]: string | number;
+            };
+            /** Deadline Months */
+            deadline_months?: number | null;
+            /** Document Id */
+            document_id?: string | null;
+            /**
+             * Overrides
+             * @default {}
+             */
+            overrides: {
+                [key: string]: number;
+            };
+            /** Payment Schedule */
+            payment_schedule?: components["schemas"]["PaymentMilestone-Output"][] | null;
             /**
              * Scope
              * @default []
@@ -3389,6 +3534,37 @@ export interface components {
             code: string;
             /** New Password */
             new_password: string;
+        };
+        /**
+         * ReviewPrefill
+         * @description The review form's starting state, and what it sends when everything is accepted.
+         */
+        ReviewPrefill: {
+            /** Country */
+            country: string;
+            /** Name */
+            name: string;
+            /** Features */
+            features: string[];
+            /** Choices */
+            choices: {
+                [key: string]: string | number;
+            };
+            /** Answered */
+            answered: string[];
+            /** Levels */
+            levels: {
+                [key: string]: "basic" | "standard" | "advanced";
+            };
+            /** Facts */
+            facts: components["schemas"]["FactValue"][];
+            /** Custom Features */
+            custom_features: components["schemas"]["CustomFeature"][];
+            /** Scope */
+            scope: string[];
+            /** Payment Schedule */
+            payment_schedule: components["schemas"]["PaymentMilestone-Output"][] | null;
+            request: components["schemas"]["QuickRequest-Output"];
         };
         /**
          * Role
@@ -5241,7 +5417,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["QuickRequest"];
+                "application/json": components["schemas"]["QuickRequest-Input"];
             };
         };
         responses: {
@@ -5429,7 +5605,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["QuickRequest"];
+                "application/json": components["schemas"]["QuickRequest-Input"];
             };
         };
         responses: {
@@ -5462,7 +5638,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["QuickRequest"];
+                "application/json": components["schemas"]["QuickRequest-Input"];
             };
         };
         responses: {
@@ -5601,6 +5777,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["PrebidQuery"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    get_review_form_documents__document_id__form_get: {
+        parameters: {
+            query?: {
+                country?: string;
+            };
+            header?: never;
+            path: {
+                document_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReviewPrefill"];
                 };
             };
             /** @description Validation Error */

@@ -59,6 +59,9 @@ class OnsiteResource(Strict):
     # person-days each in all, when the document limits onsite work (e.g. during an event);
     # None = all year, every support year
     days: Decimal | None = Field(default=None, gt=0)
+    # "support": dedicated support staff a document states (offsite, or where they sit is not
+    # said): the least support labour, covering the support work priced (support_staff.v1)
+    kind: Literal["onsite", "support"] = "onsite"
 
 
 class PaymentMilestone(Strict):
@@ -89,7 +92,8 @@ class Questionnaire(Strict):
     hosting_pricing: Literal["on_demand", "reserved"]
     ai_runtime_mode: Literal["api", "self_hosted_gpu"]
     licensing: Literal["open_source", "licensed"]
-    support_sla: Literal["8x5", "24x7"]
+    # 24x7_on_call (parameters v22+): office hours plus an engineer on call out of hours
+    support_sla: Literal["8x5", "24x7", "24x7_on_call"]
     onsite_resources: list[OnsiteResource]
     change_request_pd_per_year: Decimal | None = Field(ge=0)
     cert_in_audit: bool

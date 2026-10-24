@@ -2,8 +2,11 @@
 
 import * as React from "react";
 
-import type { QuickSummary } from "@/lib/api/client";
+import type { PricedOption, QuickSummary } from "@/lib/api/client";
 import { formatApprox } from "@/lib/format";
+import { cn } from "@/lib/utils";
+
+import { biggestOpenAnswer, changeRange } from "./check";
 
 type CostItem = QuickSummary["cost_items"][number];
 type Money = (paise: number | null | undefined) => string;
@@ -14,6 +17,24 @@ function moneyOf(summary: QuickSummary): Money {
 
 function yearsText(years: number): string {
   return `${years} year${years === 1 ? "" : "s"}`;
+}
+
+/** A small right-pointing chevron (rotate it for other directions). */
+export function Chevron({ className }: { className?: string }) {
+  return (
+    <svg
+      aria-hidden="true"
+      viewBox="0 0 16 16"
+      className={cn("inline-block size-3.5 align-[-2px]", className)}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M6 3.5 10.5 8 6 12.5" />
+    </svg>
+  );
 }
 
 /** A collapsed section: the title (and a one-line hint) stays visible, the rest opens on click. */
@@ -29,31 +50,21 @@ export function Disclosure({
   children: React.ReactNode;
 }) {
   return (
-    <details
-      className="group rounded-2xl border bg-card shadow-sm"
-      open={defaultOpen}
-    >
-      <summary className="flex cursor-pointer list-none items-center justify-between gap-4 rounded-2xl px-6 py-4 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none sm:px-8 [&::-webkit-details-marker]:hidden">
+    <details className="fold group border-t" open={defaultOpen}>
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-6 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none [&::-webkit-details-marker]:hidden">
         <span className="flex flex-col gap-0.5">
-          <h2 className="text-lg font-semibold">{title}</h2>
+          <h2 className="text-xl font-semibold transition-colors group-hover:text-primary">
+            {title}
+          </h2>
           {hint ? (
             <span className="text-sm text-muted-foreground">{hint}</span>
           ) : null}
         </span>
-        <span className="flex shrink-0 items-center gap-1 text-sm font-medium text-primary">
-          <span className="group-open:hidden">Show</span>
-          <span className="hidden group-open:inline">Hide</span>
-          <span
-            aria-hidden="true"
-            className="transition-transform group-open:rotate-180"
-          >
-            ▾
-          </span>
+        <span className="flex size-9 shrink-0 items-center justify-center rounded-full border text-muted-foreground transition-[transform,color,border-color] duration-300 group-open:rotate-90 group-hover:border-foreground/40 group-hover:text-foreground">
+          <Chevron />
         </span>
       </summary>
-      <div className="flex flex-col gap-8 border-t px-6 py-6 sm:px-8">
-        {children}
-      </div>
+      <div className="flex flex-col gap-10 pt-2 pb-10">{children}</div>
     </details>
   );
 }
@@ -194,6 +205,39 @@ function WhenBadge({ when, years }: { when: Category["when"]; years: number }) {
   );
 }
 
+/** Shades for the price categories: blues for the work, saffron for support, greys after. */
+const SHADES = [
+  "var(--primary)",
+  "#4fa9de",
+  "#a6d8f5",
+  "#f2a541",
+  "#556070",
+  "#a5afbc",
+  "#d5dbe2",
+];
+
+/** The categories as one bar, each part as wide as its share of the price. */
+function ShareBar({ rows }: { rows: { key: string; amount: number }[] }) {
+  const total = rows.reduce((s, r) => s + r.amount, 0);
+  if (total <= 0) return null;
+  return (
+    <div
+      aria-hidden="true"
+      className="band-open flex h-3 w-full gap-0.5 overflow-hidden rounded-sm [--to-left:0%] [--to-right:100%]"
+    >
+      {rows.map((r, i) => (
+        <span
+          key={r.key}
+          style={{
+            width: `${(100 * r.amount) / total}%`,
+            background: SHADES[i % SHADES.length],
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
 /** The quote in a few plain categories that add up to the most likely price. */
 export function CostSummary({ summary }: { summary: QuickSummary }) {
   const money = moneyOf(summary);
@@ -205,7 +249,6 @@ export function CostSummary({ summary }: { summary: QuickSummary }) {
   const rows: {
     key: string;
     label: string;
-    covers: string | null;
     amount: number;
     when: Category["when"] | null;
   }[] =
@@ -213,26 +256,22 @@ export function CostSummary({ summary }: { summary: QuickSummary }) {
       ? CATEGORIES.map((c) => ({
           key: c.key,
           label: c.label,
-          covers: c.covers,
           amount: sum(items.filter((i) => categoryOf(i) === c.key)),
           when: c.when,
         })).filter((r) => r.amount > 0)
       : summary.parts.map((p) => ({
           key: p.key,
           label: p.label,
-          covers: null,
           amount: p.amount_paise,
           when: null,
         }));
 
   return (
-    <section className="flex flex-col gap-4 rounded-2xl border bg-card px-6 py-6 shadow-sm sm:px-8">
+    <section className="sheet">
       <div>
-        <h2 className="text-lg font-semibold">What the price is made of</h2>
-        <p className="text-sm text-muted-foreground">
-          Most likely amounts. They add up to the most likely price.
-        </p>
+        <h2 className="text-xl font-semibold">What the price is made of</h2>
       </div>
+      <ShareBar rows={rows} />
       <ul className="flex flex-col divide-y">
         {rows.map((r) => (
           <li
@@ -241,14 +280,16 @@ export function CostSummary({ summary }: { summary: QuickSummary }) {
           >
             <span className="flex max-w-xl flex-col gap-1">
               <span className="flex flex-wrap items-center gap-2 font-medium">
+                <span
+                  aria-hidden="true"
+                  className="size-2.5 rounded-sm"
+                  style={{
+                    background: SHADES[rows.indexOf(r) % SHADES.length],
+                  }}
+                />
                 {r.label}
                 {r.when ? <WhenBadge when={r.when} years={years} /> : null}
               </span>
-              {r.covers ? (
-                <span className="text-sm text-muted-foreground">
-                  {r.covers}
-                </span>
-              ) : null}
             </span>
             <span className="font-semibold tabular-nums">
               {money(r.amount)}
@@ -260,26 +301,22 @@ export function CostSummary({ summary }: { summary: QuickSummary }) {
             <span className="flex max-w-xl flex-col gap-1">
               <span className="font-medium">Expected overrun (risk)</span>
               <span className="text-sm text-muted-foreground">
-                Work usually runs over the plan. This is how much, from
-                simulating the project thousands of times. It is not a cost
-                line, and it replaces a fixed contingency (that line is zero).
+                How far work usually runs over the plan, from simulation.
               </span>
             </span>
             <span className="font-semibold tabular-nums">{money(risk)}</span>
           </li>
         ) : null}
         <li className="flex flex-wrap items-baseline justify-between gap-x-6 py-3">
-          <span className="font-semibold">
-            Most likely price (in the quote)
-          </span>
+          <span className="font-semibold">Most likely price</span>
           <span className="text-lg font-semibold text-primary tabular-nums">
             {money(summary.likely_paise)}
           </span>
         </li>
       </ul>
       {summary.client_pays.length > 0 ? (
-        <p className="rounded-xl bg-muted/60 px-4 py-3 text-sm">
-          <strong>Not in this price:</strong>{" "}
+        <p className="text-sm text-muted-foreground">
+          <strong className="text-foreground">Not in this price:</strong>{" "}
           {summary.client_pays_first_year_paise > 0
             ? `${money(summary.client_pays_first_year_paise)} in the first year that the client pays providers directly`
             : "fees the client pays providers directly"}{" "}
@@ -303,16 +340,15 @@ function ListGroup({
 }) {
   const items = entries.filter(Boolean);
   if (items.length === 0 && empty === null) return null;
-  const mark = tone === "included" ? "✓" : tone === "separate" ? "₹" : "?";
   const markClass =
     tone === "included"
-      ? "text-success"
+      ? "bg-success"
       : tone === "separate"
-        ? "text-muted-foreground"
-        : "text-warning";
+        ? "bg-muted-foreground"
+        : "bg-warning";
   return (
     <div className="flex flex-col gap-2">
-      <h3 className="font-semibold">{title}</h3>
+      <h3 className="border-b pb-2 font-semibold">{title}</h3>
       {items.length === 0 ? (
         <p className="text-sm text-muted-foreground">{empty}</p>
       ) : (
@@ -321,10 +357,8 @@ function ListGroup({
             <li key={i} className="flex items-start gap-2">
               <span
                 aria-hidden="true"
-                className={`w-4 shrink-0 text-center font-semibold ${markClass}`}
-              >
-                {mark}
-              </span>
+                className={`mt-[0.55em] size-1.5 shrink-0 rounded-full ${markClass}`}
+              />
               <span className="flex flex-col">{child}</span>
             </li>
           ))}
@@ -335,8 +369,15 @@ function ListGroup({
 }
 
 /** What the quote covers, what the client pays separately, and what still needs checking. */
-export function WhatsIncluded({ summary }: { summary: QuickSummary }) {
+export function WhatsIncluded({
+  summary,
+  options = [],
+}: {
+  summary: QuickSummary;
+  options?: PricedOption[];
+}) {
   const money = moneyOf(summary);
+  const open = biggestOpenAnswer(options);
   const years = summary.support_years;
   const scopeItems = summary.scope_items ?? [];
   const priced = scopeItems.filter((s) => !s.partly_priced);
@@ -429,14 +470,12 @@ export function WhatsIncluded({ summary }: { summary: QuickSummary }) {
           )
         </span>
         <span className="text-muted-foreground">
-          {r.method === "web"
-            ? "Not in the catalog, so its hours come from figures published on the web and checked on each page. Low confidence: confirm the scope."
-            : "Not in the catalog and no published hours found, so AI matched it to similar catalog blocks and their hours were used. Low confidence: confirm the scope."}
+          Not in the catalog; low confidence, confirm the scope.
           {r.sources
             .filter((s) => s.url)
             .map((s, i) => (
               <a
-                key={s.url}
+                key={`${s.url}-${i}`}
                 href={s.url ?? undefined}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -452,7 +491,7 @@ export function WhatsIncluded({ summary }: { summary: QuickSummary }) {
       <>
         <span className="font-medium">{q}</span>
         <span className="text-muted-foreground">
-          You answered &quot;Not sure&quot;, which widens the range.
+          Answered &quot;Not sure&quot;.
         </span>
       </>
     )),
@@ -465,10 +504,13 @@ export function WhatsIncluded({ summary }: { summary: QuickSummary }) {
         </span>
       </>
     ) : null,
-    summary.biggest_uncertainty ? (
+    open || summary.biggest_uncertainty ? (
       <>
         <span className="font-medium">What could change the price most</span>
         <span className="text-muted-foreground">
+          {open
+            ? `Your answer to "${open.question}" (priced as ${open.priced_as}): another answer changes the price by ${changeRange(open, summary.currency)}, past the range shown. `
+            : ""}
           {summary.biggest_uncertainty}
         </span>
       </>
@@ -476,16 +518,10 @@ export function WhatsIncluded({ summary }: { summary: QuickSummary }) {
   ];
 
   return (
-    <section className="flex flex-col gap-6 rounded-2xl border bg-card px-6 py-6 shadow-sm sm:px-8">
-      <div>
-        <h2 className="text-lg font-semibold">
-          What&apos;s included and what&apos;s not
-        </h2>
-        <p className="text-sm text-muted-foreground">
-          Anything not listed under &quot;Included&quot; is not priced in this
-          estimate.
-        </p>
-      </div>
+    <Disclosure
+      title="What's included and what's not"
+      hint={`${included.filter(Boolean).length} included · ${separate.length} paid separately · ${confirm.filter(Boolean).length} to confirm`}
+    >
       <div className="grid gap-6 md:grid-cols-3">
         <ListGroup
           title="Included in this estimate"
@@ -506,7 +542,7 @@ export function WhatsIncluded({ summary }: { summary: QuickSummary }) {
           entries={confirm}
         />
       </div>
-    </section>
+    </Disclosure>
   );
 }
 
@@ -523,17 +559,23 @@ function Tile({
 }) {
   return (
     <div
-      className={
-        strong
-          ? "flex flex-col gap-1 rounded-xl border-2 border-primary/30 bg-primary/5 px-4 py-3"
-          : "flex flex-col gap-1 rounded-xl border px-4 py-3"
-      }
+      className={cn(
+        "flex flex-col gap-1 border-l pl-4",
+        strong && "border-primary",
+      )}
     >
-      <span className="text-sm font-medium">{label}</span>
-      <span className="text-xl font-semibold tracking-tight tabular-nums">
+      <span className="figure-label">{label}</span>
+      <span
+        className={cn(
+          "text-xl font-semibold tracking-tight tabular-nums",
+          strong && "text-primary",
+        )}
+      >
         {value}
       </span>
-      <span className="text-sm text-muted-foreground">{note}</span>
+      {note ? (
+        <span className="text-xs text-muted-foreground">{note}</span>
+      ) : null}
     </div>
   );
 }
@@ -558,37 +600,26 @@ export function OngoingCosts({ summary }: { summary: QuickSummary }) {
   const ownership = summary.likely_paise + clientTotal;
 
   return (
-    <section className="flex flex-col gap-5 rounded-2xl border bg-card px-6 py-6 shadow-sm sm:px-8">
+    <section className="sheet">
       <div>
-        <h2 className="text-lg font-semibold">One-time and running costs</h2>
-        <p className="text-sm text-muted-foreground">
-          Most likely amounts before margin, risk buffer and tax, which are
-          added once on the whole price.
-        </p>
+        <h2 className="text-xl font-semibold">One-time and running costs</h2>
+        <p className="figure-label">Before margin, risk buffer and tax</p>
       </div>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <Tile
           label="One-time: build and launch"
           value={money(sum(oneTime))}
-          note="Paid once, during the build."
+          note=""
         />
         <Tile
           label="Running cost per year"
           value={perYear !== null ? money(perYear) : "Not included"}
-          note={
-            perYear !== null
-              ? `Average of the ${yearsText(years)} in the quote.`
-              : "The quote has no support or hosting after launch."
-          }
+          note={perYear !== null ? `Average of ${yearsText(years)}` : ""}
         />
         <Tile
           label="Running cost per month"
           value={perYear !== null ? money(perYear / 12) : "Not included"}
-          note={
-            perYear !== null
-              ? "The yearly average ÷ 12."
-              : "Ask for support to see running costs."
-          }
+          note=""
         />
         <Tile
           strong
@@ -600,8 +631,8 @@ export function OngoingCosts({ summary }: { summary: QuickSummary }) {
           value={money(ownership)}
           note={
             clientTotal > 0
-              ? `The most likely price plus ${money(clientTotal)} paid to providers directly.`
-              : "The most likely price; nothing sized is paid separately."
+              ? `Includes ${money(clientTotal)} paid to providers`
+              : ""
           }
         />
       </div>
@@ -623,8 +654,7 @@ export function OngoingCosts({ summary }: { summary: QuickSummary }) {
                 Depends on use ({money(sum(usage))} over {yearsText(years)})
               </dt>
               <dd className="text-muted-foreground">
-                {usage.map((i) => i.label).join(", ")}. Priced from the expected
-                number of users and requests; the real bill follows real use.
+                {usage.map((i) => i.label).join(", ")}
               </dd>
             </div>
           ) : null}

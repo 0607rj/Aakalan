@@ -105,15 +105,24 @@ export function UploadStep({
             pick(e.dataTransfer.files);
           }}
           className={cn(
-            "flex cursor-pointer flex-col items-center gap-3 rounded-2xl border-2 border-dashed bg-card px-6 py-16 text-center transition-colors",
+            "flex cursor-pointer flex-col items-center gap-3 rounded-xl border border-dashed border-input bg-card px-6 py-16 text-center transition-colors duration-200",
             dragging
               ? "border-primary bg-primary/5"
-              : "border-border hover:border-primary/50 hover:bg-muted/40",
+              : "hover:border-foreground/40 hover:bg-panel-2",
           )}
         >
-          <span className="text-4xl" aria-hidden>
-            📄
-          </span>
+          <svg
+            aria-hidden="true"
+            viewBox="0 0 24 24"
+            className="size-10 text-primary"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinejoin="round"
+          >
+            <path d="M6 2.75h8.5L19.25 7.5v13.75H6z" />
+            <path d="M14.25 2.75V7.75h5M9 12h7M9 15.5h7M9 19h4" />
+          </svg>
           <span className="text-lg font-semibold">
             Drop the file here, or click to choose it
           </span>

@@ -2,11 +2,11 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { CostSky } from "@/components/site/cost-sky";
+import { Keypad } from "@/components/site/keypad";
 import {
   DocumentMockup,
   EstimateMockup,
   FeatureBarsFigure,
-  Keypad,
   NotPricedMockup,
   QuestionMockup,
   RangeWidenFigure,
@@ -92,13 +92,13 @@ export default function HomePage() {
       {/* Hero: the sky of possible costs, the claim across its foot */}
       <section className="relative">
         <div className="mx-auto flex max-w-6xl flex-col items-center px-4 pt-8 text-center sm:px-6 sm:pt-12">
-          <div className="rise-in relative aspect-[4/3] w-full max-w-5xl overflow-hidden rounded-[22px] bg-[#08090b] shadow-[0_0_0_1px_rgb(255_255_255/0.09),0_40px_120px_rgb(0_0_0/0.65)] sm:aspect-[2/1]">
+          <div className="rise-in relative aspect-[4/3] w-full max-w-5xl overflow-hidden rounded-[22px] bg-card shadow-[0_0_0_1px_rgb(27_36_51/0.08),0_40px_120px_rgb(27_36_51/0.16)] sm:aspect-[2/1]">
             <CostSky />
             <div
               aria-hidden="true"
-              className="pointer-events-none absolute inset-0 bg-[linear-gradient(transparent_45%,rgb(7_8_10/0.85)_100%)]"
+              className="pointer-events-none absolute inset-0 bg-[linear-gradient(transparent_45%,rgb(255_255_255/0.85)_100%)]"
             />
-            <span className="eyebrow absolute top-4 left-4 flex items-center gap-2 text-left text-white/70">
+            <span className="eyebrow absolute top-4 left-4 flex items-center gap-2 text-left text-foreground/70">
               <span
                 className="pulse-dot size-1.5 rounded-full bg-tape"
                 aria-hidden="true"
@@ -107,7 +107,7 @@ export default function HomePage() {
             </span>
           </div>
           <h1
-            className="rise-in font-display relative -mt-[0.6em] text-[clamp(3.2rem,10.5vw,7.5rem)] leading-[0.95] [text-shadow:0_10px_50px_rgb(0_0_0/0.6)]"
+            className="rise-in font-display relative -mt-[0.6em] text-[clamp(3.2rem,10.5vw,7.5rem)] leading-[0.95]"
             style={delay(1.5)}
           >
             Price what gets <em className="text-tape-2">built</em>.
@@ -145,7 +145,7 @@ export default function HomePage() {
       </section>
 
       {/* The problem */}
-      <Section className="pt-28 pb-20 sm:pt-40 sm:pb-28">
+      <Section className="pt-14 pb-12 sm:pt-20 sm:pb-16">
         <Title claim="Hourly rates were made for a world where people typed every line.">
           AI tools now draft code, tests and documents in minutes, and someone
           still has to read, test and fix what they write. A fair price counts
@@ -158,7 +158,7 @@ export default function HomePage() {
               {OLD_VS_NEW.map((row) => (
                 <div key={row.topic} className="flex flex-col gap-1 py-4">
                   <dt className="text-sm text-muted-foreground">{row.topic}</dt>
-                  <dd className="text-white/55 line-through decoration-white/20">
+                  <dd className="text-foreground/55 line-through decoration-foreground/30">
                     {row.old}
                   </dd>
                 </div>
@@ -172,7 +172,7 @@ export default function HomePage() {
           >
             <div
               aria-hidden="true"
-              className="pointer-events-none absolute inset-0 bg-[radial-gradient(70%_60%_at_100%_0%,rgb(255_107_107/0.12),transparent_70%)]"
+              className="pointer-events-none absolute inset-0 bg-[radial-gradient(70%_60%_at_100%_0%,rgb(11_120_184/0.12),transparent_70%)]"
             />
             <p className="eyebrow relative text-tape">Priced by Aakalan</p>
             <dl className="relative mt-5 flex flex-col divide-y">
@@ -188,7 +188,7 @@ export default function HomePage() {
       </Section>
 
       {/* What you get, each with its picture */}
-      <Section className="pb-20 sm:pb-28">
+      <Section className="pb-12 sm:pb-16">
         <Title center claim="Nothing hidden inside the total.">
           Every part of the price is on the page, with its reason.
         </Title>
@@ -198,7 +198,7 @@ export default function HomePage() {
               key={s.claim}
               data-reveal
               style={delay(i % 2)}
-              className="flex flex-col gap-6 rounded-[26px] border bg-white/[0.015] p-6 sm:p-8"
+              className="flex flex-col gap-6 rounded-[26px] border bg-foreground/[0.015] p-6 sm:p-8"
             >
               <p className="max-w-md text-lg leading-snug">
                 <span className="font-semibold">{s.claim}</span>{" "}
@@ -211,7 +211,7 @@ export default function HomePage() {
       </Section>
 
       {/* How it works, short */}
-      <Section className="pb-20 sm:pb-28">
+      <Section className="pb-12 sm:pb-16">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <Title claim="Three steps,">about as long as making tea.</Title>
           <Link
@@ -239,7 +239,7 @@ export default function HomePage() {
       </Section>
 
       {/* Honest about accuracy */}
-      <Section className="grid items-center gap-12 pb-20 sm:pb-28 lg:grid-cols-2">
+      <Section className="grid items-center gap-12 pb-12 sm:pb-16 lg:grid-cols-2">
         <div className="flex flex-col gap-5">
           <Title claim="A range, because nobody knows the exact number yet." />
           <p data-reveal className="text-muted-foreground">
@@ -262,13 +262,13 @@ export default function HomePage() {
         <RangeWidenFigure />
       </Section>
 
-      {/* Closing: the keypad presses itself */}
+      {/* Closing: the keypad presses itself, then anyone can use it */}
       <section className="relative overflow-hidden border-t">
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(50%_45%_at_50%_30%,rgb(255_107_107/0.09),transparent_70%)]"
+          className="pointer-events-none absolute inset-0 bg-[radial-gradient(50%_45%_at_50%_30%,rgb(11_120_184/0.09),transparent_70%)]"
         />
-        <div className="relative mx-auto flex max-w-6xl flex-col items-center gap-12 px-4 py-24 text-center sm:px-6 sm:py-32">
+        <div className="relative mx-auto flex max-w-6xl flex-col items-center gap-8 px-4 py-14 text-center sm:px-6 sm:py-20">
           <Keypad />
           <div className="flex flex-col items-center gap-4">
             <h2

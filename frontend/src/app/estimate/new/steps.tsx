@@ -136,22 +136,23 @@ export function useSteps(keys: string[]) {
 export function Progress({ index, total }: { index: number; total: number }) {
   const percent = Math.round(((index + 1) / total) * 100);
   return (
-    <div className="flex flex-col gap-2">
-      <span className="text-sm text-muted-foreground">
-        Step {index + 1} of {total}
-      </span>
+    <div className="flex items-center gap-4">
       <div
-        className="h-2 w-full max-w-xl overflow-hidden rounded-full bg-muted"
+        className="h-1 w-full overflow-hidden rounded-full bg-muted"
         role="progressbar"
+        aria-label="Progress"
         aria-valuemin={1}
         aria-valuemax={total}
         aria-valuenow={index + 1}
       >
         <div
-          className="h-full rounded-full bg-primary transition-all"
+          className="h-full rounded-full bg-primary transition-[width] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]"
           style={{ width: `${percent}%` }}
         />
       </div>
+      <span className="shrink-0 text-sm text-muted-foreground tabular-nums">
+        {index + 1} / {total}
+      </span>
     </div>
   );
 }
@@ -171,7 +172,7 @@ export function StepButtons({
   hint?: string | null;
 }) {
   return (
-    <div className="flex flex-wrap items-center gap-4">
+    <div className="flex flex-wrap items-center gap-4 border-t pt-6">
       <Button variant="outline" size="lg" className="h-11" onClick={onBack}>
         Back
       </Button>
@@ -303,7 +304,7 @@ export function CheckStep({
           Change anything that is not right, then calculate.
         </p>
       </div>
-      <dl className="flex flex-col divide-y rounded-2xl border bg-card">
+      <dl className="flex flex-col divide-y rounded-xl border bg-card">
         {rows.map((row) => (
           <div
             key={`${row.step}-${row.label}`}

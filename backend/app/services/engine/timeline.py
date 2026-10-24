@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from decimal import Decimal
 
 from app.services.engine.components import ComponentEffort
-from app.services.engine.context import PricingContext
+from app.services.engine.context import LineBuilder, PricingContext
 from app.services.engine.money import ONE, ZERO, ceil_to, dsum, interpolate
 from app.services.engine.outputs import Infeasibility, PhaseSuggestion, Timeline
 from app.services.engine.reference import SizeBand
@@ -35,6 +35,62 @@ def size_band(ctx: PricingContext, effort_pd: Decimal) -> tuple[int, SizeBand]:
         if band.max_build_pd is None or effort_pd <= band.max_build_pd:
             return i, band
     raise ValueError("timeline.size_bands must end with an open-ended band")
+
+
+@dataclass(frozen=True)
+class BandMix:
+    lower: int  # index of the band whose value applies at weight 0
+    upper: int  # the next band (the same index outside a blend)
+    weight: Decimal  # the upper band's share
+
+
+def band_mix(ctx: PricingContext, effort_pd: Decimal) -> BandMix:
+    """Where the build sits between the size bands. With timeline.size_band_blend_share = s
+    (v23+), across band edge E: weight = (pd − E(1 − s)) / (2 E s) for E(1 − s) < pd < E(1 + s);
+    elsewhere, and before v23, the band holding the build at weight 0."""
+    idx, _ = size_band(ctx, effort_pd)
+    s = ctx.p.timeline.size_band_blend_share
+    bands = ctx.p.timeline.size_bands
+    if s is not None:
+        for i, band in enumerate(bands[:-1]):
+            edge = band.max_build_pd
+            if edge is None:
+                break
+            low, high = edge * (ONE - s), edge * (ONE + s)
+            if low < effort_pd < high:
+                return BandMix(i, i + 1, (effort_pd - low) / (high - low))
+    return BandMix(idx, idx, ZERO)
+
+
+def _blend(t: LineBuilder, mix: BandMix, label: str, low: Decimal, high: Decimal) -> Decimal:
+    """low + (high − low) × weight, recorded as a step with the blend share it came from."""
+    t.param("timeline", "size_band_blend_share")
+    return t.step(
+        f"{label} between the size bands",
+        f"{low} + ({high} − {low}) × {mix.weight:.4f}",
+        low + (high - low) * mix.weight,
+    )
+
+
+def band_value(t: LineBuilder, effort_pd: Decimal, field: str) -> Decimal:
+    """size_bands[band][field] for this build size, blended across a band edge (band_mix)."""
+    mix = band_mix(t.ctx, effort_pd)
+    low: Decimal = t.param("timeline", "size_bands", mix.lower, field)
+    if mix.upper == mix.lower:
+        return low
+    high: Decimal = t.param("timeline", "size_bands", mix.upper, field)
+    return _blend(t, mix, field, low, high)
+
+
+def band_fee(t: LineBuilder, effort_pd: Decimal, prefix: str) -> Decimal:
+    """rate(prefix.audit_band) for this build size, blended across a band edge (band_mix)."""
+    mix = band_mix(t.ctx, effort_pd)
+    band: str = t.param("timeline", "size_bands", mix.lower, "audit_band")
+    low = t.rate_local(f"{prefix}.{band}")
+    if mix.upper == mix.lower:
+        return low
+    upper: str = t.param("timeline", "size_bands", mix.upper, "audit_band")
+    return _blend(t, mix, f"{prefix} fee", low, t.rate_local(f"{prefix}.{upper}"))
 
 
 def compression_multiplier(ctx: PricingContext, ratio: Decimal) -> Decimal:

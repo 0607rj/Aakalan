@@ -10,6 +10,7 @@ import re
 from datetime import date
 from decimal import Decimal
 from enum import StrEnum
+from itertools import pairwise
 from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
@@ -453,6 +454,19 @@ class Timeline(Sourced):
     # v17+: a squeezed build also runs its programme (management, test servers) over the
     # deadline, not the natural duration it was squeezed from.
     programme_follows_deadline: bool = False
+    # v23+ (OPEN_QUESTIONS 160): around each band edge E, a band's values (PM, exit days, audit
+    # fees) move in a straight line from the lower band's to the upper band's between
+    # E × (1 − share) and E × (1 + share), so one person-day more never steps the price.
+    # None = steps at the edges (before v23).
+    size_band_blend_share: Decimal | None = Field(default=None, gt=0, lt=1)
+
+    @model_validator(mode="after")
+    def _blends_do_not_overlap(self) -> "Timeline":
+        s = self.size_band_blend_share
+        edges = [b.max_build_pd for b in self.size_bands if b.max_build_pd is not None]
+        if s is not None and any(a * (1 + s) > b * (1 - s) for a, b in pairwise(edges)):
+            raise ValueError("size_band_blend_share makes two band edges' blends overlap")
+        return self
 
 
 class Programme(Sourced):
@@ -672,6 +686,10 @@ class Calibration(Sourced):
     model_spread: dict[str, ClaritySpread] = {}
     # v12+: the same by project size (used instead of the segment's when the size is known).
     model_spread_by_size: dict[str, ClaritySpread] = {}
+    # v23+ (OPEN_QUESTIONS 160): "median" divides each draw by the triangle's median, so the
+    # factor widens the range without lifting P50 (a lopsided triangle with its peak at 1 has
+    # a median above 1); "mode" (before v23) leaves the draw as it is.
+    model_spread_centre: Literal["mode", "median"] = "mode"
     # v14+ (should-cost): the price is not tuned to market prices; what real contracts of each
     # project size cost relative to it is shown next to it as a market check.
     should_cost: bool = False

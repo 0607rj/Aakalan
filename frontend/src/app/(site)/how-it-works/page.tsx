@@ -62,7 +62,7 @@ export default function HowItWorksPage() {
         same answers always give the same price.
       </PageIntro>
 
-      <Section className="py-16 sm:py-24">
+      <Section className="py-12 sm:py-16">
         <ol className="relative flex flex-col gap-16 border-l-2 border-dashed border-border pl-8 sm:pl-12">
           {STEPS.map((step, i) => (
             <li

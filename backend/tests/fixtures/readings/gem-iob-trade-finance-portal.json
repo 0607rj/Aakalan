@@ -1,0 +1,1339 @@
+{
+ "benchmark_id": "gem-iob-trade-finance-portal",
+ "reader_model": "stand-in: a Claude Code Sonnet subagent answering the app's own prompts (relayed), NOT the production claude-sonnet-5-5 API call",
+ "read_on": "2026-10-24",
+ "code_path": "production reading code: app parser, ai_read (extract_tender_v8 + gap_check_v3), verify_findings, merge_extractions; only the LLM call was relayed. No inventory (independent check) was read.",
+ "files_read": [
+  "att01.pdf",
+  "att07.pdf",
+  "att06.pdf"
+ ],
+ "files_not_read": [],
+ "extraction": {
+  "reader": "ai",
+  "prompt_version": "extract_tender_v8",
+  "project_name": "Trade Finance Customer Portal",
+  "summary": "The requirement document is a bank tender for a customer web portal where business customers raise trade finance requests such as letters of credit, guarantees, bills and remittances online instead of at a branch. The portal must connect to the bank's existing core banking, SWIFT and screening systems, run on the bank's own infrastructure, and be supported for five years with on-site staff.",
+  "features": [
+   {
+    "key": "online_forms",
+    "label": "Online application or registration forms",
+    "evidence": [
+     {
+      "page": 59,
+      "clause_ref": "5.1",
+      "quote": "A Front Office Layer having Trade Web Portal for Customer user with paperless multi-channel initiation for generating request",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 22,
+      "clause_ref": "B.4",
+      "quote": "Supports submission of online requests by Corporates for creation, cancellations, amendments, enquiries, rejections, resubmissions,",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 1,
+    "suggested": true,
+    "stories": [
+     "As a corporate customer, I can initiate a trade finance request online from the portal",
+     "As a corporate customer, I can save an incomplete request as a draft and finish it later",
+     "As a corporate customer, I can enter special instructions on a request",
+     "As a corporate customer, I can submit amendment, cancellation and enquiry requests on an existing transaction"
+    ],
+    "story_level": "standard",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "approval_workflow",
+    "label": "Files go from person to person for approval",
+    "evidence": [
+     {
+      "page": 23,
+      "clause_ref": "B.5",
+      "quote": "Supports Verification, Maker-checker features, Supervisory Release / Rejects, Re-submissions, Escalation, Approvals, etc. across all product lines.",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 65,
+      "clause_ref": "5.27",
+      "quote": "The Solution should have the capability to allow the admin to create the transaction authorization matrix with threshold limit.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 1,
+    "suggested": true,
+    "stories": [
+     "As a bank user, I can verify, approve, release or reject a request through maker-checker steps",
+     "As a bank user, I can send a request back for resubmission or escalate it",
+     "As an administrator, I can set up an authorization matrix with threshold limits for each customer",
+     "As an administrator, I can reassign in-process tasks to other users, offices or regions"
+    ],
+    "story_level": "standard",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "documents",
+    "label": "Store and manage documents",
+    "evidence": [
+     {
+      "page": 66,
+      "clause_ref": "5.31",
+      "quote": "The solution should have provision to handle/ upload documents to Bank’s DMS (Document management System) and associated workflows.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 1,
+    "suggested": true,
+    "stories": [
+     "As a corporate customer, I can upload documents and files with a request",
+     "As a bank user, I can store and retrieve the documents of a transaction in the Bank's document management system",
+     "As a user, I can view the full up-to-date copy of a letter of credit or guarantee with its amendments, comments and attachments",
+     "As a user, I can see documents watermarked with the comments made during processing"
+    ],
+    "story_level": "standard",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "dashboards",
+    "label": "Reports and dashboards",
+    "evidence": [
+     {
+      "page": 82,
+      "clause_ref": "5",
+      "quote": "The solution should provide a holistic view of the system for monitoring purpose for all end users (especially for Customers & Bank users if required) through a dashboard with real time out of the Box reports",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 1,
+    "suggested": true,
+    "stories": [
+     "As a bank user or customer, I can see a real-time dashboard with standard reports such as turn-around time, volume and discrepancies",
+     "As a bank user or customer, I can build my own reports and schedule them at set frequencies",
+     "As a user, I can export reports as digitally signed or encrypted CSV, Excel, XML or PDF files",
+     "As a customer, I can see a report of the requests that need action from me",
+     "As a corporate user, I can see consolidated information for my corporate group",
+     "As a bank user, I can generate regulatory MIS and audit reports"
+    ],
+    "story_level": "standard",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "notifications",
+    "label": "SMS, email and app notifications",
+    "evidence": [
+     {
+      "page": 66,
+      "clause_ref": "5.43",
+      "quote": "The solution should generate intimation to customers via SMS/email in case of any rejection/cancellation/approval of request by Bank.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 1,
+    "suggested": true,
+    "stories": [
+     "As a corporate customer, I receive an SMS or email when the bank rejects, cancels or approves my request",
+     "As a bank user, I receive an SMS, email or WhatsApp message when a customer raises a request",
+     "As a user, I can change the alert settings for events and milestones in a transaction"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "staff_login",
+    "label": "Log in with existing accounts",
+    "evidence": [
+     {
+      "page": 85,
+      "clause_ref": "n",
+      "quote": "The Solution must be capable of supporting LDAP and system can be integrated with Windows Active Directory to achieve Single Sign on (SSO).",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 1,
+    "suggested": true,
+    "stories": [
+     "As a bank user, I can sign in with my Active Directory account using single sign-on"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "connect_existing",
+    "label": "Connect to existing systems (SAP, old software)",
+    "evidence": [
+     {
+      "page": 76,
+      "clause_ref": "13",
+      "quote": "The solution is to be integrated with back-end CBS Finacle system. For this purpose, the API development under Finacle CBS is to be undertaken by the bidder.",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 63,
+      "clause_ref": "5.9",
+      "quote": "Integration with following third party system for compliance check and other requirements",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 84,
+      "clause_ref": "l",
+      "quote": "The solution should integrate with Customer ERP and Finacle Core Banking for all transactions (Adapter based/ API based/ Web Service/",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 2,
+    "suggested": true,
+    "stories": [
+     "As a bank user, I see the customer's limits, account balances and parameters fetched from Finacle core banking during a transaction",
+     "As a bank user, I can have straight-through transactions posted to Finacle core banking",
+     "As a bank user, I see rates fetched from the Bank's internal rate and treasury systems",
+     "As a bank user, I can check a customer against the duplicate-record and fraud databases",
+     "As a customer, I can reach the portal from the Bank's internet banking and mobile banking applications",
+     "As a bank administrator, I can feed data to the Bank's CRM and data warehouse",
+     "As a corporate customer, I can connect my ERP to the portal to exchange transaction data"
+    ],
+    "story_level": "standard",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "ai_chatbot",
+    "label": "AI chatbot that answers people's questions",
+    "evidence": [
+     {
+      "page": 64,
+      "clause_ref": "5.16",
+      "quote": "The Solution should provide Online Help/Chat bot service to guide corporate during input.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 1,
+    "suggested": true,
+    "stories": [
+     "As a corporate customer, I can ask the online help or chat bot for guidance while filling in a request"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   }
+  ],
+  "other_features": [
+   {
+    "name": "Letters of credit requests and life cycle",
+    "description": "Customers request issuance, amendment, cancellation and closure of letters of credit and bank users process them.",
+    "category": "module",
+    "size": "M",
+    "evidence": [
+     {
+      "page": 23,
+      "clause_ref": "D.1",
+      "quote": "Request for /Issuance of Letters of Credit – Client’s ability to initiate online requests for LCs, LC Amendments/ Cancellation/closure.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a corporate customer, I can request issuance of an import or export letter of credit",
+     "As a corporate customer, I can request amendment, cancellation or closure of a letter of credit",
+     "As a corporate customer, I can accept or reject an amendment and ask for clarification",
+     "As a bank user, I can advise, confirm and transfer a letter of credit"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Bank guarantees and undertakings",
+    "description": "Customers request guarantees of many kinds and their amendment, extension, invocation and closure.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 60,
+      "clause_ref": "5.7.1",
+      "quote": "Performance, Financial, Deferred payment, Shipping, Bid Bond, Advance payment, Payment / Loan, SBLC etc.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a corporate customer, I can request issuance of a guarantee or undertaking",
+     "As a corporate customer, I can request amendment, extension, invocation, cancellation or closure of a guarantee"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Bills, collections and bill financing",
+    "description": "Handling of inward and outward bills, purchase, discounting, negotiation and invoice financing.",
+    "category": "module",
+    "size": "M",
+    "evidence": [
+     {
+      "page": 61,
+      "clause_ref": "5.7.3",
+      "quote": "Inward Bills for Collection with or without LC",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a corporate customer, I can submit inward and outward bills for collection with or without a letter of credit",
+     "As a corporate customer, I can request purchase, discounting or negotiation of a bill",
+     "As a corporate customer, I can request invoice discounting, invoice financing, factoring or forfaiting",
+     "As a corporate customer, I can request a trust receipt for import financing"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Trade remittances",
+    "description": "Inward and outward remittances against imports, exports and other purposes, including straight-through processing.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 61,
+      "clause_ref": "5.7.4",
+      "quote": "Outward and Advance remittance against Imports",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a corporate customer, I can request an outward or advance remittance against imports",
+     "As a corporate customer, I can request an inward or advance remittance against exports",
+     "As a corporate customer, I can request a remittance other than import or export"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Trade loans, buyer's credit and export finance",
+    "description": "Requests for trade loans, buyer's credit, pre-shipment and post-shipment export finance and forward contracts, with loan accounts opened and closed.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 61,
+      "clause_ref": "5.7.5",
+      "quote": "Buyer’s credit, Export finance - Pre-Shipment (Packing Credit) - RPC/PCFC & Post Shipment, Forward Contract – Sale & purchase,",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a corporate customer, I can request buyer's credit, trade loans and export finance",
+     "As a corporate customer, I can request a forward contract",
+     "As a corporate customer, I can request opening and closing of a loan account with fixed or variable maturity"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Compliance and sanction screening",
+    "description": "Automatic compliance, sanctions, AML and credit checks on each transaction using the Bank's existing screening solution.",
+    "category": "integration",
+    "size": "M",
+    "evidence": [
+     {
+      "page": 59,
+      "clause_ref": "5.4",
+      "quote": "Automate compliance function and have capability for real time integration with international and national sanctions list screening",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a bank user, I can see the result of sanctions and AML screening on each transaction",
+     "As a bank user, I can see the check of sanctioned country, port and vessel",
+     "As a bank user, I can see the credit limit check and compliance check result",
+     "As a bank user, I can record enhanced due diligence on a case"
+    ],
+    "units": 1
+   },
+   {
+    "name": "SWIFT messaging interface",
+    "description": "Interface to SWIFT to populate, validate and send trade messages.",
+    "category": "integration",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 26,
+      "clause_ref": "9",
+      "quote": "Inbuilt capabilities to interface with SWIFT Alliance, Payment Hubs & Systems of the Bank including populating the fields with in-puts from the transaction records and carrying out validation checks",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a bank user, I can have SWIFT messages populated and validated from the transaction record",
+     "As a bank user, I can have SWIFT-compliant field validation applied to a request"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Workflow and rule designer",
+    "description": "Admin tools to create new workflows, business rules and forms without new programming.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 65,
+      "clause_ref": "5.22",
+      "quote": "The solution should be able to provide the workflow and ability to create the new workflows.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As an administrator, I can create and change workflows",
+     "As an administrator, I can define business rules",
+     "As an administrator, I can design dynamic forms"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Queue management and turn-around-time monitoring",
+    "description": "Prioritising, reallocating and monitoring work queues, exceptions and escalations.",
+    "category": "module",
+    "size": "M",
+    "evidence": [
+     {
+      "page": 65,
+      "clause_ref": "5.29",
+      "quote": "Facility for queue management of transaction – to prioritize or de- prioritize request. Workflow/job re- allocation",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a bank user, I can prioritise or de-prioritise a request, including urgent requests within a limit set per customer",
+     "As a supervisor, I can reallocate jobs between users",
+     "As a supervisor, I can monitor turn-around time at the mid office",
+     "As a bank user, I can work an exception queue",
+     "As a supervisor, I can have requests escalated automatically"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Online document examination and discrepancy handling",
+    "description": "Bank users examine presented documents, record discrepancies and exchange queries with the customer.",
+    "category": "module",
+    "size": "M",
+    "evidence": [
+     {
+      "page": 24,
+      "clause_ref": "D.4",
+      "quote": "Ability for Bank users to examine presented documents online and post queries / comments back to the Corporate",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a bank user, I can examine and re-examine presented documents online and record observations and discrepancies",
+     "As a bank user, I can send discrepancies and queries to the corporate through the application or by email",
+     "As a corporate customer, I can respond to queries and upload revised documents",
+     "As a bank user, I can view presented documents online including scanned images"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Customer groups and multi-client access",
+    "description": "Rules for which clients in a corporate group a user can see, copying masters between clients and linking accounts.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 65,
+      "clause_ref": "5.28",
+      "quote": "The Solution should provide a capability to define whether a user has rights to only one client within the group or whether the user can access data for multiple clients within the group.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As an administrator, I can set whether a user can access one client or several clients in a group",
+     "As a corporate customer, I can copy the masters defined for one client to another client in the group",
+     "As an administrator or customer, I can link and de-link accounts"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Credit limit hierarchy",
+    "description": "Multi-tier credit limits for customers, correspondent banks, parent groups and country risk.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 67,
+      "clause_ref": "5.47",
+      "quote": "The solution should support multi-tier credit structure hierarchy. Limits may be set for Customers, Correspondent banks, at parent-level (for groups of customers/ banks) and for Country for Risk.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a bank user, I can set limits for customers, correspondent banks, parent groups and countries",
+     "As a bank user, I can parameterise credit sanction terms"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Charges customization",
+    "description": "Customer-specific charges, discounts and collection of charges.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 65,
+      "clause_ref": "5.30",
+      "quote": "The Solution should have Charges customization for modification/collection of various charges (Customer specific discounts/ or any other charges).",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a bank user, I can modify and collect charges, including customer-specific discounts"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Templates, static data and clause library",
+    "description": "Saved templates, beneficiary and bank details, and standard clauses for trade documents.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 63,
+      "clause_ref": "5.10",
+      "quote": "Templates and Data Maintenance: Standard/customized templates can be saved and static data like beneficiary address, bank details, etc. can be maintained.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a corporate customer, I can save standard or customised templates and create requests from them",
+     "As a corporate customer, I can maintain beneficiary address and bank details",
+     "As a user, I can select and modify standard clauses from a library"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Calendar, due dates and reminders",
+    "description": "Calendar of due, maturity and expiry dates with alerts, reminders and holiday maintenance.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 63,
+      "clause_ref": "5.10",
+      "quote": "Calendar: Calendar showing Due Date/Maturity Date for LCs, Bill Payment Date, Bank Guarantee/Undertaking Expiry Date, etc. and necessary alert generation.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a user, I can see a calendar of due, maturity and expiry dates with alerts",
+     "As a user, I receive time-based and event-based reminders",
+     "As an administrator, I can maintain bank holidays and currency holidays for locations and currencies"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Real-time transaction tracking",
+    "description": "Tracking where a pending transaction sits in the bank, across teams and branches.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 63,
+      "clause_ref": "5.10",
+      "quote": "Realtime Online Tracking: Pending Transactions can be tracked online i.e. at which level in the Bank a particular transaction is pending.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a customer or bank user, I can see the real-time status of a transaction and where it is pending"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Electronic guarantee and letter of credit generation",
+    "description": "Generating electronic bank guarantees and letters of credit under the latest electronic UCP rules.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 66,
+      "clause_ref": "5.45",
+      "quote": "The solution should be capable of generating electronic BG, LC / latest version E-UCP (Electronic Uniform Customs and Practices for Documentary credits)",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a bank user, I can generate an electronic bank guarantee or letter of credit under the latest E-UCP"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Advices, letters and message generation",
+    "description": "Creating advices, letters, emails, SMS and SWIFT copies with preview and printing.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 82,
+      "clause_ref": "4",
+      "quote": "The solution should have in-built mechanism to create Email, Letter, Advices, SMS, Swift Copy and follow-ups.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a bank user, I can generate emails, letters, advices, SMS, SWIFT copies and follow-ups from a transaction",
+     "As a bank user, I can preview advices and messages before approval and print a hard copy",
+     "As a customer, I can print advices as I choose"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Duplicate check",
+    "description": "Checks to avoid duplicate records, bill payments and letters of credit.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 66,
+      "clause_ref": "5.39",
+      "quote": "The solution should have the provision to check in the system to avoid duplication, viz. payment of duplicate bills, LC duplication, etc.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a bank user, I am warned when a bill payment, letter of credit or record is a duplicate"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Bulk and file upload of requests",
+    "description": "Batch, file and template uploads of data and bulk case initiation.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 66,
+      "clause_ref": "5.44",
+      "quote": "The solution must have the capability of batch/file/template uploads of the data.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a corporate customer, I can upload many requests or data records at once by file"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Document and data extraction and signature verification",
+    "description": "Reading data from submitted documents and verifying signatures online.",
+    "category": "ai",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 60,
+      "clause_ref": "5.6",
+      "quote": "Case Initiation (including bulk upload) and Document & Data Extraction",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a bank user, I have data extracted from submitted documents into the request",
+     "As a bank user, I can verify a customer's signature online"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Advanced login security checks",
+    "description": "Login pattern analysis, geo-tagging, virtual keyboard and tracking of failed logins.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 64,
+      "clause_ref": "5.10",
+      "quote": "The solution should have the capability to analyze regular login, logout schedules of the customer as an extra layer of protection to prevent any unauthorized access.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As an administrator, I can have unusual login patterns and customer access points flagged",
+     "As a customer, I can type my password on a virtual keyboard",
+     "As a customer or administrator, I can see unsuccessful login attempts with details"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Multi-country and multi-currency handling",
+    "description": "Support for several countries, currencies and operating models such as centralized or hub and spoke.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 85,
+      "clause_ref": "m",
+      "quote": "The Solution should be capable of handling multi country, multicurrency, cross-currency multi-product administration and services.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As an administrator, I can configure operations for several countries, currencies and products",
+     "As an administrator, I can configure a centralized, hub-and-spoke or regional operating model"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Home page for bank products and trade information",
+    "description": "Home page space where the bank markets products and shares trade information, with web content management.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 83,
+      "clause_ref": "17",
+      "quote": "The solution should provide space for Bank to market other products to customers and to provide useful trade related information on the home page.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a bank administrator, I can publish product promotions and trade information on the home page",
+     "As a bank administrator, I can manage the web content shown to users"
+    ],
+    "units": 1
+   },
+   {
+    "name": "FAQ repository with suggestions",
+    "description": "A list of frequently asked questions that accepts suggestions.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 83,
+      "clause_ref": "24",
+      "quote": "The solution should be able to provide the FAQs from the repository and the ability to accept the suggestions on the FAQs.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a customer, I can read the FAQs and send suggestions on them"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Branch observations, trade memo and deviation tracking",
+    "description": "Entry of branch or bank observations at mid office, trade memo and deviation tracker.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 60,
+      "clause_ref": "5.6",
+      "quote": "Entry of Branch / Bank observation at Mid-office layer",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a bank user, I can enter branch or bank observations at the mid-office layer",
+     "As a bank user, I can record a trade memo",
+     "As a bank user, I can track deviations"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Branch-initiated requests for customers",
+    "description": "Bank users create, amend, authorise, cancel and verify requests on behalf of clients who submitted them physically at a branch.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 22,
+      "clause_ref": "B.3",
+      "quote": "Menus to bank users to initiate, create, amend, authorise, cancel, verify any requests based on client requests submitted physically at the Branch",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a bank user, I can initiate, amend, authorise, cancel and verify a request on behalf of a client who applied physically at the branch"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Document preparation and e-presentment",
+    "description": "Preparing trade documents and presenting them electronically.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 84,
+      "clause_ref": "26",
+      "quote": "The Solution should support Document preparation and e-presentment related to Trade Finance business/ products.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a corporate customer, I can prepare trade documents and present them electronically"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Session logs and security activity reports",
+    "description": "Session log files that users can analyse, with tracking of client IP and network address.",
+    "category": "report",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 80,
+      "clause_ref": "39",
+      "quote": "The Solution should be able to provide session log files. The user should be able to analyses the information (e.g., account id, session time etc.).",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As an administrator, I can analyse session logs with account, session time and client IP details"
+    ],
+    "units": 1
+   }
+  ],
+  "choices": {
+   "hosting": {
+    "value": "existing",
+    "label": "Servers you already have",
+    "evidence": [
+     {
+      "page": 74,
+      "clause_ref": "2",
+      "quote": "Bank will provide all Hardware Infrastructure all i.e. Server, Storage space, Load Balancer etc for the proposed solution.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "platforms": {
+    "value": "web",
+    "label": "Website",
+    "evidence": [
+     {
+      "page": 81,
+      "clause_ref": "A",
+      "quote": "The Trade Finance Customer Portal Solution should be a Web application software system",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "build_type": {
+    "value": "ready_product",
+    "label": "Set up a ready-made product",
+    "evidence": [
+     {
+      "page": 119,
+      "clause_ref": "8.12",
+      "quote": "Application Software supplied under Serial No 1.a of Table I shall be enterprise and perpetual edition without any limitation (Unlimited License) such as number of users, clients etc.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "integrations": {
+    "value": "many",
+    "label": "Yes, several",
+    "evidence": [
+     {
+      "page": 63,
+      "clause_ref": "5.9",
+      "quote": "Integration with following third party system for compliance check and other requirements",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "helpdesk_scope": {
+    "value": "yes",
+    "label": "Yes",
+    "evidence": [
+     {
+      "page": 87,
+      "clause_ref": "",
+      "quote": "Deployment of onsite L1 and L2 online/ remote support through e-mail/ SMS alert from System Integrator/ OEM/ OSD depending upon the criticality of the issue on 24 X 7 X 365 basis.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "support_hours": {
+    "value": "on_call",
+    "label": "Round the clock, on call",
+    "evidence": [
+     {
+      "page": 79,
+      "clause_ref": "Page 79",
+      "quote": "24*7*365 backend support for the proposed solution related malfunctions as defined in SLAs and ability to log requests online.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "availability": {
+    "value": "high",
+    "label": "Work stops",
+    "evidence": [
+     {
+      "page": 153,
+      "clause_ref": "9.1",
+      "quote": "Application (As a whole / any module of the application) availability will be 99.9% on 24x7x365.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "disaster_site": {
+    "value": "yes",
+    "label": "Yes",
+    "evidence": [
+     {
+      "page": 76,
+      "clause_ref": "14",
+      "quote": "Bidder is to ensure BCP Scenario (DC/DR Cutover & Cutback) successful implementation of proposed solution at both data center",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "penalties": {
+    "value": "yes",
+    "label": "Yes",
+    "evidence": [
+     {
+      "page": 69,
+      "clause_ref": "6.2",
+      "quote": "a penalty of half percent (0.5%) of the Net Order Value, for each week or part thereof of the delay subject to a maximum of 5% will be levied",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "security_audit": {
+    "value": "yes",
+    "label": "Yes",
+    "evidence": [
+     {
+      "page": 57,
+      "clause_ref": "",
+      "quote": "Bidder to provide a certificate from auditor evidencing that the security testing of the application has been done and the observations therein has been complied with.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "onsite_period": {
+    "value": "support",
+    "label": "Throughout support",
+    "evidence": [
+     {
+      "page": 82,
+      "clause_ref": "13",
+      "quote": "Bidder is required to deploy on-site support resource as per requirement factored in the commercial sheet.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   }
+  },
+  "numbers": {
+   "emd_paise": {
+    "value": 250000000,
+    "label": "emd_rupees",
+    "evidence": [
+     {
+      "page": 18,
+      "clause_ref": "3.7",
+      "quote": "The bid should also be accompanied by BG in lieu of Earnest Money deposit (refundable) of Rs. 25,00,000/- (Rupees Twenty Five Lakhs Only).",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "pbg_percent": {
+    "value": 0.05,
+    "label": "pbg_percent",
+    "evidence": [
+     {
+      "page": 19,
+      "clause_ref": "3.8",
+      "quote": "equivalent to 5% of the order value for a duration of 62 months with a claim period of 3 months",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "om_years": {
+    "value": 5,
+    "label": "om_years",
+    "evidence": [
+     {
+      "page": 77,
+      "clause_ref": "23",
+      "quote": "ATS of 5 years will be considered for commercial evaluation.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "onsite_staff": {
+    "value": 4,
+    "label": "onsite_staff",
+    "evidence": [
+     {
+      "page": 87,
+      "clause_ref": "",
+      "quote": "L1 to run onsite with a minimum of 2 person per shift, minimum 4 persons in all on a 2-shift basis (8am to 8pm)",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   }
+  },
+  "unclear_points": [
+   {
+    "topic": "Implementation deadline",
+    "why": "The document gives 6 months in one place, 12 months in another and a phase table running to about 261 days.",
+    "page": 67,
+    "clause_ref": "6.2",
+    "quote": "The solution must be implemented as per project scope within 6 months in totality from the date of issuance of purchase order.",
+    "prebid_query": "Clause 6.2 states the solution must be implemented within 6 months of the purchase order, while Part 7 (General Requirements, item 12) states 12 months and the phase table shows Phase 2 going live at T+261 days. Kindly confirm the single applicable deadline for full go-live."
+   },
+   {
+    "topic": "Support period",
+    "why": "Support charges are quoted for 4 years after a 1-year warranty in one place and ATS for 5 years from go-live in another.",
+    "page": 54,
+    "clause_ref": "5.30",
+    "quote": "The bidders shall quote Support Charges for the Solution for a period of 4 years after the initial comprehensive onsite warranty period of 1 years in the commercial bid (Format 8.12).",
+    "prebid_query": "Clause 5.30 asks for support charges for 4 years after a 1-year warranty, while Part 7 item 23 says ATS of 5 years from go-live will be considered for evaluation. Kindly clarify the exact warranty and ATS periods and their start dates."
+   },
+   {
+    "topic": "Number of on-site support staff",
+    "why": "The help desk clause asks for at least 4 L1 persons, while the commercial format prices 1 person per day for TCO.",
+    "page": 119,
+    "clause_ref": "8.12 Note 8",
+    "quote": "However, for the TCO purpose 1-person day (1 shift x 1 person) x 365 for each year will be considered.",
+    "prebid_query": "Part 7 (Help Desk Requirements) asks for a minimum of 4 L1 persons on a 2-shift basis, while Format 8.12 Note 8 and Tables IV to VI use 1 person x 365 days. Kindly confirm the number of L1, L2 and developer resources to be deployed on-site."
+   },
+   {
+    "topic": "User and transaction volumes",
+    "why": "Sizing depends on user information the document says is given elsewhere, but no numbers are stated.",
+    "page": 57,
+    "clause_ref": "",
+    "quote": "The sizing of the above components should be based on the User information mentioned elsewhere in the RFP and application specific requirements.",
+    "prebid_query": "The Infrastructure Sizing section refers to user information mentioned elsewhere in the RFP. Kindly provide the number of corporate customers, bank users, concurrent users and expected transactions per month for sizing."
+   },
+   {
+    "topic": "Hosting model",
+    "why": "The Bank may choose cloud or on-premises later, yet the solution is also described as hosted on-premises and as 100% cloud native.",
+    "page": 57,
+    "clause_ref": "",
+    "quote": "Bank at any point of time may decide and advice vendor to implement the solution in the cloud or on premise as per the choice of bank.",
+    "prebid_query": "Kindly confirm whether the initial deployment is on-premises at the Bank's data centres or on cloud, and whether any cloud hosting charges are to be borne by the bidder."
+   },
+   {
+    "topic": "Indicative scope",
+    "why": "The scope is described as indicative and open to change at any phase.",
+    "page": 58,
+    "clause_ref": "6.1",
+    "quote": "The below mentioned SoW is indicative in nature and the Department reserves the right to modify/ change the scope of work at any phase.",
+    "prebid_query": "Clause 6.1 states the scope of work is indicative. Kindly provide the final list of products, functions and integrations to be delivered in Phase 1, Phase 2 and Phase 3, and how scope changes will be priced."
+   },
+   {
+    "topic": "Finacle customization extent",
+    "why": "The number and nature of API developments in the core banking system are left open.",
+    "page": 76,
+    "clause_ref": "13",
+    "quote": "Customization / API Development under Bank-end System i.e., CBS Finacle 10.x is to be undertaken as per requirements.",
+    "prebid_query": "Part 7 item 13 requires API development under Finacle CBS 10.x as per requirements. Kindly provide the list of APIs and the expected number of integration points."
+   },
+   {
+    "topic": "Data migration",
+    "why": "Migration of existing data is conditional and no volume or source is given.",
+    "page": 75,
+    "clause_ref": "9",
+    "quote": "In case of migration of existing data is required or proposed by the Bank, the successful Bidder should facilitate the same without any additional cost for the Bank.",
+    "prebid_query": "Part 7 item 9 mentions migration of existing data if required. Kindly state whether data migration is required and, if so, the source systems and approximate record volumes."
+   },
+   {
+    "topic": "Chatbot scope",
+    "why": "Only a single line asks for an online help or chat bot, with no detail on what it should answer.",
+    "page": 64,
+    "clause_ref": "5.16",
+    "quote": "The Solution should provide Online Help/Chat bot service to guide corporate during input.",
+    "prebid_query": "Clause 5.16 requires an online help or chat bot service. Kindly specify whether it is a rule-based guide or an AI assistant, the languages, and the expected volume of queries."
+   },
+   {
+    "topic": "Channels",
+    "why": "The portal must support multichannel but the channels are not named.",
+    "page": 59,
+    "clause_ref": "4",
+    "quote": "The proposed Trade Finance Customer portal should support multichannel.",
+    "prebid_query": "Item 4 of Clause 6.1 requires the portal to support multichannel. Kindly list the channels required, including whether a native mobile app is expected."
+   }
+  ],
+  "dropped_findings": 1,
+  "not_priced": [
+   {
+    "topic": "warranty",
+    "label": "Warranty period",
+    "note": "One year of comprehensive on-site warranty from installation or 13 months from delivery, whichever is earlier.",
+    "evidence": [
+     {
+      "page": 53,
+      "clause_ref": "5.28",
+      "quote": "installation or 13 months from the date of delivery whichever is earlier",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "topic": "payment_terms",
+    "label": "Payment terms (when the vendor is paid)",
+    "note": "Payments are set per component (licence 50/50, implementation in nine milestones, quarterly support) and do not map to one split of the contract value.",
+    "evidence": [
+     {
+      "page": 51,
+      "clause_ref": "5.26",
+      "quote": "Phase 1 - SRS/FSD Sign-off 15%",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "topic": "data_rules",
+    "label": "Data protection and other rules to follow",
+    "note": "The vendor must follow the RBI directions on outsourcing of IT services, including keeping data in India.",
+    "evidence": [
+     {
+      "page": 28,
+      "clause_ref": "3.11",
+      "quote": "Standard Covenants in terms of Master Direction on outsourcing of Information Technology Services by RBI",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "topic": "technology",
+    "label": "Required technology or software",
+    "note": "The database must be Oracle and the back end is Finacle 10.x.",
+    "evidence": [
+     {
+      "page": 74,
+      "clause_ref": "3",
+      "quote": "It may be noted that the Database should be used as Oracle only as Bank has the Enterprise Agreement with Oracle.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "topic": "source_code",
+    "label": "Source code and ownership handover",
+    "note": "Source code must be held in escrow at the bidder's cost, with access for the Bank when needed.",
+    "evidence": [
+     {
+      "page": 57,
+      "clause_ref": "3",
+      "quote": "Bidder should at their own cost deploy, maintain, and manage the source codes and other related information under Escrow.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "topic": "multi_tenancy",
+    "label": "Several client organisations on one system (multi-tenant)",
+    "note": "The solution should be installable as a single instance or a multi-tenant instance as the Bank requires.",
+    "evidence": [
+     {
+      "page": 79,
+      "clause_ref": "34",
+      "quote": "The solution should be capable of being installed either as a single instance or multi or multi-tenant instance depending on Bank’s requirements.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   }
+  ],
+  "payment_terms": null,
+  "scope": [
+   {
+    "key": "otp_codes",
+    "label": "Sign-in and user accounts: One-time codes by SMS or email (sign-in or password reset)",
+    "status": "explicit",
+    "note": "OTP based login for login and transactions.",
+    "evidence": [
+     {
+      "page": 64,
+      "clause_ref": "5.13",
+      "quote": "The solution should have multifactor authentication features like digital signature / bio- metric/OTP based login for login / transaction.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "key": "two_step_sign_in",
+    "label": "Sign-in and user accounts: Two-step sign-in (MFA)",
+    "status": "explicit",
+    "note": "",
+    "evidence": [
+     {
+      "page": 64,
+      "clause_ref": "5.13",
+      "quote": "The solution should have multifactor authentication features like digital signature / bio- metric/OTP based login for login / transaction.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "key": "audit_log",
+    "label": "Sign-in and user accounts: A record of who did what (audit log)",
+    "status": "explicit",
+    "note": "",
+    "evidence": [
+     {
+      "page": 65,
+      "clause_ref": "5.19",
+      "quote": "The solution should be capable of configuring the audit trial of each and every activity of users / admin module wise",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "key": "public_api",
+    "label": "Connections with other systems: An API or webhooks so other systems can use it",
+    "status": "explicit",
+    "note": "",
+    "evidence": [
+     {
+      "page": 84,
+      "clause_ref": "j",
+      "quote": "The solution should provide open APIs so that the Bank’s different applications can be integrated with the solution.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "key": "workflow_audit",
+    "label": "Approvals: Record every decision and who made it (audit trail)",
+    "status": "explicit",
+    "note": "",
+    "evidence": [
+     {
+      "page": 86,
+      "clause_ref": "8",
+      "quote": "The Solution should maintain detailed record of every addition / modification / verification / Rejection details of each transaction",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "key": "workflow_reports",
+    "label": "Approvals: Reports on pending files and delays",
+    "status": "explicit",
+    "note": "",
+    "evidence": [
+     {
+      "page": 65,
+      "clause_ref": "5.24",
+      "quote": "The Solution should have capability to monitor and report the status of transactions across all teams, branches, Mid-Office / processing centers.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "key": "documents_audit",
+    "label": "Documents: Record who opened or changed each file",
+    "status": "explicit",
+    "note": "",
+    "evidence": [
+     {
+      "page": 23,
+      "clause_ref": "B.10",
+      "quote": "Preserves all transaction details, files, images, user access, audit trails, etc. for retrieval on a future date based on the unique reference number.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "key": "documents_esign",
+    "label": "Documents: Digital signatures (eSign or DSC)",
+    "status": "explicit",
+    "note": "",
+    "evidence": [
+     {
+      "page": 64,
+      "clause_ref": "5.13",
+      "quote": "Transaction file upload should support facility for digital signature of document.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "key": "monitoring",
+    "label": "Security, compliance and monitoring: Monitoring, logs and alerts",
+    "status": "explicit",
+    "note": "",
+    "evidence": [
+     {
+      "page": 76,
+      "clause_ref": "16",
+      "quote": "The Bidder shall do proactive monitoring and capacity planning at regular intervals and advise the Bank on Hardware / Software upgrades.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   }
+  ],
+  "scope_set_aside": [],
+  "inventory": null
+ }
+}

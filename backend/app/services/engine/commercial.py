@@ -17,7 +17,7 @@ from app.services.engine import spreads
 from app.services.engine.context import LineBuilder, PricingContext
 from app.services.engine.money import ONE, ZERO, dsum, interpolate, paise_to_rupees
 from app.services.engine.outputs import CostLineOut, Timeline
-from app.services.engine.timeline import size_band
+from app.services.engine.timeline import band_value
 
 DERIVED_ORDER = ("contingency", "working_capital", "pbg", "penalty_reserve", "margin", "gst")
 FORMULA_IDS = {key: f"commercial.{key}.v1" for key in DERIVED_ORDER} | {
@@ -139,8 +139,7 @@ def base_commercial_lines(ctx: PricingContext, timeline: Timeline) -> list[CostL
             label="Exit management and handover",
             formula_id="commercial.exit.v1",
         )
-        idx, _ = size_band(ctx, timeline.build_effort_pd)
-        pd: Decimal = t.param("timeline", "size_bands", idx, "exit_management_pd")
+        pd = band_value(t, timeline.build_effort_pd, "exit_management_pd")
         role: str = t.param("commercial", "exit_role")
         t.add_role_pd(role, pd)
         spreads.clarity(t, ctx.overall_clarity())

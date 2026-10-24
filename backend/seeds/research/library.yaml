@@ -1760,3 +1760,766 @@ blocks:
     block: workflow_engine
     level: basic
     why: Gratis eligibility claims need a simple approve/reject step by an organiser.
+- key: researched_confirmation_generation_letter_partnership
+  name: Partnership confirmation letter generation
+  section: business
+  base_type: module
+  method: analysis
+  added: '2026-10-23'
+  spec:
+    source: 'AI analysis (no published hours found): Document management (basic), Master data management
+      (basic); hours are those blocks'' own catalog hours (S / L = one size smaller / larger); low confidence'
+    key: researched_confirmation_generation_letter_partnership
+    name: Partnership confirmation letter generation
+    category: custom
+    bucket: build.module_development
+    description: Generates a partnership confirmation letter (e.g. as a PDF from a template filled with
+      partner details) once a partnership is approved, and stores it for download or sharing.
+    task_mix:
+      crud: '0.55'
+      tests: '0.2'
+      ui_design: '0.05'
+      documentation: '0.05'
+      review_uat: '0.15'
+    base_effort_pd:
+      S: '13.5'
+      M: '13.5'
+      L: '41.6'
+    applicable_drivers:
+    - languages
+    - accessibility
+    - concurrency
+    tags: []
+    licence: null
+    section: business
+    source_era: unknown
+    era_reason: Composed from catalog blocks; AI use behind their hours is not established
+    confidence: low
+    evidence:
+    - id: researched_confirmation_generation_letter_partnership.1
+      citation: 'AI analysis 2026-10-23: document_management basic (The generated letter must be stored,
+        retrieved and downloaded securely, with simple versioning.); master_data_management basic (Letter
+        templates and fixed fields such as signatory and letterhead need simple admin screens.)'
+      source_type: expert_judgement
+      published: null
+      url: null
+      era: unknown
+      era_basis: not_established
+      ai_workflow: null
+      sample_size: null
+      quality: low
+  sources:
+  - kind: part
+    block: document_management
+    level: basic
+    why: The generated letter must be stored, retrieved and downloaded securely, with simple versioning.
+  - kind: part
+    block: master_data_management
+    level: basic
+    why: Letter templates and fixed fields such as signatory and letterhead need simple admin screens.
+- key: researched_bank_credential
+  name: Credential bank
+  section: security
+  base_type: module
+  method: analysis
+  added: '2026-10-23'
+  spec:
+    source: 'AI analysis (no published hours found): Keys and secrets management (Vault / KMS) (standard),
+      Privacy: consent, account deletion and data download (DPDP Act / GDPR) (basic), Masking personal
+      data (PII) (basic); hours are those blocks'' own catalog hours (S / L = one size smaller / larger);
+      low confidence'
+    key: researched_bank_credential
+    name: Credential bank
+    category: custom
+    bucket: build.module_development
+    description: A secure store where users or administrators keep credentials such as passwords, API
+      keys or certificates, with controlled access, sharing and rotation.
+    task_mix:
+      crud: '0.55'
+      tests: '0.2'
+      ui_design: '0.05'
+      documentation: '0.05'
+      review_uat: '0.15'
+    base_effort_pd:
+      S: '7.2'
+      M: '8.1'
+      L: '11.7'
+    applicable_drivers:
+    - languages
+    - accessibility
+    - concurrency
+    tags: []
+    licence: null
+    section: security
+    source_era: unknown
+    era_reason: Composed from catalog blocks; AI use behind their hours is not established
+    confidence: low
+    evidence:
+    - id: researched_bank_credential.1
+      citation: 'AI analysis 2026-10-23: secrets_management standard (Core of the feature is storing credentials
+        encrypted in a vault with rotation and access rules.); privacy_consent_dpdp basic (Users may need
+        to download or delete their stored credential data.); pii_masking basic (Credential values must
+        be masked on screens, logs and exports.)'
+      source_type: expert_judgement
+      published: null
+      url: null
+      era: unknown
+      era_basis: not_established
+      ai_workflow: null
+      sample_size: null
+      quality: low
+  sources:
+  - kind: part
+    block: secrets_management
+    level: standard
+    why: Core of the feature is storing credentials encrypted in a vault with rotation and access rules.
+  - kind: part
+    block: privacy_consent_dpdp
+    level: basic
+    why: Users may need to download or delete their stored credential data.
+  - kind: part
+    block: pii_masking
+    level: basic
+    why: Credential values must be masked on screens, logs and exports.
+- key: researched_against_bid_checklist_examination
+  name: Bid examination against checklist
+  section: government
+  base_type: module
+  method: analysis
+  added: '2026-10-23'
+  spec:
+    source: 'AI analysis (no published hours found): Approval workflow engine (standard), Master data
+      management (basic), Document management (basic), Dashboards and MIS reports (basic); hours are those
+      blocks'' own catalog hours (S / L = one size smaller / larger); low confidence'
+    key: researched_against_bid_checklist_examination
+    name: Bid examination against checklist
+    category: custom
+    bucket: build.module_development
+    description: Officials examine each submitted bid against a tender checklist, mark each criterion
+      as met or not met with remarks, and the system records the outcome to decide whether the bid qualifies.
+    task_mix:
+      crud: '0.55'
+      tests: '0.2'
+      ui_design: '0.05'
+      documentation: '0.05'
+      review_uat: '0.15'
+    base_effort_pd:
+      S: '37.2'
+      M: '65.3'
+      L: '174.4'
+    applicable_drivers:
+    - languages
+    - accessibility
+    - concurrency
+    tags: []
+    licence: null
+    section: government
+    source_era: unknown
+    era_reason: Composed from catalog blocks; AI use behind their hours is not established
+    confidence: low
+    evidence:
+    - id: researched_against_bid_checklist_examination.1
+      citation: 'AI analysis 2026-10-23: workflow_engine standard (Bids move through multi-step scrutiny
+        and approval with decisions and escalation on each evaluation stage.); master_data_management
+        basic (Checklist templates and criteria must be set up and maintained by admins.); document_management
+        basic (Examiners open and review the documents attached to each bid against the checklist.); dashboard_mis_reports
+        basic (Summary of bids examined, qualified and rejected, with exportable evaluation sheets.)'
+      source_type: expert_judgement
+      published: null
+      url: null
+      era: unknown
+      era_basis: not_established
+      ai_workflow: null
+      sample_size: null
+      quality: low
+  sources:
+  - kind: part
+    block: workflow_engine
+    level: standard
+    why: Bids move through multi-step scrutiny and approval with decisions and escalation on each evaluation
+      stage.
+  - kind: part
+    block: master_data_management
+    level: basic
+    why: Checklist templates and criteria must be set up and maintained by admins.
+  - kind: part
+    block: document_management
+    level: basic
+    why: Examiners open and review the documents attached to each bid against the checklist.
+  - kind: part
+    block: dashboard_mis_reports
+    level: basic
+    why: Summary of bids examined, qualified and rejected, with exportable evaluation sheets.
+- key: researched_bid_monitoring_template
+  name: Bid monitoring template
+  section: business
+  base_type: module
+  method: analysis
+  added: '2026-10-23'
+  spec:
+    source: 'AI analysis (no published hours found): Approval workflow engine (basic), Customer management
+      (CRM) (basic), Dashboards and MIS reports (standard), Document management (basic), Master data management
+      (basic); hours are those blocks'' own catalog hours (S / L = one size smaller / larger); low confidence'
+    key: researched_bid_monitoring_template
+    name: Bid monitoring template
+    category: custom
+    bucket: build.module_development
+    description: A reusable template for tracking bids/tenders through their lifecycle, with deadlines,
+      status stages, assigned owners, and summary views for monitoring progress.
+    task_mix:
+      crud: '0.55'
+      tests: '0.2'
+      ui_design: '0.05'
+      documentation: '0.05'
+      review_uat: '0.15'
+    base_effort_pd:
+      S: '54.1'
+      M: '67.6'
+      L: '187.8'
+    applicable_drivers:
+    - languages
+    - accessibility
+    - concurrency
+    tags: []
+    licence: null
+    section: business
+    source_era: unknown
+    era_reason: Composed from catalog blocks; AI use behind their hours is not established
+    confidence: low
+    evidence:
+    - id: researched_bid_monitoring_template.1
+      citation: 'AI analysis 2026-10-23: workflow_engine basic (Bids move through defined stages (identified,
+        preparing, submitted, won/lost) with owners and deadline escalation.); crm_module basic (Tracking
+        bids as pipeline records with contacts, follow-ups and activity history is similar to lead tracking.);
+        dashboard_mis_reports standard (Monitoring needs status dashboards, deadline views and exportable
+        bid reports.); document_management basic (Bid documents and tender files need to be attached and
+        stored against each bid.); master_data_management basic (A template needs configurable stages,
+        bid categories and departments.)'
+      source_type: expert_judgement
+      published: null
+      url: null
+      era: unknown
+      era_basis: not_established
+      ai_workflow: null
+      sample_size: null
+      quality: low
+  sources:
+  - kind: part
+    block: workflow_engine
+    level: basic
+    why: Bids move through defined stages (identified, preparing, submitted, won/lost) with owners and
+      deadline escalation.
+  - kind: part
+    block: crm_module
+    level: basic
+    why: Tracking bids as pipeline records with contacts, follow-ups and activity history is similar to
+      lead tracking.
+  - kind: part
+    block: dashboard_mis_reports
+    level: standard
+    why: Monitoring needs status dashboards, deadline views and exportable bid reports.
+  - kind: part
+    block: document_management
+    level: basic
+    why: Bid documents and tender files need to be attached and stored against each bid.
+  - kind: part
+    block: master_data_management
+    level: basic
+    why: A template needs configurable stages, bid categories and departments.
+- key: researched_tender_tracker
+  name: Tender tracker
+  section: business
+  base_type: integration
+  method: analysis
+  added: '2026-10-23'
+  spec:
+    source: 'AI analysis (no published hours found): Approval workflow engine (basic), Document management
+      (standard), Dashboards and MIS reports (basic), Master data management (basic), Search (basic);
+      hours are those blocks'' own catalog hours (S / L = one size smaller / larger); low confidence'
+    key: researched_tender_tracker
+    name: Tender tracker
+    category: custom
+    bucket: build.integrations
+    description: A tool to record tenders, track their stages and deadlines, keep related documents, and
+      show status to the team.
+    task_mix:
+      integration: '0.6'
+      analysis: '0.05'
+      tests: '0.2'
+      documentation: '0.05'
+      review_uat: '0.1'
+    base_effort_pd:
+      S: '40.6'
+      M: '59.7'
+      L: '157.6'
+    applicable_drivers:
+    - security_level
+    tags:
+    - integration
+    licence: null
+    section: business
+    source_era: unknown
+    era_reason: Composed from catalog blocks; AI use behind their hours is not established
+    confidence: low
+    evidence:
+    - id: researched_tender_tracker.1
+      citation: 'AI analysis 2026-10-23: workflow_engine basic (Tenders move through stages such as identified,
+        bid preparation, submitted and awarded, with simple approvals.); document_management standard
+        (Tender documents, addenda and bid submissions need upload, versioning and retrieval.); dashboard_mis_reports
+        basic (A status view and reports on tenders by stage, value and closing date.); master_data_management
+        basic (Admin-managed lists such as tender categories, departments and stages.); search_module
+        basic (Users need to find tenders by keyword, status, and date.)'
+      source_type: expert_judgement
+      published: null
+      url: null
+      era: unknown
+      era_basis: not_established
+      ai_workflow: null
+      sample_size: null
+      quality: low
+  sources:
+  - kind: part
+    block: workflow_engine
+    level: basic
+    why: Tenders move through stages such as identified, bid preparation, submitted and awarded, with
+      simple approvals.
+  - kind: part
+    block: document_management
+    level: standard
+    why: Tender documents, addenda and bid submissions need upload, versioning and retrieval.
+  - kind: part
+    block: dashboard_mis_reports
+    level: basic
+    why: A status view and reports on tenders by stage, value and closing date.
+  - kind: part
+    block: master_data_management
+    level: basic
+    why: Admin-managed lists such as tender categories, departments and stages.
+  - kind: part
+    block: search_module
+    level: basic
+    why: Users need to find tenders by keyword, status, and date.
+- key: researched_bod_data_report
+  name: BOD data report
+  section: business
+  base_type: report
+  method: analysis
+  added: '2026-10-23'
+  spec:
+    source: 'AI analysis (no published hours found): Dashboards and MIS reports (basic); hours are those
+      blocks'' own catalog hours (S / L = one size smaller / larger); low confidence'
+    key: researched_bod_data_report
+    name: BOD data report
+    category: custom
+    bucket: build.module_development
+    description: A report on BOD data (most likely board of directors information, though the name is
+      ambiguous) that presents the data in a standard report view with filtering and export.
+    task_mix:
+      crud: '0.6'
+      analysis: '0.1'
+      tests: '0.15'
+      review_uat: '0.15'
+    base_effort_pd:
+      S: '6.8'
+      M: '6.8'
+      L: '20.3'
+    applicable_drivers:
+    - languages
+    tags: []
+    licence: null
+    section: business
+    source_era: unknown
+    era_reason: Composed from catalog blocks; AI use behind their hours is not established
+    confidence: low
+    evidence:
+    - id: researched_bod_data_report.1
+      citation: 'AI analysis 2026-10-23: dashboard_mis_reports basic (A single standard report with filters
+        and export fits the basic level of the reports block.)'
+      source_type: expert_judgement
+      published: null
+      url: null
+      era: unknown
+      era_basis: not_established
+      ai_workflow: null
+      sample_size: null
+      quality: low
+  sources:
+  - kind: part
+    block: dashboard_mis_reports
+    level: basic
+    why: A single standard report with filters and export fits the basic level of the reports block.
+- key: researched_engagement_partner_project
+  name: Partner project engagement
+  section: business
+  base_type: module
+  method: analysis
+  added: '2026-10-23'
+  spec:
+    source: 'AI analysis (no published hours found): Online registration / empanelment application (standard),
+      Approval workflow engine (standard), Customer management (CRM) (basic), Dashboards and MIS reports
+      (basic), Document management (basic); hours are those blocks'' own catalog hours (S / L = one size
+      smaller / larger); low confidence'
+    key: researched_engagement_partner_project
+    name: Partner project engagement
+    category: custom
+    bucket: build.module_development
+    description: Lets partner organisations be onboarded and engaged on projects, with their applications,
+      assignments to projects, progress tracking and communication handled in the system.
+    task_mix:
+      crud: '0.55'
+      tests: '0.2'
+      ui_design: '0.05'
+      documentation: '0.05'
+      review_uat: '0.15'
+    base_effort_pd:
+      S: '63.1'
+      M: '113.7'
+      L: '290.3'
+    applicable_drivers:
+    - languages
+    - accessibility
+    - concurrency
+    tags: []
+    licence: null
+    section: business
+    source_era: unknown
+    era_reason: Composed from catalog blocks; AI use behind their hours is not established
+    confidence: low
+    evidence:
+    - id: researched_engagement_partner_project.1
+      citation: 'AI analysis 2026-10-23: registration_empanelment standard (Partners apply or are onboarded
+        through a multi-step form with document upload and status tracking.); workflow_engine standard
+        (Partner approval and project assignment need multi-level approvals with defined stages.); crm_module
+        basic (Partner contacts, follow-ups and engagement history need to be tracked.); dashboard_mis_reports
+        basic (Project and partner engagement status needs simple dashboards and reports.); document_management
+        basic (Agreements and project documents shared with partners need secure storage.)'
+      source_type: expert_judgement
+      published: null
+      url: null
+      era: unknown
+      era_basis: not_established
+      ai_workflow: null
+      sample_size: null
+      quality: low
+  sources:
+  - kind: part
+    block: registration_empanelment
+    level: standard
+    why: Partners apply or are onboarded through a multi-step form with document upload and status tracking.
+  - kind: part
+    block: workflow_engine
+    level: standard
+    why: Partner approval and project assignment need multi-level approvals with defined stages.
+  - kind: part
+    block: crm_module
+    level: basic
+    why: Partner contacts, follow-ups and engagement history need to be tracked.
+  - kind: part
+    block: dashboard_mis_reports
+    level: basic
+    why: Project and partner engagement status needs simple dashboards and reports.
+  - kind: part
+    block: document_management
+    level: basic
+    why: Agreements and project documents shared with partners need secure storage.
+- key: researched_agreement_expiry_partner_renewal_tracking
+  name: Partner agreement renewal and expiry tracking
+  section: business
+  base_type: module
+  method: analysis
+  added: '2026-10-23'
+  spec:
+    source: 'AI analysis (no published hours found): Document management (standard), Approval workflow
+      engine (basic), Dashboards and MIS reports (basic), Customer management (CRM) (basic); hours are
+      those blocks'' own catalog hours (S / L = one size smaller / larger); low confidence'
+    key: researched_agreement_expiry_partner_renewal_tracking
+    name: Partner agreement renewal and expiry tracking
+    category: custom
+    bucket: build.module_development
+    description: Tracks the term and expiry dates of partner agreements, sends reminders ahead of expiry,
+      and lets staff renew them through an approval step with the renewed contract documents stored.
+    task_mix:
+      crud: '0.55'
+      tests: '0.2'
+      ui_design: '0.05'
+      documentation: '0.05'
+      review_uat: '0.15'
+    base_effort_pd:
+      S: '49.6'
+      M: '68.7'
+      L: '183.4'
+    applicable_drivers:
+    - languages
+    - accessibility
+    - concurrency
+    tags: []
+    licence: null
+    section: business
+    source_era: unknown
+    era_reason: Composed from catalog blocks; AI use behind their hours is not established
+    confidence: low
+    evidence:
+    - id: researched_agreement_expiry_partner_renewal_tracking.1
+      citation: 'AI analysis 2026-10-23: document_management standard (Agreement files need storage, versioning
+        and metadata such as start and end dates for each renewal.); workflow_engine basic (Renewal requests
+        need a simple approval step before the agreement term is extended.); dashboard_mis_reports basic
+        (A list and report of agreements expiring soon or already expired, with export.); crm_module basic
+        (Partner records with follow-ups and a history of renewals and contract activity.)'
+      source_type: expert_judgement
+      published: null
+      url: null
+      era: unknown
+      era_basis: not_established
+      ai_workflow: null
+      sample_size: null
+      quality: low
+  sources:
+  - kind: part
+    block: document_management
+    level: standard
+    why: Agreement files need storage, versioning and metadata such as start and end dates for each renewal.
+  - kind: part
+    block: workflow_engine
+    level: basic
+    why: Renewal requests need a simple approval step before the agreement term is extended.
+  - kind: part
+    block: dashboard_mis_reports
+    level: basic
+    why: A list and report of agreements expiring soon or already expired, with export.
+  - kind: part
+    block: crm_module
+    level: basic
+    why: Partner records with follow-ups and a history of renewals and contract activity.
+- key: researched_base_chatbot_internal_knowledge_multiple_repository
+  name: Chatbot internal repository and multiple knowledge bases
+  section: ai_ml
+  base_type: module
+  method: web
+  added: '2026-10-23'
+  spec:
+    source: '40 / 60 / 80 team hours (lowest / median / highest checked figure) x 0.9 / 8 h per day; low
+      confidence; web research: Conferbot Knowledge base & RAG'
+    key: researched_base_chatbot_internal_knowledge_multiple_repository
+    name: Chatbot internal repository and multiple knowledge bases
+    category: custom
+    bucket: build.module_development
+    description: A chatbot that answers from a company's internal document repository, using one or more
+      indexed knowledge bases. It uses a vector database, embeddings and a retrieval pipeline.
+    task_mix:
+      crud: '0.55'
+      tests: '0.2'
+      ui_design: '0.05'
+      documentation: '0.05'
+      review_uat: '0.15'
+    base_effort_pd:
+      S: '4.5'
+      M: '6.8'
+      L: '9.0'
+    applicable_drivers:
+    - languages
+    - accessibility
+    - concurrency
+    tags: []
+    licence: null
+    section: ai_ml
+    source_era: unknown
+    era_reason: Web sources; none states whether AI coding tools were used
+    confidence: low
+    evidence:
+    - id: researched_base_chatbot_internal_knowledge_multiple_repository.1
+      citation: 'Conferbot, ''Chatbot Implementation Cost Breakdown (2026)'': Knowledge base & RAG: "|
+        Knowledge base & RAG | 40-80 | $4,000-$16,000 | Vector DB, embeddings, retrieval pipeline |" (web
+        research, checked on the page 2026-10-23)'
+      source_type: vendor_estimate
+      published: 2026
+      url: https://www.conferbot.com/blog/chatbot-implementation-cost
+      era: unknown
+      era_basis: not_established
+      ai_workflow: null
+      sample_size: null
+      quality: low
+  sources:
+  - url: https://www.conferbot.com/blog/chatbot-implementation-cost
+    publisher: Conferbot
+    title: Chatbot Implementation Cost Breakdown (2026)
+    year: 2026
+    label: Knowledge base & RAG
+    quote: '| Knowledge base & RAG | 40-80 | $4,000-$16,000 | Vector DB, embeddings, retrieval pipeline
+      |'
+    hours:
+    - '40'
+    - '80'
+    scope: dev-only
+    ok: true
+    reason: ''
+- key: researched_chatbot_escalation_human_website_widget
+  name: Chatbot website widget and human escalation
+  section: ai_ml
+  base_type: module
+  method: web
+  added: '2026-10-23'
+  spec:
+    source: '8 / 12 / 16 team hours (lowest / median / highest checked figure) x 0.9 / 8 h per day; low
+      confidence; web research: Optimum Web Widget frontend; Optimum Web AI integration'
+    key: researched_chatbot_escalation_human_website_widget
+    name: Chatbot website widget and human escalation
+    category: custom
+    bucket: build.module_development
+    description: A chat widget on a website where a chatbot answers visitors' questions and passes the
+      conversation to a human agent when it can't help.
+    task_mix:
+      crud: '0.55'
+      tests: '0.2'
+      ui_design: '0.05'
+      documentation: '0.05'
+      review_uat: '0.15'
+    base_effort_pd:
+      S: '0.9'
+      M: '1.4'
+      L: '1.8'
+    applicable_drivers:
+    - languages
+    - accessibility
+    - concurrency
+    tags: []
+    licence: null
+    section: ai_ml
+    source_era: unknown
+    era_reason: Web sources; none states whether AI coding tools were used
+    confidence: low
+    evidence:
+    - id: researched_chatbot_escalation_human_website_widget.1
+      citation: 'Optimum Web, ''AI Chat Widget for Website 2026: Build vs Buy Decision Guide'': Widget
+        frontend: "Widget frontend (~2 days): Floating button, chat panel, typing indicator, responsive
+        mobile design, brand customization" (web research, checked on the page 2026-10-23)'
+      source_type: vendor_estimate
+      published: 2026
+      url: https://www.optimum-web.com/blog/ai-chat-widget-website-2026-build-vs-buy-complete-guide/
+      era: unknown
+      era_basis: not_established
+      ai_workflow: null
+      sample_size: null
+      quality: low
+    - id: researched_chatbot_escalation_human_website_widget.2
+      citation: 'Optimum Web, ''AI Chat Widget for Website 2026: Build vs Buy Decision Guide'': AI integration:
+        "AI integration (~1 day): RAG pipeline, vector database with your knowledge base, prompt engineering,
+        human escalation trigger" (web research, checked on the page 2026-10-23)'
+      source_type: vendor_estimate
+      published: 2026
+      url: https://www.optimum-web.com/blog/ai-chat-widget-website-2026-build-vs-buy-complete-guide/
+      era: unknown
+      era_basis: not_established
+      ai_workflow: null
+      sample_size: null
+      quality: low
+  sources:
+  - url: https://www.optimum-web.com/blog/ai-chat-widget-website-2026-build-vs-buy-complete-guide/
+    publisher: Optimum Web
+    title: 'AI Chat Widget for Website 2026: Build vs Buy Decision Guide'
+    year: 2026
+    label: Widget frontend
+    quote: 'Widget frontend (~2 days): Floating button, chat panel, typing indicator, responsive mobile
+      design, brand customization'
+    hours:
+    - '16'
+    scope: unclear
+    ok: true
+    reason: ''
+  - url: https://www.optimum-web.com/blog/ai-chat-widget-website-2026-build-vs-buy-complete-guide/
+    publisher: Optimum Web
+    title: 'AI Chat Widget for Website 2026: Build vs Buy Decision Guide'
+    year: 2026
+    label: AI integration
+    quote: 'AI integration (~1 day): RAG pipeline, vector database with your knowledge base, prompt engineering,
+      human escalation trigger'
+    hours:
+    - '8'
+    scope: unclear
+    ok: true
+    reason: ''
+- key: researched_000_document_page_referencing
+  name: Document referencing for 25,000 pages
+  section: ai_ml
+  base_type: module
+  method: web
+  added: '2026-10-23'
+  spec:
+    source: '24 / 40 / 60 team hours (lowest / median / highest checked figure) x 0.9 / 8 h per day; low
+      confidence; web research: Stratagem Systems RAG pipeline development (small-scale, 1K-10K documents);
+      Huzaifa Tahir Citation and source linking'
+    key: researched_000_document_page_referencing
+    name: Document referencing for 25,000 pages
+    category: custom
+    bucket: build.module_development
+    description: Lets users ask questions across a library of about 25,000 pages of documents and get
+      answers that cite the source document and page.
+    task_mix:
+      crud: '0.55'
+      tests: '0.2'
+      ui_design: '0.05'
+      documentation: '0.05'
+      review_uat: '0.15'
+    base_effort_pd:
+      S: '2.7'
+      M: '4.5'
+      L: '6.8'
+    applicable_drivers:
+    - languages
+    - accessibility
+    - concurrency
+    tags: []
+    licence: null
+    section: ai_ml
+    source_era: unknown
+    era_reason: Web sources; none states whether AI coding tools were used
+    confidence: low
+    evidence:
+    - id: researched_000_document_page_referencing.1
+      citation: 'Stratagem Systems, ''RAG Implementation Cost 2026: Real Pricing + Free Calculator'':
+        RAG pipeline development (small-scale, 1K-10K documents): "RAG pipeline development: 40-60 hours
+        ($4,000-$7,200)" (web research, checked on the page 2026-10-23)'
+      source_type: vendor_estimate
+      published: 2026
+      url: https://www.stratagem-systems.com/blog/rag-implementation-cost-roi-analysis
+      era: unknown
+      era_basis: not_established
+      ai_workflow: null
+      sample_size: null
+      quality: low
+    - id: researched_000_document_page_referencing.2
+      citation: 'Huzaifa Tahir, ''RAG Development Cost: Complete Pricing Guide for Retrieval Systems in
+        2025–2026, Huzaifa Tahir'': Citation and source linking: "Citation and source linking | 3–5 days
+        | $2,500 – $6,000" (web research, checked on the page 2026-10-23)'
+      source_type: vendor_estimate
+      published: 2025
+      url: https://huzaifatahir.com/blog/rag-development-cost
+      era: unknown
+      era_basis: not_established
+      ai_workflow: null
+      sample_size: null
+      quality: low
+  sources:
+  - url: https://www.stratagem-systems.com/blog/rag-implementation-cost-roi-analysis
+    publisher: Stratagem Systems
+    title: 'RAG Implementation Cost 2026: Real Pricing + Free Calculator'
+    year: 2026
+    label: RAG pipeline development (small-scale, 1K-10K documents)
+    quote: 'RAG pipeline development: 40-60 hours ($4,000-$7,200)'
+    hours:
+    - '40'
+    - '60'
+    scope: dev-only
+    ok: true
+    reason: ''
+  - url: https://huzaifatahir.com/blog/rag-development-cost
+    publisher: Huzaifa Tahir
+    title: 'RAG Development Cost: Complete Pricing Guide for Retrieval Systems in 2025–2026, Huzaifa Tahir'
+    year: 2025
+    label: Citation and source linking
+    quote: Citation and source linking | 3–5 days | $2,500 – $6,000
+    hours:
+    - '24'
+    - '40'
+    scope: dev-only
+    ok: true
+    reason: ''

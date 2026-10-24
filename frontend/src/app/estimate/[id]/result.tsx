@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 
 import { ErrorNotice, Loading } from "@/components/status";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { api, errorText, type QuickSummary } from "@/lib/api/client";
 import {
   formatApprox,
@@ -19,20 +19,89 @@ import { useLoad } from "@/lib/use-load";
 import { BidResultCard } from "./bid-result";
 import { CompareOptions } from "./compare";
 import {
+  Chevron,
   CostSummary,
   Disclosure,
   OngoingCosts,
   WhatsIncluded,
 } from "./cost-summary";
-import { exportBlocked, IndependentCheckCard, OpenAnswers } from "./check";
+import {
+  exportBlocked,
+  IndependentCheckCard,
+  OpenAnswers,
+  usePricedOptions,
+} from "./check";
 import { Downloads } from "./downloads";
 import { RealityCheck } from "./reality";
 
 function Fact({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex flex-col">
-      <span className="text-sm text-muted-foreground">{label}</span>
-      <span className="text-lg font-semibold">{value}</span>
+    <div className="flex flex-col gap-0.5">
+      <dt className="figure-label">{label}</dt>
+      <dd className="font-medium tabular-nums">{value}</dd>
+    </div>
+  );
+}
+
+/** "₹ 1.2 Cr": a rounded amount without the "about". */
+function shortMoney(paise: number | null, currency: QuickSummary["currency"]) {
+  return formatApprox(paise, currency).replace("about ", "");
+}
+
+/**
+ * The range measured out on a ruler that starts at zero, so the band's width shows how sure
+ * the price is. The band opens from the most likely mark.
+ */
+function RangeBand({ summary }: { summary: QuickSummary }) {
+  const low = summary.low_paise;
+  const high = summary.high_paise;
+  const likely = summary.likely_paise;
+  if (low === null || high === null || likely === null || high <= low)
+    return null;
+  const top = high * 1.08;
+  const pos = (paise: number) => (100 * paise) / top;
+  const at = (100 * (likely - low)) / (high - low);
+  return (
+    <div className="flex flex-col gap-2">
+      <div className="relative h-9" aria-hidden="true">
+        <div
+          className="absolute inset-x-0 bottom-0 h-2 opacity-60"
+          style={{
+            backgroundImage:
+              "repeating-linear-gradient(90deg, var(--input) 0 1px, transparent 1px 10%)",
+          }}
+        />
+        <div className="absolute inset-x-0 bottom-0 h-px bg-input" />
+        <div
+          className="band-open absolute bottom-0 h-5 rounded-sm bg-tape-soft ring-1 ring-primary/40"
+          style={
+            {
+              left: `${pos(low)}%`,
+              width: `${pos(high) - pos(low)}%`,
+              "--to-left": `${at}%`,
+              "--to-right": `${100 - at}%`,
+            } as React.CSSProperties
+          }
+        />
+        <div
+          className="mark-drop absolute bottom-0 h-9 w-1 -translate-x-1/2 rounded-full bg-warm"
+          style={{ left: `${pos(likely)}%` }}
+        />
+      </div>
+      <div className="flex justify-between gap-4 text-sm tabular-nums">
+        <span>
+          <span className="text-muted-foreground">Low </span>
+          <span className="font-medium">
+            {shortMoney(low, summary.currency)}
+          </span>
+        </span>
+        <span>
+          <span className="text-muted-foreground">High </span>
+          <span className="font-medium">
+            {shortMoney(high, summary.currency)}
+          </span>
+        </span>
+      </div>
     </div>
   );
 }
@@ -44,46 +113,43 @@ function Headline({ summary }: { summary: QuickSummary }) {
   const approx = (paise: number | null) =>
     formatApprox(paise, summary.currency);
   const risk = summary.risk_allowance_paise;
+  const tax = summary.currency === "INR" ? "GST" : "tax";
   return (
     <section
       aria-labelledby="estimate-heading"
-      className="flex flex-col gap-6 rounded-2xl border bg-card px-6 py-8 shadow-sm sm:px-10"
+      className="slab flex flex-col gap-8 px-6 py-8 sm:px-10 sm:py-10"
     >
-      <div className="flex flex-col gap-1">
-        <h2
-          id="estimate-heading"
-          className="text-base font-medium text-muted-foreground"
-        >
-          {summary.mode === "client"
-            ? "Fair budget range"
-            : "Your software cost estimate"}
-        </h2>
-        <span className="text-4xl font-semibold tracking-tight text-primary tabular-nums sm:text-5xl">
-          {range(summary.low_paise, summary.high_paise)}
-        </span>
-        <span className="text-lg font-medium">
-          Most likely: {approx(summary.likely_paise)}
-          {summary.currency === "INR" ? " with GST" : " with tax"}
+      <div className="flex flex-wrap items-end justify-between gap-x-10 gap-y-4">
+        <div className="settle flex flex-col gap-1">
+          <h2 id="estimate-heading" className="figure-label">
+            {summary.mode === "client"
+              ? "Fair budget, most likely"
+              : "Most likely price"}
+            , with {tax}
+          </h2>
+          <span className="text-5xl font-semibold tracking-tight text-primary tabular-nums sm:text-6xl">
+            {shortMoney(summary.likely_paise, summary.currency)}
+          </span>
           {summary.likely_without_tax_paise ? (
-            <span className="text-muted-foreground">
-              {" "}
-              ({approx(summary.likely_without_tax_paise)} without{" "}
-              {summary.currency === "INR" ? "GST" : "tax"})
+            <span className="text-sm text-muted-foreground tabular-nums">
+              {shortMoney(summary.likely_without_tax_paise, summary.currency)}{" "}
+              without {tax}
             </span>
           ) : null}
-        </span>
-        <p className="max-w-2xl text-sm text-muted-foreground">
-          An estimate before the work starts, not a final quotation. The range
-          is wide because scope, effort and other factors are still uncertain.{" "}
+        </div>
+        <p className="settle max-w-xs text-sm text-muted-foreground [--d:2]">
+          An early estimate, not a quotation.{" "}
           {summary.support_term_open
-            ? "The support period is not decided, so it includes one year of support after launch (a yearly price), margin and tax."
+            ? "Includes one year of support, margin and tax."
             : years > 0
-              ? `It includes ${years} year${years === 1 ? "" : "s"} of support after launch, margin and tax.`
-              : "It covers building and launch only (no support after launch), with margin and tax."}
+              ? `Includes ${years} year${years === 1 ? "" : "s"} of support, margin and tax.`
+              : "Building and launch only, with margin and tax."}
         </p>
       </div>
 
-      <div className="flex flex-wrap gap-x-10 gap-y-4 border-t pt-5">
+      <RangeBand summary={summary} />
+
+      <dl className="settle grid grid-cols-2 gap-x-8 gap-y-5 border-t pt-6 [--d:4] sm:grid-cols-4">
         <Fact
           label="Building and launch only"
           value={range(
@@ -93,75 +159,52 @@ function Headline({ summary }: { summary: QuickSummary }) {
         />
         <Fact
           label="Time to build"
-          value={`about ${formatDecimal(summary.build_months, 1)} months`}
+          value={`${formatDecimal(summary.build_months, 1)} months`}
         />
         {summary.project_size ? (
           <Fact
             label="Project size"
             value={
               summary.size_points
-                ? `${summary.project_size} (${summary.size_points} feature points)`
+                ? `${summary.project_size} · ${summary.size_points} pts`
                 : summary.project_size
             }
           />
         ) : null}
         <Fact
-          label="Support included"
+          label="Support"
           value={
             summary.support_term_open
-              ? "Per year (term not decided)"
+              ? "Per year"
               : years > 0
-                ? `${years} year${years === 1 ? "" : "s"} after launch`
-                : "None (handed over after launch)"
+                ? `${years} year${years === 1 ? "" : "s"}`
+                : "None"
           }
         />
-      </div>
+      </dl>
 
       <AiSaving summary={summary} />
 
-      <details className="group text-sm">
-        <summary className="cursor-pointer rounded font-medium text-primary hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none">
-          How this estimate is calculated
+      <details className="fold group text-sm">
+        <summary className="w-fit cursor-pointer list-none rounded font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none [&::-webkit-details-marker]:hidden">
+          How this is worked out <Chevron />
         </summary>
-        <div className="mt-3 flex max-w-3xl flex-col gap-2 text-muted-foreground">
+        <div className="mt-3 flex max-w-2xl flex-col gap-2 text-muted-foreground">
           <p>
-            The team&apos;s work for every feature is counted in hours, priced
-            at each role&apos;s rate, and support, hosting, services, margin and
-            tax are added. The project is then simulated thousands of times with
-            different amounts of work.
+            Every feature&apos;s work is counted in hours and priced at each
+            role&apos;s rate; support, hosting, services, margin and tax are
+            added. The project is then run thousands of times with different
+            amounts of work: 1 in 10 runs came out below the low end (
+            {approx(summary.low_paise)}), half below the most likely, 1 in 10
+            above the high end ({approx(summary.high_paise)}).
           </p>
-          <ul className="list-disc pl-5">
-            <li>
-              <strong className="text-foreground">Low end</strong>{" "}
-              {approx(summary.low_paise)}: only 1 in 10 runs came out cheaper
-              (P10).
-            </li>
-            <li>
-              <strong className="text-foreground">Most likely</strong>{" "}
-              {approx(summary.likely_paise)}: half the runs came out cheaper,
-              half dearer (P50).
-            </li>
-            <li>
-              <strong className="text-foreground">High end</strong>{" "}
-              {approx(summary.high_paise)}: only 1 in 10 runs came out dearer
-              (P90).
-            </li>
-          </ul>
           {risk !== null && risk > 0 ? (
             <p>
-              Planned cost {approx(summary.planned_paise)} + expected overrun{" "}
+              Planned {approx(summary.planned_paise)} + expected overrun{" "}
               {approx(risk)} = most likely {approx(summary.likely_paise)}.
-              &quot;Building and launch only&quot; is the design, build, test
-              and launch work before project management, support, margin and
-              tax.
             </p>
           ) : null}
-          {summary.accuracy_note ? (
-            <p>
-              <strong className="text-foreground">How accurate is this?</strong>{" "}
-              {summary.accuracy_note}
-            </p>
-          ) : null}
+          {summary.accuracy_note ? <p>{summary.accuracy_note}</p> : null}
         </div>
       </details>
     </section>
@@ -177,7 +220,7 @@ function MarketBox({ summary }: { summary: QuickSummary }) {
   const approx = (paise: number | null) =>
     formatApprox(paise, summary.currency);
   return (
-    <div className="flex flex-col gap-1 rounded-xl border border-dashed px-5 py-4">
+    <div className="flex flex-col gap-1">
       <h3 className="text-sm font-medium">
         What real {market.project_size.toLowerCase()} projects were bought for
       </h3>
@@ -246,7 +289,7 @@ function AiSaving({ summary }: { summary: QuickSummary }) {
   const withoutAi = summary.traditional_paise;
   if (withAi === null || withoutAi === null || withoutAi <= withAi) {
     return summary.ai_saving ? (
-      <div className="flex flex-col gap-2 rounded-xl border-2 border-primary/30 bg-primary/5 px-5 py-4">
+      <div className="rounded-lg bg-ai-soft px-5 py-4">
         <Passthrough summary={summary} />
       </div>
     ) : null;
@@ -257,35 +300,33 @@ function AiSaving({ summary }: { summary: QuickSummary }) {
     ? Number(summary.traditional_build_months)
     : null;
   const monthsSaved = oldMonths !== null ? oldMonths - months : 0;
-  const monthsText = (m: number) => `about ${formatDecimal(m, 1)} months`;
   return (
-    <div className="flex flex-col gap-2 rounded-xl border-2 border-primary/30 bg-primary/5 px-5 py-4">
-      <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-1">
-        <span className="font-semibold">
-          With AI tools: {money(withAi)} · {monthsText(months)}
+    <div className="flex flex-col gap-2 rounded-lg bg-ai-soft px-5 py-4">
+      <div className="flex flex-wrap items-baseline gap-x-6 gap-y-1">
+        <span className="font-semibold text-ai">
+          AI tools save {money(withoutAi - withAi)}
+          {summary.ai_saving_percent ? ` (${summary.ai_saving_percent}%)` : ""}
+          {monthsSaved >= 0.1
+            ? ` and ${formatDecimal(monthsSaved, 1)} months`
+            : ""}
         </span>
-        <span className="text-muted-foreground">
-          Without AI tools:{" "}
+        <span className="text-sm text-muted-foreground tabular-nums">
+          Without them:{" "}
           <span className="line-through">
             {money(withoutAi)}
-            {oldMonths !== null ? ` · ${monthsText(oldMonths)}` : ""}
+            {oldMonths !== null
+              ? ` · ${formatDecimal(oldMonths, 1)} months`
+              : ""}
           </span>
         </span>
       </div>
-      <span className="text-sm font-medium text-success">
-        AI tools save about {money(withoutAi - withAi)}
-        {summary.ai_saving_percent ? ` (${summary.ai_saving_percent}%)` : ""}
-        {monthsSaved >= 0.1 ? ` and ${monthsText(monthsSaved)}` : ""}.
-      </span>
       <Passthrough summary={summary} />
       <span className="text-xs text-muted-foreground">
         {summary.ai_saving && summary.ai_saving.passed_percent < 100
-          ? "The price above passes on only part of it, "
-          : "Already in the price above, "}
-        after the cost of the AI tools and of checking what the AI wrote. It
-        compares the whole price, so it also counts the smaller support,
-        management, margin and GST that follow a smaller build. Not a guaranteed
-        saving.
+          ? "Partly passed on in the price"
+          : "Already in the price"}
+        , after the cost of the tools and of checking their work. Not
+        guaranteed.
       </span>
     </div>
   );
@@ -311,15 +352,11 @@ function HoursOfWork({ summary }: { summary: QuickSummary }) {
     <section className="flex flex-col gap-5">
       <div>
         <h3 className="text-base font-semibold">Hours of work</h3>
-        <p className="text-sm text-muted-foreground">
-          The team&apos;s work to build and launch it, counted in hours (
-          {h.hours_per_day} hours a working day), priced at each role&apos;s
-          rate.
-        </p>
+        <p className="figure-label">{h.hours_per_day} hours a working day</p>
       </div>
       <div className="grid gap-3 sm:grid-cols-3">
         {hasOld ? (
-          <div className="flex flex-col gap-1 rounded-xl border px-4 py-3">
+          <div className="flex flex-col gap-1 border-l pl-4">
             <span className="text-sm text-muted-foreground">
               Without AI tools
             </span>
@@ -331,7 +368,7 @@ function HoursOfWork({ summary }: { summary: QuickSummary }) {
             </span>
           </div>
         ) : null}
-        <div className="flex flex-col gap-1 rounded-xl border-2 border-primary/30 bg-primary/5 px-4 py-3">
+        <div className="flex flex-col gap-1 border-l border-primary pl-4">
           <span className="text-sm font-medium">With AI tools</span>
           <span className="text-2xl font-semibold tabular-nums">
             {hoursText(h.with_ai)} h
@@ -341,7 +378,7 @@ function HoursOfWork({ summary }: { summary: QuickSummary }) {
           </span>
         </div>
         {hasOld && (h.saved ?? 0) > 0 ? (
-          <div className="flex flex-col gap-1 rounded-xl bg-ai-soft px-4 py-3 text-ai">
+          <div className="flex flex-col gap-1 border-l pl-4 text-ai">
             <span className="text-sm font-medium">Saved by AI tools</span>
             <span className="text-2xl font-semibold tabular-nums">
               {hoursText(h.saved ?? 0)} h
@@ -388,11 +425,6 @@ function HoursOfWork({ summary }: { summary: QuickSummary }) {
           </tbody>
         </table>
       </div>
-      <p className="text-sm text-muted-foreground">
-        Hours are an estimate like the price: the real number depends on how
-        deep each feature turns out to be. Servers, support after launch,
-        services paid to others and tax are added separately below.
-      </p>
     </section>
   );
 }
@@ -422,10 +454,9 @@ function TeamNeeded({ summary }: { summary: QuickSummary }) {
         <h3 className="text-base font-semibold">Team needed to build it</h3>
         <p className="text-sm text-muted-foreground">
           About {Math.max(1, Math.round(total))} people working for{" "}
-          {formatDecimal(months, 1)} months on average. Some roles are needed
-          only part of the time.
+          {formatDecimal(months, 1)} months.
           {hasOld && summary.traditional_build_months
-            ? ` Without AI tools: about ${Math.max(1, Math.round(oldTotal))} people for ${formatDecimal(Number(summary.traditional_build_months), 1)} months.`
+            ? ` Without AI tools: ${Math.max(1, Math.round(oldTotal))} people, ${formatDecimal(Number(summary.traditional_build_months), 1)} months.`
             : ""}
         </p>
       </div>
@@ -472,10 +503,6 @@ function TeamNeeded({ summary }: { summary: QuickSummary }) {
           .
         </p>
       ) : null}
-      <p className="text-sm text-muted-foreground">
-        One person-month is one person working full time for a month. A tight
-        deadline needs more people at once.
-      </p>
     </section>
   );
 }
@@ -499,10 +526,6 @@ function FeatureCosts({ summary }: { summary: QuickSummary }) {
         <h3 className="text-base font-semibold">
           Building cost of each feature
         </h3>
-        <p className="text-sm text-muted-foreground">
-          The team&apos;s work on each feature with AI tools (most likely).
-          Launch, running, management, margin and tax are listed further down.
-        </p>
         {canCompare ? (
           <button
             type="button"
@@ -584,11 +607,6 @@ function FeatureCosts({ summary }: { summary: QuickSummary }) {
           </ul>
         </div>
       ) : null}
-      <p className="text-sm text-muted-foreground">
-        With AI tools the team writes code, tests and documents faster; the
-        price already includes the extra time people spend checking what the AI
-        wrote.
-      </p>
     </section>
   );
 }
@@ -657,14 +675,7 @@ function CostItems({ summary }: { summary: QuickSummary }) {
   return (
     <section className="flex flex-col gap-4">
       <div>
-        <div>
-          <h3 className="text-base font-semibold">Every cost item</h3>
-          <p className="text-sm text-muted-foreground">
-            Every cost item: people&apos;s time, AI tools, licences, servers,
-            services, margin and tax — and what each would cost if the team used
-            no AI tools.
-          </p>
-        </div>
+        <h3 className="text-base font-semibold">Every cost item</h3>
       </div>
       {
         <div className="flex flex-col gap-5">
@@ -715,9 +726,8 @@ function CostItems({ summary }: { summary: QuickSummary }) {
             </div>
           ))}
           <p className="text-sm text-muted-foreground">
-            Each item shows its own range. The total range is narrower than
-            adding up every low or every high figure, because not everything
-            turns out cheap or expensive at the same time.
+            The total range is narrower than the sum of the item ranges: not
+            everything runs high at once.
           </p>
         </div>
       }
@@ -750,10 +760,7 @@ function ClientPays({ summary }: { summary: QuickSummary }) {
             ? "Also budget for (paid to other providers)"
             : "Paid directly by the client"}
         </h3>
-        <p className="text-sm text-muted-foreground">
-          Not in the price above. The client pays these to the providers
-          themselves, so tell them to budget for it.
-        </p>
+        <p className="figure-label">Not in the price above</p>
       </div>
       <ul className="flex flex-col divide-y">
         {summary.client_pays.map((item) => (
@@ -807,8 +814,8 @@ function BidCheckCard({ summary }: { summary: QuickSummary }) {
   if (!check) return null;
   const approx = (paise: number) => formatApprox(paise, summary.currency);
   return (
-    <section className="flex flex-col gap-4 rounded-2xl border-2 border-primary/30 bg-card px-6 py-6 shadow-sm sm:px-8">
-      <h2 className="text-lg font-semibold">Bid check</h2>
+    <section className="sheet">
+      <h2 className="text-xl font-semibold">Bid check</h2>
       <ul className="grid gap-3 sm:grid-cols-3">
         <li className="flex flex-col gap-1 rounded-xl bg-warning-muted px-4 py-3">
           <span className="text-sm font-medium text-warning">
@@ -847,10 +854,7 @@ function SimilarProjects({ summary }: { summary: QuickSummary }) {
     <section className="flex flex-col gap-4">
       <div>
         <h3 className="text-base font-semibold">Similar real projects</h3>
-        <p className="text-sm text-muted-foreground">
-          What clients actually paid for comparable work (published prices, in
-          today&apos;s money). Use them to sanity-check this estimate.
-        </p>
+        <p className="figure-label">Published prices, in today&apos;s money</p>
       </div>
       <ul className="flex flex-col divide-y">
         {summary.similar_projects.map((p) => (
@@ -920,16 +924,13 @@ function SaveTemplate({ summary }: { summary: QuickSummary }) {
 function effortHint(summary: QuickSummary): string {
   const h = summary.hours;
   const bits: string[] = [];
-  if (h && h.rows.length > 0)
-    bits.push(`${hoursText(h.with_ai)} hours of work`);
+  if (h && h.rows.length > 0) bits.push(`${hoursText(h.with_ai)} hours`);
   if (summary.team.length > 0)
     bits.push(
-      `about ${Math.max(1, Math.round(Number(summary.team_people ?? 0)))} people for ${formatDecimal(Number(summary.build_months), 1)} months`,
+      `${Math.max(1, Math.round(Number(summary.team_people ?? 0)))} people, ${formatDecimal(Number(summary.build_months), 1)} months`,
     );
   if (h && (h.saved ?? 0) > 0)
-    bits.push(
-      `AI-assisted development: estimated ${hoursText(h.saved ?? 0)} hours saved`,
-    );
+    bits.push(`${hoursText(h.saved ?? 0)} hours saved by AI`);
   return bits.join(" · ");
 }
 
@@ -940,6 +941,7 @@ function SummaryView({
   summary: QuickSummary;
   onChange: (summary: QuickSummary) => void;
 }) {
+  const options = usePricedOptions(summary.estimate_id);
   const hasTeam =
     (summary.hours?.rows.length ?? 0) > 0 ||
     summary.team.length > 0 ||
@@ -947,20 +949,26 @@ function SummaryView({
   const hasMarket =
     Boolean(summary.market) || summary.similar_projects.length > 0;
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-10">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <Link
             href="/projects"
-            className="text-sm text-muted-foreground hover:text-foreground"
+            className="group inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
           >
-            ← Your estimates
+            <span
+              aria-hidden="true"
+              className="inline-block rotate-180 transition-transform group-hover:-translate-x-0.5"
+            >
+              <Chevron />
+            </span>
+            Your estimates
           </Link>
-          <h1 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">
+          <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
             {summary.name}
           </h1>
-          <p className="text-sm text-muted-foreground">
-            Estimated on {formatDate(summary.created_at)}
+          <p className="mt-1 text-sm text-muted-foreground">
+            {formatDate(summary.created_at)}
           </p>
         </div>
         <div className="flex flex-wrap items-start gap-3">
@@ -974,9 +982,9 @@ function SummaryView({
       </div>
 
       {summary.indicative ? (
-        <p className="rounded-xl border border-warning/30 bg-warning-muted px-4 py-3 text-sm text-warning">
-          These figures use public market prices and typical effort, not your
-          company’s own costs, so treat them as a guide.
+        <p className="rounded-lg bg-warning-muted px-4 py-3 text-sm text-warning">
+          Based on market prices and typical effort, not your own costs: a
+          guide.
         </p>
       ) : null}
 
@@ -985,17 +993,14 @@ function SummaryView({
           <Headline summary={summary} />
           <IndependentCheckCard summary={summary} onChange={onChange} />
           <RealityCheck summary={summary} />
-          <OpenAnswers summary={summary} />
+          <OpenAnswers summary={summary} options={options} />
           <BidCheckCard summary={summary} />
           <CostSummary summary={summary} />
-          <WhatsIncluded summary={summary} />
+          <WhatsIncluded summary={summary} options={options} />
           <OngoingCosts summary={summary} />
 
           {hasTeam ? (
-            <Disclosure
-              title="Team, effort and AI savings"
-              hint={effortHint(summary)}
-            >
+            <Disclosure title="Team and hours" hint={effortHint(summary)}>
               <HoursOfWork summary={summary} />
               <TeamNeeded summary={summary} />
             </Disclosure>
@@ -1003,7 +1008,7 @@ function SummaryView({
 
           <Disclosure
             title="Detailed breakdown"
-            hint="Cost of each feature, where the money goes, every cost item and client-paid fees."
+            hint="Each feature, where the money goes, every cost item"
           >
             <FeatureCosts summary={summary} />
             <MoneyBreakdown summary={summary} />
@@ -1014,7 +1019,7 @@ function SummaryView({
           {hasMarket ? (
             <Disclosure
               title="Market comparison"
-              hint="Published prices of real projects: an outside benchmark, not proof that this estimate is right."
+              hint="What similar real projects were bought for"
             >
               <MarketBox summary={summary} />
               <SimilarProjects summary={summary} />
@@ -1028,15 +1033,12 @@ function SummaryView({
           />
         </>
       ) : (
-        <section className="flex flex-col items-start gap-4 rounded-2xl border bg-card px-6 py-8 shadow-sm sm:px-10">
+        <section className="slab flex flex-col items-start gap-4 px-6 py-8 sm:px-10">
           <h2 className="text-xl font-semibold">
             The deadline is too short to give a price
           </h2>
           <p className="max-w-2xl text-muted-foreground">{summary.message}</p>
-          <Link
-            href="/estimate/new"
-            className="inline-flex h-11 items-center rounded-lg bg-primary px-5 font-medium text-primary-foreground hover:bg-primary/90"
-          >
+          <Link href="/estimate/new" className={buttonVariants({ size: "lg" })}>
             Change the deadline
           </Link>
         </section>
@@ -1047,18 +1049,15 @@ function SummaryView({
         currency={summary.currency}
       />
 
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
-        <Link
-          href="/estimate/new"
-          className="inline-flex h-11 items-center rounded-lg bg-primary px-5 font-medium text-primary-foreground hover:bg-primary/90"
-        >
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-3 border-t pt-8">
+        <Link href="/estimate/new" className={buttonVariants({ size: "lg" })}>
           Start another estimate
         </Link>
         <Link
           href={`/projects/${summary.project_id}?tab=estimate`}
           className="text-sm text-muted-foreground underline hover:text-foreground"
         >
-          See detailed breakdown (for experts)
+          Expert view
         </Link>
       </div>
     </div>
