@@ -24,6 +24,7 @@ from app.services.seeding.reference import load_reference
 
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures"
 READINGS = FIXTURES / "readings"
+READINGS_V9 = FIXTURES / "readings_v9"  # + staff lines entered by hand (OPEN_QUESTIONS 162)
 # What frontend/src/app/estimate/new/review.tsx sent for each saved reading, accepted untouched,
 # recorded from the form itself before it used the backend pre-fill.
 FORM = json.loads((FIXTURES / "review_form" / "requests.json").read_text(encoding="utf-8"))
@@ -34,11 +35,23 @@ BATTERY = "gem-cpcb-epr-battery-portal"
 
 
 def test_readings_are_tagged_with_their_reader() -> None:
-    readings = load_readings(READINGS)
-    assert len(readings) == 8
-    for r in readings.values():
-        assert "not the production" in r.reader_model.lower()
-        assert r.read_on == date(2026, 10, 24)
+    for folder in (READINGS, READINGS_V9):
+        readings = load_readings(folder)
+        assert len(readings) == 8
+        for r in readings.values():
+            assert "not the production" in r.reader_model.lower()
+            assert r.read_on == date(2026, 10, 24)
+
+
+def test_v9_readings_price_their_staff_lines() -> None:
+    """OPEN_QUESTIONS 162: the hand-entered staff lines are priced as the staff list."""
+    cfg = quick_config()
+    for r in load_readings(READINGS_V9).values():
+        assert "entered by hand" in r.reader_model and r.extraction.staff_lines
+        form = review_prefill(cfg, r.extraction, "india")
+        assert form.request.staff is not None and form.staff is not None
+        assert "onsite_staff" not in form.request.overrides
+        assert form.key_answers[0].key == "staff"
 
 
 @pytest.mark.parametrize("benchmark_id", sorted(FORM["requests"]))
@@ -46,6 +59,10 @@ def test_prefill_matches_the_review_form(benchmark_id: str) -> None:
     reading = load_readings(READINGS)[benchmark_id]
     request = review_prefill(quick_config(), reading.extraction, "india").request
     sent = request.model_dump(mode="json", exclude=NOT_SENT)
+    # a reading without staff lines sends no staff list (recorded before it existed)
+    assert sent.pop("staff") is None
+    # an upload sends no user stories (the form sends {}; recorded before they existed)
+    assert sent.pop("feature_stories") == {}
     assert sent == FORM["requests"][benchmark_id]
 
 
@@ -106,7 +123,7 @@ def test_production_path_back_test() -> None:
     # it prices the form's own request, with the back-test's AI use
     req = reading_request(cfg, readings[BATTERY], "india", NO_AI)
     assert req.choices[AI_USE] == NO_AI
-    sent = req.model_dump(mode="json", exclude=NOT_SENT)
+    sent = req.model_dump(mode="json", exclude={*NOT_SENT, "staff", "feature_stories"})
     assert {**sent, "choices": {k: v for k, v in sent["choices"].items() if k != AI_USE}} == FORM[
         "requests"
     ][BATTERY]

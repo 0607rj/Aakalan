@@ -1,0 +1,1641 @@
+{
+ "benchmark_id": "gem-iob-chatbot-whatsapp-banking",
+ "reader_model": "stand-in: a Claude Code Sonnet subagent answering the app's own prompts (relayed), NOT the production claude-sonnet-5-5 API call; staff lines and the chatbot's systems entered by hand from the clauses (Claude Code, 2026-10-24), no AI re-read",
+ "read_on": "2026-10-24",
+ "code_path": "production reading code: app parser, ai_read (extract_tender_v8 + gap_check_v3), verify_findings, merge_extractions; only the LLM call was relayed. Staff lines and the chatbot's systems (prompt v9 fields) added by hand, quotes checked by verify_findings' quote check; apply_code_checks (support terms and the staff rules, OPEN_QUESTIONS 162) run again on the page texts. No inventory (independent check) was read.",
+ "files_read": [
+  "att01.pdf",
+  "att05.pdf",
+  "att04.pdf"
+ ],
+ "files_not_read": [],
+ "extraction": {
+  "reader": "ai",
+  "prompt_version": "extract_tender_v8",
+  "project_name": "Supply, Implementation and Maintenance of Chatbot & WhatsApp Banking",
+  "summary": "The requirement document is a bank's request for an AI chatbot and a WhatsApp banking service that answer customer questions in many Indian languages, carry out banking services, connect to the bank's systems and hand over to live agents. The supplier must also install and run the solution in the bank's own data centres for five years, with security audits, service levels and staff for support.",
+  "features": [
+   {
+    "key": "ai_chatbot",
+    "label": "AI chatbot that answers people's questions",
+    "evidence": [
+     {
+      "page": 8,
+      "clause_ref": "1.2",
+      "quote": "intends to implement a comprehensive AI based Chatbot and WhatsApp Banking for giving the best-in-class",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 1,
+      "clause_ref": "1",
+      "quote": "Goods/Services Required (Please specify the exact goods/services required): CHATBOT AND WHATSAPP BANKING",
+      "document": "att05.pdf",
+      "checked": false
+     },
+     {
+      "page": 1,
+      "clause_ref": "1",
+      "quote": "Search String: CHATBOT AND WHATSAPP BANKING",
+      "document": "att04.pdf",
+      "checked": true
+     },
+     {
+      "page": 1,
+      "clause_ref": "1",
+      "quote": "Search String: CHATBOT AND WHATSAPP BANKING",
+      "document": "att04.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 1,
+    "suggested": true,
+    "stories": [
+     "As a customer, I can ask the chatbot banking questions in free text and get an answer",
+     "As a customer, I can switch between topics in the same conversation without losing context",
+     "As a customer, I can get how-to guides, product FAQs and help to get on-boarded for bank products",
+     "As a customer, I can search within documents and use fuzzy search through the bot",
+     "As a customer, I can use hashtags to get an answer to a specific query",
+     "As a customer, I am greeted by my first name",
+     "As a bank subject expert, I can share circulars and FAQs (PDF, Excel, Word, CSV) so the bot answers from them",
+     "As a bank admin, I can have the bot crawl the bank's websites for answers",
+     "As a bank admin, I can add or update responses to unanswered queries based on conversation analysis",
+     "As a bank admin, I can train the bot with supervised and unsupervised learning and retrain it on bank data"
+    ],
+    "story_level": "advanced",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "chat",
+    "label": "Chat between users or with support",
+    "evidence": [
+     {
+      "page": 32,
+      "clause_ref": "37",
+      "quote": "BOT platform should provide for a live agent dashboard for seamless transfer of entire chat to the live agent.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 1,
+    "suggested": true,
+    "stories": [
+     "As a customer, I can be transferred with my whole chat to a live agent when the bot cannot help or I am frustrated",
+     "As a live agent, I can see the entire chat history and the customer's record from the bank's CRM",
+     "As a bank admin, I can set rules that send a chat to the relevant live agent by customer or conversation type",
+     "As a live agent, I can answer WhatsApp messages from a console and pass the chat back to the bot"
+    ],
+    "story_level": "standard",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "dashboards",
+    "label": "Reports and dashboards",
+    "evidence": [
+     {
+      "page": 33,
+      "clause_ref": "46",
+      "quote": "Solution should provide the real-time dashboard to help generating",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 48,
+      "clause_ref": "55",
+      "quote": "Display system utilization metrics such as CPU, RAM, and network usage.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 2,
+    "suggested": true,
+    "stories": [
+     "As a bank admin, I can watch a real-time dashboard of bot performance such as sessions, goal completion, confusion and human takeover",
+     "As a bank admin, I can see uptime, availability and penalty figures on a dashboard",
+     "As a bank admin, I can filter reports by channel, product and query",
+     "As a bank admin, I can search conversations by text, mobile number or account number and fetch the logs",
+     "As a bank admin, I can download reports in Word, Excel, CSV and PDF",
+     "As a bank admin, I can schedule reports for stakeholders",
+     "As a bank admin, I can see WhatsApp message counts, delivery status and billing reports",
+     "As a bank admin, I can see CPU, RAM and network usage on the dashboard"
+    ],
+    "story_level": "standard",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "languages",
+    "label": "Available in Indian languages",
+    "evidence": [
+     {
+      "page": 28,
+      "clause_ref": "9",
+      "quote": "raised in English and other regional languages such as Hindi,",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 1,
+    "suggested": true,
+    "stories": [
+     "As a customer, I can chat with the bot in English and regional Indian languages",
+     "As a customer, I can type in Indian languages using a phonetic or native keypad",
+     "As a customer, I can choose my preferred language on the chat and voice bots",
+     "As a customer, I get replies in the new language when I switch language in the middle of a conversation",
+     "As a bank admin, I can set responses in several languages and change a flow once for all languages"
+    ],
+    "story_level": "standard",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "notifications",
+    "label": "SMS, email and app notifications",
+    "evidence": [
+     {
+      "page": 31,
+      "clause_ref": "29",
+      "quote": "Chatbot must engage with bank’s customers by broadcasting",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 1,
+    "suggested": true,
+    "stories": [
+     "As a customer, I receive personalised reminders for payments, insurance dues and complaint status",
+     "As a customer, I receive push notifications aimed at my segment such as age range, activity or location",
+     "As a bank admin, I get automatic alerts by email, SMS or portal when the system is down or has errors"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "ai_voice",
+    "label": "Voice input or spoken answers",
+    "evidence": [
+     {
+      "page": 28,
+      "clause_ref": "13",
+      "quote": "Chatbot Solution should support speech-to-text (S2T) conversion of",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 1,
+    "suggested": true,
+    "stories": [
+     "As a customer, I can speak to the bot and hear its spoken answer",
+     "As a customer, I can use voice to navigate to content on the bank's web channels",
+     "As a customer, I can do voice banking through API integrations"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "ai_text_sorting",
+    "label": "AI sorts messages or complaints",
+    "evidence": [
+     {
+      "page": 33,
+      "clause_ref": "42",
+      "quote": "The BOT should be able to detect the emotional polarity of the",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 1,
+    "suggested": true,
+    "stories": [
+     "As a customer, I get replies that take my mood into account because the bot detects whether I am angry, sad or happy",
+     "As a customer, I am moved to a live agent when the bot detects that I am frustrated"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "ai_documents",
+    "label": "AI reads documents (OCR)",
+    "evidence": [
+     {
+      "page": 28,
+      "clause_ref": "6",
+      "quote": "The Chatbot solution should have the capability to perform Cognitive Document Processing (CDP) & Cognitive Document Automation",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 1,
+    "suggested": true,
+    "stories": [
+     "As a customer, I can have data pulled out of my documents and checked automatically by the bot"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "connect_existing",
+    "label": "Connect to existing systems (SAP, old software)",
+    "evidence": [
+     {
+      "page": 60,
+      "clause_ref": "45",
+      "quote": "The proposed solution should be able to integrate with all current and future application",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 1,
+    "suggested": true,
+    "stories": [
+     "As a customer, I can get my data from the bank's core banking, loan and CRM systems through the bot",
+     "As a bank admin, I can connect further bank systems using APIs, web hooks, ESB and message queues with ready adaptors",
+     "As a bank analyst, I can send chat statistics to the bank's enterprise data warehouse"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "staff_login",
+    "label": "Log in with existing accounts",
+    "evidence": [
+     {
+      "page": 86,
+      "clause_ref": "E1.1.6.7",
+      "quote": "Ability to integrate with active directory",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 1,
+    "suggested": true,
+    "stories": [
+     "As a bank staff member, I can sign in to the consoles with my Active Directory or LDAP account using single sign-on"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "maps",
+    "label": "Maps and location",
+    "evidence": [
+     {
+      "page": 32,
+      "clause_ref": "36",
+      "quote": "Real-time assistance in locating ATM/Branch location using GPS",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 1,
+    "suggested": true,
+    "stories": [
+     "As a customer, I can find the nearest ATM or branch using my location",
+     "As a customer, I can find a branch, ATM or DBU by branch name or DP code"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "aadhaar_digilocker",
+    "label": "Login or verification with Aadhaar / DigiLocker",
+    "evidence": [
+     {
+      "page": 32,
+      "clause_ref": "36",
+      "quote": "Account Number / MMID / VPA / AADHAAR based authentication",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 1,
+    "suggested": true,
+    "stories": [
+     "As a customer, I can be authenticated for transactions using my account number, MMID, VPA or Aadhaar"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "approval_workflow",
+    "label": "Files go from person to person for approval",
+    "evidence": [
+     {
+      "page": 35,
+      "clause_ref": "66",
+      "quote": "The application needs to implement maker-checker principle for",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 1,
+    "suggested": true,
+    "stories": [
+     "As a bank admin, I can have important parameter changes and WhatsApp campaigns approved by a checker before they take effect"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "grievances",
+    "label": "Complaints and helpdesk tickets",
+    "evidence": [
+     {
+      "page": 66,
+      "clause_ref": "A1.9",
+      "quote": "not available, the Chatbot should be capable of raising a service ticket and tracking the same.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 1,
+    "suggested": true,
+    "stories": [
+     "As a customer, I can register a complaint through the bot or WhatsApp",
+     "As a customer, I get a service ticket raised and can track it when no agent is available",
+     "As a customer, I can see the status of my earlier complaint and give feedback"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   }
+  ],
+  "other_features": [
+   {
+    "name": "WhatsApp Business account set-up and API",
+    "description": "Setting up and managing the bank's verified WhatsApp Business account, its profile, contacts and message templates.",
+    "category": "integration",
+    "size": "M",
+    "evidence": [
+     {
+      "page": 37,
+      "clause_ref": "2",
+      "quote": "The system should be capable of establishing a verified WhatsApp Business account specifically for Indian Overseas Bank, utilizing Indian phone numbers.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a bank admin, I can have a verified WhatsApp Business account set up on Indian numbers, with more numbers added later",
+     "As a bank admin, I can change the display name and description and have the catalogue managed",
+     "As a bank admin, I can manage profiles and contacts and see message status (sent, delivered, read)",
+     "As a bank admin, I can create, localise and get approval for template messages",
+     "As a bank admin, I can move journeys to a new mobile number"
+    ],
+    "units": 1
+   },
+   {
+    "name": "WhatsApp banking conversation journeys",
+    "description": "Customer journeys on WhatsApp that answer queries through an interactive dialogue and carry out banking services.",
+    "category": "module",
+    "size": "M",
+    "evidence": [
+     {
+      "page": 38,
+      "clause_ref": "",
+      "quote": "The customer journey should autonomously respond to user queries, utilizing an interactive dialogue interface.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a customer, I can chat with the bank on WhatsApp using menus and free text",
+     "As a customer, I can restart or resume a journey I left halfway",
+     "As a customer, I can write in mixed language such as Hinglish and be understood",
+     "As a customer, I can use voice banking on WhatsApp",
+     "As a customer, non-customer, business correspondent or bank staff member, I get my own kind of journey on the same account",
+     "As a bank admin, I can change a journey without downtime and build new journeys on request"
+    ],
+    "units": 1
+   },
+   {
+    "name": "WhatsApp push campaign manager",
+    "description": "A role-based console to run scheduled WhatsApp push campaigns and send documents and notices to customers.",
+    "category": "module",
+    "size": "M",
+    "evidence": [
+     {
+      "page": 43,
+      "clause_ref": "49",
+      "quote": "Facilitation of sending various documents like Bills, Certificate, User Manual and other notifications (due date reminders, payment receipts, notices etc.) to citizen/user WhatsApp accounts.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a bank staff member, I can run push campaigns from a role-based console",
+     "As a bank staff member, I can schedule a campaign and send text, image, audio, video and document messages",
+     "As a bank staff member, I can set up a campaign from an Excel or CSV file or fetch its data from a database or API",
+     "As a bank staff member, I can see how many leads a campaign converted",
+     "As a customer, I receive statements, interest certificates and user manuals on WhatsApp"
+    ],
+    "units": 1
+   },
+   {
+    "name": "WhatsApp opt-in, opt-out and block list",
+    "description": "Collecting customer consent to receive WhatsApp messages, letting them opt out and blocking spam senders.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 39,
+      "clause_ref": "13",
+      "quote": "Implementation of opt-in campaigns to obtain consumer consent for message transmission via WhatsApp is necessary.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a customer, I can opt in through a missed call, SMS, email or QR code and opt out later",
+     "As a bank admin, I can block users who send spam",
+     "As another bank application, I can check by API whether a customer has opted in or is on WhatsApp"
+    ],
+    "units": 1
+   },
+   {
+    "name": "WhatsApp messaging API and console",
+    "description": "An API and a multi-user console to send and receive WhatsApp messages with rich media for registered and non-registered customers.",
+    "category": "integration",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 40,
+      "clause_ref": "26",
+      "quote": "An API should be provided for sending and receiving WhatsApp",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As another bank application, I can send WhatsApp messages with or without media through one generic API",
+     "As a bank staff member, I can send and receive WhatsApp messages from a multi-user console",
+     "As a bank staff member, I can have received messages forwarded to chosen email IDs while the sender gets an acknowledgement"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Account enquiries and statements",
+    "description": "Balance, mini statement, transactions, statements and tax certificates through the bot and WhatsApp.",
+    "category": "module",
+    "size": "M",
+    "evidence": [
+     {
+      "page": 45,
+      "clause_ref": "52",
+      "quote": "c. Mini Statement: The platform should support statement inquiries with OTP authentication, utilizing an API provided by the bank.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a customer, I can check my balance",
+     "As a customer, I can get a mini statement and see recent transactions",
+     "As a customer, I can get an account statement by email or as a PDF",
+     "As a customer, I can download interest certificates and 15G/15H forms",
+     "As a customer, I can look up my customer ID and product information"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Card services",
+    "description": "Debit and credit card requests, blocking and settings through the bot and WhatsApp.",
+    "category": "module",
+    "size": "M",
+    "evidence": [
+     {
+      "page": 45,
+      "clause_ref": "52",
+      "quote": "k. Block/Unblock Services: Users should be able to block/unblock debit cards, credit cards, internet banking, and mobile banking services.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a customer, I can block or unblock my debit card, credit card, internet banking and mobile banking",
+     "As a customer, I can request a debit card and check my credit card application status",
+     "As a customer, I can activate or deactivate a card and set international usage",
+     "As a customer, I can generate or reset a PIN",
+     "As a customer, I can report a lost or stolen card"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Service requests and profile updates",
+    "description": "Cheque book and other account service requests and detail updates raised through the bot and WhatsApp.",
+    "category": "module",
+    "size": "M",
+    "evidence": [
+     {
+      "page": 45,
+      "clause_ref": "52",
+      "quote": "e. Cheque Book Requests: Users should be able to request a cheque book through the platform.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a customer, I can request a cheque book and track the request",
+     "As a customer, I can submit a FATCA declaration",
+     "As a customer, I can cancel a NACH mandate",
+     "As a customer, I can change my home branch",
+     "As a customer, I can update my PAN details and KYC",
+     "As a customer, I can add, change or delete a nomination",
+     "As a customer, I can deactivate UPI"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Fund transfers, bill payments and recharges",
+    "description": "Money movement and payments through the bot and WhatsApp, linked to the bank's payment systems.",
+    "category": "integration",
+    "size": "M",
+    "evidence": [
+     {
+      "page": 32,
+      "clause_ref": "36",
+      "quote": "i. Fund Transfers Within & External Bank (NEFT, IMPS, UPI) account",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a customer, I can transfer funds within the bank and to other banks by NEFT, IMPS or UPI",
+     "As a customer, I can pay my credit card bill",
+     "As a customer, I can pay insurance premiums and donations",
+     "As a customer, I can recharge my mobile or DTH"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Commerce services through the bot",
+    "description": "A transactional bot for non-bank services such as travel, events and local deals.",
+    "category": "integration",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 29,
+      "clause_ref": "19",
+      "quote": "Ecommerce BOT for powering services such as recharges, bill",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a customer, I can book cab, laundry, events, movies, bus, train, hotel and flights and find local deals through the bot"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Product applications and on-boarding",
+    "description": "Applying for loans, cards, deposits, investments, insurance and government schemes through the bot and WhatsApp, with lead capture.",
+    "category": "module",
+    "size": "L",
+    "evidence": [
+     {
+      "page": 46,
+      "clause_ref": "53",
+      "quote": "e. Apply Now Services: i. Loan & Credit Card ii. Credit Card iii. Personal Loan",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a customer, I can apply for a personal, gold, two-wheeler, business or home loan",
+     "As a customer, I can apply for a credit card",
+     "As a customer, I can open an account",
+     "As a customer, I can book or open an FD or RD and view my summary",
+     "As a customer, I can apply for investments, a demat and trading account, a forex card and forex facilities",
+     "As a customer, I can use the bank's insurance service",
+     "As a customer, I can apply for and activate FASTag",
+     "As a customer, I can subscribe to government schemes such as PMJJBY, PPF, PMSBY and APY",
+     "As a customer, I can close a loan or deposit",
+     "As a bank staff member, I can collect leads for the bank's asset products"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Calculators and rate information",
+    "description": "Interest rates, loan eligibility and EMI and deposit calculators in the bot.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 32,
+      "clause_ref": "36",
+      "quote": "ix. Facility to know Interest rates/Loan eligibility x. EMI calculator xi. Deposit calculator",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a customer, I can see interest rates and check my loan eligibility",
+     "As a customer, I can use an EMI calculator and a deposit calculator"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Customer surveys, feedback and offers",
+    "description": "Engagement features such as surveys, feedback, news and promotional banners sent by the bot.",
+    "category": "module",
+    "size": "M",
+    "evidence": [
+     {
+      "page": 29,
+      "clause_ref": "21",
+      "quote": "Customer Survey as and when Bank requires.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a customer, I can take a survey when the bank asks",
+     "As a customer, I can give feedback and reviews through the bot",
+     "As a customer, I can read news and announcements and subscribe to subscription messaging",
+     "As a customer, I can see offers and banners for bank products"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Multi-channel deployment of the bot",
+    "description": "Making the bot available on social media, phone, IVR, smart assistants and the bank's own channels.",
+    "category": "integration",
+    "size": "M",
+    "evidence": [
+     {
+      "page": 34,
+      "clause_ref": "55",
+      "quote": "Out-of-box deployment to Phone, IVR, and SMS Smart Assistants",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a customer, I can reach the bot through Facebook Messenger, Twitter and Instagram direct messages",
+     "As a customer, I can reach the bot by phone or IVR and through Alexa or Google Home",
+     "As a customer, I can use the bot inside mobile banking, internet banking, UPI and wallet apps",
+     "As a customer, I can talk to a virtual robot or animated character on a device in a branch"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Voice biometric authentication",
+    "description": "Connecting the bot to a voice biometric engine to capture and check a customer's voice.",
+    "category": "integration",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 69,
+      "clause_ref": "B1.8",
+      "quote": "integrate with Voice Biometric Engine for capturing of Voice Biometric and",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a customer, I can be verified by my voice"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Employee assistant (B2E)",
+    "description": "A version of the assistant for bank employees on the intranet or desktop, kept apart from customer data.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 69,
+      "clause_ref": "B1.7",
+      "quote": "provide a provision for Employees with an option to select option directly on intranet portal or desktop.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a bank employee, I can use the assistant on the intranet portal or desktop and raise tickets or complaints through it"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Low-code designer for bot flows and forms",
+    "description": "Tools for the bank to design conversation flows, workflows, forms and business rules without writing code.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 86,
+      "clause_ref": "E1.1.6.9",
+      "quote": "Ability to support Low Code /No Code",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a bank admin, I can design bot conversation flows and workflows in a visual designer",
+     "As a bank admin, I can design forms with a form designer and set business rules",
+     "As a bank admin, I can change the look of the bot and forms to match the bank's marketing guidelines"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Welcome kit delivery for new accounts",
+    "description": "Helping the bank deliver a welcome kit for accounts opened through branches or digital channels.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 45,
+      "clause_ref": "52",
+      "quote": "Welcome Kit Delivery: Facilitation of Welcome Kit delivery for accounts opened through branches/digital channels.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a customer, I can get a welcome kit delivered for an account opened at a branch or through a digital channel"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Disable copy-paste and screen capture",
+    "description": "The system must be able to switch off copy/paste and screen capture to protect displayed information.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 83,
+      "clause_ref": "B1.5",
+      "quote": "Proposed system should be able to disable the",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a bank admin, I can disable copy/paste and screen capture in the system"
+    ],
+    "units": 1
+   }
+  ],
+  "choices": {
+   "integrations": {
+    "value": "many",
+    "label": "Yes, several",
+    "evidence": [
+     {
+      "page": 60,
+      "clause_ref": "45",
+      "quote": "The proposed solution should be able to integrate with all current and future application",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "build_type": {
+    "value": "ready_product",
+    "label": "Set up a ready-made product",
+    "evidence": [
+     {
+      "page": 27,
+      "clause_ref": "",
+      "quote": "intelligent COTS products/solutions based on Artificial Intelligence &",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "hosting": {
+    "value": "existing",
+    "label": "Servers you already have",
+    "evidence": [
+     {
+      "page": 9,
+      "clause_ref": "1.2",
+      "quote": "Bank shall provide the required infrastructure at Bank’s Data Centre.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "helpdesk_scope": {
+    "value": "yes",
+    "label": "Yes",
+    "evidence": [
+     {
+      "page": 60,
+      "clause_ref": "VII",
+      "quote": "Bank reserves the rights to decide on Resource headcount as per business requirements.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "support_hours": {
+    "value": "on_call",
+    "label": "Round the clock, on call",
+    "evidence": [
+     {
+      "page": 115,
+      "clause_ref": "Page 115",
+      "quote": "Bank at its own discretion may ask any number of resources to deployed based on business requirements and the resources shall be required to work on 24*7 basis",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 60,
+      "clause_ref": "Page 60",
+      "quote": "Bank reserves the rights to decide on Resource headcount as per business requirements",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "availability": {
+    "value": "normal",
+    "label": "Some trouble",
+    "evidence": [
+     {
+      "page": 103,
+      "clause_ref": "",
+      "quote": "Vendor will have to guarantee a minimum uptime of 99.5%, calculated on a monthly basis.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "disaster_site": {
+    "value": "yes",
+    "label": "Yes",
+    "evidence": [
+     {
+      "page": 39,
+      "clause_ref": "17",
+      "quote": "The Service Provider must design the solution with high availability, business continuity plan & secure Infrastructure in Data Centre and Disaster Recovery site as per Industry accepted security standards",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "penalties": {
+    "value": "yes",
+    "label": "Yes",
+    "evidence": [
+     {
+      "page": 12,
+      "clause_ref": "1.3.2",
+      "quote": "of half percent (0.5%) of the Net Order Value, for each week or part thereof of the delay subject to a maximum of 5%",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "security_audit": {
+    "value": "yes",
+    "label": "Yes",
+    "evidence": [
+     {
+      "page": 53,
+      "clause_ref": "",
+      "quote": "SB must submit the compliance certificate from cert-in empaneled auditor stating that the solution/product is free of known vulnerabilities,",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "chatbot_task": {
+    "value": "advanced",
+    "label": "Complex questions",
+    "evidence": [
+     {
+      "page": 34,
+      "clause_ref": "Page 34",
+      "quote": "System should provide support for integration of Bank’s Systems",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 32,
+      "clause_ref": "Page 32",
+      "quote": "Financial Services through Chatbot: Following services are to be",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   }
+  },
+  "numbers": {
+   "om_years": {
+    "value": 5,
+    "label": "om_years",
+    "evidence": [
+     {
+      "page": 9,
+      "clause_ref": "1.2",
+      "quote": "The Period of Contract shall be for a period of five years.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "deadline_months": {
+    "value": 3,
+    "label": "deadline_months",
+    "evidence": [
+     {
+      "page": 10,
+      "clause_ref": "1.3",
+      "quote": "The solution must be implemented as per project scope within 3 months (90 CD)",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "languages": {
+    "value": 11,
+    "label": "languages",
+    "evidence": [
+     {
+      "page": 64,
+      "clause_ref": "A1.4",
+      "quote": "other regional Indian languages (Hindi, Malayalam, Tamil, Telugu, Kannada, Odia, Gujarati, Punjabi, Marathi, Bengali)",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "pbg_percent": {
+    "value": 0.05,
+    "label": "pbg_percent",
+    "evidence": [
+     {
+      "page": 13,
+      "clause_ref": "1.4",
+      "quote": "Bank guarantee (Delivery cum performance) for a value of 5% of the total order value within 15 days",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   }
+  },
+  "unclear_points": [
+   {
+    "topic": "Concurrent chat sessions and accuracy",
+    "why": "The document gives two different minimum concurrent sessions (1000 and 100) and two accuracy targets (97% and 95%).",
+    "page": 32,
+    "clause_ref": "34",
+    "quote": "Chatbot solution should be able to handle minimum 1000 concurrent",
+    "prebid_query": "Clause 34 of Annexure-I (page 32) asks for 1000 concurrent chat sessions and 97% accuracy, while clause B1.4 of Annexure-I-A (page 68) asks for 100 concurrent sessions and 95% accuracy. Please confirm which figures apply.",
+    "answer": "",
+    "document": ""
+   },
+   {
+    "topic": "Expected request volumes",
+    "why": "The document refers to projected request volumes in the RFP but no user numbers or daily chatbot query counts are given.",
+    "page": 38,
+    "clause_ref": "10",
+    "quote": "The solution must accommodate the projected request volumes",
+    "prebid_query": "Clause 10 of the WhatsApp Banking Functionalities (page 38) refers to the projected request volumes outlined in the RFP. Please state the expected number of customers, chatbot conversations per day and WhatsApp messages per month for each year of the contract.",
+    "answer": "",
+    "document": ""
+   },
+   {
+    "topic": "Languages to be supported",
+    "why": "A list of languages is given with etc., but another clause asks for all Indian vernacular languages.",
+    "page": 44,
+    "clause_ref": "51",
+    "quote": "a. Language Support: The platform must accommodate all Indian vernacular languages.",
+    "prebid_query": "Clause 51(a) of Annexure-I (page 44) asks for all Indian vernacular languages, while clause A1.4 of Annexure-I-A lists ten regional languages and English. Please confirm the exact list of languages required at go-live.",
+    "answer": "",
+    "document": ""
+   },
+   {
+    "topic": "Rollout phases",
+    "why": "Operationalization is tied to the Go Live of each phase, but the project schedule has a single Go Live at 90 days and names no phases.",
+    "page": 12,
+    "clause_ref": "1.3.4",
+    "quote": "must be completed within 12 weeks from the date of the Go Live of each phase",
+    "prebid_query": "Clause 1.3.4 (page 12) refers to the Go Live of each phase, but clause 1.3.1 lists only one Go Live at T + 90 CD. Please state the phases, what each covers and the date by which each must go live.",
+    "answer": "",
+    "document": ""
+   },
+   {
+    "topic": "Warranty period",
+    "why": "ATS is paid from the 2nd year after a warranty phase, but another clause says software is warranted throughout the contract period and no warranty length is given.",
+    "page": 15,
+    "clause_ref": "1.5",
+    "quote": "This shall be initiated by the bank post completion of Warranty phase.",
+    "prebid_query": "Clause 1.5(v) (page 15) refers to a warranty phase before ATS starts, while clause VI.5 of Annexure-I (page 54) says software is warranted throughout the contract period. Please state the length of the warranty period.",
+    "answer": "",
+    "document": ""
+   },
+   {
+    "topic": "Training frequency",
+    "why": "Training is stated as at least once a year in one place and twice a year in another.",
+    "page": 61,
+    "clause_ref": "VIII",
+    "quote": "Mandatorily comprehensive training (technical and functional separately) to Bank Staff, at least once in a year during the contract period.",
+    "prebid_query": "Section VIII of Annexure-I (page 61) asks for training at least once a year, while page 62 asks for training twice in each year. Please state the number of training sessions per year, the number of trainees and the batches.",
+    "answer": "",
+    "document": ""
+   },
+   {
+    "topic": "Support staff numbers and location",
+    "why": "The bank decides headcount later; one onsite developer, an onsite L2 engineer for the first year and L1, L2 and L3 resources per shift are all mentioned.",
+    "page": 60,
+    "clause_ref": "VII",
+    "quote": "Bank reserves the rights to decide on Resource headcount as per business requirements.",
+    "prebid_query": "Section VII of Annexure-I (page 60) leaves resource headcount to the Bank. Please state the number of L1, L2 and L3 resources per shift, the number of shifts, and which resources must sit onsite and for how long.",
+    "answer": "",
+    "document": ""
+   },
+   {
+    "topic": "Open-ended functional scope",
+    "why": "The functional list is described as not exhaustive and the bank may add functions during execution.",
+    "page": 64,
+    "clause_ref": "1.1",
+    "quote": "is not exhaustive, bank may change/ add new functions at the time of execution basis new developments.",
+    "prebid_query": "Clause 1.1 of Annexure-I-A (page 64) says the functional requirements are not exhaustive and the bank may add functions at execution. Please confirm that the listed functions are the complete scope for the quoted price and how additions will be handled.",
+    "answer": "",
+    "document": ""
+   },
+   {
+    "topic": "Live agent licences",
+    "why": "The number of live agent licences is left to the bank's actual need.",
+    "page": 116,
+    "clause_ref": "",
+    "quote": "Count of Live agent license shall be based on the actual requirement of the bank.",
+    "prebid_query": "Note 3 to the commercial bid format (page 116) leaves the number of live agent licences to the bank's actual requirement. Please state the number of live agents expected at go-live and in each year of the contract.",
+    "answer": "",
+    "document": ""
+   },
+   {
+    "topic": "Scope of the chatbot and WhatsApp banking",
+    "why": "The document only names the goods or services and does not say which banking functions, languages, channels or integrations are required.",
+    "page": 1,
+    "clause_ref": "1",
+    "quote": "Goods/Services Required (Please specify the exact goods/services required): CHATBOT AND WHATSAPP BANKING",
+    "prebid_query": "Regarding clause 1 (Goods/Services Required: CHATBOT AND WHATSAPP BANKING), please provide the detailed functional scope, including the banking services and queries to be handled, the languages, and the systems to be integrated.",
+    "answer": "",
+    "document": ""
+   },
+   {
+    "topic": "Users, volumes, support period and timeline",
+    "why": "No number of users, daily conversations, support years or delivery deadline is stated.",
+    "page": 1,
+    "clause_ref": "1",
+    "quote": "I understand that the creation of a custom bid/BoQ is an exceptional process and should only be used when existing categories on GeM are not suitable for the required goods/services.",
+    "prebid_query": "Please state the expected number of customers and daily chatbot and WhatsApp conversations, the O&M support period, and the delivery timeline for the goods/services described in clause 1.",
+    "answer": "",
+    "document": ""
+   },
+   {
+    "topic": "Scope of chatbot and WhatsApp banking service",
+    "why": "The document only names the service searched for and gives no functions, users, volumes, integrations, timelines or support terms.",
+    "page": 1,
+    "clause_ref": "1",
+    "quote": "Search String: CHATBOT AND WHATSAPP BANKING",
+    "prebid_query": "Please share the detailed scope of work for the Chatbot and WhatsApp Banking service referred to in the GeM report, covering the banking functions, expected number of users and daily queries, languages, integrations with core banking systems, contract period and support terms.",
+    "answer": "",
+    "document": ""
+   },
+   {
+    "topic": "Support hours",
+    "why": "Table VI: one L1, one L2 and one L3 per shift; the number of shifts and where they sit are not stated",
+    "page": 115,
+    "clause_ref": "Page 115",
+    "quote": "Bank at its own discretion may ask any number of resources to deployed based on business requirements and the resources shall be required to work on 24*7 basis",
+    "prebid_query": "The L1, L2 and L3 managed-services resources are to work round the clock (page 115) but their number is set by the Bank or Department. Kindly confirm whether a staffed round-the-clock team is required from the start, and how many people per shift; we have priced on-call support outside office hours.",
+    "answer": "support_hours",
+    "document": "att01.pdf"
+   },
+   {
+    "topic": "Where the L1, L2 and L3 managed-services resources sit",
+    "why": "Table VI: one L1, one L2 and one L3 per shift; the number of shifts and where they sit are not stated",
+    "page": 115,
+    "clause_ref": "Page 115",
+    "quote": "Bank at its own discretion may ask any number of resources to deployed based on business requirements and the resources shall be required to work on 24*7 basis",
+    "prebid_query": "The document asks for 3 L1, L2 and L3 managed-services resources (page 115) but does not say whether they sit at the client's premises or offsite. Kindly confirm; we have priced them offsite.",
+    "answer": "support_staff",
+    "document": "att01.pdf"
+   },
+   {
+    "topic": "Number of L1, L2 and L3 managed-services resources",
+    "why": "Table VI: one L1, one L2 and one L3 per shift; the number of shifts and where they sit are not stated",
+    "page": 115,
+    "clause_ref": "Page 115",
+    "quote": "Bank at its own discretion may ask any number of resources to deployed based on business requirements and the resources shall be required to work on 24*7 basis",
+    "prebid_query": "The document leaves the number of L1, L2 and L3 managed-services resources to the Bank's or Department's discretion (page 115). Kindly confirm the number of resources to be priced, their shifts and where they sit; we have priced 3 as written.",
+    "answer": "support_staff",
+    "document": "att01.pdf"
+   }
+  ],
+  "dropped_findings": 0,
+  "not_priced": [
+   {
+    "topic": "penalties",
+    "label": "Penalties for delay or downtime (service levels)",
+    "note": "Penalties apply for late delivery and rollout and for uptime and other service level failures.",
+    "evidence": [
+     {
+      "page": 12,
+      "clause_ref": "1.3.2",
+      "quote": "of half percent (0.5%) of the Net Order Value, for each week or part thereof of the delay subject to a maximum of 5%",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 103,
+      "clause_ref": "",
+      "quote": "The SLA charges will be subject to an overall cap of 10% of the Monthly Maintenance Charges",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "topic": "warranty",
+    "label": "Warranty period",
+    "note": "All software is warranted against defects for the contract period.",
+    "evidence": [
+     {
+      "page": 54,
+      "clause_ref": "VI.5",
+      "quote": "Bidder should warrant all the software against defects arising out of faulty design, workmanship etc. throughout the contract period.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "topic": "payment_terms",
+    "label": "Payment terms (when the vendor is paid)",
+    "note": "Payment is split by component (licences, implementation milestones, training, ATS, managed services) rather than as shares of one contract value.",
+    "evidence": [
+     {
+      "page": 14,
+      "clause_ref": "1.5",
+      "quote": "50% Cost of the Solution Application Software licenses shall be released after successful delivery of software license and remaining 50% will be released after successful UAT.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "topic": "data_rules",
+    "label": "Data protection and other rules to follow",
+    "note": "The solution must follow RBI, IT Act and other regulator guidelines and keep data in India.",
+    "evidence": [
+     {
+      "page": 71,
+      "clause_ref": "C1.7",
+      "quote": "guidelines issued by DFS/RBI/IBA/Govt. of India, IT ACT, Statutory",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "topic": "technology",
+    "label": "Required technology or software",
+    "note": "The solution must work with the bank's existing core banking platform and other listed systems.",
+    "evidence": [
+     {
+      "page": 60,
+      "clause_ref": "46",
+      "quote": "Core Banking Platform at our Domestic & Foreign Offices, currently Finacle 10.2.17",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "topic": "team_qualifications",
+    "label": "Required team qualifications or CVs",
+    "note": "Developers, L2 and L3 support staff must have stated minimum years of experience.",
+    "evidence": [
+     {
+      "page": 58,
+      "clause_ref": "32",
+      "quote": "Developers should have minimum 2-years of development experience on the proposed",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "topic": "source_code",
+    "label": "Source code and ownership handover",
+    "note": "The vendor must set up an escrow arrangement for the application software.",
+    "evidence": [
+     {
+      "page": 57,
+      "clause_ref": "23",
+      "quote": "Vendor to make the Escrow arrangement for the application software.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "topic": "multi_tenancy",
+    "label": "Several client organisations on one system (multi-tenant)",
+    "note": "The platform is required to be multi-tenant while keeping the bank's data secure.",
+    "evidence": [
+     {
+      "page": 86,
+      "clause_ref": "E1.1.6.1",
+      "quote": "Platform should be multi-tenant ensuring application and data security with",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "topic": "realtime_media",
+    "label": "Video calls or live chat between users",
+    "note": "Web chat and video chat on WhatsApp are listed among engagement features.",
+    "evidence": [
+     {
+      "page": 41,
+      "clause_ref": "32",
+      "quote": "Webchat and video chat with multi-user and receiver functionality,",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   }
+  ],
+  "payment_terms": null,
+  "scope": [
+   {
+    "key": "otp_codes",
+    "label": "Sign-in and user accounts: One-time codes by SMS or email (sign-in or password reset)",
+    "status": "explicit",
+    "note": "One-time codes are required for critical services such as cheque book requests.",
+    "evidence": [
+     {
+      "page": 47,
+      "clause_ref": "53",
+      "quote": "OTP Validations for Critical Services:",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "key": "two_step_sign_in",
+    "label": "Sign-in and user accounts: Two-step sign-in (MFA)",
+    "status": "explicit",
+    "note": "",
+    "evidence": [
+     {
+      "page": 31,
+      "clause_ref": "32",
+      "quote": "Multi-factor authentication and support for Single Sign On (SSO),",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "key": "audit_log",
+    "label": "Sign-in and user accounts: A record of who did what (audit log)",
+    "status": "explicit",
+    "note": "",
+    "evidence": [
+     {
+      "page": 42,
+      "clause_ref": "43",
+      "quote": "Provision of Audit Log to track application activities.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "key": "whatsapp",
+    "label": "Notifications: Messages on WhatsApp",
+    "status": "explicit",
+    "note": "",
+    "evidence": [
+     {
+      "page": 42,
+      "clause_ref": "38",
+      "quote": "Implementation of sending WhatsApp messages in both English and",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "key": "push",
+    "label": "Notifications: Push notifications on phones and browsers",
+    "status": "explicit",
+    "note": "",
+    "evidence": [
+     {
+      "page": 29,
+      "clause_ref": "21",
+      "quote": "Automatically segmenting Push Notifications to customer by Bot:",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "key": "chatbot_indian_languages",
+    "label": "AI chatbot: Answers in Indian languages (Bhashini translation)",
+    "status": "explicit",
+    "note": "No named translation service is given.",
+    "evidence": [
+     {
+      "page": 28,
+      "clause_ref": "8",
+      "quote": "The Chatbot deployed should be capable of having an end-to-end",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "key": "chatbot_records",
+    "label": "AI chatbot: Looks up the user's own records in your systems",
+    "status": "explicit",
+    "note": "The bot must fetch the customer's earlier data such as complaint status.",
+    "evidence": [
+     {
+      "page": 33,
+      "clause_ref": "41",
+      "quote": "fetching the previous data, should share the status and request for",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "key": "monitoring",
+    "label": "Security, compliance and monitoring: Monitoring, logs and alerts",
+    "status": "explicit",
+    "note": "",
+    "evidence": [
+     {
+      "page": 103,
+      "clause_ref": "",
+      "quote": "The Vendor should have 24X7X365 monitoring, escalation and resolution infrastructure.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "key": "siem",
+    "label": "Security, compliance and monitoring: Security monitoring (SIEM)",
+    "status": "explicit",
+    "note": "",
+    "evidence": [
+     {
+      "page": 52,
+      "clause_ref": "IV.4",
+      "quote": "The application should be monitored via SIEM for logs monitoring",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "key": "security_scans",
+    "label": "Security, compliance and monitoring: Automatic security scans of the code",
+    "status": "explicit",
+    "note": "Source code review and regular vulnerability scans are required.",
+    "evidence": [
+     {
+      "page": 53,
+      "clause_ref": "b",
+      "quote": "Testing related to review of source code/ certification shall be conducted/ obtained.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "key": "data_masking",
+    "label": "Security, compliance and monitoring: Masking personal data",
+    "status": "explicit",
+    "note": "",
+    "evidence": [
+     {
+      "page": 70,
+      "clause_ref": "C1.2",
+      "quote": "information like AADHAAR number and other information to be masked or encrypted in the database",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "key": "secrets",
+    "label": "Security, compliance and monitoring: Keys and secrets kept in a vault (KMS)",
+    "status": "explicit",
+    "note": "Hardware security module for key management.",
+    "evidence": [
+     {
+      "page": 63,
+      "clause_ref": "9",
+      "quote": "Service provider have capability to integrate with HSM for key management",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "key": "compliance",
+    "label": "Security, compliance and monitoring: Compliance controls (ISO 27001, SOC 2)",
+    "status": "explicit",
+    "note": "ISO 27001 and OWASP standards are named.",
+    "evidence": [
+     {
+      "page": 87,
+      "clause_ref": "E1.1.6.10",
+      "quote": "Platform must adhere to security standards such as ISO27001/OWASP-MASVS,",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   }
+  ],
+  "scope_set_aside": [],
+  "inventory": null,
+  "staff_lines": [
+   {
+    "role": "L1, L2 and L3 managed-services resources",
+    "count": "3",
+    "count_basis": "per_shift",
+    "location": "not_stated",
+    "months": null,
+    "phase": "support",
+    "round_the_clock": true,
+    "buyer_sets_headcount": true,
+    "in_price_table": true,
+    "same_staff_as": "",
+    "quantity_unclear": false,
+    "note": "Table VI: one L1, one L2 and one L3 per shift; the number of shifts and where they sit are not stated",
+    "evidence": [
+     {
+      "page": 115,
+      "clause_ref": "Page 115",
+      "quote": "Bank at its own discretion may ask any number of resources to deployed based on business requirements and the resources shall be required to work on 24*7 basis",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 60,
+      "clause_ref": "Page 60",
+      "quote": "Bank reserves the rights to decide on Resource headcount as per business requirements",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "role": "onsite developer",
+    "count": "1",
+    "count_basis": "people",
+    "location": "client_site",
+    "months": null,
+    "phase": "whole_contract",
+    "round_the_clock": false,
+    "buyer_sets_headcount": false,
+    "in_price_table": false,
+    "same_staff_as": "",
+    "quantity_unclear": false,
+    "note": "",
+    "evidence": [
+     {
+      "page": 57,
+      "clause_ref": "Page 57",
+      "quote": "The bidder has to provide costing for one onsite developer who will be responsible for customization, parameterization and designing workflows",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "role": "onsite support engineer (L2 level)",
+    "count": "1",
+    "count_basis": "people",
+    "location": "client_site",
+    "months": 12,
+    "phase": "support",
+    "round_the_clock": false,
+    "buyer_sets_headcount": false,
+    "in_price_table": false,
+    "same_staff_as": "",
+    "quantity_unclear": false,
+    "note": "",
+    "evidence": [
+     {
+      "page": 103,
+      "clause_ref": "Page 103",
+      "quote": "Onsite support engineer (L2 level) for initial 1 year for smooth rollout, issue redressal, handholding, training",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   }
+  ],
+  "chatbot_buyer_systems": {
+   "systems": [
+    "Bank's systems through API calls",
+    "fund transfers"
+   ],
+   "evidence": [
+    {
+     "page": 34,
+     "clause_ref": "Page 34",
+     "quote": "System should provide support for integration of Bank’s Systems",
+     "document": "att01.pdf",
+     "checked": true
+    },
+    {
+     "page": 32,
+     "clause_ref": "Page 32",
+     "quote": "Financial Services through Chatbot: Following services are to be",
+     "document": "att01.pdf",
+     "checked": true
+    }
+   ]
+  },
+  "staffing": [
+   {
+    "kind": "support",
+    "role": "L1, L2 and L3 managed-services resources",
+    "count": "3",
+    "seats": false,
+    "months": null,
+    "call_off": true,
+    "why": "place not stated: priced offsite; the buyer sets the headcount: priced as written; every support year",
+    "evidence": [
+     {
+      "page": 115,
+      "clause_ref": "Page 115",
+      "quote": "Bank at its own discretion may ask any number of resources to deployed based on business requirements and the resources shall be required to work on 24*7 basis",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 60,
+      "clause_ref": "Page 60",
+      "quote": "Bank reserves the rights to decide on Resource headcount as per business requirements",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "kind": "onsite",
+    "role": "onsite developer",
+    "count": "1",
+    "seats": false,
+    "months": null,
+    "call_off": false,
+    "why": "every support year",
+    "evidence": [
+     {
+      "page": 57,
+      "clause_ref": "Page 57",
+      "quote": "The bidder has to provide costing for one onsite developer who will be responsible for customization, parameterization and designing workflows",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "kind": "onsite",
+    "role": "onsite support engineer (L2 level)",
+    "count": "1",
+    "seats": false,
+    "months": 12,
+    "call_off": false,
+    "why": "for 12 months",
+    "evidence": [
+     {
+      "page": 103,
+      "clause_ref": "Page 103",
+      "quote": "Onsite support engineer (L2 level) for initial 1 year for smooth rollout, issue redressal, handholding, training",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   }
+  ]
+ }
+}

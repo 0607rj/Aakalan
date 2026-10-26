@@ -7,6 +7,7 @@ from app.services.engine import spreads
 from app.services.engine.context import LineBuilder, PricingContext
 from app.services.engine.money import ONE, ZERO, ceil
 from app.services.engine.outputs import CostLineOut, Timeline
+from app.services.engine.run_costs import after_hypercare, staff_doing
 from app.services.engine.timeline import band_fee, band_value, size_band
 
 
@@ -246,6 +247,17 @@ def programme_lines(ctx: PricingContext, timeline: Timeline) -> list[CostLineOut
                 f"min({pd:.2f}, {om_share} × {timeline.build_effort_pd:.2f})",
                 min(pd, om_share * timeline.build_effort_pd),
             )
+        done, names = staff_doing(ctx, "management", year)
+        if done:  # v25+: a stated onsite PM is the O&M project manager
+            t.driver("onsite_resources")
+            t.param("maintenance", "staff_replace_work")
+            t.step(f"done by the onsite staff ({', '.join(names)})", f"{done:.2f}", done)
+            pd = t.step(
+                "O&M PM beyond them", f"max({pd:.2f} − {done:.2f}, 0)", max(pd - done, ZERO)
+            )
+        rest = after_hypercare(t, year)
+        if rest != ONE:
+            pd = t.step("after hypercare", f"{pd:.2f} × {rest:.4f}", pd * rest)
         t.add_role_pd(pm_role, pd)
         esc = t.escalation("labour", year)
         spreads.clarity(t, overall)

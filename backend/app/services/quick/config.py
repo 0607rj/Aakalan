@@ -329,6 +329,39 @@ class IndependentCheck(Frozen):
         return self
 
 
+class SizeCheck(Frozen):
+    """The story-size check (services/quick/size_check.py, OPEN_QUESTIONS 163): the build sized
+    from the document's user stories with a published function-point method, compared with our
+    hours per feature. A check only; nothing here changes a price. `sources` gives the source
+    of every figure."""
+
+    sources: dict[str, str]  # figure -> where it comes from
+    fp_per_story: Decimal = Field(gt=0)  # one user story = one elementary process
+    fp_per_data_group: Decimal = Field(gt=0)
+    data_groups_per_story: Decimal = Field(ge=0)
+    hours_per_fp: dict[Literal["low", "likely", "high"], Decimal]  # delivery rate
+    stages: list[str]  # our build stages compared (year 0)
+    min_stories: int = Field(ge=1)  # fewer: the feature is too small to judge alone
+    # build types that configure more than they build: the rate is for new code, so no verdict
+    reuse_build_types: list[str] = []
+    # user stories drafted by the AI when there is no document (services/quick/stories.py):
+    # the user edits and confirms them; they feed this check only, never a level or a price
+    draft_prompt: str  # prompts/<draft_prompt>.md
+    draft_max_stories: int = Field(ge=1, le=50)  # per feature
+    draft_max_chars: int = Field(ge=20, le=500)  # per story
+    top_features: int = Field(ge=1)
+
+    @model_validator(mode="after")
+    def _check(self) -> "SizeCheck":
+        figures = {"fp_per_story", "fp_per_data_group", "data_groups_per_story", "hours_per_fp"}
+        if missing := figures - set(self.sources):
+            raise ValueError(f"size_check.sources needs {sorted(missing)}")
+        h = self.hours_per_fp
+        if set(h) != {"low", "likely", "high"} or not 0 < h["low"] <= h["likely"] <= h["high"]:
+            raise ValueError("size_check.hours_per_fp needs 0 < low <= likely <= high")
+        return self
+
+
 class NotPricedTopic(Frozen):
     label: str
     words: list[str]
@@ -492,7 +525,8 @@ class SupportTerms(Frozen):
     """Support hours and support staff a document states, found in code on the page text
     (OPEN_QUESTIONS 157). A sentence about the bidding portal's own helpdesk (`ignore`) never
     counts. Support hours: a `round_the_clock` phrase answers round the clock, staffed in shifts
-    when the sentence names a `staffed` desk, else on call; without one, an `office_hours`
+    when the sentence says shifts or a roster (`staffed`, OPEN_QUESTIONS 162), else on call
+    (uptime and availability wording included); without one, an `office_hours`
     phrase in a sentence about support answers office hours; else an SLA response faster than
     `fast_response_hours` (in a sentence about support) answers on call. Support staff: a stated
     number of `staff_words` in a sentence about support (`support_words`) with a `dedicated`
@@ -514,6 +548,30 @@ class SupportTerms(Frozen):
     max_sentence_chars: int = Field(ge=20)
     values: dict[Literal["office", "on_call", "always"], str]  # support_hours option values
     conflict_query: str
+
+
+class StaffingQueries(Frozen):
+    """Pre-bid query texts the staff rules raise; {role}, {count}, {place}, {page}, {note} and
+    the price-table row's {table_role}, {table_count}, {table_place}, {table_page} are filled in."""
+
+    table_conflict: str
+    call_off: str
+    call_off_hours: str
+    place_not_stated: str
+    quantity_unclear: str
+
+
+class Staffing(Frozen):
+    """Staff, support hours, helpdesk and chatbot level from the reading's staff lines, in code
+    (services/extraction/staffing.py, OPEN_QUESTIONS 162)."""
+
+    source: str
+    helpdesk_words: list[str]
+    queries: StaffingQueries
+    # onsite staff whose name says they do the engine's own work (OPEN_QUESTIONS 166): whole
+    # words or phrases, any case; management is checked first
+    management_words: list[str] = []  # the O&M project manager
+    upkeep_words: list[str] = []  # bug fixes, patches, upgrades, small changes
 
 
 class CmsBuiltIn(Frozen):
@@ -572,6 +630,7 @@ class QuickConfig(Frozen):
     # rate-card role for dedicated support staff a document states (offsite or not said)
     support_role: str | None = None
     support_terms: SupportTerms | None = None  # support hours and staff read in code
+    staffing: Staffing | None = None  # staff lines priced in code (OPEN_QUESTIONS 162)
     onsite_event_days: OnsiteEventDays | None = None  # onsite only for an event, no days given
     payment_points: PaymentPoints | None = None
     cost_item_groups: list[CostItemGroup] = []
@@ -586,6 +645,7 @@ class QuickConfig(Frozen):
     reality_check: RealityCheck | None = None
     always_included: AlwaysIncluded | None = None
     independent_check: IndependentCheck | None = None
+    size_check: SizeCheck | None = None
     client_provided: ClientProvided | None = None
     # catalog key -> plain words, for the standard blocks the form lets the user untick
     standard_blocks: dict[str, StandardBlock] = {}

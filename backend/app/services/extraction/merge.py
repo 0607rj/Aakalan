@@ -16,6 +16,7 @@ from sqlalchemy.orm import Session
 
 from app.models import Document, Project
 from app.services.extraction.client_provided import client_provides, find_client_provided
+from app.services.extraction.staffing import apply_staffing
 from app.services.extraction.support_terms import find_support_hours, find_support_staff
 from app.services.extraction.tender import (
     FoundValue,
@@ -61,6 +62,7 @@ def merge_extractions(
     merged.features, merged.choices, merged.numbers, merged.unclear_points = [], {}, {}, []
     merged.other_features, merged.not_priced, merged.payment_terms = [], [], None
     merged.scope, merged.scope_set_aside = [], []
+    merged.staff_lines, merged.chatbot_buyer_systems, merged.staffing = [], None, None
     scope: dict[str, Any] = {}
     set_aside: dict[str, Any] = {}
     others: dict[str, Any] = {}
@@ -126,6 +128,13 @@ def merge_extractions(
             merged.payment_terms = ex.payment_terms
         merged.unclear_points.extend(ex.unclear_points)
         merged.dropped_findings += ex.dropped_findings
+        # every file's staff statements: the code weighs them together (staffing.py)
+        merged.staff_lines.extend(s.model_copy(deep=True) for s in ex.staff_lines)
+        if ex.chatbot_buyer_systems is not None:
+            if merged.chatbot_buyer_systems is None:
+                merged.chatbot_buyer_systems = ex.chatbot_buyer_systems.model_copy(deep=True)
+            else:
+                merged.chatbot_buyer_systems.evidence.extend(ex.chatbot_buyer_systems.evidence)
     merged.features = list(features.values())
     merged.other_features = list(others.values())
     merged.scope = list(scope.values())
@@ -142,12 +151,14 @@ def merge_extractions(
 
 def apply_code_checks(extraction: TenderExtraction, docs: list[Document]) -> TenderExtraction:
     """The answers found in code on the documents' page text rather than by the reader
-    (answers from not-priced topics, items the client provides, support hours and staff),
+    (answers from not-priced topics, items the client provides, support hours and staff, then
+    the staff rules on the reading's staff lines),
     applied in place. The review form pre-fills from the same merged reading the price uses
     (GET /documents/{id}), so the two agree (OPEN_QUESTIONS 159)."""
     _answers_from_topics(extraction)
     _client_provided(extraction, docs)
     _support_terms(extraction, docs)
+    apply_staffing(quick_config(), extraction, docs)  # staff lines and rules (OPEN_QUESTIONS 162)
     return extraction
 
 
@@ -226,6 +237,8 @@ def _support_terms(merged: TenderExtraction, docs: list[Document]) -> None:
                     clause_ref=hours.conflict.clause_ref,
                     quote=hours.conflict.quote,
                     prebid_query=terms.conflict_query,
+                    answer="support_hours",
+                    document=hours.conflict.document,
                 )
             )
     if staff is not None and cfg.support_role is not None:

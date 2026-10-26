@@ -62,6 +62,17 @@ class OnsiteResource(Strict):
     # "support": dedicated support staff a document states (offsite, or where they sit is not
     # said): the least support labour, covering the support work priced (support_staff.v1)
     kind: Literal["onsite", "support"] = "onsite"
+    # months from the start of support the staff are needed (a document's staff line, e.g.
+    # "for 2 years" = 24); None = every support year (OPEN_QUESTIONS 162)
+    months: Decimal | None = Field(default=None, gt=0)
+    # count is round-the-clock seats (a committed team stated per shift): people = seats ×
+    # people per round-the-clock seat (parameters helpdesk_coverage_fte["24x7"])
+    seats: bool = False
+    name: str = Field(default="", max_length=200)  # the document's name for them, for the label
+    # the work their staff line says they do, which the engine would otherwise price again
+    # (parameter sets v25+): "upkeep" (developers, engineers: bug fixes, patches, upgrades,
+    # small changes) or "management" (the O&M project manager); "" = neither
+    covers: Literal["", "upkeep", "management"] = ""
 
 
 class PaymentMilestone(Strict):

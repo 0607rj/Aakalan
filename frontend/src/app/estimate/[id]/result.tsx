@@ -29,6 +29,7 @@ import {
   exportBlocked,
   IndependentCheckCard,
   OpenAnswers,
+  SizeCheckCard,
   usePricedOptions,
 } from "./check";
 import { Downloads } from "./downloads";
@@ -338,7 +339,13 @@ function hoursText(hours: number): string {
 }
 
 /** The build in hours: the same work without AI tools, with them, and what AI saved. */
-function HoursOfWork({ summary }: { summary: QuickSummary }) {
+function HoursOfWork({
+  summary,
+  byRole,
+}: {
+  summary: QuickSummary;
+  byRole: boolean;
+}) {
   const h = summary.hours;
   if (!h || h.rows.length === 0) return null;
   const money = (paise: number | null | undefined) =>
@@ -389,43 +396,69 @@ function HoursOfWork({ summary }: { summary: QuickSummary }) {
           </div>
         ) : null}
       </div>
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[34rem] text-sm">
-          <thead>
-            <tr className="border-b text-left text-muted-foreground">
-              <th className="py-2 pr-4 font-medium">Role</th>
-              {hasOld ? (
-                <th className="py-2 pr-4 text-right font-medium">Without AI</th>
-              ) : null}
-              <th className="py-2 pr-4 text-right font-medium">With AI</th>
-              <th className="py-2 text-right font-medium">Rate per hour</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y">
-            {h.rows.map((r) => (
-              <tr key={r.role}>
-                <td className="py-2 pr-4">{r.label}</td>
+      {byRole ? (
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[34rem] text-sm">
+            <thead>
+              <tr className="border-b text-left text-muted-foreground">
+                <th className="py-2 pr-4 font-medium">Role</th>
                 {hasOld ? (
-                  <td className="py-2 pr-4 text-right text-muted-foreground tabular-nums">
-                    {hoursText(r.hours_without_ai ?? 0)} h
-                  </td>
+                  <th className="py-2 pr-4 text-right font-medium">
+                    Without AI
+                  </th>
                 ) : null}
-                <td className="py-2 pr-4 text-right font-medium tabular-nums">
-                  {hoursText(r.hours_with_ai)} h
-                </td>
-                <td className="py-2 text-right text-muted-foreground tabular-nums">
-                  {formatPaise(
-                    Math.round(Number(r.rupees_per_hour)) * 100,
-                    summary.currency,
-                  )}
-                  /h
-                </td>
+                <th className="py-2 pr-4 text-right font-medium">With AI</th>
+                <th className="py-2 text-right font-medium">Rate per hour</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody className="divide-y">
+              {h.rows.map((r) => (
+                <tr key={r.role}>
+                  <td className="py-2 pr-4">{r.label}</td>
+                  {hasOld ? (
+                    <td className="py-2 pr-4 text-right text-muted-foreground tabular-nums">
+                      {hoursText(r.hours_without_ai ?? 0)} h
+                    </td>
+                  ) : null}
+                  <td className="py-2 pr-4 text-right font-medium tabular-nums">
+                    {hoursText(r.hours_with_ai)} h
+                  </td>
+                  <td className="py-2 text-right text-muted-foreground tabular-nums">
+                    {formatPaise(
+                      Math.round(Number(r.rupees_per_hour)) * 100,
+                      summary.currency,
+                    )}
+                    /h
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : null}
     </section>
+  );
+}
+
+/** Hours and people in total; the split by role (for a bid's price schedule) on request. */
+function TeamAndHours({ summary }: { summary: QuickSummary }) {
+  const [byRole, setByRole] = React.useState(false);
+  const roles =
+    summary.team.length > 0 || (summary.hours?.rows.length ?? 0) > 0;
+  return (
+    <>
+      <HoursOfWork summary={summary} byRole={byRole} />
+      <TeamNeeded summary={summary} byRole={byRole} />
+      {roles ? (
+        <button
+          type="button"
+          className="w-fit rounded text-sm font-medium text-primary hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+          onClick={() => setByRole((now) => !now)}
+        >
+          {byRole ? "Hide the split by role" : "Show the split by role"}
+        </button>
+      ) : null}
+    </>
   );
 }
 
@@ -437,7 +470,13 @@ function peopleText(people: number): string {
 }
 
 /** Who is needed to build it: people by role over the build, with and without AI tools. */
-function TeamNeeded({ summary }: { summary: QuickSummary }) {
+function TeamNeeded({
+  summary,
+  byRole,
+}: {
+  summary: QuickSummary;
+  byRole: boolean;
+}) {
   if (summary.team.length === 0) return null;
   const months = Number(summary.build_months);
   const total = Number(summary.team_people ?? 0);
@@ -460,46 +499,52 @@ function TeamNeeded({ summary }: { summary: QuickSummary }) {
             : ""}
         </p>
       </div>
-      <div className="overflow-x-auto">
-        <table className="w-full min-w-[32rem] text-sm">
-          <thead>
-            <tr className="border-b text-left text-muted-foreground">
-              <th className="py-2 pr-4 font-medium">Role</th>
-              <th className="py-2 pr-4 font-medium">People</th>
-              <th className="py-2 pr-4 text-right font-medium">Work</th>
-              {hasOld ? (
-                <th className="py-2 text-right font-medium">
-                  Without AI tools
-                </th>
-              ) : null}
-            </tr>
-          </thead>
-          <tbody className="divide-y">
-            {summary.team.map((r) => (
-              <tr key={r.role}>
-                <td className="py-2 pr-4">{r.label}</td>
-                <td className="py-2 pr-4 font-medium">
-                  {peopleText(Number(r.people))}
-                </td>
-                <td className="py-2 pr-4 text-right text-muted-foreground tabular-nums">
-                  {pm(r.person_months)}
-                </td>
+      {byRole ? (
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[32rem] text-sm">
+            <thead>
+              <tr className="border-b text-left text-muted-foreground">
+                <th className="py-2 pr-4 font-medium">Role</th>
+                <th className="py-2 pr-4 font-medium">People</th>
+                <th className="py-2 pr-4 text-right font-medium">Work</th>
                 {hasOld ? (
-                  <td className="py-2 text-right text-muted-foreground tabular-nums">
-                    {pm(r.traditional_person_months)}
-                  </td>
+                  <th className="py-2 text-right font-medium">
+                    Without AI tools
+                  </th>
                 ) : null}
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody className="divide-y">
+              {summary.team.map((r) => (
+                <tr key={r.role}>
+                  <td className="py-2 pr-4">{r.label}</td>
+                  <td className="py-2 pr-4 font-medium">
+                    {peopleText(Number(r.people))}
+                  </td>
+                  <td className="py-2 pr-4 text-right text-muted-foreground tabular-nums">
+                    {pm(r.person_months)}
+                  </td>
+                  {hasOld ? (
+                    <td className="py-2 text-right text-muted-foreground tabular-nums">
+                      {pm(r.traditional_person_months)}
+                    </td>
+                  ) : null}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : null}
       {summary.support_team.length > 0 && summary.support_years > 0 ? (
         <p className="text-sm text-muted-foreground">
           <strong className="text-foreground">After launch</strong> (each year):{" "}
-          {summary.support_team
-            .map((r) => `${r.label} — ${peopleText(Number(r.people))}`)
-            .join("; ")}
+          {byRole
+            ? summary.support_team
+                .map((r) => `${r.label} — ${peopleText(Number(r.people))}`)
+                .join("; ")
+            : peopleText(
+                summary.support_team.reduce((s, r) => s + Number(r.people), 0),
+              )}
           .
         </p>
       ) : null}
@@ -726,8 +771,8 @@ function CostItems({ summary }: { summary: QuickSummary }) {
             </div>
           ))}
           <p className="text-sm text-muted-foreground">
-            The total range is narrower than the sum of the item ranges: not
-            everything runs high at once.
+            Each item&apos;s range is its share of the total range, so the items
+            add up to it.
           </p>
         </div>
       }
@@ -992,6 +1037,7 @@ function SummaryView({
         <>
           <Headline summary={summary} />
           <IndependentCheckCard summary={summary} onChange={onChange} />
+          <SizeCheckCard summary={summary} />
           <RealityCheck summary={summary} />
           <OpenAnswers summary={summary} options={options} />
           <BidCheckCard summary={summary} />
@@ -1001,8 +1047,7 @@ function SummaryView({
 
           {hasTeam ? (
             <Disclosure title="Team and hours" hint={effortHint(summary)}>
-              <HoursOfWork summary={summary} />
-              <TeamNeeded summary={summary} />
+              <TeamAndHours summary={summary} />
             </Disclosure>
           ) : null}
 

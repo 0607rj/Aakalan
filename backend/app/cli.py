@@ -269,7 +269,7 @@ def main(argv: list[str] | None = None) -> None:
     p_bt.add_argument("--as-of", help="price as of this date (YYYY-MM-DD) for a repeatable report")
     p_bt.add_argument(
         "--readings",
-        default=str(BACKEND_DIR / "tests" / "fixtures" / "readings"),
+        default=str(BACKEND_DIR / "tests" / "fixtures" / "readings_v9"),
         help="saved tender readings for the production-path back-test",
     )
     p_bt.set_defaults(func=cmd_backtest)

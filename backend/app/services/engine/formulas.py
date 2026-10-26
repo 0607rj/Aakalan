@@ -81,8 +81,17 @@ FORMULAS: dict[str, str] = {
         " × (1 + escalation_prices)^year"
     ),
     "hosting.database.v1": (
-        "db_instances × db_month_rate[tier] × (1 − reserved_discount) × months_per_year"
-        " × (1 + escalation_prices)^year"
+        "db_instances × db_month_rate[tier] × (1 − reserved_discount) × months_per_year × (1 + "
+        "escalation_prices)^year"
+    ),
+    "hosting.bundle.v1": (
+        "month_rate[provider, uptime pattern, load band] × (1 − reserved_discount)"
+        " × months_per_year × (1 + escalation_prices)^year; spread: load within the band (v25+)"
+    ),
+    "maintenance.upkeep.v1": (
+        "max(Σ build_pd × share[bugfix, patching, upgrade] + change-request pd − onsite staff"
+        " who do this work, 0) at each role's rate × run_multiplier × (1 + escalation_labour)^year;"
+        " year 1 × (52 − hypercare weeks) / 52"
     ),
     "hosting.storage.v1": "storage_gb(year) × gb_month_rate × months_per_year × (1 + esc)^year",
     "hosting.backup.v1": (
@@ -93,7 +102,7 @@ FORMULAS: dict[str, str] = {
         " × (1 + esc)^year"
     ),
     "hosting.load_balancer.v1": "lb_month_rate × months_per_year × (1 + esc)^year",
-    "hosting.monitoring.v1": "monitoring_month_rate × months_per_year × (1 + esc)^year",
+    "hosting.monitoring.v1": ("monitoring_month_rate × months_per_year × (1 + esc)^year"),
     "hosting.dr.v1": "dr_cost_factor × (compute_year + database_year)",
     "hosting.onprem_colocation.v1": (
         "ceil(servers / servers_per_rack) × rack_month_rate × months_per_year × (1 + esc)^year"
@@ -162,10 +171,21 @@ FORMULAS: dict[str, str] = {
         " patching, upgrades, change requests), 0) × rate(support_role)"
         " × (1 + escalation_labour)^year"
     ),
+    # OPEN_QUESTIONS 162: staff for part of the support period, or round-the-clock seats
+    "maintenance.onsite.v2": (
+        "count × people_per_seat (round-the-clock seats only) × pd_per_year × share_of_year"
+        " × rate(role) × (1 + escalation_labour)^year; share_of_year = clamp(months −"
+        " 12 × (year − 1), 0, 12) / 12 (1 without months)"
+    ),
+    "maintenance.support_staff.v2": (
+        "max(count × people_per_seat (round-the-clock seats only) × pd_per_year × share_of_year"
+        " − support pd priced that year, 0) × rate(support_role) × (1 + escalation_labour)^year;"
+        " share_of_year = clamp(months − 12 × (year − 1), 0, 12) / 12 (1 without months)"
+    ),
     "maintenance.onsite_days.v1": (
         "count × days × rate(role) × (1 + escalation_labour), year 1 only"
     ),
-    "maintenance.annual_audit.v1": "annual_audit_fee[size_band] × (1 + escalation_prices)^year",
+    "maintenance.annual_audit.v1": ("annual_audit_fee[size_band] × (1 + escalation_prices)^year"),
     "maintenance.ssl_domain.v1": "(ssl_rate + domain_rate) × (1 + escalation_prices)^year",
     "maintenance.ssl_domain.v2": (
         "(ssl_rate[ssl_type] × ssl_in_scope + domain_rate[web_domain] × domain_in_scope)"

@@ -41,9 +41,19 @@ def test_the_bidding_portals_own_helpdesk_does_not_count() -> None:
     assert find_support_hours(terms(), pages(PORTAL)) is None
 
 
-def test_a_staffed_desk_round_the_clock_is_shifts() -> None:
-    found = find_support_hours(terms(), pages("The bidder shall run a 24x7 helpdesk for users."))
-    assert found is not None and found.value == "always" and found.conflict is None
+def test_round_the_clock_is_staffed_only_in_shifts() -> None:
+    """OPEN_QUESTIONS 162 rule 2: a 24x7 helpdesk alone is on call; shifts or a roster staff it."""
+    desk = find_support_hours(terms(), pages("The bidder shall run a 24x7 helpdesk for users."))
+    assert desk is not None and desk.value == "on_call" and desk.conflict is None
+    shifts = "The bidder shall run a 24x7 helpdesk for users in three shifts."
+    found = find_support_hours(terms(), pages(shifts))
+    assert found is not None and found.value == "always"
+
+
+def test_uptime_round_the_clock_is_on_call() -> None:
+    uptime = "The portal shall have an uptime of 99.5% on a 24x7 basis."
+    found = find_support_hours(terms(), pages(uptime))
+    assert found is not None and found.value == "on_call"
 
 
 def test_office_hours_and_a_fast_response() -> None:

@@ -2251,6 +2251,53 @@
         ]
       }
     },
+    "/quick-estimate/draft-stories": {
+      "post": {
+        "tags": [
+          "quick estimate"
+        ],
+        "summary": "Draft",
+        "description": "User stories for the ticked features, drafted by the AI for the user to edit and confirm\n(a project without a document). Nothing is saved or priced; the confirmed stories feed the\nstory-size check only.",
+        "operationId": "draft_quick_estimate_draft_stories_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DraftIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DraftOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/documents": {
       "post": {
         "tags": [
@@ -5026,6 +5073,65 @@
         ],
         "title": "DocumentOut"
       },
+      "DraftIn": {
+        "properties": {
+          "description": {
+            "type": "string",
+            "maxLength": 4000,
+            "title": "Description",
+            "default": ""
+          },
+          "features": {
+            "items": {
+              "$ref": "#/components/schemas/StoryFeature"
+            },
+            "type": "array",
+            "maxItems": 60,
+            "minItems": 1,
+            "title": "Features"
+          }
+        },
+        "type": "object",
+        "required": [
+          "features"
+        ],
+        "title": "DraftIn"
+      },
+      "DraftOut": {
+        "properties": {
+          "available": {
+            "type": "boolean",
+            "title": "Available"
+          },
+          "stories": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Stories",
+            "default": {}
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "available"
+        ],
+        "title": "DraftOut"
+      },
       "Driver": {
         "type": "string",
         "enum": [
@@ -5861,6 +5967,77 @@
         ],
         "title": "FeatureOut"
       },
+      "FeatureSize": {
+        "properties": {
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "level": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Level"
+          },
+          "stories": {
+            "type": "integer",
+            "title": "Stories"
+          },
+          "our_hours": {
+            "type": "integer",
+            "title": "Our Hours"
+          },
+          "our_hours_with_ai": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Our Hours With Ai"
+          },
+          "story_hours": {
+            "type": "integer",
+            "title": "Story Hours"
+          },
+          "ratio": {
+            "type": "string",
+            "title": "Ratio"
+          },
+          "position": {
+            "type": "string",
+            "enum": [
+              "below",
+              "inside",
+              "above"
+            ],
+            "title": "Position"
+          },
+          "judged": {
+            "type": "boolean",
+            "title": "Judged"
+          }
+        },
+        "type": "object",
+        "required": [
+          "label",
+          "level",
+          "stories",
+          "our_hours",
+          "story_hours",
+          "ratio",
+          "position",
+          "judged"
+        ],
+        "title": "FeatureSize"
+      },
       "Flag": {
         "properties": {
           "kind": {
@@ -5899,6 +6076,30 @@
           "message"
         ],
         "title": "Flag"
+      },
+      "FoundChatbotSystems": {
+        "properties": {
+          "systems": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Systems"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/VerifiedEvidence"
+            },
+            "type": "array",
+            "title": "Evidence"
+          }
+        },
+        "type": "object",
+        "required": [
+          "systems",
+          "evidence"
+        ],
+        "title": "FoundChatbotSystems"
       },
       "FoundFeature": {
         "properties": {
@@ -6283,6 +6484,181 @@
         ],
         "title": "FoundScope",
         "description": "A scope item the document mentions (quick config `scope`), with its quotes."
+      },
+      "FoundStaff": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "onsite",
+              "support"
+            ],
+            "title": "Kind"
+          },
+          "role": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Role"
+          },
+          "count": {
+            "type": "string",
+            "title": "Count"
+          },
+          "months": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 240.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Months"
+          },
+          "seats": {
+            "type": "boolean",
+            "title": "Seats",
+            "default": false
+          },
+          "call_off": {
+            "type": "boolean",
+            "title": "Call Off",
+            "default": false
+          },
+          "found_index": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Found Index"
+          },
+          "why": {
+            "type": "string",
+            "title": "Why"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/VerifiedEvidence"
+            },
+            "type": "array",
+            "title": "Evidence"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "role",
+          "count",
+          "why",
+          "evidence"
+        ],
+        "title": "FoundStaff",
+        "description": "A staff line as priced from the document, with how and where it says so."
+      },
+      "FoundStaffLine": {
+        "properties": {
+          "role": {
+            "type": "string",
+            "title": "Role"
+          },
+          "count": {
+            "type": "string",
+            "title": "Count"
+          },
+          "count_basis": {
+            "type": "string",
+            "enum": [
+              "people",
+              "per_shift",
+              "resource_months"
+            ],
+            "title": "Count Basis",
+            "default": "people"
+          },
+          "location": {
+            "type": "string",
+            "enum": [
+              "client_site",
+              "vendor_site",
+              "not_stated"
+            ],
+            "title": "Location",
+            "default": "not_stated"
+          },
+          "months": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Months"
+          },
+          "phase": {
+            "type": "string",
+            "enum": [
+              "build",
+              "support",
+              "whole_contract"
+            ],
+            "title": "Phase",
+            "default": "support"
+          },
+          "round_the_clock": {
+            "type": "boolean",
+            "title": "Round The Clock",
+            "default": false
+          },
+          "buyer_sets_headcount": {
+            "type": "boolean",
+            "title": "Buyer Sets Headcount",
+            "default": false
+          },
+          "in_price_table": {
+            "type": "boolean",
+            "title": "In Price Table",
+            "default": false
+          },
+          "same_staff_as": {
+            "type": "string",
+            "title": "Same Staff As",
+            "default": ""
+          },
+          "quantity_unclear": {
+            "type": "boolean",
+            "title": "Quantity Unclear",
+            "default": false
+          },
+          "note": {
+            "type": "string",
+            "title": "Note",
+            "default": ""
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/VerifiedEvidence"
+            },
+            "type": "array",
+            "title": "Evidence"
+          }
+        },
+        "type": "object",
+        "required": [
+          "role",
+          "count",
+          "evidence"
+        ],
+        "title": "FoundStaffLine",
+        "description": "A staff statement whose quote was found on its page (StaffLineFinding, normalised)."
       },
       "FoundValue": {
         "properties": {
@@ -6684,6 +7060,69 @@
           "phases"
         ],
         "title": "Infeasibility"
+      },
+      "KeyAnswer": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "enum": [
+              "staff",
+              "support_hours",
+              "support_years",
+              "build_type",
+              "chatbot_task"
+            ],
+            "title": "Key"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "value": {
+            "type": "string",
+            "title": "Value"
+          },
+          "stated": {
+            "type": "boolean",
+            "title": "Stated"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/VerifiedEvidence"
+            },
+            "type": "array",
+            "title": "Evidence"
+          },
+          "queries": {
+            "items": {
+              "$ref": "#/components/schemas/UnclearPoint"
+            },
+            "type": "array",
+            "title": "Queries"
+          },
+          "impact_paise": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Impact Paise"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "label",
+          "value",
+          "stated",
+          "evidence",
+          "queries"
+        ],
+        "title": "KeyAnswer",
+        "description": "One of the answers that move the price most, with the clause that gives it and the\npre-bid queries about it. The form orders them by `impact_paise` (GET /documents/{id}/form)."
       },
       "LevelOut": {
         "properties": {
@@ -7653,6 +8092,68 @@
         "title": "PricedOption",
         "description": "A question left open (not in the document, or answered \"Not sure\"): priced at its usual\nanswer, with what each other answer would change. Fast fixed-seed re-pricing (quick config\n`impact`) of the estimate's own snapshot, so the changes use its pinned rates."
       },
+      "PricedStaff": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "onsite",
+              "support"
+            ],
+            "title": "Kind"
+          },
+          "role": {
+            "type": "string",
+            "title": "Role"
+          },
+          "count": {
+            "type": "string",
+            "title": "Count"
+          },
+          "seats": {
+            "type": "boolean",
+            "title": "Seats",
+            "default": false
+          },
+          "months": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Months"
+          },
+          "call_off": {
+            "type": "boolean",
+            "title": "Call Off",
+            "default": false
+          },
+          "why": {
+            "type": "string",
+            "title": "Why",
+            "default": ""
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/VerifiedEvidence"
+            },
+            "type": "array",
+            "title": "Evidence"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "role",
+          "count",
+          "evidence"
+        ],
+        "title": "PricedStaff",
+        "description": "Staff the code prices from the staff lines (services/extraction/staffing.py): people at\nthe client's office (onsite) or elsewhere (support), with how long and why."
+      },
       "ProjectCreate": {
         "properties": {
           "name": {
@@ -8361,6 +8862,34 @@
               }
             ],
             "title": "Answered"
+          },
+          "staff": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/StaffItem-Input"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Staff"
+          },
+          "feature_stories": {
+            "additionalProperties": {
+              "items": {
+                "type": "string",
+                "maxLength": 300
+              },
+              "type": "array",
+              "maxItems": 100
+            },
+            "type": "object",
+            "maxProperties": 60,
+            "title": "Feature Stories",
+            "default": {}
           }
         },
         "type": "object",
@@ -8536,6 +9065,34 @@
               }
             ],
             "title": "Answered"
+          },
+          "staff": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/StaffItem-Output"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Staff"
+          },
+          "feature_stories": {
+            "additionalProperties": {
+              "items": {
+                "type": "string",
+                "maxLength": 300
+              },
+              "type": "array",
+              "maxItems": 100
+            },
+            "type": "object",
+            "maxProperties": 60,
+            "title": "Feature Stories",
+            "default": {}
           }
         },
         "type": "object",
@@ -8948,6 +9505,16 @@
             "anyOf": [
               {
                 "$ref": "#/components/schemas/IndependentCheckOut"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "size_check": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SizeCheckOut"
               },
               {
                 "type": "null"
@@ -9914,6 +10481,28 @@
             ],
             "title": "Payment Schedule"
           },
+          "staff": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/FoundStaff"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Staff"
+          },
+          "key_answers": {
+            "items": {
+              "$ref": "#/components/schemas/KeyAnswer"
+            },
+            "type": "array",
+            "title": "Key Answers",
+            "default": []
+          },
           "request": {
             "$ref": "#/components/schemas/QuickRequest-Output"
           }
@@ -10398,6 +10987,151 @@
         ],
         "title": "Size"
       },
+      "SizeCheckOut": {
+        "properties": {
+          "available": {
+            "type": "boolean",
+            "title": "Available"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "stories": {
+            "type": "integer",
+            "title": "Stories",
+            "default": 0
+          },
+          "function_points": {
+            "type": "string",
+            "title": "Function Points",
+            "default": "0"
+          },
+          "story_hours_low": {
+            "type": "integer",
+            "title": "Story Hours Low",
+            "default": 0
+          },
+          "story_hours": {
+            "type": "integer",
+            "title": "Story Hours",
+            "default": 0
+          },
+          "story_hours_high": {
+            "type": "integer",
+            "title": "Story Hours High",
+            "default": 0
+          },
+          "our_hours": {
+            "type": "integer",
+            "title": "Our Hours",
+            "default": 0
+          },
+          "our_hours_with_ai": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Our Hours With Ai"
+          },
+          "ratio": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ratio"
+          },
+          "position": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "below",
+                  "inside",
+                  "above"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Position"
+          },
+          "count_check_ratio": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Count Check Ratio"
+          },
+          "methods_agree": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Methods Agree"
+          },
+          "message": {
+            "type": "string",
+            "title": "Message",
+            "default": ""
+          },
+          "headline": {
+            "type": "string",
+            "title": "Headline",
+            "default": ""
+          },
+          "features": {
+            "items": {
+              "$ref": "#/components/schemas/FeatureSize"
+            },
+            "type": "array",
+            "title": "Features",
+            "default": []
+          },
+          "unsized": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Unsized",
+            "default": []
+          },
+          "note": {
+            "type": "string",
+            "title": "Note",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "available"
+        ],
+        "title": "SizeCheckOut"
+      },
       "SourceRef": {
         "properties": {
           "clause_ref": {
@@ -10497,6 +11231,143 @@
         ],
         "title": "SpreadFactor"
       },
+      "StaffItem-Input": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "onsite",
+              "support"
+            ],
+            "title": "Kind"
+          },
+          "role": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Role"
+          },
+          "count": {
+            "anyOf": [
+              {
+                "type": "number",
+                "maximum": 1000.0,
+                "exclusiveMinimum": 0.0
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "title": "Count"
+          },
+          "months": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 240.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Months"
+          },
+          "seats": {
+            "type": "boolean",
+            "title": "Seats",
+            "default": false
+          },
+          "call_off": {
+            "type": "boolean",
+            "title": "Call Off",
+            "default": false
+          },
+          "found_index": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Found Index"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "role",
+          "count"
+        ],
+        "title": "StaffItem",
+        "description": "People the vendor provides during support, from the document's staff lines (priced in\ncode, services/extraction/staffing.py) or added by the user (OPEN_QUESTIONS 162)."
+      },
+      "StaffItem-Output": {
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "onsite",
+              "support"
+            ],
+            "title": "Kind"
+          },
+          "role": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Role"
+          },
+          "count": {
+            "type": "string",
+            "title": "Count"
+          },
+          "months": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "maximum": 240.0,
+                "minimum": 1.0
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Months"
+          },
+          "seats": {
+            "type": "boolean",
+            "title": "Seats",
+            "default": false
+          },
+          "call_off": {
+            "type": "boolean",
+            "title": "Call Off",
+            "default": false
+          },
+          "found_index": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Found Index"
+          }
+        },
+        "type": "object",
+        "required": [
+          "kind",
+          "role",
+          "count"
+        ],
+        "title": "StaffItem",
+        "description": "People the vendor provides during support, from the document's staff lines (priced in\ncode, services/extraction/staffing.py) or added by the user (OPEN_QUESTIONS 162)."
+      },
       "StandardBlockOut": {
         "properties": {
           "key": {
@@ -10519,6 +11390,26 @@
           "hint"
         ],
         "title": "StandardBlockOut"
+      },
+      "StoryFeature": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "maxLength": 200,
+            "title": "Key"
+          },
+          "label": {
+            "type": "string",
+            "maxLength": 300,
+            "title": "Label"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "label"
+        ],
+        "title": "StoryFeature"
       },
       "SuggestedFeature": {
         "properties": {
@@ -10894,6 +11785,38 @@
                 "type": "null"
               }
             ]
+          },
+          "staff_lines": {
+            "items": {
+              "$ref": "#/components/schemas/FoundStaffLine"
+            },
+            "type": "array",
+            "title": "Staff Lines",
+            "default": []
+          },
+          "chatbot_buyer_systems": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/FoundChatbotSystems"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "staffing": {
+            "anyOf": [
+              {
+                "items": {
+                  "$ref": "#/components/schemas/PricedStaff"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Staffing"
           }
         },
         "type": "object",
@@ -11359,6 +12282,16 @@
           "prebid_query": {
             "type": "string",
             "title": "Prebid Query",
+            "default": ""
+          },
+          "answer": {
+            "type": "string",
+            "title": "Answer",
+            "default": ""
+          },
+          "document": {
+            "type": "string",
+            "title": "Document",
             "default": ""
           }
         },

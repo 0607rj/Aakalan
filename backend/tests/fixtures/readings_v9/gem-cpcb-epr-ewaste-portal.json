@@ -1,0 +1,1184 @@
+{
+ "benchmark_id": "gem-cpcb-epr-ewaste-portal",
+ "reader_model": "stand-in: a Claude Code Sonnet subagent answering the app's own prompts (relayed), NOT the production claude-sonnet-5-5 API call; staff lines and the chatbot's systems entered by hand from the clauses (Claude Code, 2026-10-24), no AI re-read",
+ "read_on": "2026-10-24",
+ "code_path": "production reading code: app parser, ai_read (extract_tender_v8 + gap_check_v3), verify_findings, merge_extractions; only the LLM call was relayed. Staff lines and the chatbot's systems (prompt v9 fields) added by hand, quotes checked by verify_findings' quote check; apply_code_checks (support terms and the staff rules, OPEN_QUESTIONS 162) run again on the page texts. No inventory (independent check) was read.",
+ "files_read": [
+  "att01.pdf",
+  "att12.pdf",
+  "att06.pdf",
+  "att05.pdf"
+ ],
+ "files_not_read": [],
+ "extraction": {
+  "reader": "ai",
+  "prompt_version": "extract_tender_v8",
+  "project_name": "Development of Extended Producers Responsibility (EPR) Portal under E-Waste (Management) Rules 2022",
+  "summary": "The requirement document asks for a national portal where producers, recyclers and refurbishers of electronic goods register, report their e-waste data and obtain or trade EPR certificates, with regulators approving and auditing them. It also asks for dashboards and reports, a mobile app with a chatbot, and five years of maintenance after a one-year warranty, hosted at the National Informatics Centre.",
+  "features": [
+   {
+    "key": "online_forms",
+    "label": "Online application or registration forms",
+    "evidence": [
+     {
+      "page": 5,
+      "clause_ref": "Module-1",
+      "quote": "The portal should facilitate sign-up and registration of Producers, Recycles and",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 5,
+      "clause_ref": "Module-1",
+      "quote": "System will auto fetch basic information of the user from the sign-up form.",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 6,
+      "clause_ref": "Module-1",
+      "quote": "Provision for geo-tagging of the locations, live videos, uploading videos & pictures.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 2,
+    "suggested": true,
+    "stories": [
+     "As a producer, recycler or refurbisher, I can sign up and register with my KYC details",
+     "As an applicant, I can submit the registration form with documents and get an application number",
+     "As an applicant, I can add the geo-tagged location, videos and pictures of my site"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "approval_workflow",
+    "label": "Files go from person to person for approval",
+    "evidence": [
+     {
+      "page": 6,
+      "clause_ref": "Module-1",
+      "quote": "Provision for movement of checklist across various officials such as Competent",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 1,
+    "suggested": true,
+    "stories": [
+     "As a CPCB officer, I can examine the submitted documents and move the checklist across the competent authority, divisional head, review officer and evaluating officers",
+     "As the competent authority, I can approve a registration and issue a unique registration number"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "dashboards",
+    "label": "Reports and dashboards",
+    "evidence": [
+     {
+      "page": 4,
+      "clause_ref": "2.0",
+      "quote": "The platform will feature a national dashboard for reporting the generation, recycling,",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 7,
+      "clause_ref": "Module-4",
+      "quote": "System to auto-generate Monthly, Quarterly & Annual Returns/Reports of Producer",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 41,
+      "clause_ref": "13.0",
+      "quote": "Development of dashboard for all users",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 1,
+    "suggested": true,
+    "stories": [
+     "As a regulator, I can see a national dashboard of e-waste generation, recycling and refurbishing",
+     "As a stakeholder, I can see a dashboard made for my role",
+     "As a producer, recycler or refurbisher, I can get my monthly, quarterly and annual returns generated and archived year-wise",
+     "As a CPCB officer, I can view state-wise reports on recyclers, refurbishers and producers with their capacity and targets",
+     "As a CPCB officer, I can view national statistics on recycled e-waste, refurbished equipment and yearly generation"
+    ],
+    "story_level": "standard",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "payments",
+    "label": "Online fee payment",
+    "evidence": [
+     {
+      "page": 6,
+      "clause_ref": "Module-1",
+      "quote": "The System to create payment gateway for charging registration fee.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 1,
+    "suggested": true,
+    "stories": [
+     "As an applicant, I can pay the automatically calculated registration fee online"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "connect_existing",
+    "label": "Connect to existing systems (SAP, old software)",
+    "evidence": [
+     {
+      "page": 4,
+      "clause_ref": "3.0",
+      "quote": "needs to develop the EPR module for e-waste and also maintain/upgrade/integrate existing",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 22,
+      "clause_ref": "5.1",
+      "quote": "The software should be provision for linkage with Central Portal of CPCB for Waste",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 1,
+    "suggested": true,
+    "stories": [
+     "As CPCB, I can have the portal linked with the central portal of CPCB and the existing EPR modules"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "languages",
+    "label": "Available in Indian languages",
+    "evidence": [
+     {
+      "page": 21,
+      "clause_ref": "5.1",
+      "quote": "The Software should have provision for multi-lingual usage.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 1,
+    "suggested": true,
+    "stories": [
+     "As a user, I can use the portal in more than one language"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "public_website",
+    "label": "Public website with notices and news",
+    "evidence": [
+     {
+      "page": 24,
+      "clause_ref": "5.5",
+      "quote": "Upload and publish latest information as received from CPCB/MoEFCC on the portal.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 1,
+    "suggested": true,
+    "stories": [
+     "As CPCB staff, I can publish documents, news and notices on the portal pages"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "mobile_app",
+    "label": "Mobile app (Android / iOS)",
+    "evidence": [
+     {
+      "page": 8,
+      "clause_ref": "Module-7",
+      "quote": "Mobile Application should be developed for Android, and IOS Operating system.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 1,
+    "suggested": true,
+    "stories": [
+     "As a producer, I can enter my monthly sales data from the mobile app",
+     "As a recycler or refurbisher, I can enter the monthly e-waste processed from the mobile app"
+    ],
+    "story_level": "advanced",
+    "story_units": 2,
+    "covers": [
+     "online_forms",
+     "approval_workflow",
+     "dashboards",
+     "payments",
+     "languages",
+     "public_website",
+     "notifications",
+     "ai_chatbot"
+    ]
+   },
+   {
+    "key": "notifications",
+    "label": "SMS, email and app notifications",
+    "evidence": [
+     {
+      "page": 6,
+      "clause_ref": "Module 2",
+      "quote": "Generate Alert Messages for timely submission of activity data and also in case on",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 22,
+      "clause_ref": "5.1",
+      "quote": "The Software should have capabilities to provide alert for non-achievement of",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 1,
+    "suggested": true,
+    "stories": [
+     "As a producer, recycler or refurbisher, I get alerts for timely submission of data and for non-compliance",
+     "As a producer, I get an alert when I fail to meet my EPR obligation or submit wrong data"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "ai_chatbot",
+    "label": "AI chatbot that answers people's questions",
+    "evidence": [
+     {
+      "page": 9,
+      "clause_ref": "Module-7",
+      "quote": "Well-trained with FAQs - Multilingual capabilities",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 21,
+      "clause_ref": "5.1",
+      "quote": "The software should have provision of chat bot.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 1,
+    "suggested": true,
+    "stories": [
+     "As a stakeholder, I can ask the chatbot questions and get contextual answers in several languages, with a live chat option"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   },
+   {
+    "key": "old_data",
+    "label": "Move data from the old system",
+    "evidence": [
+     {
+      "page": 5,
+      "clause_ref": "Module-1",
+      "quote": "Further the registration modules operational and shall migrated from",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 6,
+      "clause_ref": "Module 2",
+      "quote": "Further the EPR obligation modules is operational and shall migrated from",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "mentions": 1,
+    "suggested": true,
+    "stories": [
+     "As CPCB, I can have the registration and EPR obligation records moved from the existing portal"
+    ],
+    "story_level": "basic",
+    "story_units": 1,
+    "covers": []
+   }
+  ],
+  "other_features": [
+   {
+    "name": "EPR obligations for producers",
+    "description": "The system calculates and assigns five-year EPR obligations from the sales and import data that producers enter monthly.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 6,
+      "clause_ref": "Module 2",
+      "quote": "Auto calculate EPR Obligations based on sales /Import data & applicable EWaste",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a producer, I can enter my sales and import data every month",
+     "As the system, I calculate and assign five-year EPR obligations from the sales data and recycling targets"
+    ],
+    "units": 1
+   },
+   {
+    "name": "EPR and refurbishing certificate generation",
+    "description": "Recyclers and refurbishers submit monthly data and the system generates certificates in set denominations, shown to producers.",
+    "category": "module",
+    "size": "M",
+    "evidence": [
+     {
+      "page": 7,
+      "clause_ref": "Module-3",
+      "quote": "System to auto generate EPR certificates based on sales information provided by",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 7,
+      "clause_ref": "Module-3",
+      "quote": "System to auto generate Refurbishing certificates based on quantity of refurbished",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a recycler, I can submit monthly purchase, production and sales data with supporting documents",
+     "As a recycler, I get EPR certificates generated automatically from my sales",
+     "As a refurbisher, I can submit monthly refurbishing data",
+     "As a refurbisher, I get refurbishing certificates generated automatically",
+     "As a producer, I can see the certificates available with registered recyclers and refurbishers"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Certificate transfer and obligation adjustment",
+    "description": "Producers buy certificate credits from recyclers and refurbishers and their EPR obligations are adjusted automatically.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 7,
+      "clause_ref": "Module-3",
+      "quote": "Transfer & Exchange of EPR Certificate credits between Recycler/ Refurbishers &",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a producer, I can buy certificate credits from a recycler or refurbisher",
+     "As the system, I adjust the producer's EPR obligation after a purchase",
+     "As a stakeholder, I can see my activity sheet"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Environmental compensation",
+    "description": "The system calculates compensation for non-compliance, issues notices, collects payment and returns it after compliance.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 8,
+      "clause_ref": "Module-5",
+      "quote": "This module will generate Environmental Compensation (EC) for non compliance as per",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As CPCB, I can have compensation calculated and a notice issued for a violator",
+     "As a violator, I can pay the compensation through the payment gateway",
+     "As CPCB, I can return the compensation after the non-compliance is fixed"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Third-party audit of EPR compliance",
+    "description": "Auditors are registered, selected and assigned audits, which they carry out online with geo-tagged reports and are paid through the portal.",
+    "category": "module",
+    "size": "M",
+    "evidence": [
+     {
+      "page": 8,
+      "clause_ref": "Module-6",
+      "quote": "To conduct third-party audits of Producers, Recyclers & Refurbishers for verification of",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As an auditor, I can register and manage my profile",
+     "As CPCB, I can select an auditor and assign an audit duty",
+     "As an auditor, I can carry out the audit online and submit a geo-tagged report",
+     "As CPCB, I can process the payment to the auditor"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Quarterly waste reports collection",
+    "description": "Producers, recyclers and refurbishers submit quarterly reports on waste generation and management.",
+    "category": "report",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 22,
+      "clause_ref": "5.1",
+      "quote": "The Software should be capable for collecting quarterly reports on waste generation",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a producer, recycler or refurbisher, I can submit a quarterly report on waste generation and management"
+    ],
+    "units": 1
+   },
+   {
+    "name": "Data-fetch APIs for SPCBs and stakeholders",
+    "description": "APIs that fetch data from all SPCBs, producers and recyclers.",
+    "category": "integration",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 21,
+      "clause_ref": "5.1",
+      "quote": "The developer has to develop different API to fetch the data from all SPCBs or",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As CPCB, I can have data fetched through APIs from SPCBs, producers and recyclers"
+    ],
+    "units": 1
+   },
+   {
+    "name": "E-waste knowledge base",
+    "description": "A knowledge base on utilisation and management of e-waste and new recycling technologies.",
+    "category": "module",
+    "size": "S",
+    "evidence": [
+     {
+      "page": 23,
+      "clause_ref": "5.4",
+      "quote": "Develop knowledge base w.r.t Utilization & Management of e-waste including new",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ],
+    "stories": [
+     "As a stakeholder, I can read the knowledge base on e-waste"
+    ],
+    "units": 1
+   }
+  ],
+  "choices": {
+   "platforms": {
+    "value": "web_mobile",
+    "label": "Website and app",
+    "evidence": [
+     {
+      "page": 8,
+      "clause_ref": "Module-7",
+      "quote": "Mobile Application should be developed for Android, and IOS Operating system.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "hosting": {
+    "value": "existing",
+    "label": "Servers you already have",
+    "evidence": [
+     {
+      "page": 22,
+      "clause_ref": "5.2",
+      "quote": "The vendor should deploy portal on NIC Server - Solution shall support at least 3",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "integrations": {
+    "value": "many",
+    "label": "Yes, several",
+    "evidence": [
+     {
+      "page": 21,
+      "clause_ref": "5.1",
+      "quote": "The developer has to develop different API to fetch the data from all SPCBs or",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 22,
+      "clause_ref": "5.1",
+      "quote": "The software should be provision for linkage with Central Portal of CPCB for Waste",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "helpdesk_scope": {
+    "value": "yes",
+    "label": "Yes",
+    "evidence": [
+     {
+      "page": 23,
+      "clause_ref": "5.4",
+      "quote": "Provide 24x7 support through a helpdesk to stakeholders to manage its connectivity.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "support_hours": {
+    "value": "on_call",
+    "label": "Round the clock, on call",
+    "evidence": [
+     {
+      "page": 23,
+      "clause_ref": "Page 23",
+      "quote": "Provide 24x7 support through a helpdesk to stakeholders to manage its connectivity.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "availability": {
+    "value": "basic",
+    "label": "Not a problem",
+    "evidence": [
+     {
+      "page": 39,
+      "clause_ref": "11.0",
+      "quote": "Uptime Service: The service of the application should be available with at least 95%",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "disaster_site": {
+    "value": "yes",
+    "label": "Yes",
+    "evidence": [
+     {
+      "page": 22,
+      "clause_ref": "5.2",
+      "quote": "System should have facility to switch over from production to standby and DR or vice-",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "penalties": {
+    "value": "yes",
+    "label": "Yes",
+    "evidence": [
+     {
+      "page": 39,
+      "clause_ref": "11.0",
+      "quote": "If the service provider fails to maintain guaranteed uptime of 95% on quarterly basis, CPCB",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "web_domain": {
+    "value": "client",
+    "label": "The client provides it",
+    "evidence": [
+     {
+      "page": 38,
+      "clause_ref": "10.0",
+      "quote": "Procurement of NIC domain for hosting application",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "security_audit": {
+    "value": "yes",
+    "label": "Yes",
+    "evidence": [
+     {
+      "page": 25,
+      "clause_ref": "5.6",
+      "quote": "The firm shall be responsible for – (i) security audit of the system as per government",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "reporting": {
+    "value": "yes",
+    "label": "Yes",
+    "evidence": [
+     {
+      "page": 24,
+      "clause_ref": "5.5",
+      "quote": "Provide status updates in the required format before the review meetings of CPCB.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "chatbot_task": {
+    "value": "simple",
+    "label": "Common questions",
+    "evidence": [
+     {
+      "page": 9,
+      "clause_ref": "Module-7",
+      "quote": "Well-trained with FAQs - Multilingual capabilities",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "onsite_period": {
+    "value": "support",
+    "label": "Throughout support",
+    "evidence": [
+     {
+      "page": 26,
+      "clause_ref": "5.8",
+      "quote": "One programmer has to be deployed at CPCB on five days a week in office hours",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   }
+  },
+  "numbers": {
+   "om_years": {
+    "value": 5,
+    "label": "om_years",
+    "evidence": [
+     {
+      "page": 24,
+      "clause_ref": "5.6",
+      "quote": "Warranty period of 01 Year from the Go Live - 05 Year AMC",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "emd_paise": {
+    "value": 150000000,
+    "label": "emd_rupees",
+    "evidence": [
+     {
+      "page": 3,
+      "clause_ref": "",
+      "quote": "EMD Value Rs. 15 lakhs",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   "pbg_percent": {
+    "value": 0.1,
+    "label": "pbg_percent",
+    "evidence": [
+     {
+      "page": 41,
+      "clause_ref": "14.0",
+      "quote": "Performance Security should be for an amount of 10% of total Project cost except",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   }
+  },
+  "unclear_points": [
+   {
+    "topic": "Time allowed to go live",
+    "why": "The document gives three months in one place, four months and 24 weeks in another.",
+    "page": 51,
+    "clause_ref": "Project Duration",
+    "quote": "b. System Go Live! within 03 Months.",
+    "prebid_query": "Project Duration clause 1.0(b) allows 03 months to go live, while the penalty table in clause 11.0 refers to 04 months and 24 weeks. Please confirm the single time allowed from the work award letter to go live.",
+    "answer": "",
+    "document": ""
+   },
+   {
+    "topic": "Length of warranty and maintenance",
+    "why": "Total duration is stated as five years after go-live in one place and as one year of warranty plus five years of maintenance elsewhere.",
+    "page": 51,
+    "clause_ref": "Project Duration",
+    "quote": "e. Total project duration 05 (Five) years after GO Live! (one-year warranty after",
+    "prebid_query": "Project Duration clause 1.0(e) gives a total of 05 years after go-live including a one-year warranty, while clause 5.6 gives a one-year warranty followed by 05 years of AMC. Please confirm the total number of years of warranty and AMC after go-live.",
+    "answer": "",
+    "document": ""
+   },
+   {
+    "topic": "Number and place of support staff",
+    "why": "Clauses give different numbers of staff, some at CPCB and some remote.",
+    "page": 24,
+    "clause_ref": "5.4",
+    "quote": "The services require posting a senior IT Expert with technical, managerial and",
+    "prebid_query": "Clauses 5.4, 5.8 and the Project Duration clause 1.0(h) name different numbers of onsite and remote staff (team leader, senior IT expert, one programmer, two developers). Please confirm how many people must be stationed at CPCB in each year.",
+    "answer": "",
+    "document": ""
+   },
+   {
+    "topic": "Waste tyre wording in an e-waste portal",
+    "why": "A clause on waste tyre data appears in a document for an e-waste portal.",
+    "page": 21,
+    "clause_ref": "5.1",
+    "quote": "The Software should provide capability for the Producer to enter the quantity of waste",
+    "prebid_query": "Clause 5.1 refers to waste tyre data entered daily by the producer. Please confirm whether waste tyre is in scope of this e-waste portal and what data is to be captured.",
+    "answer": "",
+    "document": ""
+   },
+   {
+    "topic": "API integration for sign-up",
+    "why": "The sign-up module says to integrate an API without naming it.",
+    "page": 5,
+    "clause_ref": "Module-1",
+    "quote": "The system to integrate API",
+    "prebid_query": "Under Module-1 Sign-up, the clause 'The system to integrate API' does not name the API. Please list the external systems (for example PAN, GST, IEC, CIN or Aadhaar verification) to be connected and their API owners.",
+    "answer": "",
+    "document": ""
+   },
+   {
+    "topic": "Trading platforms",
+    "why": "The document asks for compatibility with trading platforms without saying which.",
+    "page": 21,
+    "clause_ref": "5.1",
+    "quote": "The software developed should be compatible to integrate with trading platforms",
+    "prebid_query": "Clause 5.1 requires compatibility to integrate with trading platforms. Please specify which trading platforms and what data is to be exchanged.",
+    "answer": "",
+    "document": ""
+   },
+   {
+    "topic": "Payment milestones",
+    "why": "Milestone 4 is missing and payment is said to be on a quarterly basis while tied to milestones.",
+    "page": 40,
+    "clause_ref": "12.0",
+    "quote": "Milestone 5: First Audit completion & Training completion: 20% Payment",
+    "prebid_query": "Clause 12.0 lists Milestones 1-3 and 5-7 with no Milestone 4, and states payment will be quarterly. Please confirm the milestone list and how milestone payments relate to the quarterly basis.",
+    "answer": "",
+    "document": ""
+   },
+   {
+    "topic": "Where the helpdesk support professionals sit",
+    "why": "The document asks for 2 helpdesk support professionals (page 55) but does not say whether they sit at the client's premises or offsite.",
+    "page": 55,
+    "clause_ref": "Page 55",
+    "quote": "Helpdesk support comprising of 2",
+    "prebid_query": "The document asks for 2 helpdesk support professionals (page 55) but does not say whether they sit at the client's premises or offsite. Kindly confirm; we have priced them offsite.",
+    "answer": "support_staff",
+    "document": "att01.pdf"
+   },
+   {
+    "topic": "Number of technical support center developers",
+    "why": "the quantity column says 02: years or developers",
+    "page": 55,
+    "clause_ref": "Page 55",
+    "quote": "Annual cost of technical support center",
+    "prebid_query": "The number for technical support center developers on page 55 is not clear (the quantity column says 02: years or developers). Kindly confirm the number of people and for how long; we have priced 2 as read.",
+    "answer": "support_staff",
+    "document": "att01.pdf"
+   },
+   {
+    "topic": "Number or place of technical support center developers",
+    "why": "The price schedule lists technical support center developers (2, offsite; quoted on page 55), while the terms on page 24 describe 3 IT staff working remotely (a senior IT Expert and two IT Developers) (offsite).",
+    "page": 24,
+    "clause_ref": "Page 24",
+    "quote": "The services require posting a senior IT Expert with technical, managerial and business analyst experience and two IT Developers with programming experience working remotely",
+    "prebid_query": "The price schedule lists technical support center developers (2, offsite; quoted on page 55), while the terms on page 24 describe 3 IT staff working remotely (a senior IT Expert and two IT Developers) (offsite). Kindly confirm the number of resources, where they sit and for how long; we have priced the price schedule.",
+    "answer": "support_staff",
+    "document": "att01.pdf"
+   }
+  ],
+  "dropped_findings": 0,
+  "not_priced": [
+   {
+    "topic": "penalties",
+    "label": "Penalties for delay or downtime (service levels)",
+    "note": "Penalties for delay, bugs, breakdown and uptime are set out in the penalty clause.",
+    "evidence": [
+     {
+      "page": 39,
+      "clause_ref": "11.0",
+      "quote": "If the service provider fails to maintain guaranteed uptime of 95% on quarterly basis, CPCB",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "topic": "warranty",
+    "label": "Warranty period",
+    "note": "One year of warranty from go-live is required, followed by five years of AMC.",
+    "evidence": [
+     {
+      "page": 24,
+      "clause_ref": "5.6",
+      "quote": "Warranty period of 01 Year from the Go Live - 05 Year AMC",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "topic": "payment_terms",
+    "label": "Payment terms (when the vendor is paid)",
+    "note": "Payments are tied to milestones but the list is incomplete and also said to be quarterly.",
+    "evidence": [
+     {
+      "page": 40,
+      "clause_ref": "12.0",
+      "quote": "Milestone 5: First Audit completion & Training completion: 20% Payment",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "topic": "technology",
+    "label": "Required technology or software",
+    "note": "The bidder must suggest the database and licences, and open source technology is preferred.",
+    "evidence": [
+     {
+      "page": 41,
+      "clause_ref": "14.0",
+      "quote": "However, open source based technology is preferred.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "topic": "team_qualifications",
+    "label": "Required team qualifications or CVs",
+    "note": "CVs of the local implementation and support team must be submitted with the technical offer.",
+    "evidence": [
+     {
+      "page": 22,
+      "clause_ref": "5.2",
+      "quote": "CVs of local implementation and post-sales support team members should be submitted along with",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "topic": "source_code",
+    "label": "Source code and ownership handover",
+    "note": "CPCB owns the complete software and work products.",
+    "evidence": [
+     {
+      "page": 42,
+      "clause_ref": "16",
+      "quote": "this project, documentation and other work products will be fully owned by CPCB.",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   }
+  ],
+  "payment_terms": null,
+  "scope": [
+   {
+    "key": "chatbot_indian_languages",
+    "label": "AI chatbot: Answers in Indian languages (Bhashini translation)",
+    "status": "inferred",
+    "note": "The chatbot must have multilingual capabilities, which for an Indian government portal implies Indian languages.",
+    "evidence": [
+     {
+      "page": 9,
+      "clause_ref": "Module-7",
+      "quote": "Well-trained with FAQs - Multilingual capabilities",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   }
+  ],
+  "scope_set_aside": [],
+  "inventory": null,
+  "staff_lines": [
+   {
+    "role": "helpdesk support professionals",
+    "count": "2",
+    "count_basis": "people",
+    "location": "not_stated",
+    "months": 24,
+    "phase": "support",
+    "round_the_clock": false,
+    "buyer_sets_headcount": false,
+    "in_price_table": true,
+    "same_staff_as": "",
+    "quantity_unclear": false,
+    "note": "",
+    "evidence": [
+     {
+      "page": 55,
+      "clause_ref": "Page 55",
+      "quote": "Helpdesk support comprising of 2",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 55,
+      "clause_ref": "Page 55",
+      "quote": "professionals for resolving user level queries",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 55,
+      "clause_ref": "Page 55",
+      "quote": "with the applicant for 2 years",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "role": "developer at CPCB Head Office",
+    "count": "1",
+    "count_basis": "people",
+    "location": "client_site",
+    "months": 60,
+    "phase": "support",
+    "round_the_clock": false,
+    "buyer_sets_headcount": false,
+    "in_price_table": true,
+    "same_staff_as": "",
+    "quantity_unclear": false,
+    "note": "",
+    "evidence": [
+     {
+      "page": 55,
+      "clause_ref": "Page 55",
+      "quote": "along with 1 developer at CPCB head office and remote support from vendor",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "role": "second developer at CPCB Head Office (1st year AMC)",
+    "count": "1",
+    "count_basis": "people",
+    "location": "client_site",
+    "months": 12,
+    "phase": "support",
+    "round_the_clock": false,
+    "buyer_sets_headcount": false,
+    "in_price_table": true,
+    "same_staff_as": "",
+    "quantity_unclear": false,
+    "note": "",
+    "evidence": [
+     {
+      "page": 55,
+      "clause_ref": "Page 55",
+      "quote": "along with 2 developers at CPCB Head Office and remote support from vendor",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "role": "technical support center developers",
+    "count": "2",
+    "count_basis": "people",
+    "location": "not_stated",
+    "months": 24,
+    "phase": "support",
+    "round_the_clock": false,
+    "buyer_sets_headcount": false,
+    "in_price_table": true,
+    "same_staff_as": "",
+    "quantity_unclear": true,
+    "note": "the quantity column says 02: years or developers",
+    "evidence": [
+     {
+      "page": 55,
+      "clause_ref": "Page 55",
+      "quote": "Annual cost of technical support center",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 55,
+      "clause_ref": "Page 55",
+      "quote": "with 2 nos of developers till atleast 2",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "role": "IT staff working remotely (a senior IT Expert and two IT Developers)",
+    "count": "3",
+    "count_basis": "people",
+    "location": "vendor_site",
+    "months": null,
+    "phase": "support",
+    "round_the_clock": false,
+    "buyer_sets_headcount": false,
+    "in_price_table": false,
+    "same_staff_as": "technical support center developers",
+    "quantity_unclear": false,
+    "note": "",
+    "evidence": [
+     {
+      "page": 24,
+      "clause_ref": "Page 24",
+      "quote": "The services require posting a senior IT Expert with technical, managerial and business analyst experience and two IT Developers with programming experience working remotely",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "role": "programmer at CPCB",
+    "count": "1",
+    "count_basis": "people",
+    "location": "client_site",
+    "months": null,
+    "phase": "support",
+    "round_the_clock": false,
+    "buyer_sets_headcount": false,
+    "in_price_table": false,
+    "same_staff_as": "developer at CPCB Head Office",
+    "quantity_unclear": false,
+    "note": "",
+    "evidence": [
+     {
+      "page": 26,
+      "clause_ref": "Page 26",
+      "quote": "One programmer has to be deployed at CPCB on five days a week in office hours at CPCB for the entire project duration",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   }
+  ],
+  "chatbot_buyer_systems": null,
+  "staffing": [
+   {
+    "kind": "support",
+    "role": "helpdesk support professionals",
+    "count": "2",
+    "seats": false,
+    "months": 24,
+    "call_off": false,
+    "why": "place not stated: priced offsite; for 24 months",
+    "evidence": [
+     {
+      "page": 55,
+      "clause_ref": "Page 55",
+      "quote": "Helpdesk support comprising of 2",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 55,
+      "clause_ref": "Page 55",
+      "quote": "professionals for resolving user level queries",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 55,
+      "clause_ref": "Page 55",
+      "quote": "with the applicant for 2 years",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "kind": "onsite",
+    "role": "developer at CPCB Head Office",
+    "count": "1",
+    "seats": false,
+    "months": 60,
+    "call_off": false,
+    "why": "for 60 months",
+    "evidence": [
+     {
+      "page": 55,
+      "clause_ref": "Page 55",
+      "quote": "along with 1 developer at CPCB head office and remote support from vendor",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "kind": "onsite",
+    "role": "second developer at CPCB Head Office (1st year AMC)",
+    "count": "1",
+    "seats": false,
+    "months": 12,
+    "call_off": false,
+    "why": "for 12 months",
+    "evidence": [
+     {
+      "page": 55,
+      "clause_ref": "Page 55",
+      "quote": "along with 2 developers at CPCB Head Office and remote support from vendor",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   },
+   {
+    "kind": "support",
+    "role": "technical support center developers",
+    "count": "2",
+    "seats": false,
+    "months": 24,
+    "call_off": false,
+    "why": "number unclear: priced as read; for 24 months",
+    "evidence": [
+     {
+      "page": 55,
+      "clause_ref": "Page 55",
+      "quote": "Annual cost of technical support center",
+      "document": "att01.pdf",
+      "checked": true
+     },
+     {
+      "page": 55,
+      "clause_ref": "Page 55",
+      "quote": "with 2 nos of developers till atleast 2",
+      "document": "att01.pdf",
+      "checked": true
+     }
+    ]
+   }
+  ]
+ }
+}

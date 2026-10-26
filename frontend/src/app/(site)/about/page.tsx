@@ -69,8 +69,14 @@ export default function AboutPage() {
               below our estimate (lowest winning bids, simpler builds)
             </li>
             <li>
-              <strong>Medium and large projects:</strong> real contracts mostly
-              came in above it (years of operations, hardware, staff on site)
+              <strong>Medium projects:</strong> real contracts mostly came in
+              below our estimate (on 5 tenders read the way the app reads them,
+              ours was about 1.3 times the published price)
+            </li>
+            <li>
+              <strong>Large projects:</strong> real contracts mostly came in
+              above it (ours was about two-thirds of the published price on 3
+              tenders: hardware, licences and work we can&apos;t see yet)
             </li>
             <li>
               <strong>Not yet checked:</strong> what finished projects really

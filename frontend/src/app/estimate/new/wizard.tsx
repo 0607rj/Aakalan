@@ -69,6 +69,7 @@ import {
   sentNotIncluded,
 } from "./feature-sections";
 import { ReviewForm } from "./review";
+import { sentStories, StoriesStep, type StoryText } from "./stories-step";
 import { UploadStep } from "./upload-step";
 
 /** The tick-box path (no document, or the document could not be read): one screen at a time. */
@@ -142,6 +143,16 @@ function ManualForm({
   );
   const [submitting, setSubmitting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  // the user's description (for drafting stories) and the stories per feature, as typed
+  const [description, setDescription] = React.useState("");
+  const [storyText, setStoryText] = React.useState<StoryText>(() =>
+    Object.fromEntries(
+      Object.entries(saved?.feature_stories ?? {}).map(([k, v]) => [
+        k,
+        v.join("\n"),
+      ]),
+    ),
+  );
 
   const deadlineMonths = deadline.trim() === "" ? null : Number(deadline);
   const deadlineValid =
@@ -178,6 +189,8 @@ function ManualForm({
     "deadline",
     ...(scopeGroups.length > 0 ? ["scope"] : []),
     ...(details.length > 0 ? ["details"] : []),
+    // optional: what people can do (double-checks the build size; a document has its own)
+    ...(documentId ? [] : ["stories"]),
     "check",
   ];
   const steps = useSteps(stepKeys);
@@ -199,6 +212,18 @@ function ManualForm({
     setNotIncluded,
   });
   const { unmark, toggleOut } = ticks;
+  const storyFeatures = [
+    ...everything.map((k) => ({
+      key: k,
+      label: options.features.find((f) => f.key === k)?.label ?? k,
+    })),
+    ...customFeatures.map((c) => ({ key: c.name, label: c.name })),
+  ];
+  const featureStories = sentStories(storyText, storyFeatures);
+  const storyCount = Object.values(featureStories).reduce(
+    (n, s) => n + s.length,
+    0,
+  );
   const request: QuickRequest = {
     name: name.trim(),
     project_type: projectType,
@@ -221,6 +246,7 @@ function ManualForm({
     // an answer may have added a feature marked not included (e.g. an app): it is priced
     not_included: sentNotIncluded(notIncluded, everything, pricedScope),
     answered: touched,
+    feature_stories: featureStories,
   };
   const impacts = useQuestionImpact(
     (current.startsWith("q:") || current === "details") && canContinue
@@ -371,6 +397,7 @@ function ManualForm({
               </p>
             </div>
             <DescribeBox
+              onText={setDescription}
               onSuggested={(s) => {
                 const tickable = new Set(
                   options.features.filter((f) => !f.hidden).map((f) => f.key),
@@ -619,6 +646,20 @@ function ManualForm({
             />
             <StepButtons onBack={steps.prev} onNext={steps.next} />
           </>
+        ) : current === "stories" ? (
+          <>
+            <StoriesStep
+              features={storyFeatures}
+              description={description}
+              text={storyText}
+              onChange={setStoryText}
+            />
+            <StepButtons
+              onBack={steps.prev}
+              onNext={steps.next}
+              nextLabel={storyCount > 0 ? "Continue" : "Skip"}
+            />
+          </>
         ) : current === "deadline" ? (
           <section className="flex flex-col gap-6">
             <div>
@@ -699,6 +740,18 @@ function ManualForm({
                   label: "Deadline",
                   value: deadlineMonths ? `${deadlineMonths} months` : "None",
                 },
+                ...(documentId
+                  ? []
+                  : [
+                      {
+                        step: "stories",
+                        label: "What people can do",
+                        value:
+                          storyCount > 0
+                            ? `${storyCount} user ${storyCount === 1 ? "story" : "stories"}`
+                            : "Skipped",
+                      },
+                    ]),
               ]}
               onChange={steps.goTo}
             />
@@ -726,8 +779,10 @@ function ManualForm({
 /** A few lines about the software -> features ticked for the user to check. */
 function DescribeBox({
   onSuggested,
+  onText,
 }: {
   onSuggested: (s: Suggestion) => void;
+  onText: (text: string) => void;
 }) {
   const [text, setText] = React.useState("");
   const [busy, setBusy] = React.useState(false);
@@ -764,7 +819,10 @@ function DescribeBox({
       <textarea
         id="describe"
         value={text}
-        onChange={(e) => setText(e.target.value)}
+        onChange={(e) => {
+          setText(e.target.value);
+          onText(e.target.value);
+        }}
         rows={3}
         maxLength={4000}
         placeholder="e.g. An app for my clinic where patients book an appointment with a doctor, pay the fee online and get an SMS reminder."

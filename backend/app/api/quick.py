@@ -28,6 +28,7 @@ from app.services.quick.service import (
     summarise,
     summary_for,
 )
+from app.services.quick.stories import DraftIn, DraftOut, draft_stories
 from app.services.research.library import shared_blocks
 from app.services.research.service import ai_available, catalog_sections, research_rows
 from app.services.settings import company_settings
@@ -359,3 +360,14 @@ def suggest(body: DescribeIn, _user: CurrentUser) -> Suggestion:
     """Features (and answers) suggested from the user's own description; nothing is saved
     or priced, the user ticks and confirms them on the form."""
     return suggest_features(quick_config(), body.text.strip())
+
+
+@router.post("/quick-estimate/draft-stories", response_model=DraftOut)
+def draft(body: DraftIn, _user: CurrentUser) -> DraftOut:
+    """User stories for the ticked features, drafted by the AI for the user to edit and confirm
+    (a project without a document). Nothing is saved or priced; the confirmed stories feed the
+    story-size check only."""
+    rules = quick_config().size_check
+    if rules is None:
+        return DraftOut(available=False, note="The story-size check is switched off.")
+    return draft_stories(rules, body)

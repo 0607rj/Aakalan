@@ -9,12 +9,13 @@ only regroups and adds integer paise that the engine produced.
 import hashlib
 import json
 import re
+from collections.abc import Callable
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime
 from decimal import ROUND_HALF_UP, Decimal
 from functools import lru_cache
 from statistics import median, quantiles
-from typing import Any, Literal
+from typing import Annotated, Any, Literal
 
 from fastapi import HTTPException, status
 from pydantic import BaseModel, Field
@@ -60,6 +61,7 @@ from app.services.quick.config import (
     LevelKey,
     Option,
     QuickConfig,
+    SizeCheck,
     SizeTier,
     quick_config,
 )
@@ -71,6 +73,7 @@ from app.services.quick.reality import (
     SupportRule,
     reality_check,
 )
+from app.services.quick.size_check import SizeCheckOut, SizedFeature, size_check
 from app.services.research.service import PREFIX as RESEARCH_PREFIX
 from app.services.research.service import resolve_features
 from app.services.settings import (
@@ -152,6 +155,19 @@ class CustomFeature(BaseModel):
     units: int = Field(default=1, ge=1)
 
 
+class StaffItem(BaseModel):
+    """People the vendor provides during support, from the document's staff lines (priced in
+    code, services/extraction/staffing.py) or added by the user (OPEN_QUESTIONS 162)."""
+
+    kind: Literal["onsite", "support"]  # at the client's office / offsite
+    role: str = Field(min_length=1, max_length=200)  # the document's name for them
+    count: Decimal = Field(gt=0, le=1000)  # people; round-the-clock seats when `seats`
+    months: int | None = Field(default=None, ge=1, le=240)  # None = every support year
+    seats: bool = False  # a committed round-the-clock team per shift (people per seat applied)
+    call_off: bool = False  # the buyer sets the headcount: priced as written
+    found_index: int | None = None  # index into the reading's `staffing` (for citations)
+
+
 class NotIncluded(BaseModel):
     """Something the user marked "Not included": a feature, a scope item, or a standard
     building block unticked. Not priced, and listed as not included on the quote."""
@@ -189,6 +205,16 @@ class QuickRequest(BaseModel):
     # ("change if wrong"). None: not sent (older forms, the API): an answer equal to its
     # default counts as assumed.
     answered: list[str] | None = None
+    # Staff during support (OPEN_QUESTIONS 162). None: not sent (older forms, readings without
+    # staff lines): the onsite_staff / support_staff numbers are used. A list, even empty, is
+    # the staff priced, and those numbers are ignored.
+    staff: list[StaffItem] | None = None
+    # User stories the user confirmed per feature (feature key, or a custom feature's name),
+    # e.g. drafted by the AI when there is no document. They feed the story-size check only
+    # (OPEN_QUESTIONS 164): no level or price follows them. Replace the document's for a feature.
+    feature_stories: dict[
+        str, Annotated[list[Annotated[str, Field(max_length=300)]], Field(max_length=100)]
+    ] = Field(default={}, max_length=60)
 
 
 class PlainPart(BaseModel):
@@ -196,7 +222,7 @@ class PlainPart(BaseModel):
     label: str
     amount_paise: int  # most likely
     share_percent: int
-    low_paise: int = 0  # optimistic and pessimistic values of the same lines
+    low_paise: int = 0  # its share of the price's P10 / P90 (share_of_range)
     high_paise: int = 0
 
 
@@ -208,7 +234,7 @@ class CostItem(BaseModel):
     key: str
     label: str
     amount_paise: int  # most likely; items sum to the planned cost
-    low_paise: int = 0  # optimistic / pessimistic value of the same lines
+    low_paise: int = 0  # its share of the price's P10 / P90 (share_of_range)
     high_paise: int = 0
     person_days: int | None = None  # the work it pays for, when it is people's time
     person_days_low: int | None = None
@@ -457,6 +483,8 @@ class QuickSummary(BaseModel):
     support_term_open: bool = False
     # a second estimate counted from the document (uploads only); None for the form
     independent_check: IndependentCheckOut | None = None
+    # the build sized from the document's user stories, beside ours (OPEN_QUESTIONS 163)
+    size_check: SizeCheckOut | None = None
     assumed: list[AssumedAnswer] = []  # answers nobody gave, priced at the usual answer
     not_included: list[NotIncludedOut] = []  # not in the price, and why
 
@@ -780,6 +808,11 @@ def plan_quick(
     overrides: dict[str, Any] = dict(req.overrides)
     if req.deadline_months is not None:
         overrides.setdefault("deadline_months", req.deadline_months)
+    if req.staff is not None:  # the staff list replaces the staff numbers
+        for k in (ONSITE_STAFF, SUPPORT_STAFF, ONSITE_DAYS):
+            overrides.pop(k, None)
+        resources, citations = _staff_list(cfg, req.staff, extraction, filename)
+        _add_staff(plan, resources, [requirement(t, "NFR", refs) for t, refs in citations])
     onsite_days = overrides.pop(ONSITE_DAYS, None)  # only with onsite_staff
     if onsite_days is None and req.choices.get(ONSITE_PERIOD) == "event" and cfg.onsite_event_days:
         onsite_days = str(cfg.onsite_event_days.days)  # an event, no days stated: the default
@@ -1076,6 +1109,57 @@ def _bigger(a: Size, b: Size) -> Size:
     return a if SIZE_RANK[a] >= SIZE_RANK[b] else b
 
 
+def _staff_list(
+    cfg: QuickConfig, staff: list[StaffItem], extraction: dict[str, Any] | None, filename: str
+) -> tuple[list[dict[str, Any]], list[tuple[str, list[dict[str, Any]]]]]:
+    """The staff list as the engine's onsite_resources: onsite at onsite_role's rate, support
+    at support_role's; and (requirement text, evidence) for each kept as the reading found it."""
+    found_staff: list[dict[str, Any]] = (extraction or {}).get("staffing") or []
+    resources: list[dict[str, Any]] = []
+    citations: list[tuple[str, list[dict[str, Any]]]] = []
+    for item in staff:
+        role = cfg.onsite_role if item.kind == "onsite" else cfg.support_role
+        if role is None:
+            raise _unprocessable("Staff during support cannot be priced.")
+        resource: dict[str, Any] = {"role": role, "count": str(item.count), "kind": item.kind}
+        if item.months is not None:
+            resource["months"] = item.months
+        if item.seats:
+            resource["seats"] = True
+        covers = _staff_covers(cfg, item) if item.kind == "onsite" else ""
+        if covers:
+            resource["covers"] = covers
+        resources.append({**resource, "name": item.role})
+        found = None
+        if item.found_index is not None and 0 <= item.found_index < len(found_staff):
+            found = found_staff[item.found_index]
+        kept = (
+            found is not None
+            and Decimal(str(found["count"])) == item.count
+            and found.get("months") == item.months
+            and bool(found.get("seats")) == item.seats
+        )
+        refs = _evidence_refs(found, filename) if kept else []
+        if refs:
+            what = "onsite" if item.kind == "onsite" else "offsite"
+            text = f"Staff: {item.count.normalize():f} {item.role} ({what}).{_quote(found)}"
+            citations.append((text, refs))
+    return resources, citations
+
+
+def _staff_covers(cfg: QuickConfig, item: StaffItem) -> str:
+    """The engine's own work an onsite staff line does, from its name (quick config
+    `staffing`): "management" (the O&M project manager), "upkeep" (bug fixes, patches,
+    upgrades, small changes) or ""."""
+    rules = cfg.staffing
+    if rules is None:
+        return ""
+    for covers, words in (("management", rules.management_words), ("upkeep", rules.upkeep_words)):
+        if any(re.search(rf"\b{re.escape(w)}\b", item.role, re.IGNORECASE) for w in words):
+            return covers
+    return ""
+
+
 def _add_staff(plan: QuickPlan, staff: list[dict[str, Any]], reqs: list[str]) -> None:
     """Onsite and dedicated support staff share the engine's onsite_resources answer."""
     current, current_reqs = plan.answers.get("onsite_resources", ([], []))
@@ -1261,7 +1345,10 @@ def request_seed(req: QuickRequest, doc: Document | None) -> int:
     the upload or the estimate's name: the same file and answers give the same range.     Which
     answers were touched does not change the price; nothing marked "Not included", and every
     feature one module, keep the seed of a request made before those fields existed."""
-    asked = req.model_dump(mode="json", exclude={"document_id", "name", "answered"})
+    # user stories feed the size check only: they never move the price, not even its seed
+    asked = req.model_dump(
+        mode="json", exclude={"document_id", "name", "answered", "feature_stories"}
+    )
     if not asked["not_included"]:
         del asked["not_included"]
     # one module each (no units given) keeps the seed of a request made before units existed
@@ -1338,6 +1425,41 @@ def question_impact(
 ) -> list[QuestionImpact]:
     """Re-price the form once per option of every question and rank questions by how much the
     most-likely total moves (brief: ask the questions that change the price most, first)."""
+    req, likely = _impact_pricer(db, user, cfg, req)
+    out = []
+    for key, question in cfg.questions.items():
+        if question.group in ("hidden", "document"):  # never asked on the form
+            continue
+        if key == "support_years" and "om_years" in req.overrides:
+            continue
+        prices = []
+        for option in question.options:
+            variant = req.model_copy(update={"choices": {**req.choices, key: option.value}})
+            prices.append(
+                OptionPrice(
+                    value=option.value,
+                    label=option.label,
+                    likely_paise=likely(variant),
+                )
+            )
+        known = [p.likely_paise for p in prices if p.likely_paise is not None]
+        out.append(
+            QuestionImpact(
+                key=key,
+                label=question.label,
+                impact_paise=(max(known) - min(known)) if known else 0,
+                options=prices,
+            )
+        )
+    out.sort(key=lambda q: -q.impact_paise)
+    return out
+
+
+def _impact_pricer(
+    db: Session, user: User, cfg: QuickConfig, req: QuickRequest
+) -> tuple[QuickRequest, Callable[[QuickRequest], int | None]]:
+    """The request with the company's defaults and catalog blocks, and a fast fixed-seed
+    pricer (quick config `impact`) of variants of it: their most likely price."""
     req = with_company_defaults(db, user, req)
     req = with_catalog_blocks(db, user, cfg, req, research=False)
     _, extraction, filename = _document_context(db, user, req.document_id)
@@ -1353,37 +1475,42 @@ def question_impact(
         ),
         "clarity": cfg.requirement_clarity,
     }
-    out = []
-    for key, question in cfg.questions.items():
-        if question.group in ("hidden", "document"):  # never asked on the form
-            continue
-        if key == "support_years" and "om_years" in req.overrides:
-            continue
-        prices = []
-        for option in question.options:
-            variant = req.model_copy(update={"choices": {**req.choices, key: option.value}})
-            plan = plan_quick(cfg, variant, extraction, filename)
-            inp = plan_to_input(
-                plan, req.name, reference, today, cfg.impact.seed, cfg.impact.monte_carlo_runs
-            )
-            totals = calculate(inp).totals
-            prices.append(
-                OptionPrice(
-                    value=option.value,
-                    label=option.label,
-                    likely_paise=totals.p50_paise if totals else None,
-                )
-            )
-        known = [p.likely_paise for p in prices if p.likely_paise is not None]
-        out.append(
-            QuestionImpact(
-                key=key,
-                label=question.label,
-                impact_paise=(max(known) - min(known)) if known else 0,
-                options=prices,
-            )
+
+    def likely(variant: QuickRequest) -> int | None:
+        plan = plan_quick(cfg, variant, extraction, filename)
+        inp = plan_to_input(
+            plan, req.name, reference, today, cfg.impact.seed, cfg.impact.monte_carlo_runs
         )
-    out.sort(key=lambda q: -q.impact_paise)
+        totals = calculate(inp).totals
+        return totals.p50_paise if totals else None
+
+    return req, likely
+
+
+def key_answer_impact(
+    db: Session, user: User, cfg: QuickConfig, req: QuickRequest, keys: list[str]
+) -> dict[str, int]:
+    """How far each key answer of the review form moves the most likely price (OPEN_QUESTIONS
+    162): the staff list against none; a question over its options (support years without the
+    document's stated years)."""
+    req, likely = _impact_pricer(db, user, cfg, req)
+    out: dict[str, int] = {}
+    for key in keys:
+        if key == "staff":
+            variants = [req, req.model_copy(update={"staff": []})]
+        elif key in cfg.questions:
+            base = req
+            if key == "support_years":
+                rest = {k: v for k, v in req.overrides.items() if k != "om_years"}
+                base = req.model_copy(update={"overrides": rest})
+            variants = [
+                base.model_copy(update={"choices": {**base.choices, key: o.value}})
+                for o in cfg.questions[key].options
+            ]
+        else:
+            continue
+        known = [p for v in variants if (p := likely(v)) is not None]
+        out[key] = (max(known) - min(known)) if known else 0
     return out
 
 
@@ -1650,6 +1777,7 @@ def summarise(
         researched=researched_features(estimate),
         support_term_open=_support_term_open(cfg, project),
     )
+    share_of_range(summary)
     req = _saved_request(project)
     if req is not None:
         found = extraction.choices if extraction else {}
@@ -1684,8 +1812,62 @@ def summarise(
             emd_rules=cfg.reality_check,
             confirmed_at=estimate.check_confirmed_at,
         )
+    if cfg.size_check is not None and estimate.feasible:
+        sized = _sized_features(cfg, cfg.size_check, estimate, project, extraction)
+        if isinstance(sized, str):
+            summary.size_check = SizeCheckOut(available=False, reason=sized)
+        elif sized is not None:
+            summary.size_check = size_check(
+                cfg.size_check,
+                *sized,
+                independent=summary.independent_check,
+                reused=_reused_build(cfg, cfg.size_check, project),
+            )
     return with_reality(
         cfg, summary, emd_paise, result.get("sanity_checks", []), shared_requirements(estimate)
+    )
+
+
+def _shares(amounts: list[int], planned: int, total: int) -> list[int]:
+    """amount × total / planned for each amount, in paise (half up); when the amounts add up to
+    the planned cost, the largest takes the rounding so the shares add up to `total`."""
+    out = [int((Decimal(a) * total / planned).to_integral_value(ROUND_HALF_UP)) for a in amounts]
+    if out and sum(amounts) == planned:
+        largest = max(range(len(out)), key=lambda i: amounts[i])
+        out[largest] += total - sum(out)
+    return out
+
+
+def share_of_range(summary: QuickSummary) -> None:
+    """Each part's and each cost item's range is its share of the whole price's range
+    (OPEN_QUESTIONS 167): low = amount × P10 / planned, high = amount × P90 / planned, so the
+    ranges add up to the price range. In place; the person-days follow the same shares. The
+    shared model error, most of the range, moves every line together, so splitting the total
+    range by share keeps the parts consistent with it; a part's own simulated range would be
+    wider and would not add up. Regroups engine paise only."""
+    planned, low, high = summary.planned_paise, summary.low_paise, summary.high_paise
+    if not planned or low is None or high is None:
+        return
+    parts = [p.amount_paise for p in summary.parts]
+    for part, lo, hi in zip(
+        summary.parts, _shares(parts, planned, low), _shares(parts, planned, high), strict=True
+    ):
+        part.low_paise, part.high_paise = lo, hi
+    items = [i.amount_paise for i in summary.cost_items]
+    for item, lo, hi in zip(
+        summary.cost_items,
+        _shares(items, planned, low),
+        _shares(items, planned, high),
+        strict=True,
+    ):
+        item.low_paise, item.high_paise = lo, hi
+        if item.person_days is not None:
+            item.person_days_low = round(item.person_days * low / planned)
+            item.person_days_high = round(item.person_days * high / planned)
+    build = summary.build_only_paise
+    summary.build_only_low_paise, summary.build_only_high_paise = (
+        _shares([build], planned, low)[0],
+        _shares([build], planned, high)[0],
     )
 
 
@@ -2353,6 +2535,117 @@ def _not_sure(cfg: QuickConfig, project: Project) -> list[str]:
         if option is not None and option.unsure and not option.left_out:
             out.append(question.label)
     return out
+
+
+BUILD_TYPE = "build_type"  # the form's question for what the build reuses
+NO_MANUAL_BUILD = (
+    "The build without AI tools could not be priced (for example, the deadline is too short "
+    "without them), so it cannot be compared with the published pre-AI delivery rate."
+)
+
+
+def _reused_build(cfg: QuickConfig, rules: SizeCheck, project: Project) -> str | None:
+    """The plain label of the project's build type when it sets up more than it builds."""
+    req = _saved_request(project)
+    value = req.choices.get(BUILD_TYPE) if req else None
+    if value not in rules.reuse_build_types:
+        return None
+    options = {o.value: o.label for o in cfg.questions[BUILD_TYPE].options}
+    return options.get(str(value), str(value))
+
+
+def _story_counts(
+    cfg: QuickConfig, req: QuickRequest, extraction: TenderExtraction | None
+) -> dict[str, int]:
+    """Feature label -> its user stories: the ones the user confirmed on the form
+    (`feature_stories`), else the document's: a ticked feature's own (an app also those of what
+    it offers that is not ticked itself), a custom feature those of the extra it was found as."""
+    labels = {f.key: f.label for f in cfg.features}
+    found = {f.key: f for f in extraction.features} if extraction else {}
+    out: dict[str, int] = {}
+    for key in req.features:
+        if key not in labels:
+            continue
+        if key in req.feature_stories:
+            count = len(req.feature_stories[key])
+        elif key in found:
+            f = found[key]
+            count = len(f.stories) + sum(
+                len(found[k].stories) for k in f.covers if k in found and k not in req.features
+            )
+        else:
+            continue
+        out[labels[key]] = out.get(labels[key], 0) + count
+    others = extraction.other_features if extraction else []
+    for custom in req.custom_features:
+        i = custom.found_index
+        if custom.name in req.feature_stories:
+            count = len(req.feature_stories[custom.name])
+        elif i is not None and 0 <= i < len(others):
+            count = len(others[i].stories)
+        else:
+            continue
+        out[custom.name] = out.get(custom.name, 0) + count
+    return out
+
+
+def _sized_features(
+    cfg: QuickConfig,
+    rules: SizeCheck,
+    estimate: Estimate,
+    project: Project,
+    extraction: TenderExtraction | None,
+) -> tuple[list[SizedFeature], list[str]] | str | None:
+    """Each priced feature's user stories and our hours without AI tools: its building cost
+    without AI tools ÷ all building lines' (standard blocks too) × the build hours without AI
+    tools in `rules.stages` (year 0); the same with AI tools from the estimate's own figures,
+    to show the saving. An estimate priced without AI tools is its own figures (no saving).
+    None: no saved form or no stories at all; a text: why there is no check."""
+    req = _saved_request(project)
+    if req is None or (extraction is None and not req.feature_stories):
+        return None
+    answers = {a["key"]: a["value"] for a in estimate.inputs_snapshot.get("answers", [])}
+    traditional: dict[str, Any] = estimate.result.get("traditional") or {}
+    own = answers.get("team_ai_maturity") == estimates.NO_AI
+    if own:
+        manpower = estimate.result.get("manpower", [])
+    elif "manpower" in traditional:
+        manpower = traditional["manpower"]
+    else:
+        return NO_MANUAL_BUILD
+    costs = feature_costs(cfg, estimate, project)
+    total = sum((c.amount_paise if own else c.traditional_paise) or 0 for c in costs)
+    total_ai = sum(c.amount_paise for c in costs)
+
+    def build_hours(rows: list[dict[str, Any]]) -> Decimal:
+        days = sum(
+            (
+                Decimal(str(r["person_days"]))
+                for r in rows
+                if r["year"] == 0 and r["stage"] in rules.stages
+            ),
+            Decimal(0),
+        )
+        return days * cfg.hours_per_person_day
+
+    hours = build_hours(manpower)
+    hours_ai = None if own else build_hours(estimate.result.get("manpower", []))
+    if total <= 0 or hours <= 0:
+        return None
+    stories = _story_counts(cfg, req, extraction)
+    sized, unsized = [], []
+    for c in costs:
+        if c.label == STANDARD_BLOCKS:
+            continue
+        if stories.get(c.label, 0) > 0:
+            share = Decimal((c.amount_paise if own else c.traditional_paise) or 0) / total
+            with_ai = (
+                Decimal(c.amount_paise) / total_ai * hours_ai if hours_ai and total_ai else None
+            )
+            sized.append(SizedFeature(c.label, c.level, stories[c.label], share * hours, with_ai))
+        else:
+            unsized.append(c.label)
+    return sized, unsized
 
 
 def _saved_request(project: Project) -> QuickRequest | None:

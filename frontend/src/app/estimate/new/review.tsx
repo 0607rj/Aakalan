@@ -69,6 +69,15 @@ import {
   sentNotIncluded,
 } from "./feature-sections";
 import { PrebidQueries } from "./prebid";
+import {
+  KEY_STEP,
+  KeyAnswersStep,
+  keyQuestionKeys,
+  sentStaff,
+  staffError,
+  staffRows,
+  type StaffRow,
+} from "./key-answers";
 
 /** A number the document may state (its limits are what the user may type). */
 type Fact = FactValue;
@@ -200,6 +209,17 @@ export function ReviewForm({
     prefill.payment_schedule !== null,
   );
   const [customizing, setCustomizing] = React.useState(false);
+  // staff during support, priced from the document's staff lines (null: the reading has none,
+  // so the staff numbers on the facts screen are used)
+  const [staff, setStaff] = React.useState<StaffRow[] | null>(() =>
+    prefill.staff ? staffRows(prefill.staff) : null,
+  );
+  const staffHasErrors = (staff ?? []).some((r) => staffError(r) !== null);
+  // the answers that move the price most are asked once, on their own screen
+  const keyAnswers = prefill.key_answers ?? [];
+  const keyKeys = keyQuestionKeys(keyAnswers);
+  const omYearsInKey =
+    keyKeys.has("support_years") && extraction.numbers.om_years !== undefined;
   const everything = allFeatures(options, features, choices);
   // a mobile app, other software or old data count too (ticked through their question)
   const anyFeature = everything.length > 0 || customFeatures.length > 0;
@@ -230,7 +250,11 @@ export function ReviewForm({
   const errors = Object.fromEntries(
     visibleFacts.map((f) => [f.key, factError(f, facts[f.key] ?? "")]),
   );
-  const hasErrors = Object.values(errors).some(Boolean);
+  const hasErrors = Object.values(errors).some(Boolean) || staffHasErrors;
+  // the facts screen, without the support years when the key answers ask them
+  const factsShown = visibleFacts.filter(
+    (f) => !(omYearsInKey && f.key === "om_years"),
+  );
   const overrides: Record<string, number> = {};
   for (const fact of visibleFacts) {
     const text = (facts[fact.key] ?? "").trim();
@@ -251,7 +275,8 @@ export function ReviewForm({
       !(q.key === "support_years" && omYearsGiven) &&
       // the document decides these (what is built), and a stated number answers its question
       q.on_upload !== "document" &&
-      byNumber[q.key] === undefined,
+      byNumber[q.key] === undefined &&
+      !keyKeys.has(q.key),
   );
   const isOpen = (q: (typeof questions)[number]) =>
     extraction.choices[q.key] === undefined;
@@ -304,14 +329,17 @@ export function ReviewForm({
     not_included: sentNotIncluded(notIncluded, everything, pricedScope),
     answered: [...new Set([...touched, ...Object.keys(byNumber)])],
     payment_schedule: useTerms ? prefill.payment_schedule : null,
+    staff: staff === null ? null : sentStaff(staff),
+    feature_stories: {}, // the document's own stories are used
   };
   const [first, ...rest] = openQuestions.map((q) => `q:${q.key}`);
   const steps = useSteps([
     "found",
+    ...(keyAnswers.length > 0 ? [KEY_STEP] : []),
     ...(scopeGroups.length > 0 ? ["scope"] : []),
     ...(first ? [first] : []),
     ...(customizing && leveled.length > 0 ? ["levels"] : []),
-    ...(visibleFacts.length > 0 || terms ? ["facts"] : []),
+    ...(factsShown.length > 0 || terms ? ["facts"] : []),
     ...rest,
     ...(foundQuestions.length > 0 ? ["found_answers"] : []),
     ...(details.length > 0 ? ["details"] : []),
@@ -496,6 +524,38 @@ export function ReviewForm({
               }
             />
           </>
+        ) : steps.current === KEY_STEP ? (
+          <>
+            <KeyAnswersStep
+              keyAnswers={keyAnswers}
+              questions={options.questions}
+              choices={choices}
+              onChoice={changeChoice}
+              staff={staff}
+              onStaff={setStaff}
+              omYears={omYearsInKey ? (facts.om_years ?? "") : null}
+              onOmYears={(text) =>
+                setFacts((now) => ({ ...now, om_years: text }))
+              }
+              currency={currency}
+              approximatePages={approx}
+            />
+            {errors.om_years ? (
+              <span className="text-sm text-destructive">
+                Support years: {errors.om_years}
+              </span>
+            ) : null}
+            <StepButtons
+              onBack={steps.prev}
+              onNext={steps.next}
+              nextDisabled={staffHasErrors || Boolean(errors.om_years)}
+              hint={
+                staffHasErrors || errors.om_years
+                  ? "Fix the highlighted numbers."
+                  : null
+              }
+            />
+          </>
         ) : steps.current === "scope" ? (
           <>
             <ScopeStep
@@ -585,7 +645,7 @@ export function ReviewForm({
               </p>
             </div>
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {visibleFacts.map((fact) => {
+              {factsShown.map((fact) => {
                 const found = extraction.numbers[fact.key];
                 const value = facts[fact.key] ?? "";
                 const unchanged =
@@ -807,6 +867,21 @@ export function ReviewForm({
                     customFeatures.map((c) => c.name),
                   ),
                 },
+                ...keyAnswers.map((k) => {
+                  const q = options.questions.find((x) => x.key === k.key);
+                  return {
+                    step: KEY_STEP,
+                    label: k.label,
+                    value:
+                      k.key === "staff"
+                        ? staffSummary(staff ?? [])
+                        : k.key === "support_years" && omYearsInKey
+                          ? `${facts.om_years ?? ""} years`
+                          : q
+                            ? answerLabel(q, choices[q.key])
+                            : k.value,
+                  };
+                }),
                 ...questions.map((q) => ({
                   step: openQuestions.includes(q)
                     ? `q:${q.key}`
@@ -816,7 +891,7 @@ export function ReviewForm({
                   label: q.label,
                   value: answerLabel(q, choices[q.key]),
                 })),
-                ...visibleFacts
+                ...factsShown
                   .filter((f) => (facts[f.key] ?? "").trim() !== "")
                   .map((f) => ({
                     step: "facts",
@@ -915,6 +990,20 @@ export function ReviewForm({
       </div>
     </div>
   );
+}
+
+/** The staff list in one line, for the check screen. */
+function staffSummary(rows: StaffRow[]): string {
+  const kept = rows.filter((r) => !r.leftOut);
+  if (kept.length === 0) return "None";
+  return kept
+    .map(
+      (r) =>
+        `${r.countText} ${r.role} (${r.kind === "onsite" ? "onsite" : "offsite"}${
+          r.monthsText.trim() ? `, ${r.monthsText} months` : ""
+        })`,
+    )
+    .join("; ");
 }
 
 /** Answers that follow from a stated number: e.g. 50,000 registered users pick the smallest

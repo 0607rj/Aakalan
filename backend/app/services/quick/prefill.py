@@ -14,9 +14,9 @@ from pydantic import BaseModel
 
 from app.services.engine.inputs import PaymentMilestone
 from app.services.engine.reference import Size
-from app.services.extraction.tender import TenderExtraction
+from app.services.extraction.tender import TenderExtraction, UnclearPoint, VerifiedEvidence
 from app.services.quick.config import LevelKey, Question, QuickConfig
-from app.services.quick.service import CustomFeature, QuickRequest
+from app.services.quick.service import CustomFeature, QuickRequest, StaffItem
 
 Choice = str | int
 HOSTING = "hosting"
@@ -66,6 +66,50 @@ class FactValue(Fact):
     value: int | float | None  # the document's number (API units); None = not stated
 
 
+class FoundStaff(StaffItem):
+    """A staff line as priced from the document, with how and where it says so."""
+
+    why: str  # how it was priced, in plain words
+    evidence: list[VerifiedEvidence]
+
+
+# The answers that move a tender's price most (OPEN_QUESTIONS 162), on the form's first review
+# screen: the staff list, then form questions. A reading's pre-bid queries name the answer they
+# affect (UnclearPoint.answer); staff queries belong to the staff list.
+KeyAnswerKey = Literal["staff", "support_hours", "support_years", "build_type", "chatbot_task"]
+STAFF: Literal["staff"] = "staff"
+OM_YEARS = "om_years"
+CHATBOT_FEATURE = "ai_chatbot"
+KEY_QUESTIONS: tuple[KeyAnswerKey, ...] = (
+    "support_hours",
+    "support_years",
+    "build_type",
+    "chatbot_task",
+)
+QUERY_ANSWER: dict[str, KeyAnswerKey] = {
+    "onsite_staff": STAFF,
+    "support_staff": STAFF,
+    "support_hours": "support_hours",
+    "support_years": "support_years",
+    "build_type": "build_type",
+    "chatbot_level": "chatbot_task",
+}
+
+
+class KeyAnswer(BaseModel):
+    """One of the answers that move the price most, with the clause that gives it and the
+    pre-bid queries about it. The form orders them by `impact_paise` (GET /documents/{id}/form)."""
+
+    key: KeyAnswerKey
+    label: str
+    value: str  # the answer as priced, in plain words
+    stated: bool  # the document gives it (else the usual answer)
+    evidence: list[VerifiedEvidence]
+    queries: list[UnclearPoint]
+    # how far the other answers move the most likely price (None: not worked out)
+    impact_paise: int | None = None
+
+
 class ReviewPrefill(BaseModel):
     """The review form's starting state, and what it sends when everything is accepted."""
 
@@ -79,6 +123,10 @@ class ReviewPrefill(BaseModel):
     custom_features: list[CustomFeature]  # found in the document (`found_index`), included
     scope: list[str]  # what the document asks for (explicit), ticked
     payment_schedule: list[PaymentMilestone] | None  # the document's payment terms
+    # staff during support priced from the document's staff lines (None: the reading has none,
+    # so the onsite_staff / support_staff facts are used)
+    staff: list[FoundStaff] | None = None
+    key_answers: list[KeyAnswer] = []
     request: QuickRequest
 
 
@@ -286,6 +334,24 @@ def review_prefill(cfg: QuickConfig, extraction: TenderExtraction, country: str)
         if terms
         else None
     )
+    staff = (
+        [
+            FoundStaff(
+                kind=p.kind,
+                role=p.role[:MAX_FEATURE_NAME],
+                count=p.count,
+                months=p.months,
+                seats=p.seats,
+                call_off=p.call_off,
+                found_index=i,
+                why=p.why,
+                evidence=p.evidence,
+            )
+            for i, p in enumerate(extraction.staffing)
+        ]
+        if extraction.staffing is not None
+        else None
+    )
     name = extraction.project_name
     request = QuickRequest(
         mode="vendor",
@@ -305,6 +371,9 @@ def review_prefill(cfg: QuickConfig, extraction: TenderExtraction, country: str)
         not_included=[],
         answered=list(dict.fromkeys([*answered, *by_number])),
         payment_schedule=schedule,
+        staff=[StaffItem(**s.model_dump(include=set(StaffItem.model_fields))) for s in staff]
+        if staff is not None
+        else None,
     )
     return ReviewPrefill(
         country=country,
@@ -317,8 +386,75 @@ def review_prefill(cfg: QuickConfig, extraction: TenderExtraction, country: str)
         custom_features=custom,
         scope=scope,
         payment_schedule=schedule,
+        staff=staff,
+        key_answers=key_answers(cfg, extraction, questions, request, staff, everything),
         request=request,
     )
+
+
+def _staff_words(staff: list[FoundStaff]) -> str:
+    if not staff:
+        return "No staff during support"
+    parts = []
+    for s in staff:
+        where = "onsite" if s.kind == "onsite" else "offsite"
+        count = f"{s.count.normalize():f}" + (" round-the-clock seats" if s.seats else "")
+        months = f", {s.months} months" if s.months else ""
+        parts.append(f"{count} {s.role} ({where}{months})")
+    return "; ".join(parts)
+
+
+def key_answers(
+    cfg: QuickConfig,
+    extraction: TenderExtraction,
+    questions: dict[str, Question],
+    request: QuickRequest,
+    staff: list[FoundStaff] | None,
+    everything: list[str],
+) -> list[KeyAnswer]:
+    """The staff list (when the reading has staff lines), support hours, support years, build
+    type and the chatbot's level (when it has one), each with its clause and pre-bid queries,
+    in this order until priced (the API orders them by impact)."""
+    queries: dict[str, list[UnclearPoint]] = {}
+    for u in extraction.unclear_points:
+        answer = QUERY_ANSWER.get(u.answer)
+        if answer is not None:
+            queries.setdefault(answer, []).append(u)
+    out: list[KeyAnswer] = []
+    if staff is not None:
+        out.append(
+            KeyAnswer(
+                key=STAFF,
+                label="Staff during support",
+                value=_staff_words(staff),
+                stated=bool(staff),
+                evidence=[e for s in staff for e in s.evidence[:1]],
+                queries=queries.get(STAFF, []),
+            )
+        )
+    for key in KEY_QUESTIONS:
+        q = questions.get(key)
+        if q is None or (key == "chatbot_task" and CHATBOT_FEATURE not in everything):
+            continue
+        found = extraction.choices.get(key)
+        value = request.choices.get(key, q.default)
+        label = next((o.label for o in q.options if o.value == value), str(value))
+        evidence = list(found.evidence) if found is not None else []
+        stated = found is not None and found.value == value
+        years = extraction.numbers.get(OM_YEARS)
+        if key == "support_years" and OM_YEARS in request.overrides and years is not None:
+            label, evidence, stated = f"{request.overrides[OM_YEARS]} years", years.evidence, True
+        out.append(
+            KeyAnswer(
+                key=key,
+                label=q.label,
+                value=label,
+                stated=stated,
+                evidence=evidence,
+                queries=queries.get(key, []),
+            )
+        )
+    return out
 
 
 def _api_value(fact: Fact, found: Any) -> int | float | None:

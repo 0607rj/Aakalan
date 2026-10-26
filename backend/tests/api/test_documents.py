@@ -175,7 +175,9 @@ def test_ai_reader_citations_are_verified(client: TestClient, admin_headers: H) 
     ex = doc["extraction"]
     assert ex["reader"] == "ai" and doc["llm_model"] == "fake"
     assert [f["key"] for f in ex["features"]] == ["payments"]  # invented quote + bad key dropped
-    assert ex["choices"]["support_hours"]["value"] == "always"  # quote is real, user will review
+    # the quote is real, but round the clock is on call without a committed staffed team
+    # (staffing rule 3, OPEN_QUESTIONS 162); the user reviews it
+    assert ex["choices"]["support_hours"]["value"] == "on_call"
     assert ex["numbers"]["om_years"]["value"] == 3
     assert ex["dropped_findings"] == 4  # + invented and wrongly typed other features
     assert [o["name"] for o in ex["other_features"]] == ["Vehicle tracking"]
@@ -361,6 +363,63 @@ def test_review_form_prefill(client: TestClient, admin_headers: H, no_override: 
     assert facts["deadline_months"]["value"] == 6 and facts["onsite_staff"]["value"] is None
     s = client.post("/quick-estimates", json=request, headers=admin_headers)
     assert s.status_code == 201, s.text
+
+
+def test_review_form_key_answers(client: TestClient, admin_headers: H) -> None:
+    """OPEN_QUESTIONS 162: staff lines become the staff list (cited, priced in code), and the
+    form's key answers come with their pre-bid queries, the biggest price impact first."""
+    pages = [
+        TENDER_PAGES[0],
+        [
+            *TENDER_PAGES[1],
+            "8.2 Two support engineers shall be deployed at the client office during support.",
+        ],
+    ]
+
+    def responder(system: str, user: str) -> object:
+        return {
+            "project_name": "Online Vendor Empanelment Portal",
+            "summary": "A portal for vendors to apply online.",
+            "features": [{"key": "ai_chatbot", "evidence": [{"page": 2, "clause_ref": "4.4", "quote": "An AI chatbot shall answer vendor queries"}]}],
+            "other_features": [],
+            "choices": [{"question": "chatbot_task", "value": "advanced", "evidence": [{"page": 2, "clause_ref": "4.4", "quote": "An AI chatbot shall answer vendor queries"}]}],
+            "numbers": [{"field": "om_years", "value": 3, "evidence": [{"page": 2, "clause_ref": "8.1", "quote": "3 years of operations and maintenance"}]}],
+            "unclear_points": [],
+            "staff_lines": [
+                {"role": "support engineers", "count": 2, "location": "client_site", "quantity_unclear": True, "note": "for how long", "evidence": [{"page": 2, "clause_ref": "8.2", "quote": "Two support engineers shall be deployed at the client office"}]},
+            ],
+        }  # fmt: skip
+
+    set_llm_client(FakeClient(responder))
+    try:
+        doc = upload(client, admin_headers, "tender.pdf", make_pdf(pages)).json()
+    finally:
+        set_llm_client(None)
+    ex = doc["extraction"]
+    assert [(s["kind"], s["count"]) for s in ex["staffing"]] == [("onsite", "2")]
+    assert "chatbot_task" not in ex["choices"]  # no buyer's systems: the usual answer
+    form = client.get(f"/documents/{doc['id']}/form", headers=admin_headers).json()
+    assert [(s["role"], s["found_index"]) for s in form["staff"]] == [("support engineers", 0)]
+    assert form["request"]["staff"][0]["count"] == "2"
+    keys = form["key_answers"]
+    assert {k["key"] for k in keys} == {
+        "staff",
+        "support_hours",
+        "support_years",
+        "build_type",
+        "chatbot_task",
+    }
+    impacts = [k["impact_paise"] for k in keys]
+    assert impacts == sorted(impacts, reverse=True) and impacts[0] > 0
+    staff = next(k for k in keys if k["key"] == "staff")
+    assert staff["evidence"][0]["page"] == 2 and staff["queries"]  # quantity unclear
+    years = next(k for k in keys if k["key"] == "support_years")
+    assert years["stated"] and years["value"] == "3 years"
+    s = client.post("/quick-estimates", json=form["request"], headers=admin_headers)
+    assert s.status_code == 201, s.text
+    detail = client.get(f"/estimates/{s.json()['estimate_id']}", headers=admin_headers).json()
+    labels = [ln["label"] for ln in detail["lines"] if ln["bucket"] == "run.onsite_resources"]
+    assert labels and all("support engineers" in label for label in labels)
 
 
 @pytest.mark.parametrize(

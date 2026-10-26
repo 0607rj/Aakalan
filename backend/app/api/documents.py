@@ -18,6 +18,7 @@ from app.services.extraction.prebid import PrebidQuery, prebid_queries
 from app.services.extraction.tender import TenderExtraction
 from app.services.quick.config import quick_config
 from app.services.quick.prefill import ReviewPrefill, review_prefill
+from app.services.quick.service import key_answer_impact
 
 router = APIRouter(tags=["documents"])
 
@@ -102,9 +103,16 @@ def get_review_form(
     merged = project_extraction(db, project).extraction if doc.extraction else None
     if merged is None:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "This document has not been read.")
-    form = review_prefill(quick_config(), merged, country)
+    cfg = quick_config()
+    form = review_prefill(cfg, merged, country)
     request = form.request.model_copy(update={"document_id": doc.id})
-    return form.model_copy(update={"request": request})
+    # the answers that move the price most, the biggest first (OPEN_QUESTIONS 162)
+    impact = key_answer_impact(db, user, cfg, request, [k.key for k in form.key_answers])
+    keys = sorted(
+        (k.model_copy(update={"impact_paise": impact.get(k.key)}) for k in form.key_answers),
+        key=lambda k: -(k.impact_paise or 0),
+    )
+    return form.model_copy(update={"request": request, "key_answers": keys})
 
 
 @router.get("/projects/{project_id}/extraction", response_model=ProjectExtraction)

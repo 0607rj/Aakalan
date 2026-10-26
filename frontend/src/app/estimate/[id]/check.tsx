@@ -161,6 +161,89 @@ export function IndependentCheckCard({
   );
 }
 
+/**
+ * One plain line: does our build size match a standard industry method, and which features
+ * may be priced low or high. The working (user stories, function points, hours with and
+ * without AI tools) sits behind "How we checked". A check only: it never changes the price.
+ */
+export function SizeCheckCard({ summary }: { summary: QuickSummary }) {
+  const check = summary.size_check;
+  if (!check?.available) return null;
+  const hours = (n: number) => `${n.toLocaleString("en-IN")} hours`;
+  const withAi = check.our_hours_with_ai;
+  const saved =
+    withAi !== null && withAi !== undefined && check.our_hours > 0
+      ? Math.round((100 * (check.our_hours - withAi)) / check.our_hours)
+      : null;
+  const good = check.methods_agree === true && check.features.length === 0;
+  const warn = check.methods_agree === false || check.features.length > 0;
+  return (
+    <section className="sheet">
+      <p className="flex gap-2 text-sm">
+        <span
+          aria-hidden
+          className={cn(
+            "font-semibold",
+            good && "text-success",
+            warn && "text-warning",
+            !good && !warn && "text-muted-foreground",
+          )}
+        >
+          {good ? "✓" : warn ? "⚠" : "–"}
+        </span>
+        <span className={cn(warn && "font-medium")}>{check.headline}</span>
+      </p>
+      <details className="text-sm">
+        <summary className="w-fit cursor-pointer list-none font-medium text-muted-foreground hover:text-foreground [&::-webkit-details-marker]:hidden">
+          How we checked
+        </summary>
+        <div className="mt-3 flex flex-col gap-3">
+          <p className="text-muted-foreground">{check.note}</p>
+          <div className="flex flex-wrap gap-x-10 gap-y-3">
+            <Months
+              label="Our build, without AI tools"
+              value={hours(check.our_hours)}
+            />
+            {withAi !== null && withAi !== undefined ? (
+              <Months
+                label={`Our build, with AI tools${saved !== null && saved > 0 ? ` (${saved}% saved)` : ""}`}
+                value={hours(withAi)}
+              />
+            ) : null}
+            <Months
+              label={`${check.stories} user stories, ${formatDecimal(check.function_points, 0)} function points`}
+              value={`${check.story_hours_low.toLocaleString("en-IN")}–${hours(check.story_hours_high)}`}
+            />
+          </div>
+          <p>{check.message}</p>
+          {check.features.length > 0 || check.unsized.length > 0 ? (
+            <ul className="flex flex-col gap-1.5">
+              {check.features.map((f) => (
+                <li key={f.label}>
+                  <span className="font-medium">{f.label}</span>
+                  {f.level ? ` (${f.level})` : ""}: {f.stories} stories, ours{" "}
+                  {hours(f.our_hours)}
+                  {f.our_hours_with_ai !== null &&
+                  f.our_hours_with_ai !== undefined
+                    ? ` (${hours(f.our_hours_with_ai)} with AI tools)`
+                    : ""}
+                  , story size {hours(f.story_hours)} (×
+                  {formatDecimal(f.ratio, 2)})
+                </li>
+              ))}
+              {check.unsized.length > 0 ? (
+                <li className="text-muted-foreground">
+                  No user stories: {check.unsized.join(", ")}
+                </li>
+              ) : null}
+            </ul>
+          ) : null}
+        </div>
+      </details>
+    </section>
+  );
+}
+
 /** "+₹ 16 L" / "−₹ 1 L": a rounded change to the most likely price. */
 function signed(paise: number, currency: QuickSummary["currency"]): string {
   const amount = formatApprox(paise, currency).replace("about ", "");

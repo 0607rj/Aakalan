@@ -18,8 +18,8 @@ from app.llm.client import LLMClient, LLMResult, load_prompt
 from app.services.documents.parsing import ParsedDocument, normalise
 from app.services.quick.config import LevelKey, QuickConfig
 
-PROMPT_FILE = "extract_tender_v8.md"
-PROMPT_VERSION = "extract_tender_v8"
+PROMPT_FILE = "extract_tender_v9.md"
+PROMPT_VERSION = "extract_tender_v9"
 SIZES = frozenset({"S", "M", "L"})
 BASIC_READER_VERSION = "basic_reader_v1"
 PAGE_TOLERANCE = 1  # a quote may straddle into the neighbouring page
@@ -98,6 +98,20 @@ class UnclearFinding(BaseModel):
     clause_ref: str
     quote: str
     prebid_query: str
+    answer: str = ""  # the answer it affects (UNCLEAR_ANSWERS), "" = none
+
+
+# answers a pre-bid query can belong to, so the review form shows it next to that answer
+UNCLEAR_ANSWERS = frozenset(
+    {
+        "onsite_staff",
+        "support_staff",
+        "support_hours",
+        "support_years",
+        "build_type",
+        "chatbot_level",
+    }
+)
 
 
 class UnclearPoint(BaseModel):
@@ -109,6 +123,8 @@ class UnclearPoint(BaseModel):
     clause_ref: str = ""
     quote: str = ""
     prebid_query: str = ""
+    answer: str = ""  # the answer it affects (UNCLEAR_ANSWERS), "" = none
+    document: str = ""  # the file it cites, when known
 
 
 class NotPricedFinding(BaseModel):
@@ -145,6 +161,33 @@ class PaymentTermsFinding(BaseModel):
     evidence: list[Evidence]
 
 
+class StaffLineFinding(BaseModel):
+    """One statement of people the vendor must provide, as the document says it (prompt v9).
+    The code prices it (services/extraction/staffing.py); the reader never does. Free text
+    where the prompt lists values, so one odd value does not void the whole reading."""
+
+    role: str
+    count: float = 0
+    count_basis: str = "people"  # people | per_shift | resource_months
+    location: str = "not_stated"  # client_site | vendor_site | not_stated
+    months: float = 0  # how long they are needed, when stated (0 = not stated)
+    phase: str = "support"  # build | support | whole_contract
+    round_the_clock: bool = False
+    buyer_sets_headcount: bool = False
+    in_price_table: bool = False
+    same_staff_as: str = ""  # a narrative line: the price-table row's role it describes
+    quantity_unclear: bool = False
+    note: str = ""
+    evidence: list[Evidence]
+
+
+class ChatbotSystemsFinding(BaseModel):
+    """The chatbot must connect to the buyer's own systems (core banking, records, ERP ...)."""
+
+    systems: list[str] = []
+    evidence: list[Evidence]
+
+
 class ExtractionOutput(BaseModel):
     project_name: str
     summary: str
@@ -156,6 +199,8 @@ class ExtractionOutput(BaseModel):
     not_priced: list[NotPricedFinding] = []
     payment_terms: PaymentTermsFinding | None = None
     scope: list[ScopeFinding] = []
+    staff_lines: list[StaffLineFinding] = []
+    chatbot_buyer_systems: ChatbotSystemsFinding | None = None
 
 
 # --- verified result stored on the Document -------------------------------------------------
@@ -259,6 +304,55 @@ class FoundInventory(BaseModel):
     dropped: int = 0  # items left out because their quote was not found
 
 
+StaffBasis = Literal["people", "per_shift", "resource_months"]
+StaffPlace = Literal["client_site", "vendor_site", "not_stated"]
+StaffPhase = Literal["build", "support", "whole_contract"]
+STAFF_BASES: tuple[StaffBasis, ...] = ("people", "per_shift", "resource_months")
+STAFF_PLACES: tuple[StaffPlace, ...] = ("client_site", "vendor_site", "not_stated")
+STAFF_PHASES: tuple[StaffPhase, ...] = ("build", "support", "whole_contract")
+MAX_STAFF_COUNT = 1000  # a larger "count" is not a head count (e.g. a value read as people)
+MAX_STAFF_MONTHS = 240
+
+
+class FoundStaffLine(BaseModel):
+    """A staff statement whose quote was found on its page (StaffLineFinding, normalised)."""
+
+    role: str
+    count: Decimal
+    count_basis: StaffBasis = "people"
+    location: StaffPlace = "not_stated"
+    months: int | None = None  # None: the statement gives no duration
+    phase: StaffPhase = "support"
+    round_the_clock: bool = False
+    buyer_sets_headcount: bool = False
+    in_price_table: bool = False
+    same_staff_as: str = ""
+    quantity_unclear: bool = False
+    note: str = ""
+    evidence: list[VerifiedEvidence]
+
+
+class FoundChatbotSystems(BaseModel):
+    systems: list[str]
+    evidence: list[VerifiedEvidence]
+
+
+class PricedStaff(BaseModel):
+    """Staff the code prices from the staff lines (services/extraction/staffing.py): people at
+    the client's office (onsite) or elsewhere (support), with how long and why."""
+
+    kind: Literal["onsite", "support"]
+    role: str  # as the document says it
+    count: Decimal  # people; round-the-clock seats when `seats`
+    # a committed round-the-clock team stated per shift: count is seats, and the engine prices
+    # people = seats × people per round-the-clock seat (parameters, shown as an assumption)
+    seats: bool = False
+    months: int | None = None  # from the start of support; None = every support year
+    call_off: bool = False  # the buyer sets the headcount: priced as written
+    why: str = ""  # how it was priced, in plain words
+    evidence: list[VerifiedEvidence]
+
+
 class TenderExtraction(BaseModel):
     reader: str  # "ai" | "basic"
     prompt_version: str
@@ -275,6 +369,11 @@ class TenderExtraction(BaseModel):
     scope: list[FoundScope] = []  # asked for or probably needed: offered, never pre-ticked
     scope_set_aside: list[FoundScope] = []  # ruled out, later phase / optional, or a mention
     inventory: FoundInventory | None = None  # for the independent check (AI reader only)
+    staff_lines: list[FoundStaffLine] = []  # people the document says the vendor provides
+    chatbot_buyer_systems: FoundChatbotSystems | None = None
+    # staff priced from the staff lines, in code (None: the reading has no staff lines, so the
+    # onsite_staff / support_staff numbers are used as before)
+    staffing: list[PricedStaff] | None = None
 
 
 def _fence(doc: ParsedDocument) -> str:
@@ -366,12 +465,13 @@ def _verify(
     return out
 
 
-def _unclear(doc: ParsedDocument, u: UnclearFinding) -> UnclearPoint:
+def _unclear(doc: ParsedDocument, u: UnclearFinding, document: str = "") -> UnclearPoint:
     verified = (
         _verify(doc, [Evidence(page=u.page, clause_ref=u.clause_ref, quote=u.quote)])
         if u.page is not None and u.quote
         else []
     )
+    answer = u.answer.strip()
     return UnclearPoint(
         topic=u.topic,
         why=u.why,
@@ -379,7 +479,47 @@ def _unclear(doc: ParsedDocument, u: UnclearFinding) -> UnclearPoint:
         clause_ref=u.clause_ref.strip()[:50],
         quote=verified[0].quote if verified else "",
         prebid_query=u.prebid_query.strip(),
+        answer=answer if answer in UNCLEAR_ANSWERS else "",
+        document=document,
     )
+
+
+def _choice[T: str](value: str, allowed: tuple[T, ...], default: T) -> T:
+    v = value.strip().lower()
+    return next((a for a in allowed if a == v), default)
+
+
+def _staff_lines(
+    doc: ParsedDocument, raw: list[StaffLineFinding], document: str
+) -> tuple[list[FoundStaffLine], int]:
+    """Staff statements with a quote found on the page, values normalised (an unknown value
+    takes the safe default: people, place not stated, support phase)."""
+    out, dropped = [], 0
+    for s in raw:
+        ev = _verify(doc, s.evidence, document)
+        role = " ".join(s.role.split())[:120]
+        if not ev or not role or not (0 <= s.count <= MAX_STAFF_COUNT):
+            dropped += 1
+            continue
+        months = round(s.months) if 0 < s.months <= MAX_STAFF_MONTHS else None
+        out.append(
+            FoundStaffLine(
+                role=role,
+                count=Decimal(int(s.count)) if s.count.is_integer() else Decimal(str(s.count)),
+                count_basis=_choice(s.count_basis, STAFF_BASES, "people"),
+                location=_choice(s.location, STAFF_PLACES, "not_stated"),
+                months=months,
+                phase=_choice(s.phase, STAFF_PHASES, "support"),
+                round_the_clock=s.round_the_clock,
+                buyer_sets_headcount=s.buyer_sets_headcount,
+                in_price_table=s.in_price_table,
+                same_staff_as=" ".join(s.same_staff_as.split())[:120],
+                quantity_unclear=s.quantity_unclear,
+                note=s.note.strip()[:300],
+                evidence=ev,
+            )
+        )
+    return out, dropped
 
 
 def _number(field: str, value: float) -> Any:
@@ -652,6 +792,16 @@ def verify_findings(
     for key in scope:  # asked for in one place, ruled out for a part elsewhere: still offered
         set_aside.pop(key, None)
     _drop_repeats(cfg, features, others, scope)
+    staff_lines, staff_dropped = _staff_lines(doc, raw.staff_lines, document)
+    dropped += staff_dropped
+    systems = None
+    if raw.chatbot_buyer_systems is not None:
+        ev = _verify(doc, raw.chatbot_buyer_systems.evidence, document)
+        if ev:
+            names = [" ".join(n.split())[:80] for n in raw.chatbot_buyer_systems.systems]
+            systems = FoundChatbotSystems(systems=[n for n in names if n], evidence=ev)
+        else:
+            dropped += 1
 
     return TenderExtraction(
         reader=reader,
@@ -662,12 +812,14 @@ def verify_findings(
         other_features=list(others.values()),
         choices=choices,
         numbers=numbers,
-        unclear_points=[_unclear(doc, u) for u in raw.unclear_points],
+        unclear_points=[_unclear(doc, u, document) for u in raw.unclear_points],
         dropped_findings=dropped,
         not_priced=list(not_priced.values()),
         payment_terms=payment_terms,
         scope=list(scope.values()),
         scope_set_aside=list(set_aside.values()),
+        staff_lines=staff_lines,
+        chatbot_buyer_systems=systems,
     )
 
 

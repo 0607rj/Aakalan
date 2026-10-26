@@ -48,6 +48,8 @@ export type QuickOptions = Schemas["QuickOptions"];
 export type QuickQuestion = Schemas["QuestionOut"];
 export type QuickRequest = Schemas["QuickRequest-Input"];
 export type Suggestion = Schemas["Suggestion"];
+export type DraftIn = Schemas["DraftIn"];
+export type DraftOut = Schemas["DraftOut"];
 export type ContactIn = Schemas["ContactIn"];
 export type QuickSummary = Schemas["QuickSummary"];
 export type SecondOpinionState = Schemas["SecondOpinionState"];
@@ -61,6 +63,9 @@ export type TenderDocument = Schemas["DocumentOut"];
 export type TenderExtraction = Schemas["TenderExtraction"];
 export type ReviewPrefill = Schemas["ReviewPrefill"];
 export type FactValue = Schemas["FactValue"];
+export type KeyAnswer = Schemas["KeyAnswer"];
+export type FoundStaff = Schemas["FoundStaff"];
+export type StaffItem = Schemas["StaffItem-Input"];
 export type FoundFeature = Schemas["FoundFeature"];
 export type FoundValue = Schemas["FoundValue"];
 export type FoundOtherFeature = Schemas["FoundOtherFeature"];
@@ -304,6 +309,8 @@ export const api = {
     send<{ id: string }>("POST", "/contact", body),
   suggestFeatures: (text: string) =>
     send<Suggestion>("POST", "/quick-estimate/suggest", { text }),
+  draftStories: (body: DraftIn) =>
+    send<DraftOut>("POST", "/quick-estimate/draft-stories", body),
   questionImpact: (body: QuickRequest, signal?: AbortSignal) =>
     request<QuestionImpact[]>("/quick-estimate/impact", {
       method: "POST",

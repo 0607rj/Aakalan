@@ -483,6 +483,25 @@ class Programme(Sourced):
     environment_rate_key_by_provider: dict[str, str] = {}
 
 
+class SmallSite(Sourced):
+    """v25+: one small server runs the application and its database together."""
+
+    monitoring_free_providers: list[str] = []  # their free tier covers one small server
+
+
+class BandSpread(Frozen):
+    down: Decimal = Field(ge=0, le=1)
+    up: Decimal = Field(ge=0)
+
+
+class HostingBundle(Sourced):
+    """v25+: hosting as one line a year from rate card `hosting.<provider>.<pattern>.<band>.month`
+    (the whole set-up at the middle of the load band); band_spread[provider][pattern][band] is
+    the set-up's cost at the band's two ends relative to its middle."""
+
+    band_spread: dict[str, dict[str, dict[str, BandSpread]]]
+
+
 class OnPrem(Sourced):
     server_rate_key: str
     storage_tb_rate_key: str
@@ -499,6 +518,10 @@ class Hosting(Sourced):
     # v12+: when the peak needs at most this many vCPUs, servers are priced at the provider's
     # small server rate (`cloud.<provider>.app_server_small.month`) when the rate card has one.
     small_app_server_max_vcpus: Decimal | None = None
+    # v25+: one server ("single") on the small server rate also runs the database: no managed
+    # database, and no monitoring fee where the provider's free tier covers it.
+    small_site: SmallSite | None = None
+    bundle: HostingBundle | None = None  # v25+: one hosting line a year
     db_instances: dict[str, Decimal]
     base_storage_gb: Decimal
     db_storage_gb: Decimal
@@ -546,6 +569,14 @@ class Maintenance(Sourced):
     upgrade_role: str
     change_request_share_of_build_pd: Decimal
     change_request_role: str
+    # v25+: bug fixes, patching, upgrades and change requests as one "Upkeep" line a year
+    upkeep_one_line: bool = False
+    # v25+: onsite staff whose line says they do upkeep / O&M management (OnsiteResource.covers)
+    # do it instead of the engine's own upkeep / O&M PM: those are priced beyond their days
+    staff_replace_work: bool = False
+    annual_audit_from_year: int = Field(default=1, ge=1)  # v25: 2 (go-live audit is year 1's)
+    # v25+: year 1's upkeep and O&M PM leave out the hypercare weeks (priced at go-live)
+    hypercare_in_year_one: bool = False
     annual_audit_rate_prefix: str
     ssl_rate_key: str
     domain_rate_key: str

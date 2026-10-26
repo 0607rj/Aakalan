@@ -68,6 +68,13 @@ backend/
                           #   items; far from the price => export blocked until confirmed
                           #   (POST /estimates/{id}/check/confirm); open answers priced as
                           #   options (GET /estimates/{id}/options)
+                          #   size_check.py: the build sized from the document's user stories
+                          #   (Simple Function Points × ISBSG hours per FP, config `size_check`)
+                          #   beside our hours without AI tools, per feature; a check only, no
+                          #   verdict on a CMS / ready-product build (OPEN_QUESTIONS 163)
+                          #   stories.py: no document => the AI drafts user stories per feature
+                          #   (POST /quick-estimate/draft-stories), the user edits them on the
+                          #   form (`feature_stories`); size check only, never price or seed
                           #   quote lists (OPEN_QUESTIONS 147): answers nobody gave
                           #   (`assumed`, the form sends `answered`), `not_included`
                           #   (features / scope / unticked standard blocks, the document's
@@ -88,6 +95,10 @@ backend/
                           #   department" (or by the client's own name) answers those questions
                           #   (code, cited); support_terms.py: support hours and stated support
                           #   staff, with a pre-bid query on a contradiction (OPEN_QUESTIONS 157)
+                          #   staffing.py: the reading's staff lines (prompt v9) priced by rule:
+                          #   price table wins, call-off as written, shifts only for a committed
+                          #   team, months from the line, helpdesk only when asked for, chatbot
+                          #   complex only with the buyer's systems (OPEN_QUESTIONS 162)
       reports/            # PDF report (reportlab) + Excel BoQ (openpyxl) from one ReportData
       outcomes.py         # bid results + calibration report
       documents/ extraction/ retrieval/ mapping/ reports/ templates/   # later milestones
@@ -122,6 +133,17 @@ backend/
                           #   parameters v22+: support level 24x7_on_call (office hours +
                           #   on call); stated support staff are the least support labour
                           #   (maintenance.support_staff.v1, OPEN_QUESTIONS 157)
+                          #   parameters v24+: 4.0 people per staffed round-the-clock seat;
+                          #   staff for some months or as round-the-clock seats priced by
+                          #   maintenance.onsite.v2 / support_staff.v2 (OPEN_QUESTIONS 162)
+                          #   parameters v25+: a small site (one server on the small rate) runs
+                          #   its database on that server: no managed database, no monitoring
+                          #   fee on AWS's free tier (hosting.small_site, OPEN_QUESTIONS 165);
+                          #   with rate card v10, hosting is one line a year (hosting.bundle.v1,
+                          #   a monthly rate by provider / plan / load band) and upkeep one line
+                          #   (maintenance.upkeep.v1); onsite developers / PM named in a staff
+                          #   line do the upkeep / O&M PM (`covers`); annual audit from year 2;
+                          #   year 1 leaves out the hypercare weeks (OPEN_QUESTIONS 166)
                           #   parameters v23+ (OPEN_QUESTIONS 160): the shared model factor is
                           #   centred on its median (widens, no P50 lift) and is a range driver;
                           #   size-band values blend across band edges (size_band_blend_share)
@@ -132,6 +154,8 @@ backend/
                           #   fixtures/srs/: synthetic requirement documents + expected-results manifests
                           #   fixtures/readings/: saved tender readings (production-path back-test),
                           #   fixtures/review_form/: what the review form sent for them (parity)
+                          #   fixtures/readings_v9/: the same readings + staff lines entered by
+                          #   hand (no AI re-read), the back-test's default (OPEN_QUESTIONS 162)
 frontend/                 # Next.js app (src/app, src/components, src/lib); see frontend/AGENTS.md
 data/                     # gitignored: app.db, huey.db, uploads/, reports/, models/
 ```
@@ -154,7 +178,7 @@ Run from the repo root. `make <target>` and `python scripts/tasks.py <target>` a
 | Regenerate OpenAPI JSON + TS types | `make openapi` |
 | Regenerate golden expectations (intentional engine change only) | `make golden` |
 | New migration after model change | `make migration m="describe change"` |
-| Back-test against real projects. First the **production path** (headline): the 8 tenders with a saved reading in `backend/tests/fixtures/readings/` (stand-in model readings), priced through the review form's pre-fill as an upload is (OPEN_QUESTIONS 161). Then the **legacy path, not the production path** (the benchmark file's hand-mapped scope), with and without AI tools (contracts up to `pre_ai_until` judged without): error, bias (ours / published), P10-P90 coverage and band hits by size and client type, in one run / fit the smooth size curve (factor by feature points) | `cd backend && uv run python -m app.cli backtest --country india [--as-of YYYY-MM-DD] [--layers] [--calibrate]` |
+| Back-test against real projects. First the **production path** (headline): the 8 tenders with a saved reading in `backend/tests/fixtures/readings_v9/` (stand-in model readings + staff lines entered by hand; `--readings` picks another folder), priced through the review form's pre-fill as an upload is (OPEN_QUESTIONS 161). Then the **legacy path, not the production path** (the benchmark file's hand-mapped scope), with and without AI tools (contracts up to `pre_ai_until` judged without): error, bias (ours / published), P10-P90 coverage and band hits by size and client type, in one run / fit the smooth size curve (factor by feature points) | `cd backend && uv run python -m app.cli backtest --country india [--as-of YYYY-MM-DD] [--layers] [--calibrate]` |
 | Benchmark tender readings (round 3): `reading:` blocks and `onsite_staff` in `backend/seeds/benchmarks/india.yaml`; a project left out names its `exclude_rule` (rules at the top of each benchmark file, OPEN_QUESTIONS 155); the reading files and scripts in `data/benchmark_readings/` (not committed) | see OPEN_QUESTIONS 153, 155; PBD control log 156 |
 | The catalog as one plain table to read (a view only, never priced from): `docs/CATALOG.md` + `data/catalog.xlsx`; run again after a catalog change | `cd backend && uv run python -m app.cli catalog-table [--version v7]` |
 | Check the email (SMTP) settings: send one test email | `cd backend && uv run python -m app.cli test-email you@example.com` |

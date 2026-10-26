@@ -16,8 +16,8 @@ show_market_prices: false
 # accepted as it pre-fills, priced as an upload is), added to every estimate's accuracy note.
 # Rewrite after each production-path back-test (OPEN_QUESTIONS 161).
 backtest_note:
-  source: "docs/backtest-production-path.md: production-path back-test 2026-10-24 (parameters v23, rate card v9, catalog v7, seed 7, 200 runs, without AI tools); 8 GeM tenders read by a stand-in model, not the production claude-sonnet-5-5 call"
-  text: "Tested on 8 real government tenders, priced the way this app prices an uploaded tender. The tenders were read by a stand-in AI model, not the one the app uses, so treat these figures as provisional. Our likely price came to 1.49 times the published price for medium tenders and 0.47 times for large ones (median), and 3 of the 8 published prices fell inside our low-to-high range."
+  source: "docs/task2-staff-rules.md: production-path back-test 2026-10-24 (parameters v24, rate card v9, catalog v7, seed 7, 200 runs, without AI tools); 8 GeM tenders read by a stand-in model, not the production claude-sonnet-5-5 call, with staff lines entered by hand (OPEN_QUESTIONS 162)"
+  text: "Tested on 8 real government tenders, priced the way this app prices an uploaded tender. The tenders were read by a stand-in AI model, not the one the app uses, and their staff were entered by hand, so treat these figures as provisional. Our likely price came to 1.33 times the published price for medium tenders and 0.63 times for large ones (median), and 3 of the 8 published prices fell inside our low-to-high range."
 
 # Every quick estimate starts from these answers; sizes, questions and features add to them.
 # No client-type extras by default: audits, reports and meetings, accessibility, languages and
@@ -952,6 +952,31 @@ independent_check:
     audit_evidence: "Audit evidence that must stand up to scrutiny"
     statistical_output: "Results that must be statistically right (ML, OCR, fuzzy matching)"
 
+# The story-size check (services/quick/size_check.py, OPEN_QUESTIONS 163): the build sized from
+# the document's user stories with Simple Function Points, at a published delivery rate, compared
+# with our hours (without AI tools: the rates are pre-AI data). A check only, never a price.
+size_check:
+  sources:
+    fp_per_story: "Simple Function Point method (Meli 2010; IFPUG SPM 2021): 4.6 per unspecified generic elementary process; one user story counted as one process (assumption) - https://en.wikipedia.org/wiki/The_Simple_Function_Point_method"
+    fp_per_data_group: "Simple Function Point method: 7.0 per unspecified generic data group - https://en.wikipedia.org/wiki/The_Simple_Function_Point_method"
+    data_groups_per_story: "placeholder: reasoned, data functions are about a quarter to a third of the function points of a business application, 7 x 0.3 / (4.6 + 7 x 0.3) = 31%; not measured"
+    hours_per_fp: "ISBSG project delivery rate, new development, 300-500 FP, quality A/B, n=488: P25 4.7, median 9.8, P75 18.4 hours per FP (van Heeringen, The value of benchmarking software projects) - https://www.slideshare.net/slideshow/the-value-of-benchmarking-software-projects/28954202"
+  fp_per_story: 4.6
+  fp_per_data_group: 7.0
+  data_groups_per_story: 0.3
+  hours_per_fp: {low: 4.7, likely: 9.8, high: 18.4}
+  stages: [pre_build, build, go_live]   # ISBSG effort covers planning to implementation
+  min_stories: 3                         # placeholder: fewer stories, too small to judge alone
+  # reasoned: the ISBSG rate is for new development; on these much is set up, not built, so
+  # ours is expected below the story size and no agree / disagree verdict is given
+  reuse_build_types: [cms, ready_product]
+  # no document: the AI drafts user stories per feature for the user to edit and confirm; they
+  # feed this check only (never a level or a price). Limits are reasoned placeholders.
+  draft_prompt: draft_stories_v1
+  draft_max_stories: 15
+  draft_max_chars: 200
+  top_features: 5
+
 # Work every estimate already prices: the size tiers' base blocks and the run costs (backups,
 # hosting, SSL). The document reader links a requirement that is only a part of one of these
 # to its key, and it is not priced again as an extra (services/extraction/tender.py).
@@ -1291,11 +1316,15 @@ support_terms:
   source: "RailTel e-Empanelment + Chatbot tender review (2026-10-23); phrase lists reasoned"
   ignore: [e-tender, e-tendering, e-nivida, e-procurement, bid submission, tender portal, cppp, gem portal, gem helpdesk]
   round_the_clock: [round-the-clock, round the clock, 24x7, "24 x 7", "24×7", "24*7", 24/7, 24x7x365, "24 x 7 x 365", 24 hours a day]
-  staffed: [helpdesk, help desk, help-desk, call centre, call center, contact centre, contact center, manned, shifts, shift]
+  # OPEN_QUESTIONS 162 rule 2: staffed round the clock only when the sentence says shifts or a
+  # roster (a 24x7 helpdesk, call centre or "manned" desk alone is on call; a call-off team in
+  # shifts is decided in staffing.py)
+  staffed: [shift, shifts, per shift, roster, rostered]
   office_hours: [business hours, office hours, working hours]
   # an SLA response faster than this many hours, in a sentence about support, is answered on call
   fast_response_hours: 4
-  support_words: [support, maintenance, o&m, helpdesk, help desk, operations, post go-live, post-go-live, after go-live, post-platform delivery]
+  # uptime and availability wording round the clock is on call, never staffed (rule 2)
+  support_words: [support, maintenance, o&m, helpdesk, help desk, operations, post go-live, post-go-live, after go-live, post-platform delivery, uptime, availability]
   staff_words: [resources, resource, engineers, engineer, staff, personnel, manpower, persons, executives, professionals]
   dedicated: [dedicated, assigned, deployed, offsite, off-site, remote, minimum, at least, atleast]
   onsite: [onsite, on-site, on site, resident, at the client's office, at client premises, client's premises, client location]
@@ -1303,6 +1332,37 @@ support_terms:
   max_sentence_chars: 400
   values: {office: office, on_call: on_call, always: always}
   conflict_query: "The document asks for support round the clock (as quoted) but also states support staff during business or office hours (as quoted). Kindly confirm whether support outside business hours is on call for urgent (severity 1) issues only, or a staffed shift, and how many people are expected outside business hours."
+
+# Staff, support hours, helpdesk and chatbot level priced in code from the reading's staff lines
+# (prompt v9) and the page text (services/extraction/staffing.py, OPEN_QUESTIONS 162). General
+# rules for every tender, decided by the user on 2026-10-24:
+# 1. a priced staff table or BoQ row wins over narrative terms; a narrative statement that
+#    describes the same staff differently raises a pre-bid query; 2. staffed round the clock
+#    only for a committed team in shifts or on a roster (support_terms.staffed); uptime or
+#    availability wording is on call; 3. call-off staff (the buyer sets the headcount) are priced
+#    as written, never multiplied by shifts, with a pre-bid query; a call-off team on 24x7 is on
+#    call; a committed round-the-clock team stated per shift is priced as seats (people per seat:
+#    parameters maintenance.helpdesk_coverage_fte 24x7); 4. place not stated: priced offsite, with
+#    a pre-bid query; 5. how long comes from the staff line, not the contract; 6. an unclear
+#    quantity is priced as read, with a pre-bid query; 7. helpdesk only for a complaint desk,
+#    service desk or helpdesk staff; 8. chatbot "complex questions" only when it must connect to
+#    the buyer's own systems. Pricing both readings (a wider range) stays off.
+staffing:
+  source: "User's rules (2026-10-24, docs/verification-sheet.md); phrase lists reasoned"
+  # a sentence about support naming one of these asks for a helpdesk team (rule 7)
+  helpdesk_words: [helpdesk, help desk, help-desk, service desk, complaint booking, complaint lodging, complaint desk, call centre, call center, contact centre, contact center]
+  # onsite staff who do work the estimate prices anyway (OPEN_QUESTIONS 166, reasoned): an onsite
+  # project manager or team leader is the O&M project manager; an onsite developer or support
+  # engineer (L2 / L3) does the bug fixes, patches, upgrades and small changes. Helpdesk (L1),
+  # analysts, designers and database administrators do other work and are priced in full.
+  management_words: [project manager, team leader, team lead, programme manager, program manager, delivery manager]
+  upkeep_words: [developer, developers, programmer, programmers, software engineer, support engineer, support engineers, technical support, l2, l3]
+  queries:
+    table_conflict: "The price schedule lists {table_role} ({table_count}, {table_place}; quoted on page {table_page}), while the terms on page {page} describe {count} {role} ({place}). Kindly confirm the number of resources, where they sit and for how long; we have priced the price schedule."
+    call_off: "The document leaves the number of {role} to the Bank's or Department's discretion (page {page}). Kindly confirm the number of resources to be priced, their shifts and where they sit; we have priced {count} as written."
+    call_off_hours: "The {role} are to work round the clock (page {page}) but their number is set by the Bank or Department. Kindly confirm whether a staffed round-the-clock team is required from the start, and how many people per shift; we have priced on-call support outside office hours."
+    place_not_stated: "The document asks for {count} {role} (page {page}) but does not say whether they sit at the client's premises or offsite. Kindly confirm; we have priced them offsite."
+    quantity_unclear: "The number for {role} on page {page} is not clear ({note}). Kindly confirm the number of people and for how long; we have priced {count} as read."
 
 # Things a requirement document may ask for that this estimate does not price: shown to the
 # user with the page, so nothing is silently left out (basic reader: these words; AI reader:

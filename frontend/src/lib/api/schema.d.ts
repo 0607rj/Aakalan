@@ -732,6 +732,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/quick-estimate/draft-stories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Draft
+         * @description User stories for the ticked features, drafted by the AI for the user to edit and confirm
+         *     (a project without a document). Nothing is saved or priced; the confirmed stories feed the
+         *     story-size check only.
+         */
+        post: operations["draft_quick_estimate_draft_stories_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/documents": {
         parameters: {
             query?: never;
@@ -1688,6 +1710,30 @@ export interface components {
             /** Llm Output Tokens */
             llm_output_tokens: number;
         };
+        /** DraftIn */
+        DraftIn: {
+            /**
+             * Description
+             * @default
+             */
+            description: string;
+            /** Features */
+            features: components["schemas"]["StoryFeature"][];
+        };
+        /** DraftOut */
+        DraftOut: {
+            /** Available */
+            available: boolean;
+            /**
+             * Stories
+             * @default {}
+             */
+            stories: {
+                [key: string]: string[];
+            };
+            /** Note */
+            note?: string | null;
+        };
         /**
          * Driver
          * @description NFR drivers a catalog component can be sensitive to.
@@ -1968,6 +2014,30 @@ export interface components {
              */
             hidden: boolean;
         };
+        /** FeatureSize */
+        FeatureSize: {
+            /** Label */
+            label: string;
+            /** Level */
+            level: string | null;
+            /** Stories */
+            stories: number;
+            /** Our Hours */
+            our_hours: number;
+            /** Our Hours With Ai */
+            our_hours_with_ai?: number | null;
+            /** Story Hours */
+            story_hours: number;
+            /** Ratio */
+            ratio: string;
+            /**
+             * Position
+             * @enum {string}
+             */
+            position: "below" | "inside" | "above";
+            /** Judged */
+            judged: boolean;
+        };
         /** Flag */
         Flag: {
             /**
@@ -1979,6 +2049,13 @@ export interface components {
             feature?: string | null;
             /** Message */
             message: string;
+        };
+        /** FoundChatbotSystems */
+        FoundChatbotSystems: {
+            /** Systems */
+            systems: string[];
+            /** Evidence */
+            evidence: components["schemas"]["VerifiedEvidence"][];
         };
         /** FoundFeature */
         FoundFeature: {
@@ -2197,6 +2274,101 @@ export interface components {
             /** Evidence */
             evidence: components["schemas"]["VerifiedEvidence"][];
         };
+        /**
+         * FoundStaff
+         * @description A staff line as priced from the document, with how and where it says so.
+         */
+        FoundStaff: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "onsite" | "support";
+            /** Role */
+            role: string;
+            /** Count */
+            count: string;
+            /** Months */
+            months?: number | null;
+            /**
+             * Seats
+             * @default false
+             */
+            seats: boolean;
+            /**
+             * Call Off
+             * @default false
+             */
+            call_off: boolean;
+            /** Found Index */
+            found_index?: number | null;
+            /** Why */
+            why: string;
+            /** Evidence */
+            evidence: components["schemas"]["VerifiedEvidence"][];
+        };
+        /**
+         * FoundStaffLine
+         * @description A staff statement whose quote was found on its page (StaffLineFinding, normalised).
+         */
+        FoundStaffLine: {
+            /** Role */
+            role: string;
+            /** Count */
+            count: string;
+            /**
+             * Count Basis
+             * @default people
+             * @enum {string}
+             */
+            count_basis: "people" | "per_shift" | "resource_months";
+            /**
+             * Location
+             * @default not_stated
+             * @enum {string}
+             */
+            location: "client_site" | "vendor_site" | "not_stated";
+            /** Months */
+            months?: number | null;
+            /**
+             * Phase
+             * @default support
+             * @enum {string}
+             */
+            phase: "build" | "support" | "whole_contract";
+            /**
+             * Round The Clock
+             * @default false
+             */
+            round_the_clock: boolean;
+            /**
+             * Buyer Sets Headcount
+             * @default false
+             */
+            buyer_sets_headcount: boolean;
+            /**
+             * In Price Table
+             * @default false
+             */
+            in_price_table: boolean;
+            /**
+             * Same Staff As
+             * @default
+             */
+            same_staff_as: string;
+            /**
+             * Quantity Unclear
+             * @default false
+             */
+            quantity_unclear: boolean;
+            /**
+             * Note
+             * @default
+             */
+            note: string;
+            /** Evidence */
+            evidence: components["schemas"]["VerifiedEvidence"][];
+        };
         /** FoundValue */
         FoundValue: {
             /** Value */
@@ -2347,6 +2519,30 @@ export interface components {
             minimum_feasible_months: string;
             /** Phases */
             phases: components["schemas"]["PhaseSuggestion"][];
+        };
+        /**
+         * KeyAnswer
+         * @description One of the answers that move the price most, with the clause that gives it and the
+         *     pre-bid queries about it. The form orders them by `impact_paise` (GET /documents/{id}/form).
+         */
+        KeyAnswer: {
+            /**
+             * Key
+             * @enum {string}
+             */
+            key: "staff" | "support_hours" | "support_years" | "build_type" | "chatbot_task";
+            /** Label */
+            label: string;
+            /** Value */
+            value: string;
+            /** Stated */
+            stated: boolean;
+            /** Evidence */
+            evidence: components["schemas"]["VerifiedEvidence"][];
+            /** Queries */
+            queries: components["schemas"]["UnclearPoint"][];
+            /** Impact Paise */
+            impact_paise?: number | null;
         };
         /** LevelOut */
         LevelOut: {
@@ -2710,6 +2906,41 @@ export interface components {
              */
             beyond_range: boolean;
         };
+        /**
+         * PricedStaff
+         * @description Staff the code prices from the staff lines (services/extraction/staffing.py): people at
+         *     the client's office (onsite) or elsewhere (support), with how long and why.
+         */
+        PricedStaff: {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "onsite" | "support";
+            /** Role */
+            role: string;
+            /** Count */
+            count: string;
+            /**
+             * Seats
+             * @default false
+             */
+            seats: boolean;
+            /** Months */
+            months?: number | null;
+            /**
+             * Call Off
+             * @default false
+             */
+            call_off: boolean;
+            /**
+             * Why
+             * @default
+             */
+            why: string;
+            /** Evidence */
+            evidence: components["schemas"]["VerifiedEvidence"][];
+        };
         /** ProjectCreate */
         ProjectCreate: {
             /** Name */
@@ -2996,6 +3227,15 @@ export interface components {
             not_included: components["schemas"]["NotIncluded"][];
             /** Answered */
             answered?: string[] | null;
+            /** Staff */
+            staff?: components["schemas"]["StaffItem-Input"][] | null;
+            /**
+             * Feature Stories
+             * @default {}
+             */
+            feature_stories: {
+                [key: string]: string[];
+            };
         };
         /** QuickRequest */
         "QuickRequest-Output": {
@@ -3070,6 +3310,15 @@ export interface components {
             not_included: components["schemas"]["NotIncluded"][];
             /** Answered */
             answered?: string[] | null;
+            /** Staff */
+            staff?: components["schemas"]["StaffItem-Output"][] | null;
+            /**
+             * Feature Stories
+             * @default {}
+             */
+            feature_stories: {
+                [key: string]: string[];
+            };
         };
         /** QuickSummary */
         QuickSummary: {
@@ -3221,6 +3470,7 @@ export interface components {
              */
             support_term_open: boolean;
             independent_check?: components["schemas"]["IndependentCheckOut"] | null;
+            size_check?: components["schemas"]["SizeCheckOut"] | null;
             /**
              * Assumed
              * @default []
@@ -3564,6 +3814,13 @@ export interface components {
             scope: string[];
             /** Payment Schedule */
             payment_schedule: components["schemas"]["PaymentMilestone-Output"][] | null;
+            /** Staff */
+            staff?: components["schemas"]["FoundStaff"][] | null;
+            /**
+             * Key Answers
+             * @default []
+             */
+            key_answers: components["schemas"]["KeyAnswer"][];
             request: components["schemas"]["QuickRequest-Output"];
         };
         /**
@@ -3744,6 +4001,78 @@ export interface components {
          * @enum {string}
          */
         Size: "S" | "M" | "L";
+        /** SizeCheckOut */
+        SizeCheckOut: {
+            /** Available */
+            available: boolean;
+            /** Reason */
+            reason?: string | null;
+            /**
+             * Stories
+             * @default 0
+             */
+            stories: number;
+            /**
+             * Function Points
+             * @default 0
+             */
+            function_points: string;
+            /**
+             * Story Hours Low
+             * @default 0
+             */
+            story_hours_low: number;
+            /**
+             * Story Hours
+             * @default 0
+             */
+            story_hours: number;
+            /**
+             * Story Hours High
+             * @default 0
+             */
+            story_hours_high: number;
+            /**
+             * Our Hours
+             * @default 0
+             */
+            our_hours: number;
+            /** Our Hours With Ai */
+            our_hours_with_ai?: number | null;
+            /** Ratio */
+            ratio?: string | null;
+            /** Position */
+            position?: ("below" | "inside" | "above") | null;
+            /** Count Check Ratio */
+            count_check_ratio?: string | null;
+            /** Methods Agree */
+            methods_agree?: boolean | null;
+            /**
+             * Message
+             * @default
+             */
+            message: string;
+            /**
+             * Headline
+             * @default
+             */
+            headline: string;
+            /**
+             * Features
+             * @default []
+             */
+            features: components["schemas"]["FeatureSize"][];
+            /**
+             * Unsized
+             * @default []
+             */
+            unsized: string[];
+            /**
+             * Note
+             * @default
+             */
+            note: string;
+        };
         /**
          * SourceRef
          * @description Where a requirement comes from in the tender document.
@@ -3776,6 +4105,66 @@ export interface components {
             /** Up */
             up: string;
         };
+        /**
+         * StaffItem
+         * @description People the vendor provides during support, from the document's staff lines (priced in
+         *     code, services/extraction/staffing.py) or added by the user (OPEN_QUESTIONS 162).
+         */
+        "StaffItem-Input": {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "onsite" | "support";
+            /** Role */
+            role: string;
+            /** Count */
+            count: number | string;
+            /** Months */
+            months?: number | null;
+            /**
+             * Seats
+             * @default false
+             */
+            seats: boolean;
+            /**
+             * Call Off
+             * @default false
+             */
+            call_off: boolean;
+            /** Found Index */
+            found_index?: number | null;
+        };
+        /**
+         * StaffItem
+         * @description People the vendor provides during support, from the document's staff lines (priced in
+         *     code, services/extraction/staffing.py) or added by the user (OPEN_QUESTIONS 162).
+         */
+        "StaffItem-Output": {
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "onsite" | "support";
+            /** Role */
+            role: string;
+            /** Count */
+            count: string;
+            /** Months */
+            months?: number | null;
+            /**
+             * Seats
+             * @default false
+             */
+            seats: boolean;
+            /**
+             * Call Off
+             * @default false
+             */
+            call_off: boolean;
+            /** Found Index */
+            found_index?: number | null;
+        };
         /** StandardBlockOut */
         StandardBlockOut: {
             /** Key */
@@ -3784,6 +4173,13 @@ export interface components {
             label: string;
             /** Hint */
             hint: string;
+        };
+        /** StoryFeature */
+        StoryFeature: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
         };
         /** SuggestedFeature */
         SuggestedFeature: {
@@ -3937,6 +4333,14 @@ export interface components {
              */
             scope_set_aside: components["schemas"]["FoundScope"][];
             inventory?: components["schemas"]["FoundInventory"] | null;
+            /**
+             * Staff Lines
+             * @default []
+             */
+            staff_lines: components["schemas"]["FoundStaffLine"][];
+            chatbot_buyer_systems?: components["schemas"]["FoundChatbotSystems"] | null;
+            /** Staffing */
+            staffing?: components["schemas"]["PricedStaff"][] | null;
         };
         /** Timeline */
         Timeline: {
@@ -4115,6 +4519,16 @@ export interface components {
              * @default
              */
             prebid_query: string;
+            /**
+             * Answer
+             * @default
+             */
+            answer: string;
+            /**
+             * Document
+             * @default
+             */
+            document: string;
         };
         /** UserOut */
         UserOut: {
@@ -5682,6 +6096,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["Suggestion"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    draft_quick_estimate_draft_stories_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DraftIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DraftOut"];
                 };
             };
             /** @description Validation Error */

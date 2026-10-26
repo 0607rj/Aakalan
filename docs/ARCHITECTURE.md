@@ -107,6 +107,23 @@ and returns a `QuickSummary` (headline range, five plain parts, build-only cost,
 biggest uncertainty in words). `GET /estimates/{id}/summary` rebuilds the summary for any
 estimate. The summary only regroups integer paise produced by the engine.
 
+**Three sizes for one build** (OPEN_QUESTIONS 163). Beside our feature-by-feature price, the
+summary shows the independent check (`anchor.py`, a build counted from the document's items)
+and the story-size check (`size_check.py`): each feature's user stories sized with Simple
+Function Points at the ISBSG delivery rate, compared with our hours without AI tools, with the
+features furthest from their story size listed. Both are checks only: they never change a
+price, and the range is not narrowed when they agree (no coverage evidence yet).
+
+**Fewer, broader lines** (parameters v25 + rate card v10, OPEN_QUESTIONS 166). Hosting is one
+line a year (`hosting.bundle.v1`): a monthly rate for the whole set-up by provider, plan and
+load band, with the load inside the band as the line's own spread; without a v10 rate card it
+stays itemised (`hosting/sizing.py`). Upkeep (bug fixes, patches, upgrades, small changes) is
+one line a year (`maintenance.upkeep.v1`). Work the engine prices is not priced again when a
+staff line already does it: onsite developers / L2-L3 do the upkeep and an onsite project
+manager is the O&M project manager (`OnsiteResource.covers`, set in `quick/service.py` from
+the role's name); the annual re-audit starts in support year 2; year 1 leaves out the
+hypercare weeks.
+
 **The price follows what is built, not who orders it** (quick config v2, parameter set v12).
 There is no client-type question. Each ticked feature has a level (`feature_levels`: basic /
 standard / advanced, `sizing.levels`) that sets its components' size and complexity and adds
@@ -221,7 +238,7 @@ bid results (`POST /projects/{id}/outcome`) and builds the calibration report (`
 
 Reference data is per country (`region` on rate cards and parameter sets; currency on the rate
 card). `services/settings.py` applies the company's margin / buffer / effort multipliers to a
-copy of the parameter set before pricing. The headline back-test is the **production path** (`backtest_production`, OPEN_QUESTIONS 161): each benchmark with a saved reading (`tests/fixtures/readings`) is priced as an upload is, through the review form's pre-fill (`services/quick/prefill.review_prefill`, which the form itself loads from `GET /documents/{id}/form`) and `plan_quick` with the reading passed in. The rest of this paragraph describes the **legacy path, not the production path**: `services/calibration/backtest.py` prices the
+copy of the parameter set before pricing. The headline back-test is the **production path** (`backtest_production`, OPEN_QUESTIONS 161): each benchmark with a saved reading (`tests/fixtures/readings_v9`, the readings plus staff lines entered by hand, OPEN_QUESTIONS 162) is priced as an upload is, through the review form's pre-fill (`services/quick/prefill.review_prefill`, which the form itself loads from `GET /documents/{id}/form`) and `plan_quick` with the reading passed in. Staff during support come from the reading's staff lines (prompt v9): `services/extraction/staffing.py` applies the rules in code (price table wins, call-off as written, staffed shifts only for a committed team, months from the line, helpdesk only when asked for, chatbot complex only with the buyer's systems) and raises the pre-bid queries; the request's `staff` list becomes the engine's `onsite_resources` (`maintenance.onsite.v2` / `support_staff.v2` for months or round-the-clock seats), and the form shows these key answers first, ordered by price impact (`key_answers`). The rest of this paragraph describes the **legacy path, not the production path**: `services/calibration/backtest.py` prices the
 benchmark contracts in `seeds/benchmarks/<country>.yaml` with the same quick-estimate mapping
 (features at the level matching each project's size class, the size pinned to that class,
 government projects above small with the audit and formal reporting asked for). From

@@ -3,7 +3,7 @@
 import * as React from "react";
 
 import type { PricedOption, QuickSummary } from "@/lib/api/client";
-import { formatApprox } from "@/lib/format";
+import { formatApprox, formatRange } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 import { biggestOpenAnswer, changeRange } from "./check";
@@ -187,6 +187,14 @@ function sum(items: CostItem[]): number {
   return items.reduce((s, i) => s + i.amount_paise, 0);
 }
 
+/** Low and high ends of items: each item's share of the price's range, so they add up. */
+function sumRange(items: CostItem[]): [number, number] {
+  return [
+    items.reduce((s, i) => s + i.low_paise, 0),
+    items.reduce((s, i) => s + i.high_paise, 0),
+  ];
+}
+
 function WhenBadge({ when, years }: { when: Category["when"]; years: number }) {
   const text =
     when === "once"
@@ -238,11 +246,12 @@ function ShareBar({ rows }: { rows: { key: string; amount: number }[] }) {
   );
 }
 
-/** The quote in a few plain categories that add up to the most likely price. */
+/** The quote in a few plain categories, each a range: its share of the price's range. */
 export function CostSummary({ summary }: { summary: QuickSummary }) {
   const money = moneyOf(summary);
+  const range = (low: number | null, high: number | null) =>
+    formatRange(low, high, summary.currency);
   const years = summary.support_years;
-  const risk = summary.risk_allowance_paise;
   const items = summary.cost_items;
 
   // Older estimates have no item list: show the stored plain parts as they are.
@@ -250,19 +259,29 @@ export function CostSummary({ summary }: { summary: QuickSummary }) {
     key: string;
     label: string;
     amount: number;
+    low: number;
+    high: number;
     when: Category["when"] | null;
   }[] =
     items.length > 0
-      ? CATEGORIES.map((c) => ({
-          key: c.key,
-          label: c.label,
-          amount: sum(items.filter((i) => categoryOf(i) === c.key)),
-          when: c.when,
-        })).filter((r) => r.amount > 0)
+      ? CATEGORIES.map((c) => {
+          const mine = items.filter((i) => categoryOf(i) === c.key);
+          const [low, high] = sumRange(mine);
+          return {
+            key: c.key,
+            label: c.label,
+            amount: sum(mine),
+            low,
+            high,
+            when: c.when,
+          };
+        }).filter((r) => r.amount > 0)
       : summary.parts.map((p) => ({
           key: p.key,
           label: p.label,
           amount: p.amount_paise,
+          low: p.low_paise,
+          high: p.high_paise,
           when: null,
         }));
 
@@ -292,28 +311,26 @@ export function CostSummary({ summary }: { summary: QuickSummary }) {
               </span>
             </span>
             <span className="font-semibold tabular-nums">
-              {money(r.amount)}
+              {range(r.low, r.high)}
             </span>
           </li>
         ))}
-        {risk !== null && risk > 0 ? (
-          <li className="flex flex-wrap items-start justify-between gap-x-6 gap-y-1 py-3">
-            <span className="flex max-w-xl flex-col gap-1">
-              <span className="font-medium">Expected overrun (risk)</span>
-              <span className="text-sm text-muted-foreground">
-                How far work usually runs over the plan, from simulation.
-              </span>
-            </span>
-            <span className="font-semibold tabular-nums">{money(risk)}</span>
-          </li>
-        ) : null}
         <li className="flex flex-wrap items-baseline justify-between gap-x-6 py-3">
-          <span className="font-semibold">Most likely price</span>
+          <span className="flex flex-col">
+            <span className="font-semibold">Total</span>
+            <span className="text-sm text-muted-foreground">
+              Most likely {money(summary.likely_paise)}
+            </span>
+          </span>
           <span className="text-lg font-semibold text-primary tabular-nums">
-            {money(summary.likely_paise)}
+            {range(summary.low_paise, summary.high_paise)}
           </span>
         </li>
       </ul>
+      <p className="text-sm text-muted-foreground">
+        No one can know the exact cost in advance, so every part is a range: its
+        share of the total range. The parts add up to the total.
+      </p>
       {summary.client_pays.length > 0 ? (
         <p className="text-sm text-muted-foreground">
           <strong className="text-foreground">Not in this price:</strong>{" "}

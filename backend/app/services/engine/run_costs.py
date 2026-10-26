@@ -11,6 +11,57 @@ from app.services.engine.outputs import CostLineOut
 from app.services.engine.timeline import band_fee
 
 OFFICE_HOURS = "8x5"  # the support hours dedicated support staff cover (support_staff.v1)
+ROUND_THE_CLOCK = "24x7"  # people per round-the-clock seat: helpdesk_coverage_fte[this]
+MONTHS_A_YEAR = 12  # calendar months, for staff needed for part of the support period
+WEEKS_A_YEAR = 52  # calendar weeks, for the hypercare weeks inside support year 1
+
+
+def _v2(res: OnsiteResource) -> bool:
+    """Staff for part of the support period, or round-the-clock seats (OPEN_QUESTIONS 162)."""
+    return res.months is not None or res.seats
+
+
+def year_pd(ctx: PricingContext, res: OnsiteResource, year: int) -> Decimal:
+    """A staff line's person-days in a support year, as its own line prices them (staff_pd):
+    count (× people per round-the-clock seat) × pd_per_year × share of the year, or count × days
+    in the first support year when the document limits their days."""
+    if res.days is not None:
+        return res.count * res.days if year == 1 else ZERO
+    people = res.count
+    if res.seats:
+        people *= ctx.p.maintenance.helpdesk_coverage_fte[ROUND_THE_CLOCK]
+    pd = people * ctx.p.calendar.pd_per_year
+    if res.months is None:
+        return pd
+    year_months = Decimal(MONTHS_A_YEAR)
+    return pd * min(max(res.months - year_months * (year - 1), ZERO), year_months) / year_months
+
+
+def staff_doing(ctx: PricingContext, covers: str, year: int) -> tuple[Decimal, list[str]]:
+    """Person-days this support year of the onsite staff whose line says they do `covers`
+    work (parameter sets v25+, maintenance.staff_replace_work), and their names."""
+    if not ctx.p.maintenance.staff_replace_work:
+        return ZERO, []
+    found = [r for r in ctx.q.onsite_resources if r.kind == "onsite" and r.covers == covers]
+    return sum((year_pd(ctx, r, year) for r in found), ZERO), [r.name or r.role for r in found]
+
+
+def after_hypercare(t: LineBuilder, year: int) -> Decimal:
+    """Share of support year 1 after the hypercare weeks (parameter sets v25+,
+    maintenance.hypercare_in_year_one): (weeks_a_year − hypercare_weeks) / weeks_a_year; 1 in
+    other years or before v25. Hypercare is priced at go-live, so those weeks are not again."""
+    if year != 1 or not t.ctx.p.maintenance.hypercare_in_year_one:
+        return ONE
+    weeks: int = t.driver("hypercare_weeks")
+    if not weeks:
+        return ONE
+    t.param("maintenance", "hypercare_in_year_one")
+    year_weeks = Decimal(WEEKS_A_YEAR)
+    return t.step(
+        "share of year 1 after hypercare",
+        f"({year_weeks} − {weeks}) / {year_weeks}",
+        max(year_weeks - weeks, ZERO) / year_weeks,
+    )
 
 
 def _run(
@@ -145,34 +196,128 @@ def maintenance_lines(ctx: PricingContext, build_effort_pd: Decimal) -> list[Cos
         spreads.om_year(t, year)
         return t.finish(amount * esc)
 
+    def staff_pd(t: LineBuilder, res: OnsiteResource, year: int, what: str) -> Decimal:
+        """count × pd_per_year (v1); with months or seats (v2, OPEN_QUESTIONS 162):
+        count × people_per_seat (seats only) × pd_per_year × share_of_year, where
+        share_of_year = clamp(months − 12 × (year − 1), 0, 12) / 12."""
+        t.param("calendar", "pd_per_year")
+        people = res.count
+        if res.seats:
+            per_seat: Decimal = t.param("maintenance", "helpdesk_coverage_fte", ROUND_THE_CLOCK)
+            people = t.step(
+                "people for the round-the-clock seats (assumption: people per seat)",
+                f"{res.count} × {per_seat}",
+                res.count * per_seat,
+            )
+        full = f"{what} person-days" if res.months is None else f"{what} person-days a full year"
+        pd = t.step(full, f"{people} × {pd_year}", people * pd_year)
+        if res.months is None:
+            return pd
+        year_months = Decimal(MONTHS_A_YEAR)
+        months = min(max(res.months - year_months * (year - 1), ZERO), year_months)
+        share = t.step(
+            "share of this year they are needed",
+            f"clamp({res.months} − {year_months} × {year - 1}, 0, {year_months}) / {year_months}",
+            months / year_months,
+        )
+        return t.step(f"{what} person-days", f"{pd:.2f} × {share:.4f}", pd * share)
+
+    def staff_label(res: OnsiteResource, default: str) -> str:
+        return f"{default}: {res.name}" if res.name else default
+
     def support_staff_line(
         res: OnsiteResource, i: int, year: int, covered: Decimal
-    ) -> CostLineOut | None:
-        """maintenance.support_staff.v1: a stated number of dedicated support staff is the
+    ) -> tuple[CostLineOut | None, Decimal]:
+        """maintenance.support_staff.v1/v2: a stated number of dedicated support staff is the
         least support labour, not more of it (OPEN_QUESTIONS 157). They do the support work
         already priced this year (the helpdesk in office hours, bug-fix, patching, upgrades,
         change requests), so only the shortfall is added:
-        max(count × pd_per_year − that work's person-days, 0)."""
+        max(staff person-days (staff_pd) − that work's person-days, 0)."""
         t = _run(
             ctx,
             f"onsite{i}",
             "run.onsite_resources",
             year,
-            "Dedicated support staff (beyond the support work above)",
-            "maintenance.support_staff.v1",
+            staff_label(res, "Dedicated support staff (beyond the support work above)"),
+            "maintenance.support_staff.v2" if _v2(res) else "maintenance.support_staff.v1",
         )
         t.driver("onsite_resources")
-        t.param("calendar", "pd_per_year")
-        stated = t.step(
-            "stated support staff person-days", f"{res.count} × {pd_year}", res.count * pd_year
-        )
+        stated = staff_pd(t, res, year, "stated support staff")
         t.step("support work priced above this year (person-days)", f"{covered:.2f}", covered)
         pd = t.step(
             "shortfall to the stated staff",
             f"max({stated:.2f} − {covered:.2f}, 0)",
             max(stated - covered, ZERO),
         )
-        return labour(t, pd, res.role, year, scaled=False) if pd else None
+        return (labour(t, pd, res.role, year, scaled=False) if pd else None), stated
+
+    def upkeep_line(year: int) -> CostLineOut | None:
+        """maintenance.upkeep.v1 (parameter sets v25+), one line a year:
+        upkeep_pd = Σ build_effort_pd × share[bugfix, patching, upgrade] + change-request pd
+        (stated, else build_effort_pd × change_request share), each at its own role;
+        beyond = max(upkeep_pd − pd of the onsite staff who do this work, 0), shared pro rata;
+        amount = Σ role pd × beyond / upkeep_pd × run multiplier × role rate
+                 × (1 + escalation_labour)^year."""
+        t = _run(
+            ctx,
+            "upkeep",
+            "run.patching_bugfix",
+            year,
+            "Upkeep: bug fixes, security patches, upgrades and small changes",
+            "maintenance.upkeep.v1",
+        )
+        t.follows_build = True
+        t.step("build effort", "Σ component effort (pd)", build_effort_pd)
+        parts: list[tuple[str, Decimal]] = []
+        for item in ("bugfix", "patching", "upgrade"):
+            share: Decimal = t.param("maintenance", f"{item}_share_of_build_pd")
+            role: str = t.param("maintenance", f"{item}_role")
+            pd = t.step(
+                f"{item} person-days", f"{build_effort_pd:.2f} × {share}", build_effort_pd * share
+            )
+            parts.append((role, pd))
+        cr: Decimal | None = t.driver("change_request_pd_per_year")
+        if cr is None:
+            share = t.param("maintenance", "change_request_share_of_build_pd")
+            cr = t.step(
+                "change-request person-days",
+                f"{build_effort_pd:.2f} × {share}",
+                build_effort_pd * share,
+            )
+        parts.append((t.param("maintenance", "change_request_role"), cr))
+        total = t.step(
+            "upkeep person-days",
+            " + ".join(f"{pd:.2f}" for _, pd in parts),
+            sum((pd for _, pd in parts), ZERO),
+        )
+        done, names = staff_doing(ctx, "upkeep", year)
+        if done:
+            t.driver("onsite_resources")
+            t.param("maintenance", "staff_replace_work")
+            t.step(f"done by the onsite staff ({', '.join(names)})", f"{done:.2f}", done)
+        beyond = t.step(
+            "upkeep beyond them", f"max({total:.2f} − {done:.2f}, 0)", max(total - done, ZERO)
+        )
+        rest = after_hypercare(t, year)
+        if rest != ONE:
+            beyond = t.step("after hypercare", f"{beyond:.2f} × {rest:.4f}", beyond * rest)
+        if beyond <= ZERO:
+            return None
+        run = t.calibration("run_multiplier")
+        factor = t.step(
+            "share priced × run multiplier",
+            f"{beyond:.2f} / {total:.2f} × {run}",
+            beyond / total * run,
+        )
+        amount = ZERO
+        for role, pd in parts:
+            if pd:
+                t.add_role_pd(role, pd * factor)
+                amount += pd * factor * t.rate_local(role)
+        esc = t.escalation("labour", year)
+        spreads.clarity(t, clarity)
+        spreads.om_year(t, year)
+        return t.finish(amount * esc)
 
     for year in range(1, ctx.q.om_years + 1):
         covered = ZERO  # support work this year that dedicated support staff would do
@@ -199,11 +344,17 @@ def maintenance_lines(ctx: PricingContext, build_effort_pd: Decimal) -> list[Cos
                 office = ctx.p.maintenance.helpdesk_coverage_fte[OFFICE_HOURS]
                 covered += sum(line.role_pd.values(), ZERO) * office / coverage
 
-        for item, label in (
+        if ctx.p.maintenance.upkeep_one_line:
+            upkeep = upkeep_line(year)
+            if upkeep is not None:
+                lines.append(upkeep)
+                covered += sum(upkeep.role_pd.values(), ZERO)
+        separate = (
             ("bugfix", "Bug-fix support"),
             ("patching", "Security patching"),
             ("upgrade", "Platform upgrades"),
-        ):
+        )
+        for item, label in () if ctx.p.maintenance.upkeep_one_line else separate:
             formula = "maintenance.upgrades.v2" if item == "upgrade" else f"maintenance.{item}.v2"
             t = _run(ctx, item, "run.patching_bugfix", year, label, formula)
             t.follows_build = True
@@ -216,47 +367,57 @@ def maintenance_lines(ctx: PricingContext, build_effort_pd: Decimal) -> list[Cos
             lines.append(line)
             covered += sum(line.role_pd.values(), ZERO)
 
-        t = _run(
-            ctx,
-            "pool",
-            "run.change_requests",
-            year,
-            "Change-request pool",
-            "maintenance.change_requests.v2",
-        )
-        cr: Decimal | None = t.driver("change_request_pd_per_year")
-        if cr is None:
-            t.follows_build = True
-            share = t.param("maintenance", "change_request_share_of_build_pd")
-            cr = t.step(
-                "CR person-days", f"{build_effort_pd:.2f} × {share}", build_effort_pd * share
+        if not ctx.p.maintenance.upkeep_one_line:  # else in the upkeep line
+            t = _run(
+                ctx,
+                "pool",
+                "run.change_requests",
+                year,
+                "Change-request pool",
+                "maintenance.change_requests.v2",
             )
-        if cr:
-            line = labour(t, cr, t.param("maintenance", "change_request_role"), year)
-            lines.append(line)
-            covered += sum(line.role_pd.values(), ZERO)
+            cr: Decimal | None = t.driver("change_request_pd_per_year")
+            if cr is None:
+                t.follows_build = True
+                share = t.param("maintenance", "change_request_share_of_build_pd")
+                cr = t.step(
+                    "CR person-days", f"{build_effort_pd:.2f} × {share}", build_effort_pd * share
+                )
+            if cr:
+                line = labour(t, cr, t.param("maintenance", "change_request_role"), year)
+                lines.append(line)
+                covered += sum(line.role_pd.values(), ZERO)
 
         for i, res in enumerate(ctx.q.onsite_resources):
             if res.days is not None and year > 1:
                 continue  # limited onsite days are priced once, in the first support year
+            if (
+                res.days is None
+                and res.months is not None
+                and res.months <= MONTHS_A_YEAR * (year - 1)
+            ):
+                continue  # no longer needed by this support year
             if res.kind == "support":
-                staff_line = support_staff_line(res, i, year, covered)
-                covered = max(covered - res.count * pd_year, ZERO)
+                staff_line, stated = support_staff_line(res, i, year, covered)
+                covered = max(covered - stated, ZERO)
                 if staff_line is not None:
                     lines.append(staff_line)
                 continue
+            if res.days is None:
+                formula = "maintenance.onsite.v2" if _v2(res) else "maintenance.onsite.v1"
+            else:
+                formula = "maintenance.onsite_days.v1"
             t = _run(
                 ctx,
                 f"onsite{i}",
                 "run.onsite_resources",
                 year,
-                f"Onsite {res.role.removeprefix('role.')}",
-                "maintenance.onsite.v1" if res.days is None else "maintenance.onsite_days.v1",
+                staff_label(res, f"Onsite {res.role.removeprefix('role.')}"),
+                formula,
             )
             t.driver("onsite_resources")
             if res.days is None:
-                t.param("calendar", "pd_per_year")
-                pd = t.step("onsite person-days", f"{res.count} × {pd_year}", res.count * pd_year)
+                pd = staff_pd(t, res, year, "onsite")
             else:
                 pd = t.step("onsite person-days", f"{res.count} × {res.days}", res.count * res.days)
             lines.append(labour(t, pd, res.role, year, scaled=False))
@@ -269,7 +430,10 @@ def maintenance_lines(ctx: PricingContext, build_effort_pd: Decimal) -> list[Cos
             "Annual security re-audit",
             "maintenance.annual_audit.v1",
         )
-        if t.driver("cert_in_audit"):
+        first: int = ctx.p.maintenance.annual_audit_from_year
+        if first > 1 and year < first and ctx.q.cert_in_audit:
+            t.param("maintenance", "annual_audit_from_year")  # the go-live audit is this year's
+        elif t.driver("cert_in_audit"):
             prefix: str = t.param("maintenance", "annual_audit_rate_prefix")
             lines.append(price(t, band_fee(t, build_effort_pd, prefix), year))
 

@@ -31,7 +31,7 @@ def _has(text: str, phrases: Iterable[str]) -> bool:
     return any(re.search(rf"(?<!\w){re.escape(p.lower())}(?!\w)", text) for p in phrases)
 
 
-def _support_sentences(
+def support_sentences(
     terms: SupportTerms, pages: Iterable[tuple[int, str]], document: str
 ) -> Iterator[tuple[str, VerifiedEvidence]]:
     """(lower-case sentence, evidence) for each sentence about support, outside the bidding
@@ -64,7 +64,7 @@ def find_support_hours(
     always: SupportHours | None = None
     office: VerifiedEvidence | None = None
     fast: VerifiedEvidence | None = None
-    for low, evidence in _support_sentences(terms, pages, document):
+    for low, evidence in support_sentences(terms, pages, document):
         if _has(low, terms.round_the_clock) and _has(low, terms.office_hours):
             continue  # asks which ("office hours or round the clock?"): answers neither
         if always is None and _has(low, terms.round_the_clock):
@@ -91,7 +91,7 @@ def find_support_staff(
 ) -> tuple[int, VerifiedEvidence] | None:
     """The first stated number of dedicated support staff: a number followed within three words
     by a staff word, in a support sentence with a `dedicated` word and no `onsite` word."""
-    for low, evidence in _support_sentences(terms, pages, document):
+    for low, evidence in support_sentences(terms, pages, document):
         if not _has(low, terms.dedicated) or _has(low, terms.onsite):
             continue
         for m in STAFF_COUNT.finditer(low):

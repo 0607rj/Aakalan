@@ -24,6 +24,7 @@ class HostingPlan:
     db_instances: Decimal
     transfer_gb_month: Decimal
     server_rate: str = "app_server"  # or "app_server_small" (rate card item suffix)
+    small_site: bool = False  # the database runs on the one small server (parameter sets v25+)
 
 
 def size(t: LineBuilder) -> HostingPlan:
@@ -33,14 +34,10 @@ def size(t: LineBuilder) -> HostingPlan:
                   and the rate card prices one (parameter sets v12+), else the standard server
     db_tier from the concurrency band; db_instances[pattern]
     transfer_gb_month = users × monthly_active_share × mb_per_active_user_month / mb_per_gb
+    small site (parameter sets v25+) = pattern single on the small server rate: the database
+                  runs on that server, db_instances = 0
     """
-    sla = t.driver("uptime_sla")
-    pattern: str = t.param("hosting", "pattern_by_sla", sla)
-    if t.ctx.q.disaster_recovery and pattern != "ha_dr":
-        # a standby site is its own requirement, not implied by high uptime (v17+ maps no
-        # uptime level to ha_dr)
-        t.driver("disaster_recovery")
-        pattern = "ha_dr"
+    pattern = _pattern(t)
     peak: int = t.driver("peak_concurrent_users")
     per_vcpu: Decimal = t.param("hosting", "concurrent_users_per_vcpu")
     per_server: Decimal = t.param("hosting", "vcpu_per_app_server")
@@ -72,8 +69,93 @@ def size(t: LineBuilder) -> HostingPlan:
         if vcpus <= limit:
             server_rate = "app_server_small"
             t.step("small servers", f"ceil({peak} / {per_vcpu}) = {vcpus} ≤ {limit} vCPUs", vcpus)
+    small_site = (
+        t.ctx.p.hosting.small_site is not None
+        and pattern == "single"
+        and server_rate == "app_server_small"
+    )
+    if small_site:
+        t.param("hosting", "small_site", "source")
+        db_instances = t.step("database instances", "on the one small server (small site)", ZERO)
     t.add_input(pattern=pattern, app_servers=str(servers), db_tier=db_tier, server=server_rate)
-    return HostingPlan(pattern, servers, db_tier, db_instances, transfer, server_rate)
+    return HostingPlan(pattern, servers, db_tier, db_instances, transfer, server_rate, small_site)
+
+
+def free_monitoring(t: LineBuilder, plan: HostingPlan) -> bool:
+    """A small site on a provider whose free monitoring tier covers it (parameter sets v25+)."""
+    rule = t.ctx.p.hosting.small_site
+    if not plan.small_site or rule is None:
+        return False
+    free: list[str] = t.param("hosting", "small_site", "monitoring_free_providers")
+    return t.ctx.q.hosting_provider in free
+
+
+def _pattern(t: LineBuilder) -> str:
+    """pattern = pattern_by_sla[sla], or ha_dr when a disaster-recovery site is asked for."""
+    sla = t.driver("uptime_sla")
+    pattern: str = t.param("hosting", "pattern_by_sla", sla)
+    if t.ctx.q.disaster_recovery and pattern != "ha_dr":
+        # a standby site is its own requirement, not implied by high uptime (v17+ maps no
+        # uptime level to ha_dr)
+        t.driver("disaster_recovery")
+        pattern = "ha_dr"
+    return pattern
+
+
+def _discount(t: LineBuilder) -> Decimal:
+    """1 − reserved_discount[provider] with reserved pricing, else 1."""
+    if t.driver("hosting_pricing") == "reserved":
+        d: Decimal = t.param("hosting", "reserved_discount", t.ctx.q.hosting_provider)
+        return t.step("reserved discount", f"1 − {d}", ONE - d)
+    return ONE
+
+
+def bundle_key(ctx: PricingContext, pattern: str, band: str) -> str:
+    return f"hosting.{ctx.q.hosting_provider}.{pattern}.{band}.month"
+
+
+def _bundled(ctx: PricingContext) -> bool:
+    """Hosting as one line (parameter sets v25+ with a rate card that prices it, v10+)."""
+    return ctx.p.hosting.bundle is not None and bundle_key(ctx, "single", "low") in ctx.rates
+
+
+def _bundle_lines(ctx: PricingContext) -> list[CostLineOut]:
+    """hosting.bundle.v1 (parameter sets v25+), one line a year:
+    hosting_year = month_rate[provider, pattern, band] × discount × months_per_year
+                   × (1 + escalation_prices)^year
+    month_rate is the whole set-up (servers, database, load balancer, monitoring, storage,
+    backups, transfer, DR) at the middle of the load band (rate card v10); pattern as `size`;
+    band = the concurrency band of the peak users online at once. The load within the band
+    is the line's own spread: band_spread[provider][pattern][band], plus the hosting spread."""
+    lines: list[CostLineOut] = []
+    provider = ctx.q.hosting_provider
+    months = ctx.months_per_year()
+    for year in range(1, ctx.q.om_years + 1):
+        t = _base(
+            ctx,
+            "bundle",
+            "run.hosting",
+            year,
+            f"Hosting: servers, database, storage, backups and monitoring (year {year})",
+            "hosting.bundle.v1",
+        )
+        t.driver("om_years")
+        pattern = _pattern(t)
+        peak: int = t.driver("peak_concurrent_users")
+        index = concurrency_band_index(ctx, peak)
+        band: str = t.param("nfr", "concurrency_bands", index, "name")
+        rate = t.rate_local(bundle_key(ctx, pattern, band))
+        annual = t.step(
+            "hosting per year", "month rate × discount × months", rate * _discount(t) * months
+        )
+        spread = t.param("hosting", "bundle", "band_spread", provider, pattern, band)
+        t.spread(f"load within the {band} band", spread.down, spread.up)
+        t.add_input(pattern=pattern, band=band)
+        esc = t.escalation("prices", year)
+        spreads.fixed(t, "hosting")
+        spreads.om_year(t, year)
+        lines.append(t.finish(annual * esc))
+    return lines
 
 
 def storage_gb(t: LineBuilder, year: int) -> Decimal:
@@ -112,6 +194,8 @@ def hosting_lines(ctx: PricingContext) -> list[CostLineOut]:
         return []
     if ctx.q.hosting_provider == "on_prem":
         return _on_prem_lines(ctx)
+    if _bundled(ctx):
+        return _bundle_lines(ctx)
     return _cloud_lines(ctx)
 
 
@@ -152,14 +236,17 @@ def _cloud_lines(ctx: PricingContext) -> list[CostLineOut]:
 
         t = line("database", "run.hosting", "Managed database", "hosting.database.v1")
         plan = size(t)
-        database = (
-            plan.db_instances
-            * t.rate_local(f"{prefix}.db.{plan.db_tier}.month")
-            * discount(t)
-            * months
-        )
-        t.step("database per year", "instances × rate × discount × months", database)
-        lines.append(finish(t, database))
+        if plan.small_site:  # the database runs on the app server: no line
+            database = ZERO
+        else:
+            database = (
+                plan.db_instances
+                * t.rate_local(f"{prefix}.db.{plan.db_tier}.month")
+                * discount(t)
+                * months
+            )
+            t.step("database per year", "instances × rate × discount × months", database)
+            lines.append(finish(t, database))
 
         t = line("storage", "run.hosting", "Object and block storage", "hosting.storage.v1")
         gb = storage_gb(t, year)
@@ -176,7 +263,10 @@ def _cloud_lines(ctx: PricingContext) -> list[CostLineOut]:
         )
 
         t = line("monitoring", "run.hosting", "Monitoring and logging", "hosting.monitoring.v1")
-        lines.append(finish(t, t.rate_local(f"{prefix}.monitoring.month") * months))
+        # only v25+ sizes here, so older estimates keep their trace (rule 3)
+        small = ctx.p.hosting.small_site is not None
+        if not (small and free_monitoring(t, size(t))):
+            lines.append(finish(t, t.rate_local(f"{prefix}.monitoring.month") * months))
 
         if plan.pattern != "single":
             t = line("load_balancer", "run.hosting", "Load balancer", "hosting.load_balancer.v1")
