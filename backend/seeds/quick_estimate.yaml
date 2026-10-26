@@ -472,12 +472,13 @@ questions:
   # --- optional details --------------------------------------------------------------------
   availability:
     label: If it stops working for an hour, how bad is that?
-    group: document   # not asked on the form; read from an uploaded document, else the usual answer
+    # asked on the form since parameters v26 (OPEN_QUESTIONS 171): it decides one server or two
+    group: detail
     default: normal
     options:
-      - {value: basic, label: Not a problem, hint: "Short breaks are fine (one server)", answers: {uptime_sla: "99.0"}}
-      - {value: normal, label: Some trouble, hint: "It should rarely stop (99.5% of the time up)", answers: {uptime_sla: "99.5"}}
-      - {value: high, label: Work stops, hint: "Almost never down (99.9%)", answers: {uptime_sla: "99.9"}}
+      - {value: basic, label: Not a problem, hint: "Short breaks are fine. One server.", answers: {uptime_sla: "99.0"}}
+      - {value: normal, label: Some trouble, hint: "It should rarely stop (99.5% up). One server while up to about 400 people use it at once, two when more do.", answers: {uptime_sla: "99.5"}}
+      - {value: high, label: Work stops, hint: "Almost never down (99.9%), e.g. a hospital or payments. Two servers, so one takes over if the other fails.", answers: {uptime_sla: "99.9"}}
       - {value: critical, label: It must never stop, hint: "Two of everything, up 99.95% of the time or more", answers: {uptime_sla: "99.95"}}
   disaster_site:
     label: Does it need a backup site for disasters?

@@ -475,6 +475,9 @@ class QuickSummary(BaseModel):
     not_sure: list[str] = []  # questions answered "Not sure" (they widen the range)
     project_size: str | None = None  # Small / ... / Large, from what is built
     size_points: int | None = None
+    # how heavily it is used (they set the hosting; the size above is what is built)
+    users_total: int | None = None
+    peak_online: int | None = None  # people online at the same time
     mode: str = "vendor"  # vendor / client
     bid_check: BidCheck | None = None  # client mode only
     researched: list[ResearchedFeature] = []  # features priced by researched blocks
@@ -1772,6 +1775,8 @@ def summarise(
         not_sure=_not_sure(cfg, project),
         project_size=_size_label(cfg, estimate),
         size_points=_size_points(cfg, project),
+        users_total=_answer_int(estimate, "users_total"),
+        peak_online=_answer_int(estimate, "peak_concurrent_users"),
         mode="client" if project.mode == BUYER_MODE else "vendor",
         bid_check=_bid_check(cfg, estimate) if project.mode == BUYER_MODE else None,
         researched=researched_features(estimate),
@@ -2665,6 +2670,14 @@ def _size_label(cfg: QuickConfig, estimate: Estimate) -> str | None:
         return cfg.sizing.tier_for(str(size)).label if size else None
     except ValueError:
         return None
+
+
+def _answer_int(estimate: Estimate, key: str) -> int | None:
+    """A whole-number answer the estimate was priced with (e.g. people online at once)."""
+    for a in estimate.inputs_snapshot.get("answers", []):
+        if a["key"] == key and isinstance(a["value"], int | float):
+            return int(a["value"])
+    return None
 
 
 def _replan(cfg: QuickConfig, project: Project) -> QuickPlan | None:

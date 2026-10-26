@@ -147,6 +147,15 @@ backend/
                           #   (maintenance.upkeep.v1); onsite developers / PM named in a staff
                           #   line do the upkeep / O&M PM (`covers`); annual audit from year 2;
                           #   year 1 leaves out the hypercare weeks (OPEN_QUESTIONS 166)
+                          #   parameters v26+ (OPEN_QUESTIONS 171): a site whose load fits one
+                          #   server (about 400 online at once, `single_max_vcpus`) at 99.5% uptime
+                          #   runs on one server, not two + a load balancer
+                          #   (`hosting.small_site.single_for_sla`); servers follow load and uptime,
+                          #   never the feature count; the form asks the uptime (details) and,
+                          #   optionally, the people online at once (`overrides.peak_concurrent_users`);
+                          #   with rate card v11, hosting is priced by the actual number online on a
+                          #   straight line between price points (`hosting.bundle.price_points`,
+                          #   `hosting.bundle.v2`), not at the middle of the load band
                           #   parameters v23+ (OPEN_QUESTIONS 160): the shared model factor is
                           #   centred on its median (widens, no P50 lift) and is a range driver;
                           #   size-band values blend across band edges (size_band_blend_share)

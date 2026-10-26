@@ -49,3 +49,36 @@ def test_a_bigger_load_keeps_its_database(
 ) -> None:
     inp = answer(small(golden, reference, "v25"), "peak_concurrent_users", 1000)  # 10 vCPUs
     assert "Managed database" in hosting(inp)
+
+
+def test_a_small_site_at_99_5_runs_on_one_server(
+    golden: Callable[[str], EstimateInput], reference: ReferenceData
+) -> None:
+    """v26 (OPEN_QUESTIONS 171): a single cloud server is itself covered at 99.5%."""
+    inp = answer(small(golden, reference, "v26"), "uptime_sla", "99.5")
+    parts = hosting(inp)
+    assert "Application servers" in parts
+    assert not {"Load balancer", "Managed database"} & parts
+
+
+def test_99_5_with_a_bigger_load_keeps_two_servers(
+    golden: Callable[[str], EstimateInput], reference: ReferenceData
+) -> None:
+    inp = answer(small(golden, reference, "v26"), "uptime_sla", "99.5")
+    inp = answer(inp, "peak_concurrent_users", 500)  # 5 vCPUs: more than one small server
+    assert {"Managed database", "Load balancer"} <= hosting(inp)
+
+
+def test_servers_follow_the_load_not_the_features(
+    golden: Callable[[str], EstimateInput], reference: ReferenceData
+) -> None:
+    """Many features with a small load: one server; the feature points do not decide it."""
+    inp = answer(small(golden, reference, "v26"), "uptime_sla", "99.5")
+    assert "Load balancer" not in hosting(answer(inp, "size_points", 30))
+
+
+def test_99_9_keeps_two_servers_on_a_small_site(
+    golden: Callable[[str], EstimateInput], reference: ReferenceData
+) -> None:
+    inp = answer(small(golden, reference, "v26"), "uptime_sla", "99.9")
+    assert {"Managed database", "Load balancer"} <= hosting(inp)

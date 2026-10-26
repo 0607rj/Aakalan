@@ -151,7 +151,7 @@ function Headline({ summary }: { summary: QuickSummary }) {
 
       <RangeBand summary={summary} />
 
-      <dl className="settle grid grid-cols-2 gap-x-8 gap-y-5 border-t pt-6 [--d:4] sm:grid-cols-4">
+      <dl className="settle grid grid-cols-2 gap-x-8 gap-y-5 border-t pt-6 [--d:4] sm:grid-cols-3 lg:grid-cols-5">
         <Fact
           label="Building and launch only"
           value={range(
@@ -165,12 +165,19 @@ function Headline({ summary }: { summary: QuickSummary }) {
         />
         {summary.project_size ? (
           <Fact
-            label="Project size"
+            label="Build size"
             value={
               summary.size_points
                 ? `${summary.project_size} · ${summary.size_points} pts`
                 : summary.project_size
             }
+          />
+        ) : null}
+        {summary.peak_online ? (
+          // how heavily it is used sets the servers; the build size does not
+          <Fact
+            label="Use"
+            value={`${summary.peak_online.toLocaleString("en-IN")} online at once`}
           />
         ) : null}
         <Fact

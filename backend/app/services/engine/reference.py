@@ -487,6 +487,12 @@ class SmallSite(Sourced):
     """v25+: one small server runs the application and its database together."""
 
     monitoring_free_providers: list[str] = []  # their free tier covers one small server
+    # v26+: uptime levels a small site meets on its one small server (a single EC2 instance
+    # is itself covered at 99.5%), so they do not need the two-server set-up
+    single_for_sla: list[str] = []
+    # v26+: the most vCPUs that one server takes at those uptime levels (one standard server);
+    # without it, the small server's small_app_server_max_vcpus
+    single_max_vcpus: Decimal | None = None
 
 
 class BandSpread(Frozen):
@@ -500,6 +506,10 @@ class HostingBundle(Sourced):
     the set-up's cost at the band's two ends relative to its middle."""
 
     band_spread: dict[str, dict[str, dict[str, BandSpread]]]
+    # v26+: people online at once with a whole-set-up price in the rate card
+    # (`hosting.<provider>.<pattern>.at_<n>.month`, v11+); hosting is priced on a straight line
+    # between the two nearest, not at the middle of the band
+    price_points: list[int] = []
 
 
 class OnPrem(Sourced):

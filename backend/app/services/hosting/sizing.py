@@ -90,16 +90,52 @@ def free_monitoring(t: LineBuilder, plan: HostingPlan) -> bool:
     return t.ctx.q.hosting_provider in free
 
 
-def _pattern(t: LineBuilder) -> str:
-    """pattern = pattern_by_sla[sla], or ha_dr when a disaster-recovery site is asked for."""
+def _pattern(t: LineBuilder, at_peak: int | None = None) -> str:
+    """pattern = pattern_by_sla[sla], or ha_dr when a disaster-recovery site is asked for.
+    at_peak: the pattern at that many people online instead of the estimate's own (a price
+    point, parameter sets v26+)."""
     sla = t.driver("uptime_sla")
     pattern: str = t.param("hosting", "pattern_by_sla", sla)
+    if pattern == "ha" and _single_is_enough(t, sla, at_peak):
+        pattern = "single"
     if t.ctx.q.disaster_recovery and pattern != "ha_dr":
         # a standby site is its own requirement, not implied by high uptime (v17+ maps no
         # uptime level to ha_dr)
         t.driver("disaster_recovery")
         pattern = "ha_dr"
     return pattern
+
+
+def _single_is_enough(t: LineBuilder, sla: str, at_peak: int | None = None) -> bool:
+    """Parameter sets v26+: a site whose load fits one server (people online at once ≤
+    single_max_vcpus × concurrent_users_per_vcpu; without single_max_vcpus the small server's
+    small_app_server_max_vcpus), at an uptime level in small_site.single_for_sla, runs on one
+    server, not two with a load balancer. A single cloud server is itself covered at 99.5%
+    (small_site.source). Servers follow the load and the uptime answer only, not how many
+    features are built; bigger loads keep pattern_by_sla."""
+    rule = t.ctx.p.hosting.small_site
+    if rule is None or sla not in rule.single_for_sla:
+        return False
+    small_max = t.ctx.p.hosting.small_app_server_max_vcpus
+    small_key = f"cloud.{t.ctx.q.hosting_provider}.app_server_small.month"
+    if small_max is None or small_key not in t.ctx.rates:
+        return False
+    peak: int = t.driver("peak_concurrent_users") if at_peak is None else at_peak
+    per_vcpu: Decimal = t.param("hosting", "concurrent_users_per_vcpu")
+    if rule.single_max_vcpus is not None:
+        limit: Decimal = t.param("hosting", "small_site", "single_max_vcpus")
+    else:
+        limit = t.param("hosting", "small_app_server_max_vcpus")
+    if ceil(Decimal(peak) / per_vcpu) > limit:
+        return False
+    t.param("hosting", "small_site", "single_for_sla")
+    if at_peak is None:
+        t.step(
+            "one server is enough",
+            f"uptime {sla}% is in single_for_sla and ceil({peak} / {per_vcpu}) ≤ {limit} vCPUs",
+            ONE,
+        )
+    return True
 
 
 def _discount(t: LineBuilder) -> Decimal:
@@ -119,6 +155,48 @@ def _bundled(ctx: PricingContext) -> bool:
     return ctx.p.hosting.bundle is not None and bundle_key(ctx, "single", "low") in ctx.rates
 
 
+def point_key(ctx: PricingContext, pattern: str, peak: int) -> str:
+    return f"hosting.{ctx.q.hosting_provider}.{pattern}.at_{peak}.month"
+
+
+def _priced_by_points(ctx: PricingContext) -> bool:
+    """Hosting by the actual number online (parameter sets v26+ with a rate card that has the
+    price points, v11+)."""
+    bundle = ctx.p.hosting.bundle
+    return (
+        bundle is not None
+        and bool(bundle.price_points)
+        and point_key(ctx, "single", bundle.price_points[0]) in ctx.rates
+    )
+
+
+def _point_rate(t: LineBuilder, peak: int) -> Decimal:
+    """month_rate(peak), a straight line between the two nearest price points:
+    rate(p) = rate card hosting.<provider>.<pattern at p>.at_<p>.month, the whole set-up at p
+    people online at once, its pattern chosen for p as for the estimate (`_pattern`), so the
+    price moves smoothly from one server to two
+    peak ≤ first point: rate(first)
+    lo < peak ≤ hi:     rate(lo) + (rate(hi) − rate(lo)) × (peak − lo) / (hi − lo)
+    peak > last point:  the last two points' line carried on (servers grow with the load)"""
+    points: list[int] = t.param("hosting", "bundle", "price_points")
+    if peak <= points[0]:
+        lo, hi = points[0], points[0]
+    elif peak > points[-1]:
+        lo, hi = points[-2], points[-1]
+    else:
+        hi = next(p for p in points if p >= peak)
+        lo = points[points.index(hi) - 1]
+    low_rate = t.rate_local(point_key(t.ctx, _pattern(t, lo), lo))
+    if hi == lo:
+        return low_rate
+    high_rate = t.rate_local(point_key(t.ctx, _pattern(t, hi), hi))
+    return t.step(
+        "month rate at this many online",
+        f"{low_rate:.2f} + ({high_rate:.2f} − {low_rate:.2f}) × ({peak} − {lo}) / ({hi} − {lo})",
+        low_rate + (high_rate - low_rate) * Decimal(peak - lo) / Decimal(hi - lo),
+    )
+
+
 def _bundle_lines(ctx: PricingContext) -> list[CostLineOut]:
     """hosting.bundle.v1 (parameter sets v25+), one line a year:
     hosting_year = month_rate[provider, pattern, band] × discount × months_per_year
@@ -126,10 +204,13 @@ def _bundle_lines(ctx: PricingContext) -> list[CostLineOut]:
     month_rate is the whole set-up (servers, database, load balancer, monitoring, storage,
     backups, transfer, DR) at the middle of the load band (rate card v10); pattern as `size`;
     band = the concurrency band of the peak users online at once. The load within the band
-    is the line's own spread: band_spread[provider][pattern][band], plus the hosting spread."""
+    is the line's own spread: band_spread[provider][pattern][band], plus the hosting spread.
+    hosting.bundle.v2 (parameter sets v26+ with rate card v11+): month_rate is priced by the
+    actual number online between the nearest price points instead (`_point_rate`)."""
     lines: list[CostLineOut] = []
     provider = ctx.q.hosting_provider
     months = ctx.months_per_year()
+    by_points = _priced_by_points(ctx)
     for year in range(1, ctx.q.om_years + 1):
         t = _base(
             ctx,
@@ -137,14 +218,14 @@ def _bundle_lines(ctx: PricingContext) -> list[CostLineOut]:
             "run.hosting",
             year,
             f"Hosting: servers, database, storage, backups and monitoring (year {year})",
-            "hosting.bundle.v1",
+            "hosting.bundle.v2" if by_points else "hosting.bundle.v1",
         )
         t.driver("om_years")
         pattern = _pattern(t)
         peak: int = t.driver("peak_concurrent_users")
         index = concurrency_band_index(ctx, peak)
         band: str = t.param("nfr", "concurrency_bands", index, "name")
-        rate = t.rate_local(bundle_key(ctx, pattern, band))
+        rate = _point_rate(t, peak) if by_points else t.rate_local(bundle_key(ctx, pattern, band))
         annual = t.step(
             "hosting per year", "month rate × discount × months", rate * _discount(t) * months
         )

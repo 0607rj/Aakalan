@@ -7558,6 +7558,17 @@
               }
             ],
             "title": "Feature Level"
+          },
+          "peak_online": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Peak Online"
           }
         },
         "type": "object",
@@ -9462,6 +9473,28 @@
               }
             ],
             "title": "Size Points"
+          },
+          "users_total": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Users Total"
+          },
+          "peak_online": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Peak Online"
           },
           "mode": {
             "type": "string",

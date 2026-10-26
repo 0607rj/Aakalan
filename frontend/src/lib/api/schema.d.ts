@@ -2724,6 +2724,8 @@ export interface components {
             };
             /** Feature Level */
             feature_level?: string | null;
+            /** Peak Online */
+            peak_online?: number | null;
         };
         /** OptionPrice */
         OptionPrice: {
@@ -3452,6 +3454,10 @@ export interface components {
             project_size?: string | null;
             /** Size Points */
             size_points?: number | null;
+            /** Users Total */
+            users_total?: number | null;
+            /** Peak Online */
+            peak_online?: number | null;
             /**
              * Mode
              * @default vendor

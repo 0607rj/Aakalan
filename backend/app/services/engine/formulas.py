@@ -88,6 +88,11 @@ FORMULAS: dict[str, str] = {
         "month_rate[provider, uptime pattern, load band] × (1 − reserved_discount)"
         " × months_per_year × (1 + escalation_prices)^year; spread: load within the band (v25+)"
     ),
+    "hosting.bundle.v2": (
+        "month_rate(people online at once), a straight line between the two nearest rate-card"
+        " price points (each the whole set-up at that load), × (1 − reserved_discount)"
+        " × months_per_year × (1 + escalation_prices)^year (v26+ with rate card v11+)"
+    ),
     "maintenance.upkeep.v1": (
         "max(Σ build_pd × share[bugfix, patching, upgrade] + change-request pd − onsite staff"
         " who do this work, 0) at each role's rate × run_multiplier × (1 + escalation_labour)^year;"

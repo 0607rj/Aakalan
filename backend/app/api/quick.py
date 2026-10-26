@@ -45,6 +45,12 @@ class OptionOut(BaseModel):
     max_users: int | None = None  # scale options: the most users it covers (None = no limit)
     add_features: dict[str, str | None] = {}  # features this answer adds (and their level)
     feature_level: str | None = None  # default level of every feature (MVP / full product)
+    # scale options: the people online at once this band assumes (the form's default)
+    peak_online: int | None = None
+
+
+def _int_or_none(value: object) -> int | None:
+    return int(value) if isinstance(value, int | float | str) and str(value).isdigit() else None
 
 
 class QuestionOut(BaseModel):
@@ -223,6 +229,7 @@ def options(db: DbSession, user: CurrentUser, country: str = "india") -> QuickOp
                         add_features=dict(o.add_features),
                         feature_level=o.feature_level,
                         max_users=o.max_users,
+                        peak_online=_int_or_none(o.answers.get("peak_concurrent_users")),
                     )
                     for o in q.options
                 ],

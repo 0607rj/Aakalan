@@ -138,7 +138,21 @@ function ManualForm({
   const [notIncluded, setNotIncluded] = React.useState<NotIncluded[]>(
     () => saved?.not_included ?? [],
   );
-  const overrides = saved?.overrides ?? {};
+  // people online at the same time, typed by the user (empty: the user band's own number)
+  const [peakOnline, setPeakOnline] = React.useState(() => {
+    const n = saved?.overrides?.[PEAK];
+    return n ? String(n) : "";
+  });
+  const peakNumber = peakOnline.trim() === "" ? null : Number(peakOnline);
+  const peakValid =
+    peakNumber === null ||
+    (Number.isInteger(peakNumber) && peakNumber >= 1 && peakNumber <= MAX_PEAK);
+  const overrides = {
+    ...Object.fromEntries(
+      Object.entries(saved?.overrides ?? {}).filter(([k]) => k !== PEAK),
+    ),
+    ...(peakValid && peakNumber !== null ? { [PEAK]: peakNumber } : {}),
+  };
   const [deadline, setDeadline] = React.useState(
     saved?.deadline_months ? String(saved.deadline_months) : "",
   );
@@ -641,6 +655,15 @@ function ManualForm({
               hideLegend
               onChange={(value) => change(question.key, value)}
             />
+            {question.key === SCALE ? (
+              <PeakOnline
+                question={question}
+                value={choices[question.key] ?? question.default}
+                text={peakOnline}
+                valid={peakValid}
+                onChange={setPeakOnline}
+              />
+            ) : null}
             {question.key === VERSION && leveled.length > 0 ? (
               <button
                 type="button"
@@ -656,7 +679,10 @@ function ManualForm({
             <StepButtons
               onBack={steps.prev}
               onNext={steps.next}
-              nextDisabled={unchosen([question], choices).length > 0}
+              nextDisabled={
+                unchosen([question], choices).length > 0 ||
+                (question.key === SCALE && !peakValid)
+              }
               hint={
                 unchosen([question], choices).length > 0
                   ? "Pick an answer to continue."
@@ -754,6 +780,15 @@ function ManualForm({
                   label: q.label,
                   value: answerLabel(q, choices[q.key]),
                 })),
+                ...(peakNumber !== null && peakValid
+                  ? [
+                      {
+                        step: `q:${SCALE}`,
+                        label: "People online at the same time",
+                        value: peakNumber.toLocaleString("en-IN"),
+                      },
+                    ]
+                  : []),
                 ...details.map((q) => ({
                   step: "details",
                   label: q.label,
@@ -801,6 +836,59 @@ function ManualForm({
           </>
         )}
       </div>
+    </div>
+  );
+}
+
+/** The number of people online at once: the user band's own number unless typed. It sets the
+ * servers and hosting; the features set the build. */
+function PeakOnline({
+  question,
+  value,
+  text,
+  valid,
+  onChange,
+}: {
+  question: QuickOptions["questions"][number];
+  value: Choice;
+  text: string;
+  valid: boolean;
+  onChange: (text: string) => void;
+}) {
+  const assumed = question.options.find(
+    (o) => String(o.value) === String(value),
+  )?.peak_online;
+  return (
+    <div className="slab flex max-w-xl flex-col gap-2 p-5 sm:p-6">
+      <Label htmlFor="peak-online" className="text-base">
+        People online at the same time{" "}
+        <span className="font-normal text-muted-foreground">(optional)</span>
+      </Label>
+      <Input
+        id="peak-online"
+        type="number"
+        inputMode="numeric"
+        min={1}
+        max={MAX_PEAK}
+        value={text}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={
+          assumed ? `We assume ${assumed.toLocaleString("en-IN")}` : ""
+        }
+        className="h-11 w-56 text-base"
+      />
+      <span className="text-sm text-muted-foreground">
+        {assumed
+          ? `For this many users we assume ${assumed.toLocaleString("en-IN")} at once. `
+          : ""}
+        Type your own if you know it: it decides the servers and hosting, not
+        the building cost.
+      </span>
+      {!valid ? (
+        <span className="text-sm text-destructive">
+          Enter a whole number from 1 to {MAX_PEAK.toLocaleString("en-IN")}.
+        </span>
+      ) : null}
     </div>
   );
 }
@@ -888,6 +976,11 @@ function RuledOutBecause({ quote }: { quote?: string }) {
 }
 
 const MIN_DESCRIPTION = 10; // characters, as the API requires
+
+/** The users question, and the people online at once the user may type under it. */
+const SCALE = "scale";
+const PEAK = "peak_concurrent_users";
+const MAX_PEAK = 10_000_000; // a typing guard only: the engine sizes any number
 
 /** The "Something else" kind: every feature, nothing ticked to start with. */
 const OTHER_TYPE = "other";
