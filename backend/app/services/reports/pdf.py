@@ -1,5 +1,5 @@
 # ruff: noqa: E501  (report layout reads better with long lines)
-"""PDF report (reportlab, BSD licence — no system libraries needed on Windows or Docker).
+"""PDF report (reportlab, BSD licence — no system libraries needed on Windows or Linux).
 
 Sections: summary, where the money goes, range drivers and checks, breakdown by stage and
 year, cost lines, manpower, assumptions, pre-bid queries, and a trace appendix showing the

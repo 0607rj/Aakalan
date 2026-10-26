@@ -1,0 +1,14 @@
+# The API (FastAPI). Settings come from /home/ubuntu/Aakalan/.env (read by the app itself).
+[Unit]
+Description=Aakalan API
+After=network.target
+
+[Service]
+User=ubuntu
+WorkingDirectory=/home/ubuntu/Aakalan/backend
+ExecStart=/home/ubuntu/Aakalan/backend/.venv/bin/uvicorn app.main:app --host 127.0.0.1 --port 8000
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

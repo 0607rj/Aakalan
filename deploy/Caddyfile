@@ -1,0 +1,12 @@
+# Aakalan behind Caddy on an Ubuntu server (docs/DEPLOY.md): /api/* goes to the API (the prefix
+# is stripped), everything else to the website. Replace ":80" with the domain name
+# (akalan.panscience.ai) once its DNS points here, and Caddy gets an HTTPS certificate itself.
+:80 {
+	encode gzip
+	handle_path /api/* {
+		reverse_proxy 127.0.0.1:8000
+	}
+	handle {
+		reverse_proxy 127.0.0.1:3000
+	}
+}

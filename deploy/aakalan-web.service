@@ -1,0 +1,15 @@
+# The website (Next.js standalone build, made by deploy/update.sh).
+[Unit]
+Description=Aakalan website
+After=network.target
+
+[Service]
+User=ubuntu
+WorkingDirectory=/home/ubuntu/Aakalan/frontend/.next/standalone
+Environment=NODE_ENV=production NEXT_TELEMETRY_DISABLED=1 PORT=3000 HOSTNAME=127.0.0.1
+ExecStart=/usr/bin/node server.js
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

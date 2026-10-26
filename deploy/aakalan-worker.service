@@ -1,0 +1,14 @@
+# Background jobs (Huey, SQLite queue at data/huey.db): tender reading and other long tasks.
+[Unit]
+Description=Aakalan background worker
+After=network.target aakalan-api.service
+
+[Service]
+User=ubuntu
+WorkingDirectory=/home/ubuntu/Aakalan/backend
+ExecStart=/home/ubuntu/Aakalan/backend/.venv/bin/huey_consumer app.jobs.huey -w 2
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

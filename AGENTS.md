@@ -37,13 +37,15 @@ Estimates are saved as templates, and recorded outcomes calibrate future estimat
   6-digit codes (`services/auth.py`, hashed, expiring, limited tries); a reset or change raises the
   user's `token_version` (`tv` in the JWT) so older tokens stop working. Email through
   `services/email.py` (SMTP, or the server log in development; tests use `set_email_sender`).
-- **Ops:** Docker + docker-compose (`python:3.12-slim`), later Caddy, Litestream → S3, Sentry.
+- **Ops:** no Docker. One Ubuntu server: systemd services (API, Huey worker, Next.js standalone)
+  behind Caddy (`deploy/`, [`docs/DEPLOY.md`](docs/DEPLOY.md)); later Litestream → S3, Sentry.
 - **Licence rule:** no AGPL libraries (e.g. PyMuPDF) without a commercial licence.
 
 ## Repo layout
 
 ```
-AGENTS.md CLAUDE.md README.md Makefile docker-compose.yml .env.example
+AGENTS.md CLAUDE.md README.md Makefile .env.example
+deploy/                   # Ubuntu server: systemd units, Caddyfile, update.sh (docs/DEPLOY.md)
 scripts/tasks.py          # stdlib task runner; every Makefile target calls it
 docs/                     # PROJECT_BRIEF.md, OPEN_QUESTIONS.md, ARCHITECTURE.md
 backend/
@@ -169,6 +171,7 @@ Run from the repo root. `make <target>` and `python scripts/tasks.py <target>` a
 |---|---|
 | Install deps (backend via uv, frontend via npm) | `make install` |
 | Dev servers: API :8000, web :3000, Huey worker | `make dev` |
+| Install or update the Ubuntu server (pull, install, migrate, seed, build, restart) | `bash deploy/update.sh` on the server (first install: `docs/DEPLOY.md`) |
 | Apply migrations | `make migrate` |
 | Load seed data (taxonomy, catalog, rate card, parameters, demo users + demo project) | `make seed` |
 | All tests (pytest + frontend typecheck/lint) | `make test` |

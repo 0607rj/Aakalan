@@ -11,8 +11,8 @@ the code implements it. Update it when the structure changes.
 | Worker | `huey_consumer app.jobs.huey` | Huey with SQLite storage at `data/huey.db` |
 | Web | `next dev` / standalone `server.js` (port 3000) | Next.js App Router, talks to the API via `NEXT_PUBLIC_API_URL` |
 
-All persistent state lives in `./data` (gitignored; a Docker volume, an encrypted EBS volume in
-production).
+All persistent state lives in `./data` (gitignored; an encrypted EBS volume in production).
+Production runs without Docker: systemd services behind Caddy (`docs/DEPLOY.md`).
 
 ## Backend layers
 
