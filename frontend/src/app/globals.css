@@ -74,6 +74,9 @@
   --font-serif: var(--font-plex), "Segoe UI", ui-sans-serif, sans-serif;
   --font-mono:
     var(--font-plex-mono), ui-monospace, "Cascadia Mono", Consolas, monospace;
+  --font-head:
+    var(--font-bricolage), var(--font-plex), "Segoe UI", ui-sans-serif,
+    sans-serif;
 }
 
 @layer base {
@@ -108,16 +111,74 @@
 }
 
 @layer utilities {
-  /* Section headlines: Inter, tight. */
+  /* Section headlines: the headline face, bold and tight. */
   .font-wide {
-    letter-spacing: -0.035em;
+    font-family: var(--font-head);
+    font-weight: 700;
+    letter-spacing: -0.04em;
   }
 
-  /* The few big statements: Plex, semibold and tight. */
+  /* The few big statements: the headline face, heavier and tighter still. */
   .font-display {
-    font-family: var(--font-sans);
+    font-family: var(--font-head);
+    font-weight: 750;
+    letter-spacing: -0.05em;
+  }
+
+  /* A faint square grid of hairlines, fading out towards the edges (heroes, closings). */
+  .grid-lines {
+    background-image:
+      linear-gradient(to right, rgb(27 36 51 / 0.07) 1px, transparent 1px),
+      linear-gradient(to bottom, rgb(27 36 51 / 0.07) 1px, transparent 1px);
+    background-size: 64px 64px;
+    background-position: -1px -1px;
+    mask-image: radial-gradient(
+      ellipse 80% 70% at 50% 35%,
+      #000 30%,
+      transparent 85%
+    );
+  }
+
+  /* A key on a keyboard: hints like "Not sure" or a shortcut. */
+  .kbd {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    min-width: 1.6rem;
+    justify-content: center;
+    padding: 0.1rem 0.45rem;
+    border: 1px solid var(--border);
+    border-bottom-width: 2px;
+    border-radius: 0.4rem;
+    background: var(--card);
+    font-family: var(--font-mono);
+    font-size: 0.75rem;
+    color: var(--foreground);
+  }
+
+  /* A plain text link with a rule under it and an arrow after it. */
+  .text-link {
+    display: inline-flex;
+    width: fit-content;
+    align-items: center;
+    gap: 0.4rem;
+    padding-bottom: 0.2rem;
+    border-bottom: 1px solid rgb(27 36 51 / 0.25);
     font-weight: 600;
-    letter-spacing: -0.035em;
+    color: var(--foreground);
+    transition: border-color 0.2s var(--ease);
+  }
+
+  .text-link:hover {
+    border-color: var(--foreground);
+  }
+
+  .text-link svg {
+    transition: transform 0.2s var(--ease);
+  }
+
+  .text-link:hover svg {
+    transform: translateX(3px);
   }
 
   /* Small labels above things, in mono capitals. */

@@ -10,78 +10,34 @@ import {
   AiSavingFigure,
   DocumentFigure,
   FeatureCostFigure,
-  IconTile,
   NotPricedFigure,
   QuestionFigure,
 } from "@/components/site/illustrations";
 import { FeatureMosaic } from "@/components/site/page-art";
-import { PageIntro, Section, StartBand } from "@/components/site/sections";
-import { cn } from "@/lib/utils";
+import {
+  AppWindow,
+  FeatureRow,
+  Kicker,
+  PageIntro,
+  Section,
+  StartBand,
+  Title,
+} from "@/components/site/sections";
 
 export const metadata: Metadata = {
   title: "Features · Aakalan",
 };
 
-interface Feature {
-  title: string;
-  body: string;
-  chips: string[];
-  art: React.ReactNode;
-  cell: string;
-}
-
-const FEATURES: Feature[] = [
-  {
-    title: "Priced by what is built",
-    body: "The same feature costs the same for a startup or a ministry.",
-    chips: [
-      "Basic, standard or advanced",
-      "MVP or full product",
-      "Audits only when asked",
-    ],
-    art: <FeatureCostFigure />,
-    cell: "lg:col-span-4 bg-tape-soft/70",
-  },
-  {
-    title: "Priced for AI-era work",
-    body: "Saving worked out task by task, with the checking added back.",
-    chips: ["With and without AI tools"],
-    art: <AiSavingFigure />,
-    cell: "lg:col-span-2 bg-ai-soft/80",
-  },
-  {
-    title: "Reads your requirement document",
-    body: "Each feature it finds shows the page and the sentence.",
-    chips: ["PDF or Word", "Corrigenda override", "Questions for the client"],
-    art: <DocumentFigure />,
-    cell: "lg:col-span-3 border bg-card",
-  },
-  {
-    title: "Nothing left out quietly",
-    body: "What the document asks for but the price leaves out is listed.",
-    chips: ["Costs paid to others apart", "Onsite staff priced"],
-    art: <NotPricedFigure />,
-    cell: "lg:col-span-3 bg-warning-muted/70",
-  },
-  {
-    title: "Short, plain questions",
-    body: "About ten, one per screen, in everyday words. Only the ones your project needs.",
-    chips: ["Usual answer picked", "Not sure widens the range"],
-    art: <QuestionFigure />,
-    cell: "lg:col-span-6 border bg-card lg:grid lg:grid-cols-2 lg:items-center lg:gap-10",
-  },
-];
-
 const ALSO = [
   {
     icon: UsersThreeIcon,
     title: "Team and timeline",
-    body: "People by role and months to build.",
+    body: "People by role and the months to build.",
   },
   {
     icon: FileXlsIcon,
     title: "Reports to share",
-    body: "PDF report and Excel bill of quantities.",
+    body: "A PDF report and an Excel bill of quantities.",
   },
   {
     icon: ArrowsClockwiseIcon,
@@ -106,53 +62,101 @@ export default function FeaturesPage() {
         every number comes from.
       </PageIntro>
 
-      <Section className="py-12 sm:py-16">
-        <div className="grid gap-4 lg:grid-cols-6">
-          {FEATURES.map((f, i) => (
-            <article
-              key={f.title}
-              data-reveal
-              style={{ "--rd": i % 2 } as React.CSSProperties}
-              className={cn(
-                "flex flex-col gap-6 rounded-[26px] p-6 sm:p-8",
-                f.cell,
-              )}
-            >
-              <div className="flex flex-col gap-3">
-                <h2 className="font-wide text-2xl font-semibold">{f.title}</h2>
-                <p className="text-muted-foreground">{f.body}</p>
-                <ul className="flex flex-wrap gap-2">
-                  {f.chips.map((c) => (
-                    <li
-                      key={c}
-                      className="rounded-full border border-foreground/10 bg-card/80 px-3 py-1 text-xs font-medium"
-                    >
-                      {c}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-              <div className="mt-auto">{f.art}</div>
-            </article>
-          ))}
-        </div>
+      <Section>
+        <FeatureRow
+          kicker="Per feature"
+          n="01"
+          title="Priced by what is built."
+          rest="Not by who asks."
+          body="The same feature costs the same for a startup or a ministry. Each one is priced at the level the project needs."
+          points={[
+            "Basic, standard or advanced for every feature",
+            "A first simple version, or the full product",
+            "Security audits only when the project asks for one",
+          ]}
+          art={
+            <AppWindow title="result · features">
+              <FeatureCostFigure />
+            </AppWindow>
+          }
+        />
+        <FeatureRow
+          flip
+          kicker="AI-era work"
+          n="02"
+          title="Priced for how software is built now."
+          body="The saving AI tools bring is worked out task by task, and the time people spend checking the AI's work is added back."
+          points={["Every feature with and without AI tools"]}
+          art={
+            <AppWindow title="ai tools · where they save">
+              <AiSavingFigure />
+            </AppWindow>
+          }
+        />
+        <FeatureRow
+          kicker="Your document"
+          n="03"
+          title="Reads your requirement document."
+          rest="And shows its page."
+          body="Each feature it finds keeps the page and the sentence it came from, so you can check every one before any price is worked out."
+          points={[
+            "PDF or Word",
+            "A corrigendum overrides the original",
+            "Questions to send the client before you bid",
+          ]}
+          art={
+            <AppWindow title="requirement.pdf · page 4">
+              <DocumentFigure />
+            </AppWindow>
+          }
+        />
+        <FeatureRow
+          flip
+          kicker="Nothing quiet"
+          n="04"
+          title="Nothing left out quietly."
+          body="What the document asks for but the price leaves out is listed, with its page. Costs paid to other providers are kept apart."
+          points={["Onsite staff priced from the document's own lines"]}
+          art={
+            <AppWindow title="requirement.pdf · not in the price">
+              <NotPricedFigure />
+            </AppWindow>
+          }
+        />
+        <FeatureRow
+          kicker="The questions"
+          n="05"
+          title="Short, plain questions."
+          rest="About ten."
+          body="One per screen, in everyday words, and only the ones your project needs. The usual answer is already picked."
+          points={["“Not sure” is an answer: the range widens"]}
+          art={
+            <AppWindow title="question 3 of 10">
+              <QuestionFigure />
+            </AppWindow>
+          }
+        />
       </Section>
 
-      <Section className="pb-12 sm:pb-16">
-        <h2 data-reveal className="font-wide text-2xl font-semibold">
-          Also included
-        </h2>
-        <dl className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+      <Section className="border-t py-20 sm:py-28">
+        <Kicker n="06">Also included</Kicker>
+        <Title claim="The rest of what a quote needs." className="mt-5" />
+        <dl className="mt-14 grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
           {ALSO.map((a, i) => (
             <div
               key={a.title}
               data-reveal
               style={{ "--rd": i } as React.CSSProperties}
-              className="flex flex-col gap-3"
+              className="flex flex-col gap-2 border-t pt-6"
             >
-              <IconTile icon={a.icon} />
-              <dt className="font-semibold">{a.title}</dt>
-              <dd className="-mt-2 text-sm text-muted-foreground">{a.body}</dd>
+              <a.icon
+                size={24}
+                weight="duotone"
+                aria-hidden="true"
+                className="mb-2 text-tape"
+              />
+              <dt className="text-lg font-semibold">{a.title}</dt>
+              <dd className="text-muted-foreground">{a.body}</dd>
             </div>
           ))}
         </dl>

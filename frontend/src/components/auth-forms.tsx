@@ -1,14 +1,13 @@
 "use client";
 
 import * as React from "react";
-import { CheckCircleIcon } from "@phosphor-icons/react/dist/ssr";
 
-import { LogoMark } from "@/components/site/logo";
 import {
   CodeFigure,
   FlowFigure,
   SavedEstimatesFigure,
 } from "@/components/site/page-art";
+import { AppWindow } from "@/components/site/sections";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,22 +17,33 @@ import { cn } from "@/lib/utils";
 /** What the left side of a sign-in screen says (large screens only). */
 export type Scene = "login" | "signup" | "forgot" | "verify";
 
-const SCENES: Record<Scene, { title: string; text: string }> = {
+const SCENES: Record<
+  Scene,
+  { title: string; rest: string; window: string; art: () => React.ReactNode }
+> = {
   login: {
     title: "Pick up where you left off.",
-    text: "Your estimates and saved templates are all here.",
+    rest: "Your estimates are all here.",
+    window: "your estimates",
+    art: () => <SavedEstimatesFigure />,
   },
   signup: {
-    title: "Price your next project in minutes.",
-    text: "Describe it or upload the requirement document, and get a low, likely and high cost.",
+    title: "Price your next project.",
+    rest: "In minutes, feature by feature.",
+    window: "the way to a price",
+    art: () => <FlowFigure />,
   },
   forgot: {
-    title: "Locked out? It happens.",
-    text: "We email a 6-digit code. Use it to set a new password and you are back in.",
+    title: "Locked out?",
+    rest: "A 6-digit code gets you back in.",
+    window: "inbox · your code",
+    art: () => <CodeFigure />,
   },
   verify: {
     title: "One quick check.",
-    text: "A code in your inbox confirms the address, so only you can open your estimates.",
+    rest: "So only you can open your estimates.",
+    window: "inbox · your code",
+    art: () => <CodeFigure />,
   },
 };
 
@@ -43,17 +53,10 @@ const PROMISES = [
   "The same answers give the same price, every time.",
 ];
 
-/** The picture for each screen: saved estimates, the way to a price, or the emailed code. */
-const ART: Record<Scene, () => React.ReactNode> = {
-  login: () => <SavedEstimatesFigure />,
-  signup: () => <FlowFigure />,
-  forgot: () => <CodeFigure />,
-  verify: () => <CodeFigure />,
-};
-
 /**
- * The screen for sign in, sign up, reset and confirm: a sheet in two halves, the screen's
- * picture and what Aakalan promises on the left (large screens), the form on the right.
+ * The screen for sign in, sign up, reset and confirm, in the public pages' style: on large
+ * screens a large two-tone line, the screen's picture in a product window and Aakalan's
+ * promises as a ruled list on the faint grid; the form on the right, unframed.
  */
 export function AuthScreen({
   scene,
@@ -72,54 +75,52 @@ export function AuthScreen({
 }) {
   const side = SCENES[scene];
   return (
-    <div className="panel grid w-full max-w-5xl overflow-hidden rounded-[28px] lg:grid-cols-2">
-      <aside className="relative hidden flex-col justify-between gap-10 overflow-hidden border-r bg-panel-2 p-10 lg:flex">
-        <div
-          aria-hidden="true"
-          className="pointer-events-none absolute inset-0 bg-[radial-gradient(70%_55%_at_0%_0%,rgb(11_120_184/0.14),transparent_70%)]"
-        />
-        <div className="relative flex flex-col gap-4">
-          <LogoMark className="size-11" />
-          <h2 className="font-display text-4xl leading-[1.05]">{side.title}</h2>
-          <p className="max-w-sm text-muted-foreground">{side.text}</p>
-        </div>
-        <div className="relative flex flex-col gap-8">
-          {ART[scene]()}
-          <ul className="flex flex-col gap-2.5 text-sm text-muted-foreground">
-            {PROMISES.map((line) => (
-              <li key={line} className="flex gap-2.5">
-                <CheckCircleIcon
-                  size={18}
-                  weight="fill"
-                  aria-hidden="true"
-                  className="shrink-0 text-ai"
-                />
-                {line}
+    <div className="grid w-full flex-1 grid-cols-1 lg:grid-cols-[1.05fr_0.95fr]">
+      <aside className="relative hidden overflow-hidden border-r lg:block">
+        <div aria-hidden="true" className="grid-lines absolute inset-0" />
+        <div className="relative ml-auto flex h-full max-w-xl flex-col gap-10 px-10 pt-16 pb-12 xl:px-14">
+          <h2 className="rise-in font-display text-[2.9rem] leading-[1]">
+            {side.title}
+            <span className="block text-foreground/35">{side.rest}</span>
+          </h2>
+          <div className="rise-in" style={{ "--rd": 1 } as React.CSSProperties}>
+            <AppWindow title={side.window}>{side.art()}</AppWindow>
+          </div>
+          <ol
+            className="rise-in flex flex-col border-t text-sm"
+            style={{ "--rd": 2 } as React.CSSProperties}
+          >
+            {PROMISES.map((line, i) => (
+              <li key={line} className="flex gap-4 border-b py-3">
+                <span className="font-mono text-xs leading-5 text-tape">
+                  0{i + 1}
+                </span>
+                <span className="text-muted-foreground">{line}</span>
               </li>
             ))}
-          </ul>
+          </ol>
         </div>
       </aside>
-      <div className="flex flex-col">
-        <div className="flex flex-1 flex-col justify-center p-6 sm:p-10">
-          <div className="mx-auto flex w-full max-w-sm flex-col gap-7">
-            <div className="settle flex flex-col gap-2">
-              <p className="eyebrow">{eyebrow}</p>
-              <h1 className="font-display text-3xl">{title}</h1>
-              <p className="text-muted-foreground">{description}</p>
-            </div>
-            <div
-              className="settle flex flex-col gap-5"
-              style={{ "--d": 1 } as React.CSSProperties}
-            >
-              {children}
-            </div>
-            {footer ? (
-              <div className="flex flex-col gap-1 border-t pt-5 text-sm text-muted-foreground">
-                {footer}
-              </div>
-            ) : null}
+      <div className="flex flex-col justify-center px-4 py-14 sm:px-10 sm:py-20 lg:justify-start lg:pt-16">
+        <div className="mx-auto flex w-full max-w-sm flex-col gap-8 lg:mr-auto lg:ml-12 xl:ml-20">
+          <div className="settle flex flex-col gap-3">
+            <p className="eyebrow">{eyebrow}</p>
+            <h1 className="font-display text-[2.75rem] leading-none">
+              {title}
+            </h1>
+            <p className="text-muted-foreground">{description}</p>
           </div>
+          <div
+            className="settle flex flex-col gap-5"
+            style={{ "--d": 1 } as React.CSSProperties}
+          >
+            {children}
+          </div>
+          {footer ? (
+            <div className="flex flex-col gap-1 border-t pt-5 text-sm text-muted-foreground">
+              {footer}
+            </div>
+          ) : null}
         </div>
       </div>
     </div>

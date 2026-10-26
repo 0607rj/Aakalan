@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import {
+  Bricolage_Grotesque,
   Geist_Mono,
   IBM_Plex_Mono,
   IBM_Plex_Sans,
@@ -37,6 +38,12 @@ const plexMono = IBM_Plex_Mono({
   variable: "--font-plex-mono",
   display: "swap",
 });
+// Headlines: a grotesque with some character, heavy and tight (the public pages' big type).
+const display = Bricolage_Grotesque({
+  subsets: ["latin"],
+  variable: "--font-bricolage",
+  display: "swap",
+});
 const mono = Geist_Mono({
   subsets: ["latin"],
   variable: "--font-geist-mono",
@@ -53,7 +60,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${body.variable} ${serif.variable} ${mono.variable} ${plex.variable} ${plexMono.variable} h-full antialiased`}
+      className={`${body.variable} ${serif.variable} ${mono.variable} ${plex.variable} ${plexMono.variable} ${display.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>

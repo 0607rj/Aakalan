@@ -108,14 +108,18 @@ const FEATURE_COSTS = [
 /** Each feature on its own line, with and without AI tools. */
 export function FeatureCostFigure({ className }: { className?: string }) {
   return (
-    <figure data-reveal className={cn("flex flex-col gap-2", className)}>
+    <figure data-reveal className={cn("flex flex-col", className)}>
+      <span className="eyebrow flex justify-between border-b pb-2">
+        <span>Feature</span>
+        <span>With AI tools / without</span>
+      </span>
       {FEATURE_COSTS.map((f, i) => (
         <div
           key={f.name}
-          className="fig-step flex items-center gap-3 rounded-2xl border bg-card p-3"
+          className="fig-step flex items-center gap-3 border-b py-3"
           style={d(i)}
         >
-          <IconTile icon={f.icon} />
+          <IconTile icon={f.icon} size="sm" />
           <span className="flex min-w-0 flex-col">
             <span className="truncate font-medium">{f.name}</span>
             <span className="text-xs text-muted-foreground">{f.level}</span>
@@ -130,7 +134,7 @@ export function FeatureCostFigure({ className }: { className?: string }) {
           </span>
         </div>
       ))}
-      <figcaption className="mt-1 flex flex-wrap items-center gap-x-2 text-sm text-muted-foreground">
+      <figcaption className="mt-3 flex flex-wrap items-center gap-x-2 text-sm text-muted-foreground">
         Together
         <span className="font-mono font-semibold text-foreground">
           {lakh(FEATURE_COSTS.reduce((s, f) => s + f.ai, 0))}
@@ -274,10 +278,7 @@ export function TeamFigure({ className }: { className?: string }) {
 /** A page of the requirement document with the sentence a feature came from. */
 export function DocumentFigure({ className }: { className?: string }) {
   return (
-    <figure
-      data-reveal
-      className={cn("rounded-2xl border bg-card p-4", className)}
-    >
+    <figure data-reveal className={cn(className)}>
       <span className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
         <FilePdfIcon size={16} weight="duotone" className="text-destructive" />
         requirement.pdf, page 4
@@ -341,11 +342,11 @@ const SAVINGS = [
 /** Where AI tools save the most, and the checking that is added back. */
 export function AiSavingFigure({ className }: { className?: string }) {
   return (
-    <figure data-reveal className={cn("flex flex-col gap-2", className)}>
+    <figure data-reveal className={cn("flex flex-col", className)}>
       {SAVINGS.map((s, i) => (
         <span
           key={s.task}
-          className="fig-step flex items-center justify-between gap-3 rounded-xl bg-card px-3 py-2 text-sm"
+          className="fig-step flex items-center justify-between gap-3 border-b py-2.5 text-sm"
           style={d(i)}
         >
           {s.task}
@@ -362,7 +363,7 @@ export function AiSavingFigure({ className }: { className?: string }) {
         </span>
       ))}
       <span
-        className="fig-step flex items-center justify-between gap-3 rounded-xl border border-dashed border-foreground/20 px-3 py-2 text-sm"
+        className="fig-step flex items-center justify-between gap-3 py-2.5 text-sm text-muted-foreground"
         style={d(3)}
       >
         People checking the AI&apos;s work

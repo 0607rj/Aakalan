@@ -30,19 +30,14 @@ const COLUMNS = [
 
 export function Footer() {
   return (
-    <footer className="mt-auto border-t bg-card">
+    <footer className="mt-auto border-t">
       <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:px-6 md:grid-cols-[1.4fr_repeat(3,1fr)]">
         <div className="flex max-w-xs flex-col gap-4">
           <Logo />
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm leading-relaxed text-muted-foreground">
             Costs software by what is built, the way it is built today: with AI
             tools, and people who check their work.
           </p>
-          {/* the tape, as a quiet signature */}
-          <div
-            aria-hidden="true"
-            className="tape-ticks h-3 w-40 rounded-sm bg-tape"
-          />
         </div>
         {COLUMNS.map((col) => (
           <nav
@@ -50,7 +45,9 @@ export function Footer() {
             aria-label={col.title}
             className="flex flex-col gap-3"
           >
-            <span className="text-sm font-semibold">{col.title}</span>
+            <span className="font-mono text-xs font-medium tracking-[0.08em] uppercase">
+              {col.title}
+            </span>
             {col.links.map((link) => (
               <Link
                 key={link.href}
@@ -65,7 +62,7 @@ export function Footer() {
       </div>
       <div className="border-t">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-4 py-4 text-xs text-muted-foreground sm:px-6">
-          <span>© Aakalan</span>
+          <span className="font-mono">© Aakalan · आकलन, estimation</span>
           <span>
             Estimates are a guide before work starts, not a quote or a bill.
           </span>
