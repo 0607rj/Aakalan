@@ -1,9 +1,20 @@
 "use client";
 
 import * as React from "react";
+import {
+  CaretRightIcon,
+  ChartPieSliceIcon,
+  ListChecksIcon,
+  ReceiptIcon,
+} from "@phosphor-icons/react/dist/ssr";
 
 import type { PricedOption, QuickSummary } from "@/lib/api/client";
 import { formatApprox, formatRange } from "@/lib/format";
+import {
+  IconTile,
+  type IconType,
+  type Tone,
+} from "@/components/site/illustrations";
 import { cn } from "@/lib/utils";
 
 import { biggestOpenAnswer, changeRange } from "./check";
@@ -22,29 +33,47 @@ function yearsText(years: number): string {
 /** A small right-pointing chevron (rotate it for other directions). */
 export function Chevron({ className }: { className?: string }) {
   return (
-    <svg
+    <CaretRightIcon
+      size={14}
+      weight="bold"
       aria-hidden="true"
-      viewBox="0 0 16 16"
-      className={cn("inline-block size-3.5 align-[-2px]", className)}
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.75"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M6 3.5 10.5 8 6 12.5" />
-    </svg>
+      className={cn("inline-block align-[-2px]", className)}
+    />
+  );
+}
+
+/** A section heading of the result page, with its icon on a tinted tile. */
+export function SectionTitle({
+  icon,
+  tone = "tape",
+  children,
+  className,
+}: {
+  icon: IconType;
+  tone?: Tone;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <span className="flex items-center gap-3">
+      <IconTile icon={icon} tone={tone} size="sm" />
+      <h2 className={cn("text-xl font-semibold", className)}>{children}</h2>
+    </span>
   );
 }
 
 /** A collapsed section: the title (and a one-line hint) stays visible, the rest opens on click. */
 export function Disclosure({
   title,
+  icon,
+  tone,
   hint,
   defaultOpen = false,
   children,
 }: {
   title: string;
+  icon: IconType;
+  tone?: Tone;
   hint?: React.ReactNode;
   defaultOpen?: boolean;
   children: React.ReactNode;
@@ -52,12 +81,16 @@ export function Disclosure({
   return (
     <details className="fold group border-t" open={defaultOpen}>
       <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-6 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none [&::-webkit-details-marker]:hidden">
-        <span className="flex flex-col gap-0.5">
-          <h2 className="text-xl font-semibold transition-colors group-hover:text-primary">
+        <span className="flex flex-col gap-1">
+          <SectionTitle
+            icon={icon}
+            tone={tone}
+            className="transition-colors group-hover:text-primary"
+          >
             {title}
-          </h2>
+          </SectionTitle>
           {hint ? (
-            <span className="text-sm text-muted-foreground">{hint}</span>
+            <span className="pl-11 text-sm text-muted-foreground">{hint}</span>
           ) : null}
         </span>
         <span className="flex size-9 shrink-0 items-center justify-center rounded-full border text-muted-foreground transition-[transform,color,border-color] duration-300 group-open:rotate-90 group-hover:border-foreground/40 group-hover:text-foreground">
@@ -287,9 +320,9 @@ export function CostSummary({ summary }: { summary: QuickSummary }) {
 
   return (
     <section className="sheet">
-      <div>
-        <h2 className="text-xl font-semibold">What the price is made of</h2>
-      </div>
+      <SectionTitle icon={ChartPieSliceIcon}>
+        What the price is made of
+      </SectionTitle>
       <ShareBar rows={rows} />
       <ul className="flex flex-col divide-y">
         {rows.map((r) => (
@@ -537,6 +570,7 @@ export function WhatsIncluded({
   return (
     <Disclosure
       title="What's included and what's not"
+      icon={ListChecksIcon}
       hint={`${included.filter(Boolean).length} included · ${separate.length} paid separately · ${confirm.filter(Boolean).length} to confirm`}
     >
       <div className="grid gap-6 md:grid-cols-3">
@@ -619,8 +653,10 @@ export function OngoingCosts({ summary }: { summary: QuickSummary }) {
   return (
     <section className="sheet">
       <div>
-        <h2 className="text-xl font-semibold">One-time and running costs</h2>
-        <p className="figure-label">Before margin, risk buffer and tax</p>
+        <SectionTitle icon={ReceiptIcon}>
+          One-time and running costs
+        </SectionTitle>
+        <p className="figure-label pl-11">Before margin, risk buffer and tax</p>
       </div>
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
         <Tile

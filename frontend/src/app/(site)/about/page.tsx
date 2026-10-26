@@ -1,151 +1,231 @@
 import type { Metadata } from "next";
+import {
+  ArrowDownIcon,
+  ArrowUpIcon,
+  BankIcon,
+  HandshakeIcon,
+  HourglassMediumIcon,
+  MagnifyingGlassIcon,
+  RobotIcon,
+  RocketIcon,
+  ScalesIcon,
+  SealCheckIcon,
+} from "@phosphor-icons/react/dist/ssr";
 
-import { RangeTape } from "@/components/site/mockups";
+import { IconTile, TraceFigure } from "@/components/site/illustrations";
+import { MeaningFigure } from "@/components/site/page-art";
 import { PageIntro, Section, StartBand } from "@/components/site/sections";
 
 export const metadata: Metadata = {
   title: "About · Aakalan",
 };
 
-const PRINCIPLES = [
+const ANSWER = [
+  "Each feature at the size it needs",
+  "The saving AI tools really bring, task by task",
+  "The checking that saving demands",
+  "Everything after launch",
+];
+
+const TESTS = [
   {
-    title: "Price what is built, not who asks",
-    body: "A login screen costs the same for everyone. Bigger or stricter work costs more because there is more of it, and it shows up as its own line.",
+    size: "Small projects",
+    icon: ArrowDownIcon,
+    text: "Real contracts mostly came in below ours: lowest bids, simpler builds.",
   },
   {
-    title: "AI reads, formulas count",
-    body: "AI helps read documents and descriptions and suggests features. It never sets, edits or rounds a price; a fixed set of formulas does, the same way every time.",
+    size: "Medium projects",
+    icon: ArrowDownIcon,
+    text: "Real contracts mostly came in a little below ours.",
   },
   {
-    title: "Every number has a source",
-    body: "Each line links to the feature that asked for it, the rate and where that rate came from, and the formula used. Nothing is a black box.",
-  },
-  {
-    title: "Honest about how sure we are",
-    body: "We say where every price comes from, show real project prices beside it and give a range, not a single number pretending to be exact.",
+    size: "Large projects",
+    icon: ArrowUpIcon,
+    text: "Real contracts mostly came in above ours: hardware and licences we can't see yet.",
   },
 ];
+
+const PRINCIPLES = [
+  {
+    icon: ScalesIcon,
+    title: "Price what is built, not who asks",
+    body: "A login screen costs the same for everyone.",
+  },
+  {
+    icon: RobotIcon,
+    title: "AI reads, formulas count",
+    body: "AI suggests features. It never sets, edits or rounds a price.",
+  },
+  {
+    icon: MagnifyingGlassIcon,
+    title: "Every number has a source",
+    body: "Feature, rate, where the rate came from, and the formula.",
+  },
+  {
+    icon: SealCheckIcon,
+    title: "Honest about how sure we are",
+    body: "A range with its reasons, not one number pretending to be exact.",
+  },
+];
+
+const AUDIENCE = [
+  {
+    icon: HandshakeIcon,
+    title: "Companies quoting a project",
+    body: "Price a quote from the document in minutes, with your own rates.",
+  },
+  {
+    icon: RocketIcon,
+    title: "People planning to build",
+    body: "Know what an app should cost before asking for quotes.",
+  },
+  {
+    icon: BankIcon,
+    title: "Departments budgeting",
+    body: "A realistic budget with security, support and hosting included.",
+  },
+];
+
+const delay = (rd: number) => ({ "--rd": rd }) as React.CSSProperties;
 
 export default function AboutPage() {
   return (
     <>
-      <PageIntro title="Aakalan means estimation. We built it because software prices stopped adding up.">
-        For years software was priced by the hour. AI tools now do much of the
-        typing, and nobody agrees what that should do to the price. Vendors
-        guess, buyers guess, and the gap between quotes grows.
+      <PageIntro
+        title="Aakalan means estimation. We built it because software prices stopped adding up."
+        art={<MeaningFigure />}
+      >
+        AI now does much of the typing. Nobody agrees what that does to the
+        price, so quotes drift further apart.
       </PageIntro>
 
-      <Section className="grid gap-12 py-12 sm:py-16 lg:grid-cols-[1fr_1fr]">
-        <div className="flex flex-col gap-5 text-lg">
+      {/* The question and our answer */}
+      <Section className="grid items-center gap-10 py-12 sm:py-16 lg:grid-cols-2">
+        <div className="flex flex-col gap-6">
           <h2
             data-reveal
             className="font-wide text-3xl leading-tight font-semibold"
           >
-            The question we set out to answer
+            How do you price software when AI writes much of the code, but
+            people still design, check and look after it?
           </h2>
-          <p className="text-muted-foreground">
-            How do you work out the cost of building software when AI writes
-            much of the code, but people still design it, check it, test it,
-            launch it and look after it for years?
+          <p data-reveal className="text-lg text-muted-foreground">
+            Price the work itself, and show the working:
           </p>
-          <p className="text-muted-foreground">
-            Our answer is to price the work itself: each feature at the size it
-            needs to be, each kind of task with the saving AI tools really
-            bring, plus the review that saving demands, plus everything after
-            launch. Then to show the working.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 rounded-[22px] border bg-card p-6">
-          <h3 className="text-lg font-bold">How we test the prices</h3>
-          <p className="text-muted-foreground">
-            We collected 56 Indian projects with published prices: government
-            contracts and private and startup projects. The prices are not tuned
-            to them; they come from hours and rates. Each estimate shows what
-            real projects of its size were bought for, as published.
-          </p>
-          <ul className="flex flex-col gap-2">
-            <li>
-              <strong>Small projects:</strong> real contracts mostly came in
-              below our estimate (lowest winning bids, simpler builds)
-            </li>
-            <li>
-              <strong>Medium projects:</strong> real contracts mostly came in
-              below our estimate (on 5 tenders read the way the app reads them,
-              ours was about 1.3 times the published price)
-            </li>
-            <li>
-              <strong>Large projects:</strong> real contracts mostly came in
-              above it (ours was about two-thirds of the published price on 3
-              tenders: hardware, licences and work we can&apos;t see yet)
-            </li>
-            <li>
-              <strong>Not yet checked:</strong> what finished projects really
-              cost; recorded outcomes will do that
-            </li>
+          <ul className="flex flex-wrap gap-2">
+            {ANSWER.map((a, i) => (
+              <li
+                key={a}
+                data-reveal
+                style={delay(i)}
+                className="rounded-full bg-tape-soft px-3.5 py-1.5 text-sm font-medium text-tape"
+              >
+                {a}
+              </li>
+            ))}
           </ul>
-          <RangeTape
-            low={1_400_000}
-            likely={1_900_000}
-            high={2_600_000}
-            scaleMax={3_000_000}
-          />
-          <p className="text-sm text-muted-foreground">
-            That is why every estimate is a range. Treat it as a guide before
-            work starts, and use your own judgement.
-          </p>
+        </div>
+        <div
+          data-reveal
+          style={delay(1)}
+          className="rounded-[26px] border bg-card p-6 sm:p-8"
+        >
+          <p className="mb-6 font-semibold">Where one number comes from</p>
+          <TraceFigure />
         </div>
       </Section>
 
-      <div className="border-y bg-card">
+      {/* How we test the prices */}
+      <Section className="pb-12 sm:pb-16">
+        <h2 data-reveal className="font-wide text-3xl font-semibold">
+          How we test the prices
+        </h2>
+        <p data-reveal className="mt-3 max-w-2xl text-muted-foreground">
+          We compare with real Indian projects that have published prices. Our
+          prices are not tuned to them: they come from hours and rates.
+        </p>
+        <div className="mt-8 grid gap-4 md:grid-cols-3">
+          {TESTS.map((t, i) => (
+            <div
+              key={t.size}
+              data-reveal
+              style={delay(i)}
+              className="flex flex-col gap-4 rounded-[22px] border bg-card p-6"
+            >
+              <span className="flex items-center justify-between">
+                <span className="font-semibold">{t.size}</span>
+                <IconTile
+                  icon={t.icon}
+                  size="sm"
+                  tone={t.icon === ArrowUpIcon ? "warm" : "tape"}
+                />
+              </span>
+              <p className="text-muted-foreground">{t.text}</p>
+            </div>
+          ))}
+        </div>
+        <p
+          data-reveal
+          className="mt-4 flex items-center gap-3 rounded-2xl bg-warning-muted px-4 py-3 text-sm"
+        >
+          <HourglassMediumIcon
+            size={20}
+            weight="duotone"
+            className="shrink-0 text-warning"
+          />
+          Not checked yet: what finished projects really cost. Recorded outcomes
+          will do that, so treat every estimate as a guide.
+        </p>
+      </Section>
+
+      {/* What we hold to */}
+      <section className="border-y bg-card">
         <Section className="py-12 sm:py-16">
           <h2 data-reveal className="font-wide text-3xl font-semibold">
             What we hold to
           </h2>
-          <dl className="mt-10 grid gap-x-12 gap-y-10 md:grid-cols-2">
-            {PRINCIPLES.map((p) => (
-              <div key={p.title} className="flex flex-col gap-2">
-                <dt className="flex items-center gap-3 text-lg font-bold">
-                  <span
-                    aria-hidden="true"
-                    className="h-6 w-1.5 rounded-full bg-tape"
-                  />
-                  {p.title}
-                </dt>
-                <dd className="text-muted-foreground">{p.body}</dd>
+          <dl className="mt-10 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+            {PRINCIPLES.map((p, i) => (
+              <div
+                key={p.title}
+                data-reveal
+                style={delay(i)}
+                className="flex flex-col gap-3"
+              >
+                <IconTile icon={p.icon} size="lg" />
+                <dt className="text-lg font-semibold">{p.title}</dt>
+                <dd className="-mt-1 text-muted-foreground">{p.body}</dd>
               </div>
             ))}
           </dl>
         </Section>
-      </div>
+      </section>
 
+      {/* Who it is for */}
       <Section className="py-12 sm:py-16">
         <h2 data-reveal className="font-wide text-3xl font-semibold">
           Who it is for
         </h2>
-        <div className="mt-8 grid gap-8 md:grid-cols-3">
-          <div>
-            <h3 className="font-bold">Companies quoting a project</h3>
-            <p className="mt-2 text-muted-foreground">
-              Price your quote from the requirement document in minutes, with
-              your own rates and margin, and see what the document leaves
-              unclear.
-            </p>
-          </div>
-          <div>
-            <h3 className="font-bold">People planning to build</h3>
-            <p className="mt-2 text-muted-foreground">
-              Founders, shops, schools and clinics: know what an app should cost
-              before asking for quotes, and which features drive it.
-            </p>
-          </div>
-          <div>
-            <h3 className="font-bold">Departments budgeting</h3>
-            <p className="mt-2 text-muted-foreground">
-              Set a realistic budget for a portal or system, with security,
-              support and hosting included for the years you need.
-            </p>
-          </div>
-        </div>
+        <ul className="mt-8 flex flex-col divide-y rounded-[22px] border bg-card">
+          {AUDIENCE.map((a, i) => (
+            <li
+              key={a.title}
+              data-reveal
+              style={delay(i)}
+              className="flex items-center gap-5 p-5 sm:p-6"
+            >
+              <IconTile
+                icon={a.icon}
+                tone={i === 1 ? "ai" : i === 2 ? "warm" : "tape"}
+                size="lg"
+              />
+              <span className="flex flex-col gap-1">
+                <span className="text-lg font-semibold">{a.title}</span>
+                <span className="text-muted-foreground">{a.body}</span>
+              </span>
+            </li>
+          ))}
+        </ul>
       </Section>
 
       <StartBand />

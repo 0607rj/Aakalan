@@ -1,9 +1,16 @@
 "use client";
 
 import * as React from "react";
+import {
+  BuildingsIcon,
+  EnvelopeSimpleIcon,
+  LockKeyIcon,
+  UserCircleIcon,
+} from "@phosphor-icons/react/dist/ssr";
 
 import { FormError, TextField, failure } from "@/components/auth-forms";
 import { useCurrentUser } from "@/components/auth-guard";
+import { IconTile } from "@/components/site/illustrations";
 import { Button } from "@/components/ui/button";
 import { api, setToken } from "@/lib/api/client";
 
@@ -13,14 +20,24 @@ const MIN_PASSWORD = 8;
 export function AccountSummary() {
   const user = useCurrentUser();
   return (
-    <div className="flex flex-col gap-2">
-      <p className="eyebrow">Account</p>
-      <h1 className="font-display text-3xl sm:text-4xl">
-        {user.full_name || "Your account"}
-      </h1>
-      <p className="text-muted-foreground">
-        {user.email} · {user.org_name}
-      </p>
+    <div className="flex items-center gap-5">
+      <IconTile icon={UserCircleIcon} size="lg" />
+      <div className="flex flex-col gap-1">
+        <p className="eyebrow">Account</p>
+        <h1 className="font-display text-3xl sm:text-4xl">
+          {user.full_name || "Your account"}
+        </h1>
+        <p className="flex flex-wrap items-center gap-x-4 gap-y-1 text-muted-foreground">
+          <span className="inline-flex items-center gap-1.5">
+            <EnvelopeSimpleIcon size={16} aria-hidden="true" />
+            {user.email}
+          </span>
+          <span className="inline-flex items-center gap-1.5">
+            <BuildingsIcon size={16} aria-hidden="true" />
+            {user.org_name}
+          </span>
+        </p>
+      </div>
     </div>
   );
 }
@@ -52,11 +69,14 @@ export function ChangePassword() {
 
   return (
     <section className="slab flex w-full max-w-xl flex-col gap-6 p-6 sm:p-8">
-      <div className="flex flex-col gap-1">
-        <h2 className="text-xl font-semibold">Change password</h2>
-        <p className="text-sm text-muted-foreground">
-          Other devices are signed out. This one stays signed in.
-        </p>
+      <div className="flex items-center gap-3">
+        <IconTile icon={LockKeyIcon} />
+        <div className="flex flex-col gap-0.5">
+          <h2 className="text-xl font-semibold">Change password</h2>
+          <p className="text-sm text-muted-foreground">
+            Other devices are signed out. This one stays signed in.
+          </p>
+        </div>
       </div>
       <form onSubmit={submit} className="flex flex-col gap-5" noValidate>
         <TextField

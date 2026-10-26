@@ -7,6 +7,8 @@ import {
   Instrument_Serif,
 } from "next/font/google";
 
+import { RevealOnScroll } from "@/components/site/reveal";
+
 import "./globals.css";
 
 // IBM Plex Sans for everything people read and fill in, Plex Mono for small figures (the
@@ -62,7 +64,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           }}
         />
       </head>
-      <body className="flex min-h-full flex-col">{children}</body>
+      <body className="flex min-h-full flex-col">
+        {children}
+        {/* every page, so a [data-reveal] part never stays hidden in the app */}
+        <RevealOnScroll />
+      </body>
     </html>
   );
 }

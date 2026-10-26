@@ -3,7 +3,24 @@
 import * as React from "react";
 import Link from "next/link";
 
+import {
+  ArrowRightIcon,
+  FileArrowUpIcon,
+  FilePdfIcon,
+  ListChecksIcon,
+  PencilSimpleLineIcon,
+  ReceiptIcon,
+  TrashIcon,
+  WarningCircleIcon,
+} from "@phosphor-icons/react/dist/ssr";
+
 import { useCurrentUser } from "@/components/auth-guard";
+import {
+  IconTile,
+  type IconType,
+  type Tone,
+} from "@/components/site/illustrations";
+import { FlowFigure } from "@/components/site/page-art";
 import { ErrorNotice, Loading } from "@/components/status";
 import { Input } from "@/components/ui/input";
 import { api, errorText, type QuickSummary } from "@/lib/api/client";
@@ -15,94 +32,45 @@ import {
 } from "@/lib/format";
 import { useLoad } from "@/lib/use-load";
 
-const STEPS = [
+const STEPS: { title: string; text: string; icon: IconType; tone: Tone }[] = [
   {
     title: "Upload or describe",
     text: "A PDF or Word requirement document, or a few lines about what the software should do.",
+    icon: FilePdfIcon,
+    tone: "plain",
   },
   {
     title: "Check and fill the gaps",
     text: "Untick anything wrong, add anything missing, and answer only what the document doesn't say.",
+    icon: ListChecksIcon,
+    tone: "tape",
   },
   {
     title: "See your cost",
     text: "A total with a likely range, and where the money goes.",
+    icon: ReceiptIcon,
+    tone: "ai",
   },
 ];
 
 /** Search appears once the list is long enough to need it. */
 const SEARCH_FROM = 6;
 
-/** Tick marks of a measuring tape: small every 8px, tall every 40px. */
-const TICKS: React.CSSProperties = {
-  backgroundImage:
-    "linear-gradient(90deg, rgb(11 120 184 / 0.4) 1px, transparent 1px), linear-gradient(90deg, rgb(11 120 184 / 0.2) 1px, transparent 1px)",
-  backgroundSize: "40px 100%, 8px 45%",
-  backgroundRepeat: "repeat-x",
-};
-
-function Arrow() {
-  return (
-    <svg
-      viewBox="0 0 16 16"
-      aria-hidden="true"
-      className="size-4 transition-transform group-hover:translate-x-0.5"
-    >
-      <path
-        d="M3 8h9M8.5 4l4 4-4 4"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.8"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function DocIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" className="size-5">
-      <path
-        d="M6 2.75h8.5L19.25 7.5v13.75H6zM14.5 2.75V7.5h4.75M9 12h7M9 15.5h7"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
-function PenIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" className="size-5">
-      <path
-        d="M4 20l1-4.5L16.5 4a1.8 1.8 0 012.5 0l1 1a1.8 1.8 0 010 2.5L8.5 19zM14.5 6l3.5 3.5"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="1.6"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
 /** The two ways to begin: a requirement document, or a few lines of description. */
 function StartCards() {
   const cards = [
     {
       href: "/estimate/new?via=upload",
-      icon: <DocIcon />,
+      icon: FileArrowUpIcon,
+      tone: "tape" as Tone,
       title: "Upload a requirement document",
       text: "PDF or Word. We find what it asks for, with page numbers, and you check it.",
       cta: "Upload",
     },
     {
       href: "/estimate/new?via=manual",
-      icon: <PenIcon />,
+      icon: PencilSimpleLineIcon,
+      tone: "ai" as Tone,
       title: "Describe it or tick features",
       text: "No document? Say what the software should do and we price each feature.",
       cta: "Start",
@@ -117,14 +85,17 @@ function StartCards() {
           className="slab settle group flex flex-col gap-3 p-5 transition-colors hover:border-primary/50 sm:p-6"
           style={{ "--d": i + 1 } as React.CSSProperties}
         >
-          <span className="flex size-10 items-center justify-center rounded-lg bg-tape-soft text-primary">
-            {card.icon}
-          </span>
+          <IconTile icon={card.icon} tone={card.tone} />
           <span className="text-lg font-semibold">{card.title}</span>
           <span className="text-sm text-muted-foreground">{card.text}</span>
           <span className="mt-1 inline-flex items-center gap-1.5 text-sm font-semibold text-primary">
             {card.cta}
-            <Arrow />
+            <ArrowRightIcon
+              size={16}
+              weight="bold"
+              aria-hidden="true"
+              className="transition-transform group-hover:translate-x-0.5"
+            />
           </span>
         </Link>
       ))}
@@ -193,12 +164,19 @@ function EstimateRow({
         href={`/estimate/${summary.estimate_id}`}
         className="grid min-w-0 flex-1 gap-x-8 gap-y-3 rounded-xl p-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-center sm:p-5"
       >
-        <span className="flex min-w-0 flex-col gap-0.5">
-          <span className="truncate font-semibold group-hover:text-primary">
-            {summary.name}
-          </span>
-          <span className="text-xs text-muted-foreground">
-            {formatDate(summary.created_at)}
+        <span className="flex min-w-0 items-center gap-3">
+          <IconTile
+            icon={summary.feasible ? ReceiptIcon : WarningCircleIcon}
+            tone={summary.feasible ? "tape" : "warning"}
+            size="sm"
+          />
+          <span className="flex min-w-0 flex-col gap-0.5">
+            <span className="truncate font-semibold group-hover:text-primary">
+              {summary.name}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {formatDate(summary.created_at)}
+            </span>
           </span>
         </span>
         {summary.feasible ? (
@@ -231,31 +209,36 @@ function EstimateRow({
         className="mr-3 shrink-0 self-start rounded-md px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none sm:mr-4 sm:self-center"
         aria-label={`Delete ${summary.name}`}
       >
-        {deleting ? "Deleting…" : "Delete"}
+        <TrashIcon size={16} aria-hidden="true" className="sm:hidden" />
+        <span className="max-sm:sr-only">
+          {deleting ? "Deleting…" : "Delete"}
+        </span>
       </button>
     </li>
   );
 }
 
-/** What to do first: three numbered stops along a line. */
+/** What to do first: three steps, each with its icon, joined by a dashed line. */
 function FirstSteps() {
   return (
     <ol className="grid gap-6 sm:grid-cols-3">
       {STEPS.map((step, i) => (
         <li key={step.title} className="relative flex flex-col gap-2">
           <span className="flex items-center gap-3">
-            <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-primary text-sm font-semibold text-primary-foreground">
-              {i + 1}
-            </span>
+            <IconTile icon={step.icon} tone={step.tone} />
             {i < STEPS.length - 1 ? (
               <span
                 aria-hidden="true"
-                className="hidden h-2 flex-1 rounded-sm border bg-panel-2 sm:block"
-                style={TICKS}
+                className="hidden flex-1 border-t border-dashed border-primary/30 sm:block"
               />
             ) : null}
           </span>
-          <span className="font-semibold">{step.title}</span>
+          <span className="font-semibold">
+            <span className="mr-1.5 font-mono text-sm text-muted-foreground">
+              {i + 1}
+            </span>
+            {step.title}
+          </span>
           <span className="text-sm text-muted-foreground">{step.text}</span>
         </li>
       ))}
@@ -322,15 +305,18 @@ export function EstimatesHome() {
   return (
     <div className="flex flex-col gap-12">
       <section className="flex flex-col gap-8">
-        <div className="settle flex flex-col gap-3">
-          <p className="eyebrow">{first ? `Hello, ${first}` : "Welcome"}</p>
-          <h1 className="font-display max-w-3xl text-4xl sm:text-5xl">
-            What will your software cost?
-          </h1>
-          <p className="max-w-2xl text-lg text-muted-foreground">
-            Get a total for building it, launching it and running it for the
-            years you need, as a low, likely and high range.
-          </p>
+        <div className="grid items-center gap-10 lg:grid-cols-[1.2fr_0.8fr]">
+          <div className="settle flex flex-col gap-3">
+            <p className="eyebrow">{first ? `Hello, ${first}` : "Welcome"}</p>
+            <h1 className="font-display max-w-3xl text-4xl sm:text-5xl">
+              What will your software cost?
+            </h1>
+            <p className="max-w-2xl text-lg text-muted-foreground">
+              Get a total for building it, launching it and running it for the
+              years you need, as a low, likely and high range.
+            </p>
+          </div>
+          <FlowFigure className="hidden w-full max-w-sm justify-self-end lg:flex" />
         </div>
         <StartCards />
       </section>

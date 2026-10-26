@@ -359,22 +359,6 @@
     sky-drift 40s ease-in-out infinite alternate;
 }
 
-@keyframes pulse-dot {
-  0% {
-    box-shadow: 0 0 0 0 rgb(11 120 184 / 0.55);
-  }
-  70% {
-    box-shadow: 0 0 0 7px rgb(11 120 184 / 0);
-  }
-  to {
-    box-shadow: 0 0 0 0 rgb(11 120 184 / 0);
-  }
-}
-
-.pulse-dot {
-  animation: pulse-dot 2.2s ease-out infinite;
-}
-
 /* Figures play once when they are revealed (.is-in), each piece after --d steps. */
 .fig-step {
   transition:
@@ -412,40 +396,6 @@
 
 .rv [data-reveal]:not(.is-in) .fig-bar {
   transform: scaleX(0);
-}
-
-/* A line drawn from the top down. */
-.fig-drop {
-  transform-origin: center top;
-  transition: transform 1.3s var(--ease) 0.5s;
-}
-
-.rv [data-reveal]:not(.is-in) .fig-drop {
-  transform: scaleY(0);
-}
-
-/* The range that widens when answers are "not sure". */
-.fig-range {
-  transition:
-    left 1.2s var(--ease) 1.4s,
-    width 1.2s var(--ease) 1.4s;
-}
-
-.fig-swap-old {
-  transition: opacity 0.4s var(--ease) 1.4s;
-}
-
-.fig-swap-new {
-  opacity: 0;
-  transition: opacity 0.5s var(--ease) 1.9s;
-}
-
-[data-reveal].is-in .fig-swap-old {
-  opacity: 0;
-}
-
-[data-reveal].is-in .fig-swap-new {
-  opacity: 1;
 }
 
 /* The closing keypad: the sums people used to type press themselves, then "Estimate" lights. */

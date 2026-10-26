@@ -3,6 +3,13 @@
 import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
+import {
+  FileArrowUpIcon,
+  PencilSimpleLineIcon,
+} from "@phosphor-icons/react/dist/ssr";
+
+import { IconTile } from "@/components/site/illustrations";
+import { FlowFigure } from "@/components/site/page-art";
 import { ErrorNotice, Loading } from "@/components/status";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -1045,37 +1052,25 @@ function StartChoice({
 }) {
   const card =
     "slab group flex flex-col gap-3 p-5 text-left transition-colors hover:border-primary/50 sm:p-6";
-  const icon =
-    "flex size-10 items-center justify-center rounded-lg bg-tape-soft text-primary";
   return (
     <section className="flex flex-col gap-8">
-      <div className="settle flex flex-col gap-2">
-        <p className="eyebrow">New estimate</p>
-        <h1 className="font-display text-3xl sm:text-4xl">
-          How would you like to start?
-        </h1>
-        <p className="max-w-2xl text-muted-foreground">
-          The quickest way is to upload the requirement document. We read it and
-          fill in the details for you to check.
-        </p>
+      <div className="grid items-center gap-10 lg:grid-cols-[1.2fr_0.8fr]">
+        <div className="settle flex flex-col gap-2">
+          <p className="eyebrow">New estimate</p>
+          <h1 className="font-display text-3xl sm:text-4xl">
+            How would you like to start?
+          </h1>
+          <p className="max-w-2xl text-muted-foreground">
+            The quickest way is to upload the requirement document. We read it
+            and fill in the details for you to check.
+          </p>
+        </div>
+        <FlowFigure className="hidden w-full max-w-sm justify-self-end lg:flex" />
       </div>
       <CountryChoice options={options} onChange={onCountry} />
       <div className="grid gap-4 md:grid-cols-2">
         <button type="button" onClick={onUpload} className={card}>
-          <span className={icon}>
-            <svg
-              aria-hidden="true"
-              viewBox="0 0 24 24"
-              className="size-5"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.6"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M6 2.75h8.5L19.25 7.5v13.75H6zM14.5 2.75V7.5h4.75M9 12h7M9 15.5h7" />
-            </svg>
-          </span>
+          <IconTile icon={FileArrowUpIcon} />
           <span className="flex flex-wrap items-center gap-2 text-lg font-semibold">
             Upload the requirement document
             <span className="rounded-full bg-tape-soft px-2 py-0.5 text-xs font-semibold text-primary">
@@ -1087,20 +1082,7 @@ function StartChoice({
           </span>
         </button>
         <button type="button" onClick={onManual} className={card}>
-          <span className={icon}>
-            <svg
-              aria-hidden="true"
-              viewBox="0 0 24 24"
-              className="size-5"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.6"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M4 20l1-4.5L16.5 4a1.8 1.8 0 012.5 0l1 1a1.8 1.8 0 010 2.5L8.5 19zM14.5 6l3.5 3.5" />
-            </svg>
-          </span>
+          <IconTile icon={PencilSimpleLineIcon} tone="ai" />
           <span className="text-lg font-semibold">
             No document, I&apos;ll describe it myself
           </span>

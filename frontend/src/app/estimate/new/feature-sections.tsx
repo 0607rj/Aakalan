@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { CaretRightIcon } from "@phosphor-icons/react/dist/ssr";
 
 import type { NotIncluded, QuickOptions, QuickRequest } from "@/lib/api/client";
 import { cn } from "@/lib/utils";
@@ -258,21 +259,15 @@ export function FeatureSections({
           className="flex w-full flex-wrap items-baseline justify-between gap-x-4 border-b pb-2 text-left"
         >
           <span className="text-base font-semibold">
-            <svg
+            <CaretRightIcon
+              size={14}
+              weight="bold"
               aria-hidden="true"
-              viewBox="0 0 16 16"
               className={cn(
-                "mr-1.5 inline-block size-3.5 align-[-2px] transition-transform duration-300",
+                "mr-1.5 inline-block align-[-2px] transition-transform duration-300",
                 showAll && "rotate-90",
               )}
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="1.75"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <path d="M6 3.5 10.5 8 6 12.5" />
-            </svg>
+            />
             Browse all features
             <span className="ml-2 text-muted-foreground tabular-nums">
               ({browse.length})

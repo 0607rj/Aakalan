@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { TrophyIcon } from "@phosphor-icons/react/dist/ssr";
 
 import { ErrorNotice, Loading } from "@/components/status";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,8 @@ import {
 import { currencySymbol, formatPaise } from "@/lib/format";
 import { useLoad } from "@/lib/use-load";
 import { cn } from "@/lib/utils";
+
+import { SectionTitle } from "./cost-summary";
 
 const MINOR_PER_MAJOR = 100; // paise per rupee, cents per dollar
 
@@ -230,8 +233,10 @@ export function BidResultCard({
   return (
     <section className="sheet">
       <div>
-        <h2 className="text-xl font-semibold">Bid result</h2>
-        <p className="text-sm text-muted-foreground">
+        <SectionTitle icon={TrophyIcon} tone="warm">
+          Bid result
+        </SectionTitle>
+        <p className="pl-11 text-sm text-muted-foreground">
           Recording results teaches the tool to estimate closer to real prices.
         </p>
       </div>

@@ -25,13 +25,28 @@ export function RevealOnScroll() {
     );
     // remembered here, not marked on the element: parts still hydrating must match the server
     const seen = new WeakSet<Element>();
+    // React has taken the element over once it carries its fiber; until then, touching its
+    // class would break hydration, so look again a moment later
+    const hydrated = (el: Element) =>
+      Object.keys(el).some((k) => k.startsWith("__reactFiber$"));
+    let retry = 0;
+    let tries = 0;
     const scan = () => {
+      let waiting = false;
+      tries += 1;
       document.querySelectorAll("[data-reveal]:not(.is-in)").forEach((el) => {
         if (seen.has(el)) return;
+        // after a few seconds, show it anyway rather than leave it hidden
+        if (!hydrated(el) && tries < 50) {
+          waiting = true;
+          return;
+        }
         seen.add(el);
         if (still) show(el);
         else io.observe(el);
       });
+      window.clearTimeout(retry);
+      if (waiting) retry = window.setTimeout(scan, 100);
     };
     root.classList.add("rv");
     // start once the page has loaded (and React has taken it over), then watch for new parts
@@ -48,6 +63,7 @@ export function RevealOnScroll() {
     return () => {
       window.removeEventListener("load", start);
       cancelAnimationFrame(frame);
+      window.clearTimeout(retry);
       mo.disconnect();
       io.disconnect();
     };

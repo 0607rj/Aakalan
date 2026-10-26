@@ -1,6 +1,5 @@
 import { Footer } from "@/components/site/footer";
 import { SiteNavBar } from "@/components/site/navbar";
-import { RevealOnScroll } from "@/components/site/reveal";
 
 /** Public pages: home, features, how it works, about, contact and sign in. */
 export default function SiteLayout({
@@ -13,7 +12,6 @@ export default function SiteLayout({
       <SiteNavBar />
       <div className="flex flex-1 flex-col">{children}</div>
       <Footer />
-      <RevealOnScroll />
     </>
   );
 }

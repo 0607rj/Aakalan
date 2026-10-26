@@ -1,8 +1,14 @@
 "use client";
 
 import * as React from "react";
+import { CheckCircleIcon } from "@phosphor-icons/react/dist/ssr";
 
 import { LogoMark } from "@/components/site/logo";
+import {
+  CodeFigure,
+  FlowFigure,
+  SavedEstimatesFigure,
+} from "@/components/site/page-art";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -37,91 +43,17 @@ const PROMISES = [
   "The same answers give the same price, every time.",
 ];
 
-/** Tick marks of a measuring tape: small every 8px, tall every 40px. */
-const TICKS: React.CSSProperties = {
-  backgroundImage:
-    "linear-gradient(90deg, rgb(11 120 184 / 0.5) 1px, transparent 1px), linear-gradient(90deg, rgb(11 120 184 / 0.28) 1px, transparent 1px)",
-  backgroundSize: "40px 100%, 8px 45%",
-  backgroundRepeat: "repeat-x",
+/** The picture for each screen: saved estimates, the way to a price, or the emailed code. */
+const ART: Record<Scene, () => React.ReactNode> = {
+  login: () => <SavedEstimatesFigure />,
+  signup: () => <FlowFigure />,
+  forgot: () => <CodeFigure />,
+  verify: () => <CodeFigure />,
 };
 
-/** A strip of tape with a cost range measured on it: low, the most likely mark, high. */
-function RangeFigure() {
-  const low = 14;
-  const high = 76;
-  const likely = 46;
-  const at = (100 * (likely - low)) / (high - low);
-  const marks: [string, number][] = [
-    ["Low", low],
-    ["Most likely", likely],
-    ["High", high],
-  ];
-  return (
-    <figure aria-hidden="true" className="flex flex-col gap-3">
-      <div className="relative h-16">
-        <div
-          className="absolute inset-x-0 bottom-0 h-9 rounded-md border bg-[#f7f4ec]"
-          style={TICKS}
-        />
-        <div
-          className="band-open absolute bottom-0 h-9 rounded-sm bg-tape-soft/80 ring-1 ring-primary/40"
-          style={
-            {
-              left: `${low}%`,
-              width: `${high - low}%`,
-              "--to-left": `${at}%`,
-              "--to-right": `${100 - at}%`,
-            } as React.CSSProperties
-          }
-        />
-        <div
-          className="mark-drop absolute bottom-0 h-16 w-1 -translate-x-1/2 rounded-full bg-warm"
-          style={{ left: `${likely}%` }}
-        />
-      </div>
-      <div className="relative h-4 text-xs text-muted-foreground">
-        {marks.map(([label, left]) => (
-          <span
-            key={label}
-            className={cn(
-              "absolute -translate-x-1/2 whitespace-nowrap",
-              label === "Most likely" && "font-medium text-foreground",
-            )}
-            style={{ left: `${left}%` }}
-          >
-            {label}
-          </span>
-        ))}
-      </div>
-      <figcaption className="text-sm text-muted-foreground">
-        Every estimate is a range, never one guess.
-      </figcaption>
-    </figure>
-  );
-}
-
-function Check() {
-  return (
-    <svg
-      viewBox="0 0 16 16"
-      aria-hidden="true"
-      className="mt-[0.3em] size-3.5 shrink-0 text-primary"
-    >
-      <path
-        d="M3 8.5l3.2 3L13 4.5"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-    </svg>
-  );
-}
-
 /**
- * The screen for sign in, sign up, reset and confirm: a sheet in two halves, the measuring tape
- * and what Aakalan promises on the left (large screens), the form on the right.
+ * The screen for sign in, sign up, reset and confirm: a sheet in two halves, the screen's
+ * picture and what Aakalan promises on the left (large screens), the form on the right.
  */
 export function AuthScreen({
   scene,
@@ -152,11 +84,16 @@ export function AuthScreen({
           <p className="max-w-sm text-muted-foreground">{side.text}</p>
         </div>
         <div className="relative flex flex-col gap-8">
-          <RangeFigure />
+          {ART[scene]()}
           <ul className="flex flex-col gap-2.5 text-sm text-muted-foreground">
             {PROMISES.map((line) => (
               <li key={line} className="flex gap-2.5">
-                <Check />
+                <CheckCircleIcon
+                  size={18}
+                  weight="fill"
+                  aria-hidden="true"
+                  className="shrink-0 text-ai"
+                />
                 {line}
               </li>
             ))}
@@ -164,11 +101,6 @@ export function AuthScreen({
         </div>
       </aside>
       <div className="flex flex-col">
-        <div
-          aria-hidden="true"
-          className="h-2.5 border-b bg-[#f7f4ec] lg:hidden"
-          style={TICKS}
-        />
         <div className="flex flex-1 flex-col justify-center p-6 sm:p-10">
           <div className="mx-auto flex w-full max-w-sm flex-col gap-7">
             <div className="settle flex flex-col gap-2">

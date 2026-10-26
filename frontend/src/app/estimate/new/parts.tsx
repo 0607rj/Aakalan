@@ -3,6 +3,41 @@
 import * as React from "react";
 
 import {
+  BuildingOfficeIcon,
+  BuildingsIcon,
+  CalculatorIcon,
+  CalendarCheckIcon,
+  ChalkboardTeacherIcon,
+  ChatCircleDotsIcon,
+  ChatsIcon,
+  CheckIcon,
+  ClockIcon,
+  CloudIcon,
+  DatabaseIcon,
+  DevicesIcon,
+  GavelIcon,
+  GlobeIcon,
+  HandCoinsIcon,
+  HandshakeIcon,
+  HeadsetIcon,
+  LifebuoyIcon,
+  LockKeyIcon,
+  PaintBrushIcon,
+  PlugsConnectedIcon,
+  PlusCircleIcon,
+  PresentationChartIcon,
+  PulseIcon,
+  QuestionIcon,
+  RobotIcon,
+  RocketIcon,
+  ShieldCheckIcon,
+  StorefrontIcon,
+  UsersThreeIcon,
+  WrenchIcon,
+} from "@phosphor-icons/react/dist/ssr";
+
+import { IconTile, type IconType } from "@/components/site/illustrations";
+import {
   api,
   type Evidence,
   type QuestionImpact,
@@ -141,41 +176,48 @@ export function optionsCurrency(options: {
   );
 }
 
-/** Tick marks of a measuring tape: small every 8px, tall every 40px. */
-export const TICKS: React.CSSProperties = {
-  backgroundImage:
-    "linear-gradient(90deg, rgb(11 120 184 / 0.4) 1px, transparent 1px), linear-gradient(90deg, rgb(11 120 184 / 0.2) 1px, transparent 1px)",
-  backgroundSize: "40px 100%, 8px 45%",
-  backgroundRepeat: "repeat-x",
+const TYPE_ICONS: Record<string, IconType> = {
+  portal: GlobeIcon,
+  business: BuildingsIcon,
+  store: StorefrontIcon,
+  booking: CalendarCheckIcon,
+  ai: RobotIcon,
+  other: PlusCircleIcon,
 };
 
-const TYPE_ICONS: Record<string, string> = {
-  portal:
-    "M3 12h18M12 3a14 14 0 010 18M12 3a14 14 0 000 18M12 3a9 9 0 100 18 9 9 0 000-18z",
-  business: "M4 20V8l8-4 8 4v12M9 20v-6h6v6M8 10h.01M12 10h.01M16 10h.01",
-  store: "M4 9l1.5-5h13L20 9M4 9h16M4 9v11h16V9M9.5 20v-6h5v6",
-  booking: "M5 5h14v15H5zM5 9.5h14M9 3v4M15 3v4M9 14h2",
-  ai: "M5 6h14v9H9.5L6 18.5V15H5zM9 10h.01M12 10h.01M15 10h.01",
-  other: "M12 5v14M5 12h14",
-};
-
-/** A small line icon for a kind of software. */
+/** The icon for a kind of software (its tile is drawn by the card, which shows the choice). */
 export function TypeIcon({ kind }: { kind: string }) {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      aria-hidden="true"
-      className="size-5"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.6"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d={TYPE_ICONS[kind] ?? TYPE_ICONS.other} />
-    </svg>
-  );
+  const Icon = TYPE_ICONS[kind] ?? PlusCircleIcon;
+  return <Icon size={20} weight="duotone" aria-hidden="true" />;
 }
+
+/** One icon per question, so each question screen is recognisable at a glance. */
+const QUESTION_ICONS: Record<string, IconType> = {
+  version: RocketIcon,
+  platforms: DevicesIcon,
+  scale: UsersThreeIcon,
+  integrations: PlugsConnectedIcon,
+  old_data: DatabaseIcon,
+  build_type: WrenchIcon,
+  hosting: CloudIcon,
+  support_years: HandshakeIcon,
+  helpdesk_scope: HeadsetIcon,
+  support_hours: ClockIcon,
+  availability: PulseIcon,
+  disaster_site: LifebuoyIcon,
+  penalties: GavelIcon,
+  web_domain: GlobeIcon,
+  ssl_certificate: LockKeyIcon,
+  security_audit: ShieldCheckIcon,
+  reporting: PresentationChartIcon,
+  design: PaintBrushIcon,
+  chatbot_task: ChatCircleDotsIcon,
+  chatbot_volume: ChatsIcon,
+  launch_help: ChalkboardTeacherIcon,
+  onsite_period: BuildingOfficeIcon,
+  ai_passthrough: HandCoinsIcon,
+  ai_use: RobotIcon,
+};
 
 export function StepIndicator({
   labels,
@@ -201,18 +243,7 @@ export function StepIndicator({
               )}
             >
               {done ? (
-                <svg
-                  aria-label="done"
-                  viewBox="0 0 16 16"
-                  className="size-3"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2.25"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <path d="M3.5 8.5 6.5 11.5 12.5 4.5" />
-                </svg>
+                <CheckIcon size={12} weight="bold" aria-label="done" />
               ) : (
                 n
               )}
@@ -228,8 +259,7 @@ export function StepIndicator({
             {n < labels.length ? (
               <span
                 aria-hidden="true"
-                className="mr-2 hidden h-2 w-10 rounded-sm border bg-panel-2 sm:inline-block"
-                style={TICKS}
+                className="mr-2 hidden w-10 border-t border-dashed border-primary/30 sm:inline-block"
               />
             ) : null}
           </li>
@@ -281,15 +311,7 @@ export function Mark({ on, round = false }: { on: boolean; round?: boolean }) {
         round ? (
           <span className="size-2 rounded-full bg-primary-foreground" />
         ) : (
-          <svg viewBox="0 0 16 16" className="size-3.5" fill="none">
-            <path
-              d="M3.5 8.5l3 3L12.5 4.5"
-              stroke="currentColor"
-              strokeWidth="2.2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
+          <CheckIcon size={14} weight="bold" />
         )
       ) : null}
     </span>
@@ -477,11 +499,7 @@ export function SectionHeading({
           <span className="text-sm text-muted-foreground">{aside}</span>
         ) : null}
       </div>
-      <div
-        aria-hidden="true"
-        className="h-2 rounded-sm border bg-panel-2"
-        style={TICKS}
-      />
+      <div aria-hidden="true" className="h-px bg-border" />
     </div>
   );
 }
@@ -498,7 +516,14 @@ export function QuestionHeading({
 }) {
   return (
     <div className="settle flex flex-col gap-2">
-      <p className="eyebrow">A question</p>
+      <span className="mb-2 flex items-center gap-3">
+        <IconTile
+          icon={QUESTION_ICONS[question.key] ?? QuestionIcon}
+          tone={question.key.startsWith("ai") ? "ai" : "tape"}
+          size="lg"
+        />
+        <span className="eyebrow">A question</span>
+      </span>
       <h1 className="font-display text-3xl text-balance sm:text-4xl">
         {question.label}
       </h1>
@@ -624,11 +649,9 @@ export function Calculating({ labels }: { labels: string[] }) {
   return (
     <div className="flex flex-col items-center gap-4 py-24 text-center">
       <StepIndicator labels={labels} current={3} />
-      <div
-        className="mt-10 h-3 w-64 overflow-hidden rounded-sm border bg-panel-2"
-        style={TICKS}
-      >
-        <div className="h-full w-1/3 animate-[measure_1.4s_cubic-bezier(0.65,0,0.35,1)_infinite] bg-primary/80" />
+      <IconTile icon={CalculatorIcon} size="lg" className="mt-10" />
+      <div className="h-1.5 w-64 overflow-hidden rounded-full bg-tape-soft">
+        <div className="h-full w-1/3 animate-[measure_1.4s_cubic-bezier(0.65,0,0.35,1)_infinite] rounded-full bg-primary/80" />
       </div>
       <p className="text-lg font-medium">Working out your cost…</p>
     </div>

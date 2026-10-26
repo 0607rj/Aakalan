@@ -1,6 +1,12 @@
 "use client";
 
 import * as React from "react";
+import {
+  ChatCircleDotsIcon,
+  FlagIcon,
+  QuestionIcon,
+  ShieldCheckIcon,
+} from "@phosphor-icons/react/dist/ssr";
 
 import { ErrorNotice } from "@/components/status";
 import { Button } from "@/components/ui/button";
@@ -19,7 +25,7 @@ import {
 import { useLoad } from "@/lib/use-load";
 import { cn } from "@/lib/utils";
 
-import { Disclosure } from "./cost-summary";
+import { Disclosure, SectionTitle } from "./cost-summary";
 
 /** True while the independent check asks for a look before the report can be exported. */
 export function exportBlocked(summary: QuickSummary): boolean {
@@ -71,8 +77,10 @@ export function IndependentCheckCard({
       className={cn("sheet", warn && "slab border-warning/50 px-6 pb-6")}
     >
       <div>
-        <h2 className="text-xl font-semibold">Independent check</h2>
-        <p className="text-sm text-muted-foreground">{check.note}</p>
+        <SectionTitle icon={ShieldCheckIcon} tone={warn ? "warning" : "ai"}>
+          Independent check
+        </SectionTitle>
+        <p className="pl-11 text-sm text-muted-foreground">{check.note}</p>
       </div>
       <div className="flex flex-wrap gap-x-10 gap-y-3">
         <Months
@@ -311,6 +319,8 @@ export function OpenAnswers({
       {summary.assumed.length > 0 ? (
         <Disclosure
           title="Assumed answers"
+          icon={QuestionIcon}
+          tone="warning"
           hint={`${summary.assumed.length} answers nobody gave: check them`}
         >
           <ul className="flex flex-col gap-1.5 text-sm">
@@ -329,6 +339,8 @@ export function OpenAnswers({
       {summary.not_included.length > 0 ? (
         <Disclosure
           title="Not included in this price"
+          icon={FlagIcon}
+          tone="warm"
           hint={`${summary.not_included.length} items`}
         >
           <ul className="flex flex-col gap-2 text-sm">
@@ -372,6 +384,7 @@ export function OpenAnswers({
       {open.length > 0 ? (
         <Disclosure
           title="Open answers"
+          icon={ChatCircleDotsIcon}
           hint={`${open.length} priced at the usual answer`}
         >
           <ul className="flex flex-col gap-2 text-sm">

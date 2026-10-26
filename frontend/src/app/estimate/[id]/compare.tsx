@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { ArrowsLeftRightIcon } from "@phosphor-icons/react/dist/ssr";
 
 import { ErrorNotice } from "@/components/status";
 import { Button } from "@/components/ui/button";
@@ -13,6 +14,8 @@ import {
 } from "@/lib/api/client";
 import { formatPaise } from "@/lib/format";
 import { cn } from "@/lib/utils";
+
+import { SectionTitle } from "./cost-summary";
 
 interface Preset {
   id: string;
@@ -142,8 +145,8 @@ export function CompareOptions({
   return (
     <section className="sheet">
       <div>
-        <h2 className="text-xl font-semibold">Compare options</h2>
-        <p className="text-sm text-muted-foreground">
+        <SectionTitle icon={ArrowsLeftRightIcon}>Compare options</SectionTitle>
+        <p className="pl-11 text-sm text-muted-foreground">
           See how the price changes if you choose differently. Your estimate is
           not changed.
         </p>

@@ -15,7 +15,6 @@ import {
   Mark,
   QuestionGroup,
   shownChoice,
-  TICKS,
 } from "./parts";
 
 export type Level = "basic" | "standard" | "advanced";
@@ -140,8 +139,7 @@ export function Progress({ index, total }: { index: number; total: number }) {
   return (
     <div className="flex items-center gap-4">
       <div
-        className="h-2 w-full overflow-hidden rounded-sm border bg-panel-2"
-        style={TICKS}
+        className="h-1.5 w-full overflow-hidden rounded-full bg-tape-soft"
         role="progressbar"
         aria-label="Progress"
         aria-valuemin={1}
@@ -149,7 +147,7 @@ export function Progress({ index, total }: { index: number; total: number }) {
         aria-valuenow={index + 1}
       >
         <div
-          className="h-full bg-primary/80 transition-[width] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]"
+          className="h-full rounded-full bg-primary/80 transition-[width] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]"
           style={{ width: `${percent}%` }}
         />
       </div>

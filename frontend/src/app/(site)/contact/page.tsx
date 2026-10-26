@@ -1,5 +1,12 @@
 import type { Metadata } from "next";
+import {
+  BuildingsIcon,
+  MagnifyingGlassIcon,
+  PresentationChartIcon,
+} from "@phosphor-icons/react/dist/ssr";
 
+import { IconTile } from "@/components/site/illustrations";
+import { ChatFigure } from "@/components/site/page-art";
 import { PageIntro, Section } from "@/components/site/sections";
 
 import { ContactForm } from "./contact-form";
@@ -10,23 +17,29 @@ export const metadata: Metadata = {
 
 const HELPS = [
   {
+    icon: PresentationChartIcon,
     title: "Ask for a walk-through",
     body: "We price one of your real projects with you and explain every line.",
   },
   {
+    icon: MagnifyingGlassIcon,
     title: "Ask about a number",
     body: "Send the estimate's name and the line you want explained.",
   },
   {
+    icon: BuildingsIcon,
     title: "Share a real project price",
-    body: "Each published price we add makes estimates for projects like it more accurate.",
+    body: "Each published price makes estimates for projects like it more accurate.",
   },
 ];
 
 export default function ContactPage() {
   return (
     <>
-      <PageIntro title="Talk to us about a project, a price or a partnership.">
+      <PageIntro
+        title="Talk to us about a project, a price or a partnership."
+        art={<ChatFigure />}
+      >
         Write to us with the form below. A person reads every message and
         replies by email.
       </PageIntro>
@@ -38,9 +51,12 @@ export default function ContactPage() {
           </h2>
           <dl className="flex flex-col gap-6">
             {HELPS.map((h) => (
-              <div key={h.title} className="border-l-4 border-tape pl-4">
-                <dt className="font-bold">{h.title}</dt>
-                <dd className="mt-1 text-muted-foreground">{h.body}</dd>
+              <div key={h.title} className="flex gap-4">
+                <IconTile icon={h.icon} />
+                <span className="flex flex-col">
+                  <dt className="font-semibold">{h.title}</dt>
+                  <dd className="mt-1 text-muted-foreground">{h.body}</dd>
+                </span>
               </div>
             ))}
           </dl>

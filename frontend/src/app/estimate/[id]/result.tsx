@@ -1,6 +1,13 @@
 "use client";
 
 import * as React from "react";
+import {
+  BuildingsIcon,
+  ScalesIcon,
+  TimerIcon,
+  TreeStructureIcon,
+  UsersThreeIcon,
+} from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 
@@ -24,6 +31,7 @@ import {
   CostSummary,
   Disclosure,
   OngoingCosts,
+  SectionTitle,
   WhatsIncluded,
 } from "./cost-summary";
 import {
@@ -868,7 +876,9 @@ function BidCheckCard({ summary }: { summary: QuickSummary }) {
   const approx = (paise: number) => formatApprox(paise, summary.currency);
   return (
     <section className="sheet">
-      <h2 className="text-xl font-semibold">Bid check</h2>
+      <SectionTitle icon={ScalesIcon} tone="warning">
+        Bid check
+      </SectionTitle>
       <ul className="grid gap-3 sm:grid-cols-3">
         <li className="flex flex-col gap-1 rounded-xl bg-warning-muted px-4 py-3">
           <span className="text-sm font-medium text-warning">
@@ -1055,13 +1065,18 @@ function SummaryView({
           <OngoingCosts summary={summary} />
 
           {hasTeam ? (
-            <Disclosure title="Team and hours" hint={effortHint(summary)}>
+            <Disclosure
+              title="Team and hours"
+              icon={UsersThreeIcon}
+              hint={effortHint(summary)}
+            >
               <TeamAndHours summary={summary} />
             </Disclosure>
           ) : null}
 
           <Disclosure
             title="Detailed breakdown"
+            icon={TreeStructureIcon}
             hint="Each feature, where the money goes, every cost item"
           >
             <FeatureCosts summary={summary} />
@@ -1073,6 +1088,7 @@ function SummaryView({
           {hasMarket ? (
             <Disclosure
               title="Market comparison"
+              icon={BuildingsIcon}
               hint="What similar real projects were bought for"
             >
               <MarketBox summary={summary} />
@@ -1088,9 +1104,9 @@ function SummaryView({
         </>
       ) : (
         <section className="slab flex flex-col items-start gap-4 px-6 py-8 sm:px-10">
-          <h2 className="text-xl font-semibold">
+          <SectionTitle icon={TimerIcon} tone="warning">
             The deadline is too short to give a price
-          </h2>
+          </SectionTitle>
           <p className="max-w-2xl text-muted-foreground">{summary.message}</p>
           <Link href="/estimate/new" className={buttonVariants({ size: "lg" })}>
             Change the deadline

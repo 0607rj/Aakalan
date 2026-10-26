@@ -3,26 +3,46 @@ import Link from "next/link";
 import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-/** The top of an inner page: a big serif headline and one paragraph, under a soft glow. */
+/**
+ * The top of an inner page: the headline and one paragraph under a soft glow, with the page's
+ * own picture beside them on large screens (below them on small ones).
+ */
 export function PageIntro({
   title,
   children,
+  art,
 }: {
   title: string;
   children: React.ReactNode;
+  art?: React.ReactNode;
 }) {
   return (
     <section className="glow relative overflow-hidden border-b">
-      <div className="mx-auto flex max-w-6xl flex-col gap-5 px-4 pt-20 pb-16 sm:px-6 sm:pt-28 sm:pb-20">
-        <h1 className="rise-in font-display max-w-4xl text-5xl leading-[1.02] sm:text-7xl">
-          {title}
-        </h1>
-        <div
-          className="rise-in max-w-2xl text-lg text-muted-foreground"
-          style={{ "--rd": 1 } as React.CSSProperties}
-        >
-          {children}
+      <div
+        className={cn(
+          "mx-auto grid max-w-6xl items-center gap-12 px-4 pt-14 pb-14 sm:px-6 sm:pt-20 sm:pb-16",
+          art && "lg:grid-cols-[1.1fr_0.9fr]",
+        )}
+      >
+        <div className="flex flex-col gap-5">
+          <h1 className="rise-in font-display max-w-4xl text-[clamp(2.5rem,6vw,4.25rem)] leading-[1.04]">
+            {title}
+          </h1>
+          <div
+            className="rise-in max-w-xl text-lg text-muted-foreground"
+            style={{ "--rd": 1 } as React.CSSProperties}
+          >
+            {children}
+          </div>
         </div>
+        {art ? (
+          <div
+            className="rise-in mx-auto w-full max-w-md"
+            style={{ "--rd": 2 } as React.CSSProperties}
+          >
+            {art}
+          </div>
+        ) : null}
       </div>
     </section>
   );
@@ -99,8 +119,8 @@ export function StartBand({
           {title}
         </h2>
         <p className="relative mx-auto mt-4 max-w-xl text-muted-foreground">
-          Tick what it should do or upload the requirement document, answer ten
-          short questions, and get the low, likely and high cost.
+          Tick features or upload the document, answer ten questions, get the
+          price.
         </p>
         <div className="relative mt-8 flex flex-wrap justify-center gap-3">
           <Link href="/estimate/new" className={buttonVariants({ size: "lg" })}>

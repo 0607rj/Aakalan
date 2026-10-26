@@ -1,128 +1,161 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import {
+  ChatCircleDotsIcon,
+  FileArrowUpIcon,
+  FlagIcon,
+  ListChecksIcon,
+  LockIcon,
+  ReceiptIcon,
+  SlidersHorizontalIcon,
+  TagIcon,
+} from "@phosphor-icons/react/dist/ssr";
 
 import {
-  DocumentMockup,
-  EstimateMockup,
-  NotPricedMockup,
-  QuestionMockup,
-  TeamMockup,
-} from "@/components/site/mockups";
+  DocumentFigure,
+  FeatureCostFigure,
+  IconTile,
+  type IconType,
+  NotPricedFigure,
+  QuestionFigure,
+} from "@/components/site/illustrations";
+import { FlowFigure } from "@/components/site/page-art";
 import { PageIntro, Section, StartBand } from "@/components/site/sections";
 
 export const metadata: Metadata = {
   title: "How it works · Aakalan",
 };
 
-const STEPS = [
+interface Step {
+  icon: IconType;
+  title: string;
+  body: string;
+  tip: string;
+  art?: React.ReactNode;
+}
+
+const STEPS: Step[] = [
   {
+    icon: FileArrowUpIcon,
     title: "Choose how to start",
-    body: "Upload the requirement document if you have one. If not, pick the kind of software: a public portal, software for your staff, an online store, a booking app, an AI chatbot or something else.",
-    tip: "A saved template starts you with an earlier estimate's answers.",
-    art: <DocumentMockup />,
+    body: "Upload the requirement document, or pick the kind of software: portal, staff tool, store, booking app, chatbot.",
+    tip: "A saved template starts you with earlier answers.",
+    art: <DocumentFigure />,
   },
   {
+    icon: ListChecksIcon,
     title: "Tick what it should do",
-    body: "The usual features for your kind of software come first, with the most common already ticked. Write a few lines about it and Aakalan ticks the ones you describe, showing the words it matched. Anything missing, add it yourself.",
-    tip: "With a document, every feature found shows its page and sentence.",
-    art: <EstimateMockup />,
+    body: "The usual features come first. Write a few lines and Aakalan ticks the ones you describe.",
+    tip: "From a document, each feature shows its page.",
   },
   {
+    icon: ChatCircleDotsIcon,
     title: "Answer about ten questions",
-    body: "A first version or the full product, website or app too, how many people will use it, other software to connect, old data, where it runs and how long it should be looked after. One question per screen, in plain words.",
-    tip: "Not sure? Choose “Not sure”: we use the usual answer and widen the range.",
-    art: <QuestionMockup />,
+    body: "First version or full product, users, hosting, years of support. One per screen.",
+    tip: "Not sure? Say so: the range widens.",
+    art: <QuestionFigure />,
   },
   {
+    icon: SlidersHorizontalIcon,
     title: "Add details if you know them",
-    body: "How bad an hour of downtime is, a security audit, monthly reports, a ready design, how much the chatbot will be used, help at launch. Skip anything you don't know.",
-    tip: "Check every answer on one screen before calculating.",
-    art: null,
+    body: "Uptime, security audit, people online at once, help at launch. Skip what you don't know.",
+    tip: "Check every answer on one screen.",
   },
   {
+    icon: ReceiptIcon,
     title: "Read the result",
-    body: "The low, likely and high cost; the building cost of each feature with and without AI tools; the team by role and months to build; everything inside the price; costs paid to others; and similar real projects.",
-    tip: "Download the PDF report or the Excel bill of quantities to share.",
-    art: <TeamMockup />,
+    body: "Low, likely and high cost, each feature with and without AI tools, the team and the months.",
+    tip: "Download the PDF report or Excel bill of quantities.",
+    art: <FeatureCostFigure />,
   },
   {
+    icon: FlagIcon,
     title: "Check what is not priced",
-    body: "When you upload a document, Aakalan lists what it asks for that the estimate leaves out, such as penalties or warranty, and drafts questions to send the client about vague or missing points.",
-    tip: "Ask, update the answers, and calculate again for a narrower range.",
-    art: <NotPricedMockup />,
+    body: "From a document: what it asks for that the price leaves out, and questions for the client.",
+    tip: "Ask, update, calculate again.",
+    art: <NotPricedFigure />,
   },
 ];
+
+const delay = (rd: number) => ({ "--rd": rd }) as React.CSSProperties;
 
 export default function HowItWorksPage() {
   return (
     <>
-      <PageIntro title="From an idea or a document to a cost range, step by step.">
-        Six steps, most of them a single click. Aakalan&apos;s AI only reads and
-        suggests; every number is worked out by a fixed set of formulas, so the
+      <PageIntro
+        title="From an idea or a document to a price, step by step."
+        art={<FlowFigure />}
+      >
+        AI only reads and suggests. Fixed formulas work out every number, so the
         same answers always give the same price.
       </PageIntro>
 
       <Section className="py-12 sm:py-16">
-        <ol className="relative flex flex-col gap-16 border-l-2 border-dashed border-border pl-8 sm:pl-12">
+        <ol className="relative flex flex-col gap-12 sm:gap-16">
+          <span
+            aria-hidden="true"
+            className="absolute top-4 bottom-4 left-7 w-0.5 bg-[repeating-linear-gradient(180deg,var(--border)_0_8px,transparent_8px_14px)]"
+          />
           {STEPS.map((step, i) => (
             <li
               key={step.title}
-              className="relative grid gap-8 lg:grid-cols-[1fr_0.9fr]"
+              className="relative grid gap-6 pl-20 lg:grid-cols-[1fr_0.9fr] lg:gap-12"
             >
-              <span
-                aria-hidden="true"
-                className="font-wide absolute top-0 -left-[3.05rem] flex size-10 items-center justify-center rounded-full bg-tape text-sm font-semibold text-primary-foreground ring-4 ring-background sm:-left-[4.05rem]"
-              >
-                {i + 1}
-              </span>
-              <div className="flex flex-col gap-3">
-                <h2 data-reveal className="font-wide text-2xl font-semibold">
+              <IconTile
+                icon={step.icon}
+                size="lg"
+                className={`absolute top-0 left-0 ring-8 ring-background ${i === STEPS.length - 2 ? "bg-tape text-primary-foreground" : ""}`}
+              />
+              <div data-reveal className="flex flex-col gap-3 pt-2">
+                <h2 className="font-wide text-2xl font-semibold">
                   {step.title}
                 </h2>
                 <p className="text-lg text-muted-foreground">{step.body}</p>
-                <p className="w-fit rounded-xl bg-tape-soft px-3 py-2 text-sm">
+                <p className="w-fit rounded-full bg-tape-soft px-3.5 py-1.5 text-sm font-medium text-tape">
                   {step.tip}
                 </p>
               </div>
-              {step.art ? <div className="max-w-md">{step.art}</div> : null}
+              {step.art ? (
+                <div data-reveal style={delay(1)} className="max-w-md">
+                  {step.art}
+                </div>
+              ) : null}
             </li>
           ))}
         </ol>
       </Section>
 
-      <div className="border-y bg-card">
-        <Section className="grid gap-8 py-16 md:grid-cols-2">
-          <div>
-            <h2 data-reveal className="font-wide text-2xl font-semibold">
-              What happens to your document
+      <Section className="pb-12 sm:pb-16">
+        <div className="grid gap-4 md:grid-cols-2">
+          <div
+            data-reveal
+            className="flex flex-col gap-4 rounded-[26px] border bg-card p-6 sm:p-8"
+          >
+            <IconTile icon={LockIcon} />
+            <h2 className="font-wide text-2xl font-semibold">
+              Your document stays yours
             </h2>
-            <p className="mt-3 text-muted-foreground">
-              It stays inside your organisation&apos;s account. The text is sent
-              only to the AI service your company has set up, to read it, and is
-              treated as data, never as instructions. Without an AI key, a
-              keyword reader runs on our own server instead.
+            <p className="text-muted-foreground">
+              Only your organisation sees it. The text goes only to the AI
+              service your company set up, and is read as data, never as
+              instructions.
             </p>
           </div>
-          <div>
-            <h2 data-reveal className="font-wide text-2xl font-semibold">
-              Where the prices come from
+          <div
+            data-reveal
+            style={delay(1)}
+            className="flex flex-col gap-4 rounded-[26px] bg-tape-soft/70 p-6 sm:p-8"
+          >
+            <IconTile icon={TagIcon} tone="warm" />
+            <h2 className="font-wide text-2xl font-semibold">
+              Rates with a source and a date
             </h2>
-            <p className="mt-3 text-muted-foreground">
-              Day rates, cloud prices and service fees are stored with their
-              source and date. Each estimate keeps the versions it used, so it
-              never changes later; re-pricing at today&apos;s rates makes a new
-              version. See{" "}
-              <Link
-                href="/features"
-                className="font-semibold underline underline-offset-4"
-              >
-                all features
-              </Link>
-              .
+            <p className="text-muted-foreground">
+              Every estimate keeps the rates it used, so it never changes later.
+              Re-pricing at today&apos;s rates makes a new version.
             </p>
           </div>
-        </Section>
-      </div>
+        </div>
+      </Section>
 
       <StartBand />
     </>

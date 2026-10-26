@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { SealCheckIcon } from "@phosphor-icons/react/dist/ssr";
 
 import { ErrorNotice } from "@/components/status";
 import { Button } from "@/components/ui/button";
@@ -126,6 +127,7 @@ export function RealityCheck({ summary }: { summary: QuickSummary }) {
   return (
     <Disclosure
       title="Does this price look real?"
+      icon={SealCheckIcon}
       hint={
         <span className={ok ? "text-success" : "text-warning"}>
           {ok ? "Looks realistic" : "Worth a second look"} ·{" "}
