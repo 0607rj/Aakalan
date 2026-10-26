@@ -24,9 +24,16 @@ def verify_password(password: str, password_hash: str) -> bool:
         return False
 
 
-def create_access_token(user_id: str, org_id: str, role: str, token_version: int = 0) -> str:
+def create_access_token(
+    user_id: str,
+    org_id: str,
+    role: str,
+    token_version: int = 0,
+    acting_owner: str | None = None,
+) -> str:
     """`tv`: the user's token version; a password reset or change raises it, so every token
-    issued before stops working (api/deps.py)."""
+    issued before stops working (api/deps.py). `act`: the site owner's user id when the owner
+    opens this account to look at it (read only, api/owner.py)."""
     settings = get_settings()
     now = utcnow()
     payload: dict[str, Any] = {
@@ -34,6 +41,7 @@ def create_access_token(user_id: str, org_id: str, role: str, token_version: int
         "org": org_id,
         "role": role,
         "tv": token_version,
+        **({"act": acting_owner} if acting_owner else {}),
         "iat": now,
         "exp": now + timedelta(minutes=settings.access_token_minutes),
     }

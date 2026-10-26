@@ -3109,6 +3109,260 @@
           }
         }
       }
+    },
+    "/owner/overview": {
+      "get": {
+        "tags": [
+          "owner"
+        ],
+        "summary": "Overview",
+        "operationId": "overview_owner_overview_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Overview"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/owner/users": {
+      "get": {
+        "tags": [
+          "owner"
+        ],
+        "summary": "List Users",
+        "description": "Every account on the site, newest first, with its company and how much it has used.",
+        "operationId": "list_users_owner_users_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/OwnerUserRow"
+                  },
+                  "type": "array",
+                  "title": "Response List Users Owner Users Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/owner/users/{user_id}/estimates": {
+      "get": {
+        "tags": [
+          "owner"
+        ],
+        "summary": "User Estimates",
+        "description": "The latest estimate of every project in the user's company, newest first.",
+        "operationId": "user_estimates_owner_users__user_id__estimates_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/QuickSummary"
+                  },
+                  "title": "Response User Estimates Owner Users  User Id  Estimates Get"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/owner/users/{user_id}": {
+      "patch": {
+        "tags": [
+          "owner"
+        ],
+        "summary": "Change User",
+        "description": "Disable or enable an account (disabling signs it out everywhere), change its role, or\nmark its email as verified.",
+        "operationId": "change_user_owner_users__user_id__patch",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UserChange"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OwnerUserRow"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "owner"
+        ],
+        "summary": "Delete User",
+        "description": "Delete an account. When it is the only person in its company, the company goes too, with\nall its estimates, documents and uploaded files; otherwise the company and its work stay.\nReference data and the shared research library are untouched.",
+        "operationId": "delete_user_owner_users__user_id__delete",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Successful Response"
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/owner/users/{user_id}/view": {
+      "post": {
+        "tags": [
+          "owner"
+        ],
+        "summary": "View As",
+        "description": "A short read-only session as this user, to see their estimates exactly as they do. The\ntoken names the owner (`act`); anything but reading is refused (api/deps.py).",
+        "operationId": "view_as_owner_users__user_id__view_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "user_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "User Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -7800,6 +8054,138 @@
         ],
         "title": "OutcomeOut"
       },
+      "Overview": {
+        "properties": {
+          "companies": {
+            "type": "integer",
+            "title": "Companies"
+          },
+          "users": {
+            "type": "integer",
+            "title": "Users"
+          },
+          "active_users": {
+            "type": "integer",
+            "title": "Active Users"
+          },
+          "unverified_users": {
+            "type": "integer",
+            "title": "Unverified Users"
+          },
+          "projects": {
+            "type": "integer",
+            "title": "Projects"
+          },
+          "estimates": {
+            "type": "integer",
+            "title": "Estimates"
+          },
+          "estimates_recent": {
+            "type": "integer",
+            "title": "Estimates Recent"
+          },
+          "recent_days": {
+            "type": "integer",
+            "title": "Recent Days"
+          }
+        },
+        "type": "object",
+        "required": [
+          "companies",
+          "users",
+          "active_users",
+          "unverified_users",
+          "projects",
+          "estimates",
+          "estimates_recent",
+          "recent_days"
+        ],
+        "title": "Overview"
+      },
+      "OwnerUserRow": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "email": {
+            "type": "string",
+            "title": "Email"
+          },
+          "full_name": {
+            "type": "string",
+            "title": "Full Name"
+          },
+          "role": {
+            "$ref": "#/components/schemas/Role"
+          },
+          "is_active": {
+            "type": "boolean",
+            "title": "Is Active"
+          },
+          "email_verified": {
+            "type": "boolean",
+            "title": "Email Verified"
+          },
+          "is_owner": {
+            "type": "boolean",
+            "title": "Is Owner"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          },
+          "org_id": {
+            "type": "string",
+            "title": "Org Id"
+          },
+          "org_name": {
+            "type": "string",
+            "title": "Org Name"
+          },
+          "org_members": {
+            "type": "integer",
+            "title": "Org Members"
+          },
+          "projects": {
+            "type": "integer",
+            "title": "Projects"
+          },
+          "estimates": {
+            "type": "integer",
+            "title": "Estimates"
+          },
+          "last_estimate_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Last Estimate At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "email",
+          "full_name",
+          "role",
+          "is_active",
+          "email_verified",
+          "is_owner",
+          "created_at",
+          "org_id",
+          "org_name",
+          "org_members",
+          "projects",
+          "estimates",
+          "last_estimate_at"
+        ],
+        "title": "OwnerUserRow"
+      },
       "ParameterSetSummary": {
         "properties": {
           "version": {
@@ -12337,6 +12723,44 @@
         "title": "UnclearPoint",
         "description": "Stored form; quote is blank when it could not be found on the cited page."
       },
+      "UserChange": {
+        "properties": {
+          "is_active": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is Active"
+          },
+          "role": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/Role"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "email_verified": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Email Verified"
+          }
+        },
+        "type": "object",
+        "title": "UserChange"
+      },
       "UserOut": {
         "properties": {
           "id": {
@@ -12366,6 +12790,17 @@
             "type": "boolean",
             "title": "Is Owner",
             "default": false
+          },
+          "viewed_by_owner": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Viewed By Owner"
           }
         },
         "type": "object",

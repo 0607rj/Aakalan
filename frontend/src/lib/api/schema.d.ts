@@ -1022,6 +1022,111 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/owner/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Overview */
+        get: operations["overview_owner_overview_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/owner/users": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Users
+         * @description Every account on the site, newest first, with its company and how much it has used.
+         */
+        get: operations["list_users_owner_users_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/owner/users/{user_id}/estimates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * User Estimates
+         * @description The latest estimate of every project in the user's company, newest first.
+         */
+        get: operations["user_estimates_owner_users__user_id__estimates_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/owner/users/{user_id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /**
+         * Delete User
+         * @description Delete an account. When it is the only person in its company, the company goes too, with
+         *     all its estimates, documents and uploaded files; otherwise the company and its work stay.
+         *     Reference data and the shared research library are untouched.
+         */
+        delete: operations["delete_user_owner_users__user_id__delete"];
+        options?: never;
+        head?: never;
+        /**
+         * Change User
+         * @description Disable or enable an account (disabling signs it out everywhere), change its role, or
+         *     mark its email as verified.
+         */
+        patch: operations["change_user_owner_users__user_id__patch"];
+        trace?: never;
+    };
+    "/owner/users/{user_id}/view": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * View As
+         * @description A short read-only session as this user, to see their estimates exactly as they do. The
+         *     token names the owner (`act`); anything but reading is refused (api/deps.py).
+         */
+        post: operations["view_as_owner_users__user_id__view_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -2791,6 +2896,55 @@ export interface components {
              */
             recorded_at: string;
         };
+        /** Overview */
+        Overview: {
+            /** Companies */
+            companies: number;
+            /** Users */
+            users: number;
+            /** Active Users */
+            active_users: number;
+            /** Unverified Users */
+            unverified_users: number;
+            /** Projects */
+            projects: number;
+            /** Estimates */
+            estimates: number;
+            /** Estimates Recent */
+            estimates_recent: number;
+            /** Recent Days */
+            recent_days: number;
+        };
+        /** OwnerUserRow */
+        OwnerUserRow: {
+            /** Id */
+            id: string;
+            /** Email */
+            email: string;
+            /** Full Name */
+            full_name: string;
+            role: components["schemas"]["Role"];
+            /** Is Active */
+            is_active: boolean;
+            /** Email Verified */
+            email_verified: boolean;
+            /** Is Owner */
+            is_owner: boolean;
+            /** Created At */
+            created_at: string;
+            /** Org Id */
+            org_id: string;
+            /** Org Name */
+            org_name: string;
+            /** Org Members */
+            org_members: number;
+            /** Projects */
+            projects: number;
+            /** Estimates */
+            estimates: number;
+            /** Last Estimate At */
+            last_estimate_at: string | null;
+        };
         /** ParameterSetSummary */
         ParameterSetSummary: {
             /** Version */
@@ -4536,6 +4690,14 @@ export interface components {
              */
             document: string;
         };
+        /** UserChange */
+        UserChange: {
+            /** Is Active */
+            is_active?: boolean | null;
+            role?: components["schemas"]["Role"] | null;
+            /** Email Verified */
+            email_verified?: boolean | null;
+        };
         /** UserOut */
         UserOut: {
             /** Id */
@@ -4554,6 +4716,8 @@ export interface components {
              * @default false
              */
             is_owner: boolean;
+            /** Viewed By Owner */
+            viewed_by_owner?: string | null;
         };
         /** ValidationError */
         ValidationError: {
@@ -6688,6 +6852,172 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["ResearchedBlockOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    overview_owner_overview_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Overview"];
+                };
+            };
+        };
+    };
+    list_users_owner_users_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OwnerUserRow"][];
+                };
+            };
+        };
+    };
+    user_estimates_owner_users__user_id__estimates_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuickSummary"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    delete_user_owner_users__user_id__delete: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    change_user_owner_users__user_id__patch: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["UserChange"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["OwnerUserRow"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    view_as_owner_users__user_id__view_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                user_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TokenResponse"];
                 };
             };
             /** @description Validation Error */

@@ -20,7 +20,11 @@ export function AppHeader() {
   return (
     <NavBar
       homeHref="/projects"
-      links={APP_LINKS}
+      links={
+        user.is_owner
+          ? [...APP_LINKS, { href: "/admin", label: "Admin" }]
+          : APP_LINKS
+      }
       actions={
         <>
           <Link href="/estimate/new" className={buttonVariants()}>

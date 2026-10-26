@@ -36,7 +36,10 @@ Estimates are saved as templates, and recorded outcomes calibrate future estimat
   Sign-up creates a company with the person as admin; email verified and password reset by emailed
   6-digit codes (`services/auth.py`, hashed, expiring, limited tries); a reset or change raises the
   user's `token_version` (`tv` in the JWT) so older tokens stop working. Bid results and the
-  calibration report are owner-only (`OWNER_EMAILS`, `OwnerUser`, `is_owner` on `/auth/me`). Email through
+  calibration report are owner-only (`OWNER_EMAILS`, `OwnerUser`, `is_owner` on `/auth/me`).
+  The owner's Admin page (`/admin`, `api/owner.py`, OPEN_QUESTIONS 172) is the one place that reads
+  across organisations: every account and its estimates, disable, role, verify, delete, and "view as"
+  (a read-only token naming the owner, `act`; `viewed_by_owner` on `/auth/me`). Email through
   `services/email.py` (SMTP, or the server log in development; tests use `set_email_sender`).
 - **Ops:** no Docker. One Ubuntu server: systemd services (API, Huey worker, Next.js standalone)
   behind Caddy (`deploy/`, [`docs/DEPLOY.md`](docs/DEPLOY.md)); later Litestream → S3, Sentry.

@@ -18,6 +18,8 @@ class UserOut(BaseModel):
     org_id: str
     org_name: str
     is_owner: bool = False  # the product owner (settings owner_emails)
+    # Set when the site owner is looking at this account (read only): the owner's email.
+    viewed_by_owner: str | None = None
 
 
 class TokenResponse(BaseModel):

@@ -81,6 +81,9 @@ export type OutcomeIn = Schemas["OutcomeIn"];
 export type Outcome = Schemas["OutcomeOut"];
 export type BidResult = OutcomeIn["bid_result"];
 export type CalibrationReport = Schemas["CalibrationReport"];
+export type OwnerOverview = Schemas["Overview"];
+export type OwnerUserRow = Schemas["OwnerUserRow"];
+export type OwnerUserChange = Schemas["UserChange"];
 export type Country = Schemas["CountryOut"];
 export type Template = Schemas["TemplateOut"];
 
@@ -105,6 +108,26 @@ export function setToken(token: string): void {
 
 export function clearToken(): void {
   window.localStorage.removeItem(TOKEN_STORAGE_KEY);
+  window.localStorage.removeItem(OWNER_TOKEN_STORAGE_KEY);
+}
+
+/** The site owner's own sign-in, kept aside while they look at someone else's account. */
+const OWNER_TOKEN_STORAGE_KEY = "aakalan.owner_token";
+
+/** Look at another account (read only) with the token from `api.ownerViewAs`. */
+export function startViewing(token: string): void {
+  const own = getToken();
+  if (own) window.localStorage.setItem(OWNER_TOKEN_STORAGE_KEY, own);
+  setToken(token);
+}
+
+/** Back to the owner's own sign-in; false when there is none to go back to. */
+export function stopViewing(): boolean {
+  const own = window.localStorage.getItem(OWNER_TOKEN_STORAGE_KEY);
+  window.localStorage.removeItem(OWNER_TOKEN_STORAGE_KEY);
+  if (!own) return false;
+  setToken(own);
+  return true;
 }
 
 function describeDetail(detail: unknown): string | null {
@@ -327,6 +350,17 @@ export const api = {
   askSecondOpinion: (estimateId: string) =>
     send<SecondOpinionState>("POST", `/estimates/${estimateId}/second-opinion`),
   calibration: () => request<CalibrationReport>("/calibration"),
+
+  ownerOverview: () => request<OwnerOverview>("/owner/overview"),
+  ownerUsers: () => request<OwnerUserRow[]>("/owner/users"),
+  ownerUserEstimates: (userId: string) =>
+    request<QuickSummary[]>(`/owner/users/${userId}/estimates`),
+  ownerChangeUser: (userId: string, body: OwnerUserChange) =>
+    send<OwnerUserRow>("PATCH", `/owner/users/${userId}`, body),
+  ownerDeleteUser: (userId: string) =>
+    send<void>("DELETE", `/owner/users/${userId}`),
+  ownerViewAs: (userId: string) =>
+    send<TokenResponse>("POST", `/owner/users/${userId}/view`),
 
   listTemplates: () => request<Template[]>("/templates"),
   getTemplate: (id: string) => request<Template>(`/templates/${id}`),

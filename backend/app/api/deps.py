@@ -4,7 +4,7 @@ from collections.abc import Callable
 from typing import Annotated
 
 import jwt
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
@@ -17,7 +17,12 @@ DbSession = Annotated[Session, Depends(get_db)]
 _bearer = HTTPBearer(auto_error=False)
 
 
+# Methods that only read: all the site owner may do while looking at someone else's account.
+READ_METHODS = frozenset({"GET", "HEAD", "OPTIONS"})
+
+
 def get_current_user(
+    request: Request,
     db: DbSession,
     credentials: Annotated[HTTPAuthorizationCredentials | None, Depends(_bearer)],
 ) -> User:
@@ -40,6 +45,18 @@ def get_current_user(
         or payload.get("tv", 0) != user.token_version
     ):
         raise unauthorized
+    acting = payload.get("act")
+    if acting is not None:
+        # The site owner looking at this account: only while still an active owner, read only.
+        owner = db.get(User, acting)
+        if owner is None or not owner.is_active or not is_owner(owner):
+            raise unauthorized
+        if request.method not in READ_METHODS:
+            raise HTTPException(
+                status.HTTP_403_FORBIDDEN,
+                "Read only: you are viewing another account. Go back to Admin to make changes.",
+            )
+        request.state.acting_owner = owner
     return user
 
 

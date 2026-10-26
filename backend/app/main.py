@@ -11,6 +11,7 @@ from app.api import (
     estimates,
     health,
     outcomes,
+    owner,
     projects,
     quick,
     research,
@@ -43,6 +44,7 @@ def create_app() -> FastAPI:
     app.include_router(templates.router)
     app.include_router(contact.router)
     app.include_router(research.router)
+    app.include_router(owner.router)
     return app
 
 

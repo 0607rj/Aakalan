@@ -1,7 +1,7 @@
 """Sign-up, sign-in (JWT), email verification and password reset by emailed codes
 (services/auth.py)."""
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Request, status
 
 from app.api.deps import CurrentUser, DbSession, is_owner
 from app.core.security import create_access_token, verify_password
@@ -148,5 +148,9 @@ def change_password(body: ChangePasswordRequest, db: DbSession, user: CurrentUse
 
 
 @router.get("/me", response_model=UserOut)
-def me(user: CurrentUser) -> UserOut:
-    return user_out(user)
+def me(user: CurrentUser, request: Request) -> UserOut:
+    out = user_out(user)
+    owner: User | None = getattr(request.state, "acting_owner", None)
+    if owner is not None:
+        out.viewed_by_owner = owner.email
+    return out

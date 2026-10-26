@@ -41,8 +41,9 @@ sed -i "s/^ENVIRONMENT=.*/ENVIRONMENT=production/" .env
 sed -i "s/^JWT_SECRET=.*/JWT_SECRET=$(openssl rand -hex 32)/" .env
 sed -i 's|^CORS_ORIGINS=.*|CORS_ORIGINS=["http://SERVER_IP"]|' .env
 sed -i 's|^NEXT_PUBLIC_API_URL=.*|NEXT_PUBLIC_API_URL=http://SERVER_IP/api|' .env
-nano .env   # SEED_USER_PASSWORD (admin@gmail.com's password), ANTHROPIC_API_KEY, SMTP_*,
-            # OWNER_EMAILS (your own sign-in email: only it sees the results report)
+nano .env   # SEED_USER_PASSWORD (admin@gmail.com's password: make it strong), ANTHROPIC_API_KEY,
+            # SMTP_*, OWNER_EMAILS (the site owner's sign-in email: it sees the Admin page with
+            # every user and their estimates, and the results report)
 
 # 4. Services and Caddy
 sudo cp deploy/aakalan-*.service /etc/systemd/system/
@@ -55,6 +56,8 @@ bash deploy/update.sh
 
 Replace `SERVER_IP` with the server's public IP. Then open `http://SERVER_IP` and log in as
 `admin@gmail.com` with `SEED_USER_PASSWORD`. In production, sign-up codes need the SMTP settings.
+The owner (`OWNER_EMAILS`) can see every account, so give that account a strong password: the seed
+sets it only when the account is first created; change it later under Account → Change password.
 
 ## Updating
 
