@@ -32,7 +32,7 @@ export default function AboutPage() {
       <PageIntro title="Aakalan means estimation. We built it because software prices stopped adding up.">
         For years software was priced by the hour. AI tools now do much of the
         typing, and nobody agrees what that should do to the price. Vendors
-        guess, buyers guess, and the gap between bids grows.
+        guess, buyers guess, and the gap between quotes grows.
       </PageIntro>
 
       <Section className="grid gap-12 py-12 sm:py-16 lg:grid-cols-[1fr_1fr]">
@@ -126,8 +126,9 @@ export default function AboutPage() {
           <div>
             <h3 className="font-bold">Companies quoting a project</h3>
             <p className="mt-2 text-muted-foreground">
-              Price a bid from the requirement document in minutes, with your
-              own rates and margin, and see what the document leaves unclear.
+              Price your quote from the requirement document in minutes, with
+              your own rates and margin, and see what the document leaves
+              unclear.
             </p>
           </div>
           <div>

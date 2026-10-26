@@ -15,7 +15,7 @@ export type Scene = "login" | "signup" | "forgot" | "verify";
 const SCENES: Record<Scene, { title: string; text: string }> = {
   login: {
     title: "Pick up where you left off.",
-    text: "Your estimates, saved templates and bid results are all here.",
+    text: "Your estimates and saved templates are all here.",
   },
   signup: {
     title: "Price your next project in minutes.",

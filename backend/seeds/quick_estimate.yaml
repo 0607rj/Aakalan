@@ -588,7 +588,7 @@ questions:
     default: all
     must_choose: true
     options:
-      - {value: all, label: All of it, hint: "Lowest price. For competitive and government tenders, where the lowest bid wins", answers: {ai_passthrough_percent: 1}}
+      - {value: all, label: All of it, hint: "Lowest price. Best when you must win on price, such as a competitive or government tender", answers: {ai_passthrough_percent: 1}}
       - {value: most, label: Most of it (75%), hint: "Still a competitive price, with a little extra margin", answers: {ai_passthrough_percent: 0.75}}
       - {value: half, label: Half, hint: "Between the two", answers: {ai_passthrough_percent: 0.5}}
       - {value: keep, label: Keep it, hint: "For private or negotiated work: the price stays at the usual level and the saving is your margin", answers: {ai_passthrough_percent: 0}}
