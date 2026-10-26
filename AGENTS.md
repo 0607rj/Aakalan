@@ -35,7 +35,8 @@ Estimates are saved as templates, and recorded outcomes calibrate future estimat
 - **Auth:** JWT (HS256) + argon2; roles `admin`, `estimator`, `finance`, `viewer`. Margin visible only to `finance`/`admin`.
   Sign-up creates a company with the person as admin; email verified and password reset by emailed
   6-digit codes (`services/auth.py`, hashed, expiring, limited tries); a reset or change raises the
-  user's `token_version` (`tv` in the JWT) so older tokens stop working. Email through
+  user's `token_version` (`tv` in the JWT) so older tokens stop working. Bid results and the
+  calibration report are owner-only (`OWNER_EMAILS`, `OwnerUser`, `is_owner` on `/auth/me`). Email through
   `services/email.py` (SMTP, or the server log in development; tests use `set_email_sender`).
 - **Ops:** no Docker. One Ubuntu server: systemd services (API, Huey worker, Next.js standalone)
   behind Caddy (`deploy/`, [`docs/DEPLOY.md`](docs/DEPLOY.md)); later Litestream → S3, Sentry.

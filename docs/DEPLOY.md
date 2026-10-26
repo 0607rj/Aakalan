@@ -33,7 +33,7 @@ curl -1sLf 'https://dl.cloudsmith.io/public/caddy/stable/debian.deb.txt' | sudo 
 sudo apt-get update && sudo apt-get install -y caddy
 
 # 2. The code (a private repo asks for a GitHub username and a personal access token)
-cd ~ && git clone -b phase2/accuracy https://github.com/0607rj/Aakalan.git && cd Aakalan
+cd ~ && git clone https://github.com/0607rj/Aakalan.git && cd Aakalan
 
 # 3. Settings
 cp .env.example .env
@@ -41,7 +41,8 @@ sed -i "s/^ENVIRONMENT=.*/ENVIRONMENT=production/" .env
 sed -i "s/^JWT_SECRET=.*/JWT_SECRET=$(openssl rand -hex 32)/" .env
 sed -i 's|^CORS_ORIGINS=.*|CORS_ORIGINS=["http://SERVER_IP"]|' .env
 sed -i 's|^NEXT_PUBLIC_API_URL=.*|NEXT_PUBLIC_API_URL=http://SERVER_IP/api|' .env
-nano .env   # SEED_USER_PASSWORD (admin@gmail.com's password), ANTHROPIC_API_KEY, SMTP_*
+nano .env   # SEED_USER_PASSWORD (admin@gmail.com's password), ANTHROPIC_API_KEY, SMTP_*,
+            # OWNER_EMAILS (your own sign-in email: only it sees the results report)
 
 # 4. Services and Caddy
 sudo cp deploy/aakalan-*.service /etc/systemd/system/

@@ -4543,6 +4543,11 @@ export interface components {
             org_id: string;
             /** Org Name */
             org_name: string;
+            /**
+             * Is Owner
+             * @default false
+             */
+            is_owner: boolean;
         };
         /** ValidationError */
         ValidationError: {

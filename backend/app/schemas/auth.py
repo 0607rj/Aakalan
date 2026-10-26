@@ -17,6 +17,7 @@ class UserOut(BaseModel):
     role: Role
     org_id: str
     org_name: str
+    is_owner: bool = False  # the product owner (settings owner_emails)
 
 
 class TokenResponse(BaseModel):

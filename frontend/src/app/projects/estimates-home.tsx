@@ -3,6 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 
+import { useCurrentUser } from "@/components/auth-guard";
 import { ErrorNotice, Loading } from "@/components/status";
 import { api, errorText, type QuickSummary } from "@/lib/api/client";
 import {
@@ -28,7 +29,14 @@ const STEPS = [
   },
 ];
 
+/** The owner's check of the estimates against real results; nobody else sees it. */
 function CalibrationCard() {
+  const user = useCurrentUser();
+  if (!user.is_owner) return null;
+  return <CalibrationReport />;
+}
+
+function CalibrationReport() {
   const loader = React.useCallback(() => api.calibration(), []);
   const { state } = useLoad(loader);
   if (state.kind !== "ready" || state.data.outcomes === 0) return null;

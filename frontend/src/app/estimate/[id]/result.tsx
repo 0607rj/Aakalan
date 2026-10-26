@@ -4,6 +4,7 @@ import * as React from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 
+import { useCurrentUser } from "@/components/auth-guard";
 import { ErrorNotice, Loading } from "@/components/status";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { api, errorText, type QuickSummary } from "@/lib/api/client";
@@ -986,6 +987,7 @@ function SummaryView({
   summary: QuickSummary;
   onChange: (summary: QuickSummary) => void;
 }) {
+  const user = useCurrentUser();
   const options = usePricedOptions(summary.estimate_id);
   const hasTeam =
     (summary.hours?.rows.length ?? 0) > 0 ||
@@ -1089,10 +1091,12 @@ function SummaryView({
         </section>
       )}
 
-      <BidResultCard
-        projectId={summary.project_id}
-        currency={summary.currency}
-      />
+      {user.is_owner ? (
+        <BidResultCard
+          projectId={summary.project_id}
+          currency={summary.currency}
+        />
+      ) : null}
 
       <div className="flex flex-wrap items-center gap-x-6 gap-y-3 border-t pt-8">
         <Link href="/estimate/new" className={buttonVariants({ size: "lg" })}>

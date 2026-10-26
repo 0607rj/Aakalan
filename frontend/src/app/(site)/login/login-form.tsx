@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import {
-  AuthCard,
+  AuthScreen,
   FormError,
   TextField,
   VerifyEmailStep,
@@ -58,24 +58,24 @@ export function LoginForm() {
   }
 
   return (
-    <AuthCard
+    <AuthScreen
+      scene="login"
+      eyebrow="Welcome back"
       title="Sign in"
       description="See your estimates and start new ones."
       footer={
-        <>
-          <span>
-            New here?{" "}
-            <Link
-              href="/signup"
-              className="font-medium text-primary hover:underline"
-            >
-              Create an account
-            </Link>
-          </span>
-        </>
+        <span>
+          New here?{" "}
+          <Link
+            href="/signup"
+            className="rounded font-medium text-primary hover:underline"
+          >
+            Create an account
+          </Link>
+        </span>
       }
     >
-      <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
+      <form onSubmit={onSubmit} className="flex flex-col gap-5" noValidate>
         <TextField
           id="email"
           label="Email"
@@ -95,7 +95,7 @@ export function LoginForm() {
           />
           <Link
             href="/forgot-password"
-            className="w-fit self-end text-sm text-primary hover:underline"
+            className="w-fit self-end rounded text-sm font-medium text-primary hover:underline"
           >
             Forgot password?
           </Link>
@@ -103,12 +103,13 @@ export function LoginForm() {
         <FormError message={error} />
         <Button
           type="submit"
+          size="lg"
           disabled={submitting || !email || !password}
           className="w-full"
         >
           {submitting ? "Signing in…" : "Sign in"}
         </Button>
       </form>
-    </AuthCard>
+    </AuthScreen>
   );
 }

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import {
-  AuthCard,
+  AuthScreen,
   FormError,
   TextField,
   VerifyEmailStep,
@@ -62,7 +62,9 @@ export function SignupForm() {
     email.trim() !== "" &&
     password.length >= MIN_PASSWORD;
   return (
-    <AuthCard
+    <AuthScreen
+      scene="signup"
+      eyebrow="Step 1 of 2"
       title="Create an account"
       description="We'll email you a code to confirm your address."
       footer={
@@ -70,14 +72,14 @@ export function SignupForm() {
           Already have an account?{" "}
           <Link
             href="/login"
-            className="font-medium text-primary hover:underline"
+            className="rounded font-medium text-primary hover:underline"
           >
             Sign in
           </Link>
         </span>
       }
     >
-      <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
+      <form onSubmit={onSubmit} className="flex flex-col gap-5" noValidate>
         <TextField
           id="full-name"
           label="Your name"
@@ -101,16 +103,18 @@ export function SignupForm() {
           value={password}
           onChange={setPassword}
           hint={`At least ${MIN_PASSWORD} characters.`}
+          met={password.length >= MIN_PASSWORD}
         />
         <FormError message={error} />
         <Button
           type="submit"
+          size="lg"
           disabled={submitting || !ready}
           className="w-full"
         >
           {submitting ? "Creating your account…" : "Create account"}
         </Button>
       </form>
-    </AuthCard>
+    </AuthScreen>
   );
 }

@@ -3,7 +3,7 @@
 
 from fastapi import APIRouter, HTTPException, status
 
-from app.api.deps import CurrentUser, DbSession
+from app.api.deps import CurrentUser, DbSession, is_owner
 from app.core.security import create_access_token, verify_password
 from app.models import User
 from app.schemas.auth import (
@@ -33,6 +33,7 @@ def user_out(user: User) -> UserOut:
         role=user.role,
         org_id=user.org_id,
         org_name=user.organisation.name,
+        is_owner=is_owner(user),
     )
 
 

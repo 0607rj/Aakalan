@@ -8,6 +8,7 @@ from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.orm import Session
 
+from app.core.config import get_settings
 from app.core.db import get_db
 from app.core.security import decode_access_token
 from app.models import Role, User
@@ -62,6 +63,20 @@ def require_roles(*roles: Role) -> Callable[[User], User]:
 EditorUser = Annotated[User, Depends(require_roles(*EDITOR_ROLES))]
 AdminUser = Annotated[User, Depends(require_roles(Role.ADMIN))]
 FinanceUser = Annotated[User, Depends(require_roles(*FINANCE_ROLES))]
+
+
+def is_owner(user: User) -> bool:
+    """The product owner: the sign-in email is in settings `owner_emails` (any case)."""
+    return user.email.lower() in {e.lower() for e in get_settings().owner_emails}
+
+
+def require_owner(user: CurrentUser) -> User:
+    if not is_owner(user):
+        raise HTTPException(status.HTTP_403_FORBIDDEN, "Not available")
+    return user
+
+
+OwnerUser = Annotated[User, Depends(require_owner)]
 
 
 def can_see_margin(user: User) -> bool:

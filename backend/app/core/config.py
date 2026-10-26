@@ -44,6 +44,10 @@ class Settings(BaseSettings):
     smtp_from: str = "Aakalan <no-reply@aakalan.local>"
     smtp_starttls: bool = True
 
+    # Sign-in emails of the product owner (OWNER_EMAILS, a JSON list). Only they see how close
+    # the estimates are to real results and record bid results (OPEN_QUESTIONS 169); empty = nobody.
+    owner_emails: list[str] = []
+
     cors_origins: list[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
 
     seeds_dir: Path = BACKEND_DIR / "seeds"

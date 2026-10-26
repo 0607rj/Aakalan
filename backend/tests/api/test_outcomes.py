@@ -45,3 +45,19 @@ def test_outcome_validation(client: TestClient, admin_headers: H, viewer_headers
         ).status_code
         == 404
     )
+
+
+def test_only_the_owner_sees_results_and_calibration(
+    client: TestClient, admin_headers: H, estimator_headers: H
+) -> None:
+    """Outcomes and the calibration report are for the product owner (OWNER_EMAILS) only."""
+    s = _estimate(client, estimator_headers, "Not for them")
+    url = f"/projects/{s['project_id']}/outcome"
+    assert client.get("/auth/me", headers=admin_headers).json()["is_owner"] is True
+    assert client.get("/auth/me", headers=estimator_headers).json()["is_owner"] is False
+    assert client.get(url, headers=estimator_headers).status_code == 403
+    assert (
+        client.post(url, json={"bid_result": "won"}, headers=estimator_headers).status_code == 403
+    )
+    assert client.get("/calibration", headers=estimator_headers).status_code == 403
+    assert client.get("/calibration", headers=admin_headers).status_code == 200

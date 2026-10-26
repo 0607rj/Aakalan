@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 import {
-  AuthCard,
+  AuthScreen,
   CodeField,
   FormError,
   TextField,
@@ -57,7 +57,7 @@ export function ForgotForm() {
   const footer = (
     <Link
       href="/login"
-      className="w-fit font-medium text-primary hover:underline"
+      className="w-fit rounded font-medium text-primary hover:underline"
     >
       Back to sign in
     </Link>
@@ -65,12 +65,14 @@ export function ForgotForm() {
 
   if (!sentTo) {
     return (
-      <AuthCard
+      <AuthScreen
+        scene="forgot"
+        eyebrow="Reset password · Step 1 of 2"
         title="Forgot your password?"
         description="Enter your email and we'll send you a code to set a new one."
         footer={footer}
       >
-        <form onSubmit={sendCode} className="flex flex-col gap-4" noValidate>
+        <form onSubmit={sendCode} className="flex flex-col gap-5" noValidate>
           <TextField
             id="email"
             label="Email"
@@ -80,21 +82,27 @@ export function ForgotForm() {
             onChange={setEmail}
           />
           <FormError message={error} />
-          <Button type="submit" disabled={busy || email.trim() === ""}>
+          <Button
+            type="submit"
+            size="lg"
+            disabled={busy || email.trim() === ""}
+          >
             {busy ? "Sending…" : "Send code"}
           </Button>
         </form>
-      </AuthCard>
+      </AuthScreen>
     );
   }
 
   return (
-    <AuthCard
+    <AuthScreen
+      scene="forgot"
+      eyebrow="Reset password · Step 2 of 2"
       title="Set a new password"
       description="If an account uses this email, we sent it a 6-digit code."
       footer={footer}
     >
-      <form onSubmit={reset} className="flex flex-col gap-4" noValidate>
+      <form onSubmit={reset} className="flex flex-col gap-5" noValidate>
         <CodeField
           email={sentTo}
           code={code}
@@ -109,15 +117,17 @@ export function ForgotForm() {
           value={password}
           onChange={setPassword}
           hint={`At least ${MIN_PASSWORD} characters. You'll be signed out everywhere else.`}
+          met={password.length >= MIN_PASSWORD}
         />
         <FormError message={error} />
         <Button
           type="submit"
+          size="lg"
           disabled={busy || code.length !== 6 || password.length < MIN_PASSWORD}
         >
           {busy ? "Saving…" : "Save and sign in"}
         </Button>
       </form>
-    </AuthCard>
+    </AuthScreen>
   );
 }
