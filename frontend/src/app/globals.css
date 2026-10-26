@@ -346,14 +346,17 @@
   }
 }
 
-.cost-sky {
-  opacity: 0;
-  transition: opacity 1.2s var(--ease);
-  animation: sky-drift 40s ease-in-out infinite alternate;
+@keyframes sky-in {
+  from {
+    opacity: 0;
+  }
 }
 
-.cost-sky[data-ready="yes"] {
-  opacity: 1;
+/* The picture fades in once it has arrived, then drifts. */
+.cost-sky {
+  animation:
+    sky-in 0.9s var(--ease) both,
+    sky-drift 40s ease-in-out infinite alternate;
 }
 
 @keyframes pulse-dot {
