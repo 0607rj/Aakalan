@@ -21,7 +21,7 @@ export function RevealOnScroll() {
           }
         }
       },
-      { threshold: 0.2, rootMargin: "0px 0px -8% 0px" },
+      { threshold: 0.1, rootMargin: "0px 0px -4% 0px" },
     );
     // remembered here, not marked on the element: parts still hydrating must match the server
     const seen = new WeakSet<Element>();
@@ -37,7 +37,7 @@ export function RevealOnScroll() {
       document.querySelectorAll("[data-reveal]:not(.is-in)").forEach((el) => {
         if (seen.has(el)) return;
         // after a few seconds, show it anyway rather than leave it hidden
-        if (!hydrated(el) && tries < 50) {
+        if (!hydrated(el) && tries < 100) {
           waiting = true;
           return;
         }
@@ -46,7 +46,7 @@ export function RevealOnScroll() {
         else io.observe(el);
       });
       window.clearTimeout(retry);
-      if (waiting) retry = window.setTimeout(scan, 100);
+      if (waiting) retry = window.setTimeout(scan, 50);
     };
     root.classList.add("rv");
     // start once the page has loaded (and React has taken it over), then watch for new parts
