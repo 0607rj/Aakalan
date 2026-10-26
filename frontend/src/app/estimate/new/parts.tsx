@@ -141,6 +141,42 @@ export function optionsCurrency(options: {
   );
 }
 
+/** Tick marks of a measuring tape: small every 8px, tall every 40px. */
+export const TICKS: React.CSSProperties = {
+  backgroundImage:
+    "linear-gradient(90deg, rgb(11 120 184 / 0.4) 1px, transparent 1px), linear-gradient(90deg, rgb(11 120 184 / 0.2) 1px, transparent 1px)",
+  backgroundSize: "40px 100%, 8px 45%",
+  backgroundRepeat: "repeat-x",
+};
+
+const TYPE_ICONS: Record<string, string> = {
+  portal:
+    "M3 12h18M12 3a14 14 0 010 18M12 3a14 14 0 000 18M12 3a9 9 0 100 18 9 9 0 000-18z",
+  business: "M4 20V8l8-4 8 4v12M9 20v-6h6v6M8 10h.01M12 10h.01M16 10h.01",
+  store: "M4 9l1.5-5h13L20 9M4 9h16M4 9v11h16V9M9.5 20v-6h5v6",
+  booking: "M5 5h14v15H5zM5 9.5h14M9 3v4M15 3v4M9 14h2",
+  ai: "M5 6h14v9H9.5L6 18.5V15H5zM9 10h.01M12 10h.01M15 10h.01",
+  other: "M12 5v14M5 12h14",
+};
+
+/** A small line icon for a kind of software. */
+export function TypeIcon({ kind }: { kind: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      className="size-5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.6"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d={TYPE_ICONS[kind] ?? TYPE_ICONS.other} />
+    </svg>
+  );
+}
+
 export function StepIndicator({
   labels,
   current,
@@ -190,7 +226,11 @@ export function StepIndicator({
               {label}
             </span>
             {n < labels.length ? (
-              <span className="mr-2 hidden h-px w-8 bg-border sm:inline-block" />
+              <span
+                aria-hidden="true"
+                className="mr-2 hidden h-2 w-10 rounded-sm border bg-panel-2 sm:inline-block"
+                style={TICKS}
+              />
             ) : null}
           </li>
         );
@@ -224,6 +264,38 @@ export function NotIncludedToggle({
   );
 }
 
+/** The visible box (tick) or dot (radio) of a choice; the real input beside it stays for the keyboard. */
+export function Mark({ on, round = false }: { on: boolean; round?: boolean }) {
+  return (
+    <span
+      aria-hidden="true"
+      className={cn(
+        "mt-0.5 flex size-5 shrink-0 items-center justify-center border transition-colors duration-200",
+        round ? "rounded-full" : "rounded-md",
+        on
+          ? "border-primary bg-primary text-primary-foreground"
+          : "border-input bg-card",
+      )}
+    >
+      {on ? (
+        round ? (
+          <span className="size-2 rounded-full bg-primary-foreground" />
+        ) : (
+          <svg viewBox="0 0 16 16" className="size-3.5" fill="none">
+            <path
+              d="M3.5 8.5l3 3L12.5 4.5"
+              stroke="currentColor"
+              strokeWidth="2.2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        )
+      ) : null}
+    </span>
+  );
+}
+
 export function FeatureCard({
   label,
   hint,
@@ -246,12 +318,12 @@ export function FeatureCard({
   return (
     <div
       className={cn(
-        "flex flex-col gap-2 rounded-lg border bg-card p-4 transition-[border-color,background-color,box-shadow] duration-200",
+        "flex flex-col gap-2 rounded-xl border bg-card p-4 transition-[border-color,background-color,box-shadow] duration-200 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring",
         checked
           ? "border-primary bg-tape-soft/50 shadow-[0_0_0_1px_var(--primary)]"
           : excluded
             ? "border-dashed bg-transparent opacity-60"
-            : "hover:border-foreground/30",
+            : "hover:border-primary/40 hover:bg-panel-2",
       )}
     >
       <label className="flex cursor-pointer items-start gap-3">
@@ -259,16 +331,17 @@ export function FeatureCard({
           type="checkbox"
           checked={checked}
           onChange={onToggle}
-          className="mt-1 size-4 accent-primary"
+          className="sr-only"
         />
+        <Mark on={checked} />
         <span className="flex flex-col gap-1">
           <span className="font-semibold">{label}</span>
           <span className="text-sm text-muted-foreground">{hint}</span>
         </span>
       </label>
-      {children ? <div className="pl-7">{children}</div> : null}
+      {children ? <div className="pl-8">{children}</div> : null}
       {onNotIncluded && !checked ? (
-        <div className="pl-6">
+        <div className="pl-7">
           <NotIncludedToggle excluded={excluded} onClick={onNotIncluded} />
         </div>
       ) : null}
@@ -357,14 +430,15 @@ export function StandardBlocks({
         {blocks.map((b) => (
           <label
             key={b.key}
-            className="flex cursor-pointer items-start gap-2 rounded-lg p-2 hover:bg-muted/40"
+            className="flex cursor-pointer items-start gap-3 rounded-lg p-2 hover:bg-panel-2 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring"
           >
             <input
               type="checkbox"
               checked={!removed.includes(b.key)}
               onChange={() => onToggle(b.key)}
-              className="mt-1 size-4 accent-primary"
+              className="sr-only"
             />
+            <Mark on={!removed.includes(b.key)} />
             <span className="flex flex-col gap-0.5">
               <span>{b.label}</span>
               {b.hint ? (
@@ -389,18 +463,25 @@ export function SectionHeading({
   aside?: string;
 }) {
   return (
-    <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 border-b pb-2">
-      <h2 className="text-base font-semibold">
-        {title}
-        {count !== undefined ? (
-          <span className="ml-2 text-muted-foreground tabular-nums">
-            ({count})
-          </span>
+    <div className="flex flex-col gap-2">
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+        <h2 className="text-lg font-semibold">
+          {title}
+          {count !== undefined ? (
+            <span className="ml-2 rounded-full bg-tape-soft px-2 py-0.5 align-[1px] text-xs font-semibold text-primary tabular-nums">
+              {count}
+            </span>
+          ) : null}
+        </h2>
+        {aside ? (
+          <span className="text-sm text-muted-foreground">{aside}</span>
         ) : null}
-      </h2>
-      {aside ? (
-        <span className="text-sm text-muted-foreground">{aside}</span>
-      ) : null}
+      </div>
+      <div
+        aria-hidden="true"
+        className="h-2 rounded-sm border bg-panel-2"
+        style={TICKS}
+      />
     </div>
   );
 }
@@ -416,11 +497,12 @@ export function QuestionHeading({
   currency?: string;
 }) {
   return (
-    <div>
-      <h1 className="text-3xl font-semibold tracking-tight text-balance">
+    <div className="settle flex flex-col gap-2">
+      <p className="eyebrow">A question</p>
+      <h1 className="font-display text-3xl text-balance sm:text-4xl">
         {question.label}
       </h1>
-      <p className="mt-1 text-muted-foreground">
+      <p className="max-w-2xl text-muted-foreground">
         {impact && impact.impact_paise > 0
           ? `This answer can change the price by about ${formatPaise(impact.impact_paise, currency)}.`
           : "The usual answer is picked. Change it if it does not fit."}
@@ -470,29 +552,30 @@ export function QuestionGroup({
             <label
               key={String(option.value)}
               className={cn(
-                "flex cursor-pointer flex-col gap-1 rounded-lg border bg-card p-4 transition-[border-color,background-color,box-shadow] duration-200",
+                "flex cursor-pointer flex-col gap-1.5 rounded-xl border bg-card p-4 transition-[border-color,background-color,box-shadow] duration-200 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring",
                 selected
                   ? "border-primary bg-tape-soft/50 shadow-[0_0_0_1px_var(--primary)]"
-                  : "hover:border-foreground/30",
+                  : "hover:border-primary/40 hover:bg-panel-2",
               )}
             >
-              <span className="flex items-center gap-2">
+              <span className="flex items-start gap-3">
                 <input
                   type="radio"
                   name={question.key}
                   checked={selected}
                   onChange={() => onChange(option.value)}
-                  className="size-4 accent-primary"
+                  className="sr-only"
                 />
+                <Mark on={selected} round />
                 <span className="font-semibold">{option.label}</span>
               </span>
               {option.hint ? (
-                <span className="pl-6 text-sm text-muted-foreground">
+                <span className="pl-8 text-sm text-muted-foreground">
                   {option.hint}
                 </span>
               ) : null}
               {prices.has(String(option.value)) ? (
-                <span className="pl-6 text-xs text-muted-foreground tabular-nums">
+                <span className="pl-8 text-xs font-medium text-primary tabular-nums">
                   {price === null || price === undefined
                     ? "not possible"
                     : `≈ ${formatPaise(price, currency)}`}
@@ -541,8 +624,11 @@ export function Calculating({ labels }: { labels: string[] }) {
   return (
     <div className="flex flex-col items-center gap-4 py-24 text-center">
       <StepIndicator labels={labels} current={3} />
-      <div className="mt-10 h-1 w-48 overflow-hidden rounded-full bg-muted">
-        <div className="h-full w-1/3 animate-[measure_1.4s_cubic-bezier(0.65,0,0.35,1)_infinite] rounded-full bg-primary" />
+      <div
+        className="mt-10 h-3 w-64 overflow-hidden rounded-sm border bg-panel-2"
+        style={TICKS}
+      >
+        <div className="h-full w-1/3 animate-[measure_1.4s_cubic-bezier(0.65,0,0.35,1)_infinite] bg-primary/80" />
       </div>
       <p className="text-lg font-medium">Working out your cost…</p>
     </div>

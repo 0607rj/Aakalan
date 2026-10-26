@@ -72,11 +72,12 @@ export function StoriesStep({
 
   return (
     <section className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+      <div className="settle flex flex-col gap-2">
+        <p className="eyebrow">Optional</p>
+        <h1 className="font-display text-3xl sm:text-4xl">
           What can people do with it?
         </h1>
-        <p className="mt-1 text-muted-foreground">
+        <p className="max-w-2xl text-muted-foreground">
           Optional. One line per thing a person can do, e.g. “A patient can book
           an appointment”. We use these to double-check the size of the build.
           They don’t change the price.
@@ -94,8 +95,8 @@ export function StoriesStep({
       <ErrorNotice message={error} />
       <div className="flex flex-col gap-5">
         {features.map((f) => (
-          <label key={f.key} className="flex flex-col gap-2">
-            <span className="text-base font-medium">{f.label}</span>
+          <label key={f.key} className="slab flex flex-col gap-2 p-4 sm:p-5">
+            <span className="text-base font-semibold">{f.label}</span>
             <textarea
               value={text[f.key] ?? ""}
               onChange={(e) => onChange({ ...text, [f.key]: e.target.value })}
@@ -104,7 +105,7 @@ export function StoriesStep({
                 Math.max(2, (text[f.key] ?? "").split("\n").length),
               )}
               placeholder="One line each"
-              className="w-full rounded-lg border bg-background px-3 py-2 text-sm"
+              className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
             />
           </label>
         ))}

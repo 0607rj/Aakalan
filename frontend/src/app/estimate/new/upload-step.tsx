@@ -12,7 +12,13 @@ import {
 } from "@/lib/api/client";
 import { cn } from "@/lib/utils";
 
-import { DOCUMENT_STEPS, StepIndicator } from "./parts";
+import { DOCUMENT_STEPS, StepIndicator, TICKS } from "./parts";
+
+const NEXT = [
+  "We read the document, usually in a minute or two.",
+  "You check what we found and answer only what it does not say.",
+  "You get the total cost with a likely range and where the money goes.",
+];
 
 const ACCEPT =
   ".pdf,.docx,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document";
@@ -73,87 +79,120 @@ export function UploadStep({
   return (
     <div className="flex flex-col gap-8">
       <StepIndicator labels={DOCUMENT_STEPS} current={1} />
-      <section className="flex flex-col gap-6">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-            Upload the requirement document
-          </h1>
-          <p className="mt-1 text-muted-foreground">
-            A PDF or Word file (up to 25 MB). Scanned documents can be read once
-            the AI key is set up.
-          </p>
-        </div>
+      <div className="settle flex flex-col gap-2">
+        <p className="eyebrow">Step 1 of 3</p>
+        <h1 className="font-display text-3xl sm:text-4xl">
+          Upload the requirement document
+        </h1>
+        <p className="max-w-2xl text-muted-foreground">
+          We read it, list what it asks for with page numbers, and you check the
+          list before any price is worked out.
+        </p>
+      </div>
 
-        <div
-          role="button"
-          tabIndex={0}
-          onClick={() => inputRef.current?.click()}
-          onKeyDown={(e) => {
-            if (e.key === "Enter" || e.key === " ") {
-              e.preventDefault();
-              inputRef.current?.click();
-            }
-          }}
-          onDragOver={(e) => {
-            e.preventDefault();
-            setDragging(true);
-          }}
-          onDragLeave={() => setDragging(false)}
-          onDrop={(e) => {
-            e.preventDefault();
-            setDragging(false);
-            pick(e.dataTransfer.files);
-          }}
-          className={cn(
-            "flex cursor-pointer flex-col items-center gap-3 rounded-xl border border-dashed border-input bg-card px-6 py-16 text-center transition-colors duration-200",
-            dragging
-              ? "border-primary bg-primary/5"
-              : "hover:border-foreground/40 hover:bg-panel-2",
-          )}
-        >
-          <svg
-            aria-hidden="true"
-            viewBox="0 0 24 24"
-            className="size-10 text-primary"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinejoin="round"
-          >
-            <path d="M6 2.75h8.5L19.25 7.5v13.75H6z" />
-            <path d="M14.25 2.75V7.75h5M9 12h7M9 15.5h7M9 19h4" />
-          </svg>
-          <span className="text-lg font-semibold">
-            Drop the file here, or click to choose it
-          </span>
-          <span className="text-sm text-muted-foreground">PDF or .docx</span>
-          <input
-            ref={inputRef}
-            type="file"
-            accept={ACCEPT}
-            className="hidden"
-            onChange={(e) => {
-              pick(e.target.files);
-              e.target.value = "";
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
+        <div className="flex flex-col gap-4">
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={() => inputRef.current?.click()}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                inputRef.current?.click();
+              }
             }}
-          />
-        </div>
-
-        {error ? (
-          <div className="flex flex-col gap-3">
-            <ErrorNotice message={error} />
-            <span className="text-sm text-muted-foreground">
-              Choose another file above to try again.
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragging(true);
+            }}
+            onDragLeave={() => setDragging(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setDragging(false);
+              pick(e.dataTransfer.files);
+            }}
+            className={cn(
+              "slab group flex cursor-pointer flex-col items-center gap-4 border-dashed px-6 py-14 text-center transition-colors duration-200 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+              dragging
+                ? "border-primary bg-tape-soft/60"
+                : "hover:border-primary/50",
+            )}
+          >
+            <span className="flex size-14 items-center justify-center rounded-full bg-tape-soft text-primary transition-transform group-hover:-translate-y-0.5">
+              <svg
+                aria-hidden="true"
+                viewBox="0 0 24 24"
+                className="size-7"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M12 16V5M7.5 9.5L12 5l4.5 4.5M5 19h14" />
+              </svg>
             </span>
+            <span className="text-lg font-semibold">
+              {dragging ? "Drop it here" : "Drop the file here"}
+            </span>
+            <span className="inline-flex h-10 items-center rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground">
+              Choose a file
+            </span>
+            <span className="text-sm text-muted-foreground">
+              PDF or Word, up to 25 MB
+            </span>
+            <input
+              ref={inputRef}
+              type="file"
+              accept={ACCEPT}
+              className="hidden"
+              onChange={(e) => {
+                pick(e.target.files);
+                e.target.value = "";
+              }}
+            />
           </div>
-        ) : null}
 
-        <div>
-          <Button variant="outline" size="lg" className="h-11" onClick={onBack}>
-            Back
-          </Button>
+          {error ? (
+            <div className="flex flex-col gap-3">
+              <ErrorNotice message={error} />
+              <span className="text-sm text-muted-foreground">
+                Choose another file above to try again.
+              </span>
+            </div>
+          ) : null}
+
+          <div>
+            <Button variant="ghost" size="lg" className="h-11" onClick={onBack}>
+              ← Back
+            </Button>
+          </div>
         </div>
-      </section>
+
+        <aside className="flex flex-col gap-4 rounded-2xl border bg-panel-2 p-5">
+          <h2 className="font-semibold">What happens next</h2>
+          <ol className="flex flex-col gap-4 text-sm">
+            {NEXT.map((line, i) => (
+              <li key={line} className="flex gap-3">
+                <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-semibold text-primary-foreground">
+                  {i + 1}
+                </span>
+                <span className="text-muted-foreground">{line}</span>
+              </li>
+            ))}
+          </ol>
+          <div
+            aria-hidden="true"
+            className="h-2.5 rounded-sm border bg-card"
+            style={TICKS}
+          />
+          <p className="text-xs text-muted-foreground">
+            Scanned documents can be read once the AI key is set up. Your file
+            is sent only to the AI provider you configured.
+          </p>
+        </aside>
+      </div>
     </div>
   );
 }

@@ -26,6 +26,7 @@ import {
   FeatureCard,
   initialChoices,
   MANUAL_STEPS,
+  TypeIcon,
   optionsCurrency,
   QuestionGroup,
   QuestionHeading,
@@ -326,16 +327,17 @@ function ManualForm({
       <div key={current} className="step-in flex flex-col gap-8">
         {current === "type" ? (
           <section className="flex flex-col gap-6">
-            <div>
-              <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+            <div className="settle flex flex-col gap-2">
+              <p className="eyebrow">Step 1 of 3</p>
+              <h1 className="font-display text-3xl sm:text-4xl">
                 What do you want to build?
               </h1>
-              <p className="mt-1 text-muted-foreground">
+              <p className="max-w-2xl text-muted-foreground">
                 Give it a name and pick the closest kind. Next, you choose what
                 it should do.
               </p>
             </div>
-            <div className="flex max-w-xl flex-col gap-2">
+            <div className="slab flex flex-col gap-2 p-5 sm:p-6">
               <Label htmlFor="project-name" className="text-base">
                 Project name
               </Label>
@@ -344,8 +346,18 @@ function ManualForm({
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g. Booking app for a clinic"
-                className="h-11 text-base"
+                className="h-12 max-w-xl rounded-lg px-4 text-base"
               />
+              <span className="text-xs text-muted-foreground">
+                Only for you, to find it again in your list.
+              </span>
+            </div>
+            <div className="flex flex-col gap-1">
+              <h2 className="text-lg font-semibold">Which one is closest?</h2>
+              <p className="text-sm text-muted-foreground">
+                It only decides which features we show first. You can still tick
+                anything.
+              </p>
             </div>
             <div
               role="radiogroup"
@@ -362,12 +374,29 @@ function ManualForm({
                     aria-checked={active}
                     onClick={() => setProjectType(t.key)}
                     className={cn(
-                      "flex flex-col gap-1 rounded-xl border bg-card p-4 text-left transition-colors",
+                      "flex flex-col gap-2 rounded-xl border bg-card p-4 text-left transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
                       active
-                        ? "border-primary bg-primary/5 ring-1 ring-primary"
-                        : "hover:border-primary/40 hover:bg-muted/40",
+                        ? "border-primary bg-tape-soft/50 ring-1 ring-primary"
+                        : "hover:border-primary/40 hover:bg-panel-2",
                     )}
                   >
+                    <span className="flex items-center justify-between">
+                      <span
+                        className={cn(
+                          "flex size-9 items-center justify-center rounded-lg transition-colors",
+                          active
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-tape-soft text-primary",
+                        )}
+                      >
+                        <TypeIcon kind={t.key} />
+                      </span>
+                      {active ? (
+                        <span className="text-xs font-semibold text-primary">
+                          Selected
+                        </span>
+                      ) : null}
+                    </span>
                     <span className="font-semibold">{t.label}</span>
                     <span className="text-sm text-muted-foreground">
                       {t.hint}
@@ -388,7 +417,7 @@ function ManualForm({
         ) : current === "features" ? (
           <section className="flex flex-col gap-8">
             <div>
-              <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+              <h1 className="font-display text-3xl sm:text-4xl">
                 What should it do?
               </h1>
               <p className="mt-1 text-muted-foreground">
@@ -663,7 +692,7 @@ function ManualForm({
         ) : current === "deadline" ? (
           <section className="flex flex-col gap-6">
             <div>
-              <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+              <h1 className="font-display text-3xl sm:text-4xl">
                 Is there a deadline?
               </h1>
               <p className="mt-1 text-muted-foreground">
@@ -671,7 +700,7 @@ function ManualForm({
                 empty if there is no fixed date.
               </p>
             </div>
-            <div className="flex max-w-sm flex-col gap-2">
+            <div className="slab flex max-w-sm flex-col gap-2 p-5 sm:p-6">
               <Label htmlFor="deadline" className="text-base">
                 Months from start to launch
               </Label>
@@ -812,9 +841,9 @@ function DescribeBox({
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-primary/30 bg-primary/5 p-4">
+    <div className="slab flex flex-col gap-3 border-primary/30 p-5 sm:p-6">
       <Label htmlFor="describe" className="text-base font-semibold">
-        Describe your project
+        Describe your project in your own words
       </Label>
       <textarea
         id="describe"
@@ -826,7 +855,7 @@ function DescribeBox({
         rows={3}
         maxLength={4000}
         placeholder="e.g. An app for my clinic where patients book an appointment with a doctor, pay the fee online and get an SMS reminder."
-        className="w-full rounded-lg border bg-background px-3 py-2 text-base"
+        className="w-full rounded-lg border bg-background px-4 py-3 text-base focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
       />
       <div className="flex flex-wrap items-center gap-3">
         <Button onClick={suggest} disabled={!ready || busy}>
@@ -922,55 +951,67 @@ function StartChoice({
   onTemplate: (id: string) => void;
 }) {
   const card =
-    "group flex flex-col gap-2 rounded-xl border bg-card p-6 text-left shadow-xs transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-foreground/30 hover:shadow-md";
+    "slab group flex flex-col gap-3 p-5 text-left transition-colors hover:border-primary/50 sm:p-6";
+  const icon =
+    "flex size-10 items-center justify-center rounded-lg bg-tape-soft text-primary";
   return (
-    <section className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+    <section className="flex flex-col gap-8">
+      <div className="settle flex flex-col gap-2">
+        <p className="eyebrow">New estimate</p>
+        <h1 className="font-display text-3xl sm:text-4xl">
           How would you like to start?
         </h1>
-        <p className="mt-1 text-muted-foreground">
+        <p className="max-w-2xl text-muted-foreground">
           The quickest way is to upload the requirement document. We read it and
           fill in the details for you to check.
         </p>
       </div>
       <CountryChoice options={options} onChange={onCountry} />
       <div className="grid gap-4 md:grid-cols-2">
-        <button
-          type="button"
-          onClick={onUpload}
-          className={cn(card, "border-primary/40 ring-1 ring-primary/20")}
-        >
-          <svg
-            aria-hidden="true"
-            viewBox="0 0 24 24"
-            className="size-8 text-primary"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinejoin="round"
-          >
-            <path d="M6 2.75h8.5L19.25 7.5v13.75H6z" />
-            <path d="M14.25 2.75V7.75h5M9 12h7M9 15.5h7M9 19h4" />
-          </svg>
-          <span className="text-lg font-semibold">
-            Upload the requirement document{" "}
-            <span className="text-sm font-normal text-primary">
-              (recommended)
+        <button type="button" onClick={onUpload} className={card}>
+          <span className={icon}>
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 24 24"
+              className="size-5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M6 2.75h8.5L19.25 7.5v13.75H6zM14.5 2.75V7.5h4.75M9 12h7M9 15.5h7" />
+            </svg>
+          </span>
+          <span className="flex flex-wrap items-center gap-2 text-lg font-semibold">
+            Upload the requirement document
+            <span className="rounded-full bg-tape-soft px-2 py-0.5 text-xs font-semibold text-primary">
+              Recommended
             </span>
           </span>
-          <span className="text-muted-foreground">
+          <span className="text-sm text-muted-foreground">
             PDF or Word. Every item links to its page.
           </span>
         </button>
         <button type="button" onClick={onManual} className={card}>
-          <span className="text-3xl" aria-hidden>
-            ✏️
+          <span className={icon}>
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 24 24"
+              className="size-5"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.6"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M4 20l1-4.5L16.5 4a1.8 1.8 0 012.5 0l1 1a1.8 1.8 0 010 2.5L8.5 19zM14.5 6l3.5 3.5" />
+            </svg>
           </span>
           <span className="text-lg font-semibold">
-            No document — I&apos;ll describe it myself
+            No document, I&apos;ll describe it myself
           </span>
-          <span className="text-muted-foreground">
+          <span className="text-sm text-muted-foreground">
             Tick what the software should do, then answer a few short questions,
             one at a time.
           </span>
@@ -1004,7 +1045,11 @@ function Flow({ options }: { options: QuickOptions }) {
     const qs = query.toString();
     router.push(qs ? `/estimate/new?${qs}` : "/estimate/new", { scroll: true });
   }
-  const toStart = () => go({});
+  /** One step back: to wherever the person came from (the home cards skip the start choice). */
+  const toStart = () => {
+    if (window.history.length > 1) router.back();
+    else go({});
+  };
 
   if (docId)
     return (

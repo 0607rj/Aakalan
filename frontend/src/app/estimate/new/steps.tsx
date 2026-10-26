@@ -12,8 +12,10 @@ import type { QuestionImpact } from "@/lib/api/client";
 import {
   type Choice,
   NotIncludedToggle,
+  Mark,
   QuestionGroup,
   shownChoice,
+  TICKS,
 } from "./parts";
 
 export type Level = "basic" | "standard" | "advanced";
@@ -138,7 +140,8 @@ export function Progress({ index, total }: { index: number; total: number }) {
   return (
     <div className="flex items-center gap-4">
       <div
-        className="h-1 w-full overflow-hidden rounded-full bg-muted"
+        className="h-2 w-full overflow-hidden rounded-sm border bg-panel-2"
+        style={TICKS}
         role="progressbar"
         aria-label="Progress"
         aria-valuemin={1}
@@ -146,7 +149,7 @@ export function Progress({ index, total }: { index: number; total: number }) {
         aria-valuenow={index + 1}
       >
         <div
-          className="h-full rounded-full bg-primary transition-[width] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]"
+          className="h-full bg-primary/80 transition-[width] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]"
           style={{ width: `${percent}%` }}
         />
       </div>
@@ -172,13 +175,13 @@ export function StepButtons({
   hint?: string | null;
 }) {
   return (
-    <div className="flex flex-wrap items-center gap-4 border-t pt-6">
-      <Button variant="outline" size="lg" className="h-11" onClick={onBack}>
-        Back
+    <div className="sticky bottom-0 z-10 flex flex-wrap items-center gap-3 border-t bg-background/90 py-4 backdrop-blur">
+      <Button variant="ghost" size="lg" className="h-11" onClick={onBack}>
+        ← Back
       </Button>
       <Button
         size="lg"
-        className="h-11"
+        className="h-11 px-6"
         disabled={nextDisabled}
         onClick={onNext}
       >
@@ -216,7 +219,7 @@ export function LevelsStep({
   return (
     <section className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+        <h1 className="font-display text-3xl sm:text-4xl">
           Change the level of any feature (optional)
         </h1>
         <p className="mt-1 max-w-3xl text-muted-foreground">
@@ -245,13 +248,13 @@ export function LevelsStep({
                     <label
                       key={level.key}
                       className={cn(
-                        "flex cursor-pointer flex-col gap-1 rounded-xl border p-3 transition-colors",
+                        "flex cursor-pointer flex-col gap-1.5 rounded-xl border p-3 transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring",
                         selected
-                          ? "border-primary bg-primary/5 ring-1 ring-primary"
-                          : "hover:border-primary/40 hover:bg-muted/40",
+                          ? "border-primary bg-tape-soft/50 ring-1 ring-primary"
+                          : "hover:border-primary/40 hover:bg-panel-2",
                       )}
                     >
-                      <span className="flex items-center gap-2">
+                      <span className="flex items-start gap-3">
                         <input
                           type="radio"
                           name={`level-${feature.key}`}
@@ -259,11 +262,12 @@ export function LevelsStep({
                           onChange={() =>
                             onChange(feature.key, level.key as Level)
                           }
-                          className="size-4 accent-primary"
+                          className="sr-only"
                         />
+                        <Mark on={selected} round />
                         <span className="font-medium">{level.label}</span>
                       </span>
-                      <span className="pl-6 text-sm text-muted-foreground">
+                      <span className="pl-8 text-sm text-muted-foreground">
                         {level.hint}
                       </span>
                     </label>
@@ -297,14 +301,14 @@ export function CheckStep({
   return (
     <section className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+        <h1 className="font-display text-3xl sm:text-4xl">
           Check your answers
         </h1>
         <p className="mt-1 text-muted-foreground">
           Change anything that is not right, then calculate.
         </p>
       </div>
-      <dl className="flex flex-col divide-y rounded-xl border bg-card">
+      <dl className="slab flex flex-col divide-y overflow-hidden">
         {rows.map((row) => (
           <div
             key={`${row.step}-${row.label}`}
@@ -374,7 +378,7 @@ export function DetailsStep({
   return (
     <section className="flex flex-col gap-8">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+        <h1 className="font-display text-3xl sm:text-4xl">
           A few more details (optional)
         </h1>
         <p className="mt-1 max-w-3xl text-muted-foreground">
@@ -446,7 +450,7 @@ export function ScopeStep({
   return (
     <section className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+        <h1 className="font-display text-3xl sm:text-4xl">
           What else does it need? (optional)
         </h1>
         <p className="mt-1 max-w-3xl text-muted-foreground">
@@ -491,10 +495,10 @@ export function ScopeStep({
                   <div key={item.key} className="flex flex-col gap-1">
                     <label
                       className={cn(
-                        "flex cursor-pointer items-start gap-2 rounded-lg p-2 hover:bg-muted/40",
+                        "flex cursor-pointer items-start gap-3 rounded-lg border border-transparent p-2 hover:bg-panel-2 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring",
                         isSuggested &&
                           !checked &&
-                          "border border-dashed border-primary/40",
+                          "border-dashed border-primary/40",
                         excluded && "opacity-60",
                       )}
                     >
@@ -502,8 +506,9 @@ export function ScopeStep({
                         type="checkbox"
                         checked={checked}
                         onChange={() => onToggle(item.key)}
-                        className="mt-1 size-4 accent-primary"
+                        className="sr-only"
                       />
+                      <Mark on={checked} />
                       <span className="flex flex-col gap-1">
                         <span>
                           {item.label}

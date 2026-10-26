@@ -428,7 +428,7 @@ export function ReviewForm({
           <>
             <section className="flex flex-col gap-4">
               <div>
-                <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+                <h1 className="font-display text-3xl sm:text-4xl">
                   Here&apos;s what we found in {doc.filename}
                 </h1>
                 <p className="mt-1 text-sm text-muted-foreground">
@@ -636,9 +636,7 @@ export function ReviewForm({
         ) : steps.current === "facts" ? (
           <section className="flex flex-col gap-6">
             <div>
-              <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
-                Key numbers
-              </h1>
+              <h1 className="font-display text-3xl sm:text-4xl">Key numbers</h1>
               <p className="mt-1 text-muted-foreground">
                 Numbers from the document. Leave a box empty if it is not stated
                 — we will use a typical value.
@@ -784,7 +782,7 @@ export function ReviewForm({
         ) : steps.current === "found_answers" ? (
           <section className="flex flex-col gap-4">
             <div>
-              <h1 className="text-2xl font-semibold tracking-tight sm:text-3xl">
+              <h1 className="font-display text-3xl sm:text-4xl">
                 Also found in the document
               </h1>
               <p className="mt-1 text-muted-foreground">
