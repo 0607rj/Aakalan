@@ -496,9 +496,15 @@ function ManualForm({
                   })),
                 ];
                 const outKeys = new Set(out.map((o) => o.key));
+                // a new reading replaces the previous one's ticks (the user's own stay)
+                const before = new Set(Object.keys(reasons));
                 setFeatures((now) => [
                   ...new Set([
-                    ...now.filter((k) => !outKeys.has(k)),
+                    ...now.filter(
+                      (k) =>
+                        !outKeys.has(k) &&
+                        !(before.has(k) && !keys.includes(k)),
+                    ),
                     ...keys.filter((k) => tickable.has(k)),
                   ]),
                 ]);

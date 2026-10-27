@@ -2,19 +2,28 @@
 patients book appointments and pay online"). The text is read like a one-page requirement
 document: by the AI reader when a key is configured (rule 7: fenced as data; rule 1: it only
 suggests), else by the keyword reader. Every suggestion must quote the user's own words, and
-nothing is priced until the user confirms the ticks (rule 6). Nothing is stored."""
+nothing is priced until the user confirms the ticks (rule 6). The AI's reading is kept per
+organisation by a fingerprint of the text (never the text), so the same words give the same
+features every time (OPEN_QUESTIONS 181); nothing else is stored."""
 
+import hashlib
 import logging
 import re
 
 from pydantic import BaseModel
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.orm import Session
 
+from app.core.config import get_settings
+from app.core.tenancy import scoped
 from app.llm.client import LLMClient, LLMNotConfiguredError, LLMRefusedError, get_llm_client
+from app.models import DescriptionReading
 from app.services.documents.parsing import Page, ParsedDocument
 from app.services.extraction.basic_reader import basic_read
 from app.services.extraction.tender import (
     BASIC_READER_VERSION,
     PROMPT_VERSION,
+    ExtractionOutput,
     FoundOtherFeature,
     TenderExtraction,
     ai_read,
@@ -115,7 +124,37 @@ def ruled_out(cfg: QuickConfig, text: str) -> dict[str, str]:
     return {k: q for k, q in negated.items() if k not in wanted}
 
 
-def suggest_features(cfg: QuickConfig, text: str) -> Suggestion:
+def _remembered(
+    db: Session, org_id: str, llm: LLMClient, cfg: QuickConfig, parsed: ParsedDocument, text: str
+) -> ExtractionOutput:
+    """The AI's reading of this exact text for the organisation: the kept one, else a new one,
+    kept (OPEN_QUESTIONS 181). The same words then give the same features on every click."""
+    key = {
+        "text_sha256": hashlib.sha256(text.encode("utf-8")).hexdigest(),
+        "prompt_version": PROMPT_VERSION,
+        "model": get_settings().llm_model,
+    }
+    query = scoped(DescriptionReading, org_id).filter_by(**key)
+    kept = db.scalars(query).first()
+    if kept is not None:
+        return ExtractionOutput.model_validate(kept.output)
+    output = ai_read(llm, cfg, parsed).output
+    db.add(DescriptionReading(org_id=org_id, output=output.model_dump(mode="json"), **key))
+    try:
+        db.commit()
+    except IntegrityError:  # the same text read twice at once: keep the first
+        db.rollback()
+        kept = db.scalars(query).first()
+        if kept is not None:
+            return ExtractionOutput.model_validate(kept.output)
+    return output
+
+
+def suggest_features(
+    cfg: QuickConfig, text: str, db: Session | None = None, org_id: str | None = None
+) -> Suggestion:
+    """`db` and `org_id`: keep the AI's reading for the organisation (same words, same
+    features); without them every call reads afresh."""
     parsed = ParsedDocument(kind="text", pages=[Page(1, text)], approximate_pages=False)
     llm: LLMClient | None
     try:
@@ -125,7 +164,12 @@ def suggest_features(cfg: QuickConfig, text: str) -> Suggestion:
     note = None
     if llm is not None:
         try:
-            raw, reader, version = ai_read(llm, cfg, parsed).output, "ai", PROMPT_VERSION
+            raw = (
+                _remembered(db, org_id, llm, cfg, parsed, text)
+                if db is not None and org_id is not None
+                else ai_read(llm, cfg, parsed).output
+            )
+            reader, version = "ai", PROMPT_VERSION
         except LLMRefusedError:
             raw = None
         except Exception:  # network / API errors: fall back to the keyword reader

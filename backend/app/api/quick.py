@@ -420,10 +420,11 @@ class DescribeIn(BaseModel):
 
 
 @router.post("/quick-estimate/suggest", response_model=Suggestion)
-def suggest(body: DescribeIn, _user: CurrentUser) -> Suggestion:
-    """Features (and answers) suggested from the user's own description; nothing is saved
-    or priced, the user ticks and confirms them on the form."""
-    return suggest_features(quick_config(), body.text.strip())
+def suggest(body: DescribeIn, db: DbSession, user: CurrentUser) -> Suggestion:
+    """Features (and answers) suggested from the user's own description; nothing is priced,
+    the user ticks and confirms them on the form. The AI's reading is kept for the company, so
+    the same words give the same features every time (OPEN_QUESTIONS 181)."""
+    return suggest_features(quick_config(), body.text.strip(), db, user.org_id)
 
 
 @router.post("/quick-estimate/draft-stories", response_model=DraftOut)

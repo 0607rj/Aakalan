@@ -15,6 +15,7 @@ from app.models.project import (
     Requirement,
     Template,
 )
+from app.models.reading import DescriptionReading
 from app.models.reference import (
     CatalogComponent,
     ParameterSet,
@@ -32,6 +33,7 @@ __all__ = [
     "ComponentInstance",
     "ContactMessage",
     "CostLine",
+    "DescriptionReading",
     "Document",
     "Estimate",
     "OneTimeCode",

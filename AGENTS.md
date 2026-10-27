@@ -97,6 +97,9 @@ backend/
                           #   table shared_researched_components + seeds/research/library.yaml
       documents/          # upload storage + PDF/DOCX parsing to page texts
       extraction/         # tender reading: AI (LLMClient) or basic keyword reader + citation check,
+                          #   describe.py: "Find features" from a typed description; the AI's
+                          #   reading is kept per org by the text's sha256 (table
+                          #   description_readings), so the same words give the same features
                           #   merge of several files (corrigenda override), pre-bid queries;
                           #   inventory.py: AI lists quoted items for the independent check
                           #   client_provided.py: "hosting / domain / SSL provided by the
