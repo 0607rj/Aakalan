@@ -33,7 +33,7 @@ export function Keypad({ className }: { className?: string }) {
     >
       <div
         aria-hidden="true"
-        className="grid grid-cols-4 gap-2 rounded-[22px] border bg-card p-3 shadow-[0_1px_2px_rgb(27_36_51/0.05),0_12px_28px_-20px_rgb(27_36_51/0.2)] sm:gap-2.5 sm:p-4"
+        className="grid grid-cols-4 gap-2 rounded-[22px] border bg-card p-3 shadow-[0_1px_2px_rgb(0_0_0/0.05),0_12px_28px_-20px_rgb(0_0_0/0.2)] sm:gap-2.5 sm:p-4"
       >
         {KEY_ROWS.flat().map((k) => {
           const sum = SUMS[k];
@@ -41,7 +41,7 @@ export function Keypad({ className }: { className?: string }) {
             <span
               key={k}
               className={cn(
-                "key flex size-14 flex-col items-center justify-center rounded-xl border border-foreground/[0.08] bg-gradient-to-b from-card to-muted font-mono text-lg text-foreground/85 shadow-[inset_0_-2px_0_rgb(27_36_51/0.08)] transition-[transform,box-shadow,color] duration-150 select-none hover:-translate-y-0.5 hover:text-primary hover:shadow-[inset_0_-2px_0_rgb(27_36_51/0.08),0_6px_14px_-8px_rgb(27_36_51/0.35)] active:translate-y-px active:shadow-none sm:size-16",
+                "key flex size-14 flex-col items-center justify-center rounded-xl border border-foreground/[0.08] bg-gradient-to-b from-card to-muted font-mono text-lg text-foreground/85 shadow-[inset_0_-2px_0_rgb(0_0_0/0.08)] transition-[transform,box-shadow,color] duration-150 select-none hover:-translate-y-0.5 hover:text-primary hover:shadow-[inset_0_-2px_0_rgb(0_0_0/0.08),0_6px_14px_-8px_rgb(0_0_0/0.35)] active:translate-y-px active:shadow-none sm:size-16",
                 sum && "sum",
               )}
               style={sum ? ({ "--d": sum.order } as CSSProperties) : undefined}
@@ -58,7 +58,7 @@ export function Keypad({ className }: { className?: string }) {
       </div>
       <Link
         href="/estimate/new"
-        className="keypad-auto flex items-center gap-2 rounded-xl border border-foreground/[0.08] bg-gradient-to-b from-card to-muted px-6 py-3 font-semibold text-foreground/80 shadow-[inset_0_-2px_0_rgb(27_36_51/0.08)] transition-transform duration-150 hover:-translate-y-0.5 active:translate-y-px"
+        className="keypad-auto flex items-center gap-2 rounded-xl border border-foreground/[0.08] bg-gradient-to-b from-card to-muted px-6 py-3 font-semibold text-foreground/80 shadow-[inset_0_-2px_0_rgb(0_0_0/0.08)] transition-transform duration-150 hover:-translate-y-0.5 active:translate-y-px"
       >
         <svg
           aria-hidden="true"

@@ -246,15 +246,16 @@ function WhenBadge({ when, years }: { when: Category["when"]; years: number }) {
   );
 }
 
-/** Shades for the price categories: blues for the work, saffron for support, greys after. */
+/** Shades for the price categories, from the palette: the accent for the work, the likely
+ * mark and green next, greys after. */
 const SHADES = [
   "var(--primary)",
-  "#4fa9de",
-  "#a6d8f5",
-  "#f2a541",
-  "#556070",
-  "#a5afbc",
-  "#d5dbe2",
+  "var(--tape-2)",
+  "var(--warm)",
+  "var(--ai)",
+  "var(--muted-foreground)",
+  "var(--input)",
+  "var(--border)",
 ];
 
 /** The categories as one bar, each part as wide as its share of the price. */

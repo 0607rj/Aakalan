@@ -164,7 +164,7 @@ export function AppWindow({
   return (
     <div
       className={cn(
-        "overflow-hidden rounded-[14px] border bg-card shadow-[0_1px_2px_rgb(27_36_51/0.05),0_12px_28px_-20px_rgb(27_36_51/0.2)]",
+        "overflow-hidden rounded-[14px] border bg-card shadow-[0_1px_2px_rgb(0_0_0/0.05),0_12px_28px_-20px_rgb(0_0_0/0.2)]",
         className,
       )}
     >

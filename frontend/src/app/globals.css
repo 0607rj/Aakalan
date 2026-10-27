@@ -4,37 +4,40 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /*
- * Aakalan's look: a measuring desk in daylight. Blue-grey paper, deep slate type (never pure
- * black), white sheets with hairline rules, one sky blue for the price and the main action,
- * saffron only for the most likely mark, green for what AI tools save. IBM Plex throughout.
+ * Aakalan's colours: an off-white page, white panels with hairline edges, near-black type.
+ * Violet (`--tape`) marks the price, the main action and the ranges; purple (`--warm`) is the
+ * most likely mark; green (`--ai`) is what AI tools save. IBM Plex for reading, Bricolage for
+ * headlines.
  */
 :root {
   color-scheme: light;
-  --background: #f3f7fb;
-  --foreground: #1b2433;
+  --background: #f7f7f4;
+  --foreground: #16181d;
   --card: #ffffff;
-  --card-foreground: #1b2433;
-  --muted: #e9edf1;
-  --muted-foreground: #556070;
-  --border: #dde3ea;
-  --input: #c3ccd7;
-  --ring: #0b78b8;
-  --primary: #0b78b8;
-  --primary-foreground: #ffffff;
-  --secondary: #e9edf1;
-  --secondary-foreground: #1b2433;
-  --destructive: #b42318;
+  --card-foreground: var(--foreground);
+  --muted: #efefeb;
+  --muted-foreground: #5d616b;
+  --border: #e4e4de;
+  --input: #cfcfc8;
+  --secondary: var(--muted);
+  --secondary-foreground: var(--foreground);
+  --destructive: #c8321f;
   --destructive-foreground: #ffffff;
-  --success: #1d7048;
-  --warning: #8a5300;
-  --warning-muted: #fbf2de;
-  --tape: #0b78b8; /* the signal: ranges, the logo, the main action */
-  --tape-2: #2a95d4;
-  --tape-soft: #e2f2fd;
-  --warm: #d97a1f; /* saffron: the most likely mark */
-  --ai: #1d7a4f; /* what AI tools save */
-  --ai-soft: #e5f4ec;
-  --panel-2: #f8fafb;
+  --success: #15803d;
+  --warning: #9a5b00;
+  --warning-muted: #fbf1dc;
+  --panel-2: #fafaf8;
+  --grid-line: rgb(22 24 29 / 0.06);
+  --link-rule: rgb(15 23 42 / 0.25);
+  --primary: var(--tape);
+  --ring: var(--tape);
+  --primary-foreground: #ffffff;
+  --tape: #6d5ae6; /* violet: the price, the main action, the ranges */
+  --tape-2: #5845d6;
+  --tape-soft: #ebe8fc;
+  --warm: #a338d6; /* purple: the most likely mark */
+  --ai: #15803d; /* what AI tools save */
+  --ai-soft: #e3f4e9;
   --radius: 0.5rem;
   --ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -101,7 +104,7 @@
   }
 
   ::selection {
-    background: rgb(11 120 184 / 0.3);
+    background: color-mix(in srgb, var(--tape) 30%, transparent);
   }
 
   :focus-visible {
@@ -128,8 +131,8 @@
   /* A faint square grid of hairlines, fading out towards the edges (heroes, closings). */
   .grid-lines {
     background-image:
-      linear-gradient(to right, rgb(27 36 51 / 0.07) 1px, transparent 1px),
-      linear-gradient(to bottom, rgb(27 36 51 / 0.07) 1px, transparent 1px);
+      linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
     background-size: 64px 64px;
     background-position: -1px -1px;
     mask-image: radial-gradient(
@@ -163,7 +166,7 @@
     align-items: center;
     gap: 0.4rem;
     padding-bottom: 0.2rem;
-    border-bottom: 1px solid rgb(27 36 51 / 0.25);
+    border-bottom: 1px solid var(--link-rule);
     font-weight: 600;
     color: var(--foreground);
     transition: border-color 0.2s var(--ease);
@@ -200,15 +203,15 @@
     background: var(--card);
     border: 1px solid var(--border);
     box-shadow:
-      0 1px 2px rgb(27 36 51 / 0.05),
-      0 10px 24px -18px rgb(27 36 51 / 0.16);
+      0 1px 2px rgb(0 0 0 / 0.05),
+      0 10px 24px -18px rgb(0 0 0 / 0.16);
   }
 
-  /* The lit (coral) button face. */
+  /* The lit (accent) button face. */
   .lit {
     background: var(--primary);
     color: var(--primary-foreground);
-    box-shadow: 0 1px 2px rgb(27 36 51 / 0.14);
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.14);
   }
 
   /* Tick marks of a measuring tape (small every 4px, tall every 20px). */
@@ -223,12 +226,12 @@
     background-position: 0 0;
   }
 
-  /* A soft coral glow behind a section. */
+  /* A soft accent glow behind a section. */
   .glow {
     background:
       radial-gradient(
         60% 50% at 50% 0%,
-        rgb(11 120 184 / 0.1),
+        color-mix(in srgb, var(--tape) 10%, transparent),
         transparent 70%
       ),
       var(--background);
@@ -244,7 +247,7 @@
 }
 
 .app-ui ::selection {
-  background: rgb(11 120 184 / 0.16);
+  background: color-mix(in srgb, var(--tape) 16%, transparent);
 }
 
 .app-ui h1,
@@ -253,15 +256,15 @@
   letter-spacing: -0.015em;
 }
 
-/* the main action: flat red ink, no glow */
+/* the main action: flat accent, no glow */
 .app-ui .lit {
   background: var(--primary);
   color: var(--primary-foreground);
-  box-shadow: 0 1px 2px rgb(27 36 51 / 0.12);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.12);
 }
 
 .lit:hover {
-  background: #08639a;
+  background: var(--tape-2);
   filter: none;
 }
 
@@ -280,8 +283,8 @@
   border: 1px solid var(--border);
   border-radius: 0.75rem;
   box-shadow:
-    0 1px 2px rgb(27 36 51 / 0.04),
-    0 8px 24px -12px rgb(27 36 51 / 0.12);
+    0 1px 2px rgb(0 0 0 / 0.04),
+    0 8px 24px -12px rgb(0 0 0 / 0.12);
 }
 
 /* Small figures in labels and table heads. */
@@ -296,7 +299,7 @@
 }
 
 .app-ui ::-webkit-scrollbar-thumb {
-  background: #c3ccd7;
+  background: #3a3a41;
   border: 3px solid var(--background);
   border-radius: 999px;
 }
@@ -436,8 +439,8 @@
 /* A clause being marked, left to right. */
 .fig-mark {
   background-image: linear-gradient(
-    rgb(11 120 184 / 0.16),
-    rgb(11 120 184 / 0.16)
+    color-mix(in srgb, var(--tape) 16%, transparent),
+    color-mix(in srgb, var(--tape) 16%, transparent)
   );
   background-repeat: no-repeat;
   background-size: 100% 100%;
@@ -466,8 +469,8 @@
     box-shadow:
       inset 0 1px 0 rgb(255 255 255 / 0.04),
       inset 0 -1px 0 rgb(0 0 0 / 0.45),
-      0 0 0 1px rgb(11 120 184 / 0.55),
-      0 4px 12px rgb(11 120 184 / 0.25);
+      0 0 0 1px color-mix(in srgb, var(--tape) 55%, transparent),
+      0 4px 12px color-mix(in srgb, var(--tape) 25%, transparent);
     transform: translateY(2px);
   }
 }
@@ -479,8 +482,8 @@
     box-shadow:
       inset 0 1px 0 rgb(255 255 255 / 0.45),
       inset 0 -3px 0 rgb(0 0 0 / 0.2),
-      0 0 0 1px rgb(11 120 184 / 0.6),
-      0 0 70px rgb(11 120 184 / 0.4);
+      0 0 0 1px color-mix(in srgb, var(--tape) 60%, transparent),
+      0 0 70px color-mix(in srgb, var(--tape) 40%, transparent);
   }
 }
 

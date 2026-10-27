@@ -3,8 +3,10 @@ import Link from "next/link";
 import { cn } from "@/lib/utils";
 
 /**
- * The mark: a piece of measuring tape. A sky-blue case, the light tape with tick marks, and a
- * saffron marker where the most likely cost sits.
+ * The mark: the A of Aakalan drawn as an estimate. Its two strokes are a bell curve, the spread
+ * of possible costs; the crossbar is the low-to-high range, and the dot sits where the most likely
+ * cost is (left of centre: overruns go further than savings). White and violet on an ink tile, so
+ * it reads at 16px as well as large.
  */
 export function LogoMark({ className }: { className?: string }) {
   return (
@@ -14,35 +16,27 @@ export function LogoMark({ className }: { className?: string }) {
       focusable="false"
       className={cn("size-9", className)}
     >
-      <rect
-        x="1"
-        y="1"
-        width="38"
-        height="38"
-        rx="10"
-        fill="#0b78b8"
-        stroke="#08639a"
+      <rect width="40" height="40" rx="10" fill="#16181d" />
+      <path
+        d="M8.5 31 C14 31 15.2 9.5 20 9.5 C24.8 9.5 26 31 31.5 31"
+        fill="none"
+        stroke="#ffffff"
+        strokeWidth="3.2"
+        strokeLinecap="round"
       />
-      <rect x="7" y="17" width="26" height="10" rx="2" fill="#f7f4ec" />
-      {[10, 14, 18, 22, 26, 30].map((x, i) => (
-        <line
-          key={x}
-          x1={x}
-          x2={x}
-          y1="17"
-          y2={i % 2 === 0 ? 23 : 21}
-          stroke="#0b78b8"
-          strokeWidth="1.4"
-        />
-      ))}
-      <path d="M22 8 L26 8 L24 13 Z" fill="#f2a541" />
-      <line
-        x1="24"
-        x2="24"
-        y1="12"
-        y2="29"
-        stroke="#f2a541"
-        strokeWidth="1.6"
+      <path
+        d="M11.5 24.5 H28.5"
+        stroke="#8f7ff0"
+        strokeWidth="2.6"
+        strokeLinecap="round"
+      />
+      <circle
+        cx="18.4"
+        cy="24.5"
+        r="2.9"
+        fill="#c9bfff"
+        stroke="#16181d"
+        strokeWidth="1.3"
       />
     </svg>
   );
@@ -63,7 +57,9 @@ export function Logo({
     >
       <LogoMark />
       <span className="flex flex-col leading-none">
-        <span className="font-wide text-lg font-semibold">Aakalan</span>
+        <span className="font-display text-[1.2rem] tracking-[-0.04em]">
+          Aakalan
+        </span>
         <span className="text-[11px] text-muted-foreground" lang="hi">
           आकलन
         </span>

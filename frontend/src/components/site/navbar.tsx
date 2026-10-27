@@ -49,7 +49,7 @@ export function NavBar({
 
   return (
     <header className="sticky top-0 z-40 px-3 pt-3 sm:px-4">
-      <div className="mx-auto max-w-6xl rounded-2xl border border-foreground/[0.08] bg-background/80 shadow-[0_1px_0_rgb(255_255_255/0.7)_inset,0_12px_32px_-20px_rgb(27_36_51/0.35)] backdrop-blur-md supports-[backdrop-filter]:bg-background/70">
+      <div className="mx-auto max-w-6xl rounded-2xl border border-foreground/[0.08] bg-background/80 shadow-[0_1px_0_rgb(255_255_255/0.04)_inset,0_12px_32px_-20px_rgb(0_0_0/0.35)] backdrop-blur-md supports-[backdrop-filter]:bg-background/70">
         <div className="flex h-14 items-center gap-6 pr-2 pl-4">
           <Logo href={homeHref} />
           <nav aria-label="Main" className="hidden items-center gap-1 md:flex">

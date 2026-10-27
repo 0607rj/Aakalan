@@ -262,7 +262,7 @@ function UserCard({
   return (
     <li
       className={cn(
-        "flex flex-col gap-4 rounded-xl border bg-card p-4 shadow-[0_1px_2px_rgb(27_36_51/0.04)] sm:p-5",
+        "flex flex-col gap-4 rounded-xl border bg-card p-4 shadow-[0_1px_2px_rgb(0_0_0/0.04)] sm:p-5",
         !row.is_active && "border-dashed bg-transparent",
       )}
     >

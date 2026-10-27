@@ -194,7 +194,7 @@ export function NotPricedFigure({ className }: { className?: string }) {
   ];
   return (
     <figure data-reveal className={cn("flex items-center gap-4", className)}>
-      <span className="relative flex h-32 w-24 shrink-0 flex-col gap-1.5 rounded-lg border bg-card p-3 shadow-[0_1px_2px_rgb(27_36_51/0.06)]">
+      <span className="relative flex h-32 w-24 shrink-0 flex-col gap-1.5 rounded-lg border bg-card p-3 shadow-[0_1px_2px_rgb(0_0_0/0.06)]">
         <FileTextIcon
           size={22}
           weight="duotone"

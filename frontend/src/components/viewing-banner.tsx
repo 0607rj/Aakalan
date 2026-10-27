@@ -23,7 +23,7 @@ export function ViewingBanner() {
   }
 
   return (
-    <div className="bg-warm text-white">
+    <div className="bg-tape text-primary-foreground">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2.5 text-sm sm:px-6">
         <EyeIcon size={18} weight="bold" aria-hidden="true" />
         <span className="flex-1">
@@ -34,7 +34,7 @@ export function ViewingBanner() {
         <button
           type="button"
           onClick={back}
-          className="rounded-full bg-white/15 px-3 py-1 font-semibold transition-colors hover:bg-white/25 focus-visible:ring-2 focus-visible:ring-white focus-visible:outline-none"
+          className="rounded-full bg-black/15 px-3 py-1 font-semibold transition-colors hover:bg-black/25 focus-visible:ring-2 focus-visible:ring-black focus-visible:outline-none"
         >
           Back to Admin
         </button>

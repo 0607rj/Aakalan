@@ -31,7 +31,7 @@ import { IconTile, type IconType, type Tone } from "./illustrations";
 
 const d = (n: number) => ({ "--d": n }) as CSSProperties;
 
-const CARD = "rounded-2xl border bg-card shadow-[0_1px_2px_rgb(27_36_51/0.06)]";
+const CARD = "rounded-2xl border bg-card shadow-[0_1px_2px_rgb(0_0_0/0.06)]";
 
 const MOSAIC: {
   name: string;

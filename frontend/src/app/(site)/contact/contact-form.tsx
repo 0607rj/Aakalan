@@ -95,7 +95,7 @@ export function ContactForm() {
     <form
       onSubmit={submit}
       noValidate
-      className="flex flex-col gap-5 rounded-[22px] border bg-card p-6 shadow-[0_1px_2px_rgb(27_36_51/0.05)] sm:p-8"
+      className="flex flex-col gap-5 rounded-[22px] border bg-card p-6 shadow-[0_1px_2px_rgb(0_0_0/0.05)] sm:p-8"
     >
       <fieldset className="flex flex-col gap-2">
         <legend className="mb-2 text-sm font-semibold">
