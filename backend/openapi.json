@@ -1957,6 +1957,110 @@
         }
       }
     },
+    "/estimates/{estimate_id}/stories": {
+      "get": {
+        "tags": [
+          "quick estimate"
+        ],
+        "summary": "Stories Of",
+        "description": "What people can do with each feature: the user's saved stories, else the document's.",
+        "operationId": "stories_of_estimates__estimate_id__stories_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "estimate_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Estimate Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoriesOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "quick estimate"
+        ],
+        "summary": "Save Stories Of",
+        "description": "Save the user's stories (edited, or an AI draft they checked). They feed the build-size\ncheck only: no price changes (OPEN_QUESTIONS 174).",
+        "operationId": "save_stories_of_estimates__estimate_id__stories_put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "estimate_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Estimate Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/StoriesIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StoriesOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/estimates/{estimate_id}/options": {
       "get": {
         "tags": [
@@ -4488,6 +4592,23 @@
               }
             ],
             "title": "Team Ai Maturity"
+          },
+          "ai_passthrough": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "all",
+                  "most",
+                  "half",
+                  "keep"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Passthrough"
           }
         },
         "type": "object",
@@ -4551,6 +4672,23 @@
               }
             ],
             "title": "Team Ai Maturity"
+          },
+          "ai_passthrough": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "all",
+                  "most",
+                  "half",
+                  "keep"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ai Passthrough"
           }
         },
         "type": "object",
@@ -6291,6 +6429,43 @@
           "judged"
         ],
         "title": "FeatureSize"
+      },
+      "FeatureStories": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "stories": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Stories"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "yours",
+              "document",
+              "none"
+            ],
+            "title": "Source"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "label",
+          "stories",
+          "source"
+        ],
+        "title": "FeatureStories",
+        "description": "What people can do with one priced feature: its user stories, as the user saved them\n(`yours`), else as the document asks (`document`); `none` = no stories yet."
       },
       "Flag": {
         "properties": {
@@ -9287,6 +9462,12 @@
             "maxProperties": 60,
             "title": "Feature Stories",
             "default": {}
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 4000,
+            "title": "Description",
+            "default": ""
           }
         },
         "type": "object",
@@ -9490,6 +9671,12 @@
             "maxProperties": 60,
             "title": "Feature Stories",
             "default": {}
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 4000,
+            "title": "Description",
+            "default": ""
           }
         },
         "type": "object",
@@ -11809,6 +11996,52 @@
           "hint"
         ],
         "title": "StandardBlockOut"
+      },
+      "StoriesIn": {
+        "properties": {
+          "stories": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "type": "object",
+            "maxProperties": 60,
+            "title": "Stories"
+          }
+        },
+        "type": "object",
+        "required": [
+          "stories"
+        ],
+        "title": "StoriesIn"
+      },
+      "StoriesOut": {
+        "properties": {
+          "features": {
+            "items": {
+              "$ref": "#/components/schemas/FeatureStories"
+            },
+            "type": "array",
+            "title": "Features"
+          },
+          "can_draft": {
+            "type": "boolean",
+            "title": "Can Draft"
+          },
+          "description": {
+            "type": "string",
+            "title": "Description"
+          }
+        },
+        "type": "object",
+        "required": [
+          "features",
+          "can_draft",
+          "description"
+        ],
+        "title": "StoriesOut"
       },
       "StoryFeature": {
         "properties": {

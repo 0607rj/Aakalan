@@ -628,6 +628,31 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/estimates/{estimate_id}/stories": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Stories Of
+         * @description What people can do with each feature: the user's saved stories, else the document's.
+         */
+        get: operations["stories_of_estimates__estimate_id__stories_get"];
+        /**
+         * Save Stories Of
+         * @description Save the user's stories (edited, or an AI draft they checked). They feed the build-size
+         *     check only: no price changes (OPEN_QUESTIONS 174).
+         */
+        put: operations["save_stories_of_estimates__estimate_id__stories_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/estimates/{estimate_id}/options": {
         parameters: {
             query?: never;
@@ -1515,6 +1540,8 @@ export interface components {
             };
             /** Team Ai Maturity */
             team_ai_maturity?: ("none" | "low" | "medium" | "high") | null;
+            /** Ai Passthrough */
+            ai_passthrough?: ("all" | "most" | "half" | "keep") | null;
         };
         /** CompanySettings */
         "CompanySettings-Output": {
@@ -1541,6 +1568,8 @@ export interface components {
             };
             /** Team Ai Maturity */
             team_ai_maturity?: ("none" | "low" | "medium" | "high") | null;
+            /** Ai Passthrough */
+            ai_passthrough?: ("all" | "most" | "half" | "keep") | null;
         };
         /**
          * Complexity
@@ -2142,6 +2171,24 @@ export interface components {
             position: "below" | "inside" | "above";
             /** Judged */
             judged: boolean;
+        };
+        /**
+         * FeatureStories
+         * @description What people can do with one priced feature: its user stories, as the user saved them
+         *     (`yours`), else as the document asks (`document`); `none` = no stories yet.
+         */
+        FeatureStories: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Stories */
+            stories: string[];
+            /**
+             * Source
+             * @enum {string}
+             */
+            source: "yours" | "document" | "none";
         };
         /** Flag */
         Flag: {
@@ -3392,6 +3439,11 @@ export interface components {
             feature_stories: {
                 [key: string]: string[];
             };
+            /**
+             * Description
+             * @default
+             */
+            description: string;
         };
         /** QuickRequest */
         "QuickRequest-Output": {
@@ -3475,6 +3527,11 @@ export interface components {
             feature_stories: {
                 [key: string]: string[];
             };
+            /**
+             * Description
+             * @default
+             */
+            description: string;
         };
         /** QuickSummary */
         QuickSummary: {
@@ -4333,6 +4390,22 @@ export interface components {
             label: string;
             /** Hint */
             hint: string;
+        };
+        /** StoriesIn */
+        StoriesIn: {
+            /** Stories */
+            stories: {
+                [key: string]: string[];
+            };
+        };
+        /** StoriesOut */
+        StoriesOut: {
+            /** Features */
+            features: components["schemas"]["FeatureStories"][];
+            /** Can Draft */
+            can_draft: boolean;
+            /** Description */
+            description: string;
         };
         /** StoryFeature */
         StoryFeature: {
@@ -6079,6 +6152,72 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["QuickSummary"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    stories_of_estimates__estimate_id__stories_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                estimate_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoriesOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    save_stories_of_estimates__estimate_id__stories_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                estimate_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StoriesIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StoriesOut"];
                 };
             };
             /** @description Validation Error */

@@ -145,6 +145,8 @@ def form_questions(cfg: QuickConfig, country: str) -> dict[str, Question]:
     for key, q in cfg.questions.items():
         if q.group == "hidden":
             continue
+        if any(o.retired for o in q.options):
+            q = q.model_copy(update={"options": [o for o in q.options if not o.retired]})
         if key == HOSTING:
             shown = [o for o in q.options if o.answers.get("hosting_provider") in allowed]
             default = q.default if q.default in [o.value for o in shown] else shown[0].value

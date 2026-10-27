@@ -43,6 +43,7 @@ import {
 } from "./check";
 import { Downloads } from "./downloads";
 import { RealityCheck } from "./reality";
+import { FeatureStoriesSection } from "./stories";
 
 function Fact({ label, value }: { label: string; value: string }) {
   return (
@@ -1062,6 +1063,7 @@ function SummaryView({
           <BidCheckCard summary={summary} />
           <CostSummary summary={summary} />
           <WhatsIncluded summary={summary} options={options} />
+          <FeatureStoriesSection summary={summary} onChange={onChange} />
           <OngoingCosts summary={summary} />
 
           {hasTeam ? (

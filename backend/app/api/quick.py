@@ -19,11 +19,14 @@ from app.services.quick.service import (
     QuestionImpact,
     QuickRequest,
     QuickSummary,
+    StoriesOut,
     confirm_check,
     create_quick_estimate,
+    estimate_stories,
     feature_level_options,
     priced_options,
     question_impact,
+    save_stories,
     standard_blocks,
     summarise,
     summary_for,
@@ -286,6 +289,32 @@ def confirm_independent_check(estimate_id: str, db: DbSession, user: EditorUser)
     project = get_owned(db, Project, estimate.project_id, user.org_id)
     confirm_check(db, user, estimate)
     return summary_for(db, estimate, project, quick_config(), margin_visible=can_see_margin(user))
+
+
+@router.get("/estimates/{estimate_id}/stories", response_model=StoriesOut)
+def stories_of(estimate_id: str, db: DbSession, user: CurrentUser) -> StoriesOut:
+    """What people can do with each feature: the user's saved stories, else the document's."""
+    estimate = get_owned(db, Estimate, estimate_id, user.org_id)
+    project = get_owned(db, Project, estimate.project_id, user.org_id)
+    return estimate_stories(db, quick_config(), project, can_draft=ai_available())
+
+
+class StoriesIn(BaseModel):
+    # feature key (or a custom feature's name) -> its stories; an empty list removes the user's
+    stories: dict[str, list[str]] = Field(max_length=60)
+
+
+@router.put("/estimates/{estimate_id}/stories", response_model=StoriesOut)
+def save_stories_of(
+    estimate_id: str, body: StoriesIn, db: DbSession, user: EditorUser
+) -> StoriesOut:
+    """Save the user's stories (edited, or an AI draft they checked). They feed the build-size
+    check only: no price changes (OPEN_QUESTIONS 174)."""
+    estimate = get_owned(db, Estimate, estimate_id, user.org_id)
+    project = get_owned(db, Project, estimate.project_id, user.org_id)
+    cfg = quick_config()
+    save_stories(db, cfg, project, body.stories)
+    return estimate_stories(db, cfg, project, can_draft=ai_available())
 
 
 @router.get("/estimates/{estimate_id}/options", response_model=list[PricedOption])

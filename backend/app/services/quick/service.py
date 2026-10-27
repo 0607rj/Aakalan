@@ -215,6 +215,9 @@ class QuickRequest(BaseModel):
     feature_stories: dict[
         str, Annotated[list[Annotated[str, Field(max_length=300)]], Field(max_length=100)]
     ] = Field(default={}, max_length=60)
+    # What the user typed about the software (the form's description), kept so user stories can
+    # be drafted later from the results page. Never priced, not part of the seed.
+    description: str = Field(default="", max_length=4000)
 
 
 class PlainPart(BaseModel):
@@ -1227,14 +1230,18 @@ def _document_context(
 
 
 AI_USE = "ai_use"
+AI_PASSTHROUGH = "ai_passthrough"
 
 
 def with_company_defaults(db: Session, user: User, req: QuickRequest) -> QuickRequest:
-    """An unanswered AI-use question follows the company's saved AI level (Settings)."""
-    level = company_settings(db, user.org_id).team_ai_maturity
-    if level is None or AI_USE in req.choices:
+    """Unanswered company questions follow the company's settings: the team's AI level and
+    how much of the AI saving is passed on. The answer is saved with the estimate."""
+    settings = company_settings(db, user.org_id)
+    saved = {AI_USE: settings.team_ai_maturity, AI_PASSTHROUGH: settings.ai_passthrough}
+    given = {k: v for k, v in saved.items() if v is not None and k not in req.choices}
+    if not given:
         return req
-    return req.model_copy(update={"choices": {**req.choices, AI_USE: level}})
+    return req.model_copy(update={"choices": {**req.choices, **given}})
 
 
 def with_catalog_blocks(
@@ -1350,7 +1357,8 @@ def request_seed(req: QuickRequest, doc: Document | None) -> int:
     feature one module, keep the seed of a request made before those fields existed."""
     # user stories feed the size check only: they never move the price, not even its seed
     asked = req.model_dump(
-        mode="json", exclude={"document_id", "name", "answered", "feature_stories"}
+        mode="json",
+        exclude={"document_id", "name", "answered", "feature_stories", "description"},
     )
     if not asked["not_included"]:
         del asked["not_included"]
@@ -1437,6 +1445,8 @@ def question_impact(
             continue
         prices = []
         for option in question.options:
+            if option.retired:  # not offered on the form
+                continue
             variant = req.model_copy(update={"choices": {**req.choices, key: option.value}})
             prices.append(
                 OptionPrice(
@@ -2559,39 +2569,135 @@ def _reused_build(cfg: QuickConfig, rules: SizeCheck, project: Project) -> str |
     return options.get(str(value), str(value))
 
 
-def _story_counts(
+class FeatureStories(BaseModel):
+    """What people can do with one priced feature: its user stories, as the user saved them
+    (`yours`), else as the document asks (`document`); `none` = no stories yet."""
+
+    key: str  # a feature key, or a custom feature's name
+    label: str
+    stories: list[str]
+    source: Literal["yours", "document", "none"]
+
+
+class StoriesOut(BaseModel):
+    features: list[FeatureStories]
+    can_draft: bool  # an AI key is set and the story-size check is on
+    description: str  # what the user typed about the software (context for a draft)
+
+
+def feature_story_lists(
     cfg: QuickConfig, req: QuickRequest, extraction: TenderExtraction | None
-) -> dict[str, int]:
-    """Feature label -> its user stories: the ones the user confirmed on the form
+) -> list[FeatureStories]:
+    """Each ticked and custom feature's user stories: the ones the user saved
     (`feature_stories`), else the document's: a ticked feature's own (an app also those of what
     it offers that is not ticked itself), a custom feature those of the extra it was found as."""
     labels = {f.key: f.label for f in cfg.features}
     found = {f.key: f for f in extraction.features} if extraction else {}
-    out: dict[str, int] = {}
+    out: list[FeatureStories] = []
     for key in req.features:
         if key not in labels:
             continue
         if key in req.feature_stories:
-            count = len(req.feature_stories[key])
+            out.append(
+                FeatureStories(
+                    key=key, label=labels[key], stories=req.feature_stories[key], source="yours"
+                )
+            )
         elif key in found:
             f = found[key]
-            count = len(f.stories) + sum(
-                len(found[k].stories) for k in f.covers if k in found and k not in req.features
+            stories = list(f.stories) + [
+                s
+                for k in f.covers
+                if k in found and k not in req.features
+                for s in found[k].stories
+            ]
+            out.append(
+                FeatureStories(key=key, label=labels[key], stories=stories, source="document")
             )
         else:
-            continue
-        out[labels[key]] = out.get(labels[key], 0) + count
+            out.append(FeatureStories(key=key, label=labels[key], stories=[], source="none"))
     others = extraction.other_features if extraction else []
     for custom in req.custom_features:
         i = custom.found_index
-        if custom.name in req.feature_stories:
-            count = len(req.feature_stories[custom.name])
+        name = custom.name
+        if name in req.feature_stories:
+            out.append(
+                FeatureStories(
+                    key=name, label=name, stories=req.feature_stories[name], source="yours"
+                )
+            )
         elif i is not None and 0 <= i < len(others):
-            count = len(others[i].stories)
+            out.append(
+                FeatureStories(
+                    key=name, label=name, stories=list(others[i].stories), source="document"
+                )
+            )
         else:
-            continue
-        out[custom.name] = out.get(custom.name, 0) + count
+            out.append(FeatureStories(key=name, label=name, stories=[], source="none"))
     return out
+
+
+def _story_counts(
+    cfg: QuickConfig, req: QuickRequest, extraction: TenderExtraction | None
+) -> dict[str, int]:
+    """Feature label -> how many user stories it has (feature_story_lists); features without
+    any are left out."""
+    out: dict[str, int] = {}
+    for f in feature_story_lists(cfg, req, extraction):
+        if f.source != "none":
+            out[f.label] = out.get(f.label, 0) + len(f.stories)
+    return out
+
+
+def estimate_stories(
+    db: Session, cfg: QuickConfig, project: Project, can_draft: bool
+) -> StoriesOut:
+    """The user stories of a quick estimate's features, for the results page."""
+    req = _saved_request(project)
+    if req is None:
+        return StoriesOut(features=[], can_draft=False, description="")
+    extraction = project_extraction(db, project).extraction
+    return StoriesOut(
+        features=feature_story_lists(cfg, req, extraction),
+        can_draft=can_draft and cfg.size_check is not None,
+        description=req.description,
+    )
+
+
+def save_stories(
+    db: Session, cfg: QuickConfig, project: Project, stories: dict[str, list[str]]
+) -> None:
+    """Replace the user's stories of the features given (an empty list goes back to the
+    document's, or none). They feed the size check only, never the price nor its seed, so the
+    saved form can change without changing any estimate's figures."""
+    req = _saved_request(project)
+    if req is None:
+        raise HTTPException(status.HTTP_409_CONFLICT, "Not a quick estimate.")
+    known = {f.key for f in feature_story_lists(cfg, req, None)}
+    unknown = set(stories) - known
+    if unknown:
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_CONTENT,
+            f"Not a feature of this estimate: {sorted(unknown)}",
+        )
+    merged = dict(req.feature_stories)
+    for key, lines in stories.items():
+        clean = [" ".join(line.split()) for line in lines if line.strip()]
+        if clean:
+            merged[key] = clean
+        else:
+            merged.pop(key, None)
+    try:
+        updated = QuickRequest.model_validate(
+            {**req.model_dump(mode="json"), "feature_stories": merged}
+        )
+    except ValueError as exc:  # too many stories, or one too long
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, str(exc)) from exc
+    project.quick_request = {
+        **(project.quick_request or {}),
+        "feature_stories": updated.model_dump(mode="json")["feature_stories"],
+    }
+    db.commit()
 
 
 def _sized_features(

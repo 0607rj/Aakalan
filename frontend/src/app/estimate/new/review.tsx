@@ -331,6 +331,7 @@ export function ReviewForm({
     payment_schedule: useTerms ? prefill.payment_schedule : null,
     staff: staff === null ? null : sentStaff(staff),
     feature_stories: {}, // the document's own stories are used
+    description: "", // nothing typed: the document says what it is
   };
   const [first, ...rest] = openQuestions.map((q) => `q:${q.key}`);
   const steps = useSteps([

@@ -78,3 +78,50 @@ def test_confirmed_stories_feed_the_size_check_only(client: TestClient, admin_he
     check = told["size_check"]
     assert check["available"] and check["stories"] == len(stories)
     assert check["headline"]
+
+
+def test_stories_saved_on_the_results_page(
+    client: TestClient, admin_headers: H, viewer_headers: H
+) -> None:
+    """The results page lists each feature's stories and saves the user's (OPEN_QUESTIONS 174):
+    the size check follows them, the price does not move."""
+    body = {"name": "Stories later", "features": ["online_forms"], "description": "A job portal"}
+    made = client.post("/quick-estimates", json=body, headers=admin_headers)
+    assert made.status_code == 201, made.text
+    estimate = made.json()
+    url = f"/estimates/{estimate['estimate_id']}/stories"
+
+    listed = client.get(url, headers=admin_headers).json()
+    assert listed["description"] == "A job portal" and listed["can_draft"] is False  # no key
+    assert listed["features"] == [
+        {
+            "key": "online_forms",
+            "label": listed["features"][0]["label"],
+            "stories": [],
+            "source": "none",
+        }
+    ]
+
+    stories = ["As a candidate, I can  apply for a job", "  ", "As a recruiter, I can post a job"]
+    saved = client.put(url, json={"stories": {"online_forms": stories}}, headers=admin_headers)
+    assert saved.status_code == 200, saved.text
+    feature = saved.json()["features"][0]
+    assert feature["source"] == "yours"
+    assert feature["stories"] == [
+        "As a candidate, I can apply for a job",
+        "As a recruiter, I can post a job",
+    ]
+
+    after = client.get(
+        f"/estimates/{estimate['estimate_id']}/summary", headers=admin_headers
+    ).json()
+    assert after["planned_paise"] == estimate["planned_paise"]
+    assert after["size_check"]["stories"] == 2
+
+    assert (
+        client.put(url, json={"stories": {"payments": ["x"]}}, headers=admin_headers).status_code
+        == 422
+    )
+    assert client.put(url, json={"stories": {}}, headers=viewer_headers).status_code == 403
+    cleared = client.put(url, json={"stories": {"online_forms": []}}, headers=admin_headers).json()
+    assert cleared["features"][0]["source"] == "none"

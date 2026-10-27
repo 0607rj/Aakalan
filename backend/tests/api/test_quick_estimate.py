@@ -594,12 +594,20 @@ def test_typed_description_suggests_scope(client: TestClient, admin_headers: H) 
     assert "two-factor authentication" in scope["two_step_sign_in"]["quote"]
 
 
-def test_ai_saving_passed_to_the_client_is_asked(client: TestClient, admin_headers: H) -> None:
-    """Asked on every estimate (nothing pre-selected on the form); the cost model is the same,
-    the share not passed on is kept as margin and shown as "AI saving identified"."""
+def test_ai_saving_passed_to_the_client_is_a_company_setting(
+    client: TestClient, admin_headers: H
+) -> None:
+    """A company setting (OPEN_QUESTIONS 173), not a question on the form; the cost model is the
+    same, the share not passed on is kept as margin and shown as "AI saving identified"."""
     options = client.get("/quick-estimate/options", headers=admin_headers).json()
-    question = next(q for q in options["questions"] if q["key"] == "ai_passthrough")
-    assert question["must_choose"] and question["group"] == "main"
+    assert "ai_passthrough" not in {q["key"] for q in options["questions"]}
+    keep = client.put("/settings", json={"ai_passthrough": "keep"}, headers=admin_headers)
+    assert keep.is_success
+    try:
+        by_setting = quick(client, admin_headers).json()
+        assert by_setting["ai_saving"]["passed_percent"] == 0
+    finally:
+        client.put("/settings", json={}, headers=admin_headers)
     passed = quick(client, admin_headers, choices={"ai_passthrough": "all"}).json()
     kept = quick(client, admin_headers, choices={"ai_passthrough": "keep"}).json()
     assert passed["ai_saving"]["passed_percent"] == 100 and kept["ai_saving"]["passed_percent"] == 0

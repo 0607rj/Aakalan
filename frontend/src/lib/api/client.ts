@@ -55,6 +55,8 @@ export type QuickSummary = Schemas["QuickSummary"];
 export type SecondOpinionState = Schemas["SecondOpinionState"];
 export type IndependentCheck = Schemas["IndependentCheckOut"];
 export type PricedOption = Schemas["PricedOption"];
+export type EstimateStories = Schemas["StoriesOut"];
+export type FeatureStories = Schemas["FeatureStories"];
 export type NotIncluded = Schemas["NotIncluded"];
 export type StandardBlock = Schemas["StandardBlockOut"];
 export type Researched = Schemas["ResearchedOut"];
@@ -86,6 +88,7 @@ export type OwnerUserRow = Schemas["OwnerUserRow"];
 export type OwnerUserChange = Schemas["UserChange"];
 export type Country = Schemas["CountryOut"];
 export type Template = Schemas["TemplateOut"];
+export type CompanySettings = Schemas["CompanySettings-Output"];
 
 export class ApiError extends Error {
   constructor(
@@ -257,6 +260,10 @@ export const api = {
     send<void>("DELETE", `/requirements/${id}`),
   deleteProject: (id: string) => send<void>("DELETE", `/projects/${id}`),
   deleteEstimate: (id: string) => send<void>("DELETE", `/estimates/${id}`),
+  getSettings: () => request<CompanySettings>("/settings"),
+  /** The whole settings object: fields left out go back to their defaults. */
+  putSettings: (body: CompanySettings) =>
+    send<CompanySettings>("PUT", "/settings", body),
   confirmRequirements: (projectId: string, requirementIds?: string[]) =>
     send<Requirement[]>("POST", `/projects/${projectId}/requirements/confirm`, {
       requirement_ids: requirementIds ?? null,
@@ -304,6 +311,13 @@ export const api = {
     send<QuickSummary>("POST", `/estimates/${estimateId}/check/confirm`),
   getPricedOptions: (estimateId: string) =>
     request<PricedOption[]>(`/estimates/${estimateId}/options`),
+  getStories: (estimateId: string) =>
+    request<EstimateStories>(`/estimates/${estimateId}/stories`),
+  /** Feature key (or a custom feature's name) -> its stories; [] goes back to the document's. */
+  saveStories: (estimateId: string, stories: Record<string, string[]>) =>
+    send<EstimateStories>("PUT", `/estimates/${estimateId}/stories`, {
+      stories,
+    }),
   standardBlocks: (body: QuickRequest, signal?: AbortSignal) =>
     request<StandardBlock[]>("/quick-estimate/standard-blocks", {
       method: "POST",

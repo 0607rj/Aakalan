@@ -362,7 +362,10 @@ sizing:
 # features and the deadline about eight screens); `detail` = the optional "a few more details" screen (skipped = the usual answer);
 # `document` = not asked on the form, but read from an uploaded document; `hidden` = never asked
 # nor read (set by the back-test). Options marked `unsure: true` are
-# "Not sure": they price the usual answer and widen the range (see `not_sure`).
+# "Not sure": they price the usual answer and widen the range (see `not_sure`). "Not sure" is
+# offered only where people often cannot know (users, how it is built, hosting, other software,
+# old data, the AI's work); `retired: true` options are no longer offered on the form but still
+# price older estimates that chose them (OPEN_QUESTIONS 173).
 questions:
   version:
     label: Do you want a first simple version, or the full product?
@@ -370,8 +373,9 @@ questions:
     on_upload: document   # a requirement document sets the scope; its user stories set the sizes
     options:
       - {value: mvp, label: A first simple version (MVP), hint: "Only the main features, kept simple, to launch quickly and learn", feature_level: basic, answers: {}}
-      - {value: full, label: The full product, hint: "Everything done properly, ready for many users", feature_level: standard, answers: {}}
-      - {value: not_sure, label: Not sure, hint: "We price the full product and show a wider range", feature_level: standard, unsure: true, answers: {}}
+      - {value: full, label: The full product, hint: "Everything done properly, ready for many users. Pick this if unsure", feature_level: standard, answers: {}}
+      # retired (OPEN_QUESTIONS 173): whoever orders it knows; kept so older estimates still price
+      - {value: not_sure, label: Not sure, hint: "We price the full product and show a wider range", feature_level: standard, unsure: true, retired: true, answers: {}}
   platforms:
     label: Where should people use it?
     default: web
@@ -380,7 +384,8 @@ questions:
       - {value: web, label: Website, hint: "Works in the browser on phones and computers", answers: {}}
       - {value: web_mobile, label: Website and app, hint: "A website and an app for Android and iPhone", add_features: {mobile_app: null}, answers: {}}
       - {value: app, label: Mobile app only, hint: "An app for Android and iPhone, with a simple web admin panel to manage it", add_features: {mobile_app: null}, answers: {}}
-      - {value: not_sure, label: Not sure, hint: "We price a website and show a wider range; the price of adding an app is shown with the estimate", unsure: true, answers: {}}
+      # retired (OPEN_QUESTIONS 173): where people use it is known; kept so older estimates still price
+      - {value: not_sure, label: Not sure, hint: "We price a website and show a wider range; the price of adding an app is shown with the estimate", unsure: true, retired: true, answers: {}}
   scale:
     label: How many people will use it?
     default: up_to_10k
@@ -422,11 +427,12 @@ questions:
     label: How will it be built?
     default: custom
     options:
-      - {value: custom, label: Built from scratch, hint: "Custom code on the usual tools (e.g. React, Java, .NET): every screen written for you", answers: {build_type: custom}}
-      - {value: framework, label: On a framework with ready admin screens, hint: "e.g. Django admin, Laravel Nova, Rails, a low-code tool: forms, lists and logins are mostly generated", answers: {build_type: framework}}
-      - {value: cms, label: On a CMS with custom parts added, hint: "e.g. Drupal or WordPress with your own modules: common for government portals", answers: {build_type: cms}}
-      - {value: ready_product, label: Set up a ready-made product, hint: "An existing product configured, not built: a SaaS service, Shopify, a WordPress theme as it is, a chatbot platform", answers: {build_type: ready_product}}
-      - {value: not_sure, label: Not sure, hint: "We price building from scratch and show a wider range", unsure: true, answers: {build_type: custom}}
+      # plain words for anyone (2026-10-27); the examples in brackets help the document reader
+      - {value: custom, label: Made fully to order, hint: "Every screen made just for you. Most flexible, costs the most", answers: {build_type: custom}}
+      - {value: framework, label: Made faster with ready parts, hint: "Common screens like forms, lists and logins come ready-made; the rest is made for you (e.g. Django, Laravel, low-code tools)", answers: {build_type: framework}}
+      - {value: cms, label: "On a website builder, with extra parts added", hint: "Pages, news and editing come ready; your own parts are added (e.g. WordPress or Drupal). Common for government portals", answers: {build_type: cms}}
+      - {value: ready_product, label: An existing product set up for you, hint: "Nothing new is made: a ready product is set up with your settings (e.g. Shopify, a SaaS service, a chatbot platform). Cheapest, least flexible", answers: {build_type: ready_product}}
+      - {value: not_sure, label: "Not sure: let the team decide", hint: "We price it made fully to order and show a wider range", unsure: true, answers: {build_type: custom}}
   hosting:
     label: Where will it run?
     group: detail  # optional: skipped = the usual answer, which is priced
@@ -438,18 +444,19 @@ questions:
       - {value: existing, label: Servers you already have, hint: "e.g. NIC, a State Data Centre or your own cloud account: no new server cost (an estimate is shown separately)", answers: {hosting_provider: aws, hosting_in_scope: false}}
       - {value: not_sure, label: Not sure, hint: "We price a public cloud and show a wider range", unsure: true, answers: {hosting_provider: aws, hosting_in_scope: true}}
   support_years:
-    label: For how many years should it be looked after once it is live?
+    label: How many years of support after launch?
     group: detail  # optional: skipped = the usual answer, which is priced
     # no term is assumed: a yearly price is quoted until a term is chosen (outside review,
-    # OPEN_QUESTIONS 139); the price then includes one year of support
+    # OPEN_QUESTIONS 139); the price then includes one year of support. "Not decided" is last,
+    # like "Not sure" elsewhere (OPEN_QUESTIONS 173)
     default: per_year
     options:
-      - {value: per_year, label: "Not decided: show a yearly price", hint: "The price includes one year of support; each further year costs about the same", answers: {om_years: 1}}
-      - {value: 0, label: "Not needed", hint: "Handed over after launch; you run and maintain it", answers: {om_years: 0}}
-      - {value: 1, label: 1 year, answers: {om_years: 1}}
+      - {value: 0, label: "Not needed", hint: "Handed over at launch; you run and fix it yourself", answers: {om_years: 0}}
+      - {value: 1, label: 1 year, hint: "Fixes, small changes, hosting and keeping it running", answers: {om_years: 1}}
       - {value: 2, label: 2 years, answers: {om_years: 2}}
       - {value: 3, label: 3 years, answers: {om_years: 3}}
       - {value: 5, label: 5 years, answers: {om_years: 5}}
+      - {value: per_year, label: "Not decided yet", hint: "We price one year and show it as a yearly cost", answers: {om_years: 1}}
   helpdesk_scope:
     label: Do you need a helpdesk team to answer users?
     group: document   # not asked on the form; read from an uploaded document, else the usual answer
@@ -476,10 +483,11 @@ questions:
     group: detail
     default: normal
     options:
-      - {value: basic, label: Not a problem, hint: "Short breaks are fine. One server.", answers: {uptime_sla: "99.0"}}
-      - {value: normal, label: Some trouble, hint: "It should rarely stop (99.5% up). One server while up to about 400 people use it at once, two when more do.", answers: {uptime_sla: "99.5"}}
-      - {value: high, label: Work stops, hint: "Almost never down (99.9%), e.g. a hospital or payments. Two servers, so one takes over if the other fails.", answers: {uptime_sla: "99.9"}}
-      - {value: critical, label: It must never stop, hint: "Two of everything, up 99.95% of the time or more", answers: {uptime_sla: "99.95"}}
+      # plain words (OPEN_QUESTIONS 173); servers follow from the answer and the load (row 171)
+      - {value: basic, label: Not a problem, hint: "Short breaks are fine, e.g. an office tool or an information site (99% up)", answers: {uptime_sla: "99.0"}}
+      - {value: normal, label: Some trouble, hint: "It should rarely stop. Most websites and apps (99.5% up)", answers: {uptime_sla: "99.5"}}
+      - {value: high, label: Work stops, hint: "Almost never down, e.g. a hospital, bookings or payments (99.9% up)", answers: {uptime_sla: "99.9"}}
+      - {value: critical, label: It must never stop, hint: "Always up, e.g. banking or emergency services. Costs the most (99.95% up)", answers: {uptime_sla: "99.95"}}
   disaster_site:
     label: Does it need a backup site for disasters?
     group: document   # not asked on the form; read from an uploaded document, else the usual answer
@@ -491,14 +499,18 @@ questions:
     # a reserve for penalties is priced only when the contract has them, cited from the document
     # (parameter sets v19+); an older reading's "not priced: penalties" quotes count too
     label: Does the contract have penalties for late delivery or downtime?
-    group: detail
+    # read from an uploaded tender only (OPEN_QUESTIONS 173): a typed project rarely has a
+    # contract yet, and the reserve is small
+    group: document
     on_upload: document
     default: "no"
     from_not_priced: penalties
     options:
-      - {value: "no", label: "No", hint: "No penalty clause", answers: {penalty_clause: false}}
+      - {value: "no", label: "No", hint: "No penalty clause, or no contract yet", answers: {penalty_clause: false}}
       - {value: "yes", label: "Yes", hint: "Liquidated damages or service-level penalties: a small reserve is priced", answers: {penalty_clause: true}}
-      - {value: not_sure, label: Not sure, hint: "We price no penalty clause and show a wider range", unsure: true, answers: {penalty_clause: false}}
+      # retired (OPEN_QUESTIONS 173): no contract seen means no penalty clause; kept so older
+      # estimates still price
+      - {value: not_sure, label: Not sure, hint: "We price no penalty clause and show a wider range", unsure: true, retired: true, answers: {penalty_clause: false}}
   web_domain:
     # free from NIC only for a .gov.in / .nic.in address the document names (v19+)
     label: What web address will it use?
@@ -535,23 +547,30 @@ questions:
       - {value: "yes", label: "Yes", hint: "Written monthly reports, review meetings and visits; usual for government and large companies", answers: {governance_overheads: true}}
   design:
     label: Do you already have a design for the screens?
-    group: detail  # optional: skipped = the usual answer, which is priced
+    # not asked on the form (OPEN_QUESTIONS 173): it moved the price by under 1% on typical
+    # projects; read from an uploaded document, else the usual answer
+    group: document
     default: some
     options:
       - {value: ready, label: "Yes, the design is ready", hint: "Screens already designed (e.g. in Figma), or a brand guide to follow closely", component_complexity: {ui_ux_design: low}, answers: {}}
       - {value: some, label: "A little (logo and colours)", hint: "The team designs the screens", answers: {}}
       - {value: custom, label: "No, we want a special design", hint: "A unique look with custom illustrations and animations", component_complexity: {ui_ux_design: high}, answers: {}}
-      - {value: not_sure, label: Not sure, hint: "We price the team designing the screens and show a wider range", unsure: true, answers: {}}
+      # retired (OPEN_QUESTIONS 173): whether a design exists is known; kept so older estimates
+      # still price
+      - {value: not_sure, label: Not sure, hint: "We price the team designing the screens and show a wider range", unsure: true, retired: true, answers: {}}
   chatbot_task:
-    label: What should the chatbot handle?
+    # asked with a chatbot or any AI feature of the user's own (OPEN_QUESTIONS 173): it picks
+    # the AI model size, so it is about the AI's work, not only a chatbot's; "none" is not an
+    # answer here, the AI feature is unticked on the features screen
+    label: How hard is the work the AI does?
     group: detail
     default: simple
     only_with_features: [ai_chatbot]
     only_with_custom_types: [ai]
     options:
-      - {value: simple, label: Common questions, hint: "FAQs and information from your documents (a smaller, cheaper AI model)", answers: {ai_model_tier: simple}}
-      - {value: advanced, label: Complex questions, hint: "Reasoning over many documents and multi-step help (a larger AI model, costs more per question)", answers: {ai_model_tier: advanced}}
-      - {value: not_sure, label: Not sure, hint: "We price common questions and show a wider range", unsure: true, answers: {ai_model_tier: simple}}
+      - {value: simple, label: Simple, hint: "Common questions, short answers, reading or sorting simple items (a smaller, cheaper AI model)", answers: {ai_model_tier: simple}}
+      - {value: advanced, label: Hard, hint: "Reasoning over many documents, several steps, careful answers (a larger AI model that costs more each time it is used)", answers: {ai_model_tier: advanced}}
+      - {value: not_sure, label: Not sure, hint: "We price simple work and show a wider range", unsure: true, answers: {ai_model_tier: simple}}
   chatbot_volume:
     label: About how many questions will the chatbot answer each day?
     group: document   # not asked on the form; read from an uploaded document, else the usual answer
@@ -580,14 +599,14 @@ questions:
       - {value: support, label: Throughout support, hint: "Every year of support after launch", answers: {}}
       - {value: event, label: Only during an event or the launch, hint: "A few days (onsite_event_days), priced once", answers: {}}
   # --- not asked ---------------------------------------------------------------------------
-  # A sales decision, asked on every estimate (nothing pre-selected): the share of the AI saving
-  # the price passes to the client; the rest is kept as margin (engine ai_passthrough_percent).
-  # The default only serves requests that do not send it (API, back-test, older estimates
-  # re-priced): all passed through, as before the question existed. OPEN_QUESTIONS 145.
+  # A sales decision: the share of the AI saving the price passes to the client; the rest is
+  # kept as margin (engine ai_passthrough_percent). OPEN_QUESTIONS 145. Since OPEN_QUESTIONS
+  # 173 a company setting (Account page, `ai_passthrough` in Settings), no longer asked on every
+  # estimate: it moved the price 3-7%. Without a setting: all passed through.
   ai_passthrough:
     label: How much of the AI saving do you pass on to the client?
+    group: hidden   # the company's own setting (Account page)
     default: all
-    must_choose: true
     options:
       - {value: all, label: All of it, hint: "Lowest price. Best when you must win on price, such as a competitive or government tender", answers: {ai_passthrough_percent: 1}}
       - {value: most, label: Most of it (75%), hint: "Still a competitive price, with a little extra margin", answers: {ai_passthrough_percent: 0.75}}

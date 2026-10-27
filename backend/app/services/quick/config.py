@@ -53,6 +53,9 @@ class Option(Frozen):
     # ("if required"), at these levels (None = the default level). Not counted as unclear:
     # what is left out does not widen the range. OPEN_QUESTIONS 147.
     left_out: dict[str, LevelKey | None] = {}
+    # No longer offered on the form; kept so older estimates that chose it still price
+    # (OPEN_QUESTIONS 173).
+    retired: bool = False
 
 
 class Question(Frozen):

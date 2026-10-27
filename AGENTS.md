@@ -79,8 +79,10 @@ backend/
                           #   beside our hours without AI tools, per feature; a check only, no
                           #   verdict on a CMS / ready-product build (OPEN_QUESTIONS 163)
                           #   stories.py: no document => the AI drafts user stories per feature
-                          #   (POST /quick-estimate/draft-stories), the user edits them on the
-                          #   form (`feature_stories`); size check only, never price or seed
+                          #   (POST /quick-estimate/draft-stories) on the results page ("What
+                          #   each feature includes", GET/PUT /estimates/{id}/stories), the user
+                          #   checks and saves them (`feature_stories`; the typed `description`
+                          #   is saved for it); size check only, never price or seed
                           #   quote lists (OPEN_QUESTIONS 147): answers nobody gave
                           #   (`assumed`, the form sends `answered`), `not_included`
                           #   (features / scope / unticked standard blocks, the document's
@@ -132,7 +134,7 @@ backend/
                           #   rate card v9: audited cloud/SSL rates, free DV certificate;
                           #   caps by project size (review, pre-build, architect; the
                           #   in-between sizes are written-out midpoints, a guess);
-                          #   `ai_passthrough` question (asked on every estimate) keeps the
+                          #   `ai_passthrough` company setting (Account page; asked on every estimate until OPEN_QUESTIONS 173) keeps the
                           #   rest of the AI saving as margin, shown as its own internal item
                           #   parameters v21+: the range widens with project size
                           #   (model_spread_by_size, placeholder; OPEN_QUESTIONS 153)

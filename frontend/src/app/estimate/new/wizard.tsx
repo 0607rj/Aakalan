@@ -77,7 +77,6 @@ import {
   sentNotIncluded,
 } from "./feature-sections";
 import { ReviewForm } from "./review";
-import { sentStories, StoriesStep, type StoryText } from "./stories-step";
 import { UploadStep } from "./upload-step";
 
 /** The tick-box path (no document, or the document could not be read): one screen at a time. */
@@ -165,15 +164,10 @@ function ManualForm({
   );
   const [submitting, setSubmitting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
-  // the user's description (for drafting stories) and the stories per feature, as typed
-  const [description, setDescription] = React.useState("");
-  const [storyText, setStoryText] = React.useState<StoryText>(() =>
-    Object.fromEntries(
-      Object.entries(saved?.feature_stories ?? {}).map(([k, v]) => [
-        k,
-        v.join("\n"),
-      ]),
-    ),
+  // the user's description, saved with the estimate so user stories can be drafted from it
+  // on the results page (OPEN_QUESTIONS 174)
+  const [description, setDescription] = React.useState(
+    saved?.description ?? "",
   );
 
   const deadlineMonths = deadline.trim() === "" ? null : Number(deadline);
@@ -211,8 +205,6 @@ function ManualForm({
     "deadline",
     ...(scopeGroups.length > 0 ? ["scope"] : []),
     ...(details.length > 0 ? ["details"] : []),
-    // optional: what people can do (double-checks the build size; a document has its own)
-    ...(documentId ? [] : ["stories"]),
     "check",
   ];
   const steps = useSteps(stepKeys);
@@ -234,17 +226,15 @@ function ManualForm({
     setNotIncluded,
   });
   const { unmark, toggleOut } = ticks;
-  const storyFeatures = [
-    ...everything.map((k) => ({
-      key: k,
-      label: options.features.find((f) => f.key === k)?.label ?? k,
-    })),
-    ...customFeatures.map((c) => ({ key: c.name, label: c.name })),
-  ];
-  const featureStories = sentStories(storyText, storyFeatures);
-  const storyCount = Object.values(featureStories).reduce(
-    (n, s) => n + s.length,
-    0,
+  // a template keeps its stories (edited on the results page), for features still chosen
+  const storyKeys = new Set([
+    ...everything,
+    ...customFeatures.map((c) => c.name),
+  ]);
+  const featureStories = Object.fromEntries(
+    Object.entries(saved?.feature_stories ?? {}).filter(([k]) =>
+      storyKeys.has(k),
+    ),
   );
   const request: QuickRequest = {
     name: name.trim(),
@@ -269,6 +259,8 @@ function ManualForm({
     not_included: sentNotIncluded(notIncluded, everything, pricedScope),
     answered: touched,
     feature_stories: featureStories,
+    // kept so user stories can be drafted from it on the results page (never priced)
+    description,
   };
   const impacts = useQuestionImpact(
     (current.startsWith("q:") || current === "details") && canContinue
@@ -708,20 +700,6 @@ function ManualForm({
             />
             <StepButtons onBack={steps.prev} onNext={steps.next} />
           </>
-        ) : current === "stories" ? (
-          <>
-            <StoriesStep
-              features={storyFeatures}
-              description={description}
-              text={storyText}
-              onChange={setStoryText}
-            />
-            <StepButtons
-              onBack={steps.prev}
-              onNext={steps.next}
-              nextLabel={storyCount > 0 ? "Continue" : "Skip"}
-            />
-          </>
         ) : current === "deadline" ? (
           <section className="flex flex-col gap-6">
             <div>
@@ -811,18 +789,6 @@ function ManualForm({
                   label: "Deadline",
                   value: deadlineMonths ? `${deadlineMonths} months` : "None",
                 },
-                ...(documentId
-                  ? []
-                  : [
-                      {
-                        step: "stories",
-                        label: "What people can do",
-                        value:
-                          storyCount > 0
-                            ? `${storyCount} user ${storyCount === 1 ? "story" : "stories"}`
-                            : "Skipped",
-                      },
-                    ]),
               ]}
               onChange={steps.goTo}
             />

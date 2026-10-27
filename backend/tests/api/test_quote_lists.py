@@ -22,7 +22,7 @@ def test_untouched_answers_are_listed_as_assumed(client: TestClient, admin_heade
     assumed = {a["key"]: a for a in s["assumed"]}
     assert assumed["scale"]["detail"] == "10,000 users, 200 at the same time"
     assert "availability" in assumed  # never asked on the form: still a silent default
-    assert "ai_passthrough" not in assumed  # decided on every estimate
+    assert "ai_passthrough" not in assumed  # the company's own setting, not a gap
     assert "onsite_period" not in assumed  # no staff at the client's office
     touched = quick(client, admin_headers, answered=["scale"]).json()
     assert "scale" not in {a["key"] for a in touched["assumed"]}

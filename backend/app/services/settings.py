@@ -25,6 +25,9 @@ class CompanySettings(BaseModel):
     role_day_rates: dict[str, Decimal] = {}
     # How much the company's team uses AI tools (None = the parameter set's default).
     team_ai_maturity: Literal["none", "low", "medium", "high"] | None = None
+    # How much of the AI saving the price passes to the client (the quick estimate's
+    # ai_passthrough answer; None = the question's default, all). OPEN_QUESTIONS 173.
+    ai_passthrough: Literal["all", "most", "half", "keep"] | None = None
 
 
 def company_settings(db: Session, org_id: str) -> CompanySettings:
