@@ -2257,6 +2257,53 @@
         ]
       }
     },
+    "/quick-estimate/schedule": {
+      "post": {
+        "tags": [
+          "quick estimate"
+        ],
+        "summary": "Build Time",
+        "description": "The usual and the fastest time to build this form's project, for the deadline question\n(nothing is saved or priced).",
+        "operationId": "build_time_quick_estimate_schedule_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuickRequest-Input"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuickSchedule"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/quick-estimate/standard-blocks": {
       "post": {
         "tags": [
@@ -6187,6 +6234,11 @@
             "type": "string",
             "title": "Label"
           },
+          "hint": {
+            "type": "string",
+            "title": "Hint",
+            "default": ""
+          },
           "unit": {
             "type": "string",
             "enum": [
@@ -6236,6 +6288,15 @@
             "title": "India Term",
             "default": false
           },
+          "topic": {
+            "type": "string",
+            "title": "Topic"
+          },
+          "hidden": {
+            "type": "boolean",
+            "title": "Hidden",
+            "default": false
+          },
           "value": {
             "anyOf": [
               {
@@ -6258,6 +6319,7 @@
           "unit",
           "min",
           "integer",
+          "topic",
           "value"
         ],
         "title": "FactValue"
@@ -8988,6 +9050,10 @@
             "type": "string",
             "title": "Label"
           },
+          "topic": {
+            "type": "string",
+            "title": "Topic"
+          },
           "default": {
             "anyOf": [
               {
@@ -9089,6 +9155,7 @@
         "required": [
           "key",
           "label",
+          "topic",
           "default",
           "options"
         ],
@@ -9216,6 +9283,13 @@
             "type": "string",
             "title": "Default Level"
           },
+          "topics": {
+            "items": {
+              "$ref": "#/components/schemas/TopicOut"
+            },
+            "type": "array",
+            "title": "Topics"
+          },
           "questions": {
             "items": {
               "$ref": "#/components/schemas/QuestionOut"
@@ -9262,6 +9336,7 @@
           "project_types",
           "features",
           "default_level",
+          "topics",
           "questions",
           "custom_feature_types"
         ],
@@ -9346,9 +9421,16 @@
           "deadline_months": {
             "anyOf": [
               {
-                "type": "integer",
-                "maximum": 60.0,
-                "minimum": 1.0
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ],
+                "gt": 0,
+                "le": 60
               },
               {
                 "type": "null"
@@ -9555,9 +9637,16 @@
           "deadline_months": {
             "anyOf": [
               {
-                "type": "integer",
-                "maximum": 60.0,
-                "minimum": 1.0
+                "anyOf": [
+                  {
+                    "type": "integer"
+                  },
+                  {
+                    "type": "number"
+                  }
+                ],
+                "gt": 0,
+                "le": 60
               },
               {
                 "type": "null"
@@ -9684,6 +9773,25 @@
           "name"
         ],
         "title": "QuickRequest"
+      },
+      "QuickSchedule": {
+        "properties": {
+          "usual_months": {
+            "type": "string",
+            "title": "Usual Months"
+          },
+          "fastest_months": {
+            "type": "string",
+            "title": "Fastest Months"
+          }
+        },
+        "type": "object",
+        "required": [
+          "usual_months",
+          "fastest_months"
+        ],
+        "title": "QuickSchedule",
+        "description": "How long the form's build takes, shown beside the deadline (OPEN_QUESTIONS 179)."
       },
       "QuickSummary": {
         "properties": {
@@ -10142,6 +10250,28 @@
             "type": "array",
             "title": "Not Included",
             "default": []
+          },
+          "deadline_asked_months": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deadline Asked Months"
+          },
+          "deadline_priced_months": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Deadline Priced Months"
           }
         },
         "type": "object",
@@ -11410,6 +11540,21 @@
             "type": "boolean",
             "title": "Partly Priced",
             "default": false
+          },
+          "ask": {
+            "type": "string",
+            "title": "Ask",
+            "default": ""
+          },
+          "hint": {
+            "type": "string",
+            "title": "Hint",
+            "default": ""
+          },
+          "advanced": {
+            "type": "boolean",
+            "title": "Advanced",
+            "default": false
           }
         },
         "type": "object",
@@ -12590,6 +12735,29 @@
           "user"
         ],
         "title": "TokenResponse"
+      },
+      "TopicOut": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "hint": {
+            "type": "string",
+            "title": "Hint"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "label",
+          "hint"
+        ],
+        "title": "TopicOut"
       },
       "Totals": {
         "properties": {

@@ -1,0 +1,631 @@
+# v27 (2026-10-27): v26 with handover at the end of the contract following the work on small
+# projects (OPEN_QUESTIONS 179). Exit management was a fixed 10 person-days for every "small"
+# project, from a 50 person-day site to a 1,000 person-day portal (5% of a 200 person-day build,
+# 1% of a 1,000 person-day one). On lean delivery it is now the smaller of the band's days and
+# lean.exit_share_of_build_pd of the build (a handover of the code, documents and access; the
+# documents themselves are priced in the build). Medium and large projects are unchanged.
+# Everything else is v26.
+# v26 (2026-10-26): v25 with two hosting changes (OPEN_QUESTIONS 171).
+# (1) The default uptime answer "Some trouble" (99.5%) priced every site as two servers, two
+# databases and a load balancer (about Rs 3.0 lakh a year of hosting for a small business
+# website). A single cloud server is itself covered at 99.5% (AWS EC2 instance-level SLA), so a
+# site whose load fits one server (up to about 400 people online at once, single_max_vcpus) at
+# 99.5% now runs on one server (hosting.small_site.single_for_sla). Servers follow the load and
+# the uptime answer, not the number of features. Larger loads and 99.9% and above keep
+# pattern_by_sla. The form now asks the uptime question and the people online at once.
+# (2) With rate card v11, hosting is priced by the actual number online, on a straight line
+# between the two nearest price points (hosting.bundle.price_points), not at the middle of its
+# load band: 500 online no longer costs the same as 1,000, and the step from one server to two
+# is spread between 400 and 1,000 online instead of a jump at 201.
+# v25 (2026-10-25): v24 made simpler, and two double charges removed (OPEN_QUESTIONS 165, 166).
+# (1) Hosting is one line a year: an all-in monthly price (servers, database, load balancer,
+# monitoring, storage, backups, transfer, DR) from rate card v10, picked by provider, uptime
+# pattern and load band (hosting.bundle). Load within the band, which the separate lines used to
+# follow, is the line's own range (band_spread: the set-up's cost at the band's two ends ÷ its
+# middle, worked out from the rate card v9 items). A rate card without these prices keeps the
+# separate lines, where a small site (one small server) runs its database on that server and,
+# on AWS, its monitoring on the free tier (hosting.small_site).
+# (2) Upkeep is one line a year (maintenance.upkeep_one_line): bug fixes, security patches,
+# platform upgrades and small changes, each its own share of the build as in v24, summed.
+# (3) Onsite staff a document states who do that work (developers, engineers: their staff line
+# says so) do it instead of a second team: upkeep is priced only beyond their person-days. An
+# onsite project manager or team leader stated by the document is the O&M project manager, so
+# the engine's O&M project management is priced only beyond their person-days.
+# (4) Two more overlaps (outside audit 2026-10-25): the annual security re-audit starts in
+# support year 2, as the go-live audit is year 1's; and the hypercare weeks are not priced again
+# in year 1's upkeep and O&M project management.
+# Everything else is v24.
+# v24 (2026-10-24): v23 plus the people per staffed round-the-clock seat (OPEN_QUESTIONS 162).
+# A seat staffed 24 hours a day, 7 days a week needs 168 hours ÷ 48-hour week = 3.5 people,
+# plus about 15% leave and relief cover: 4.0 (was 4.2, a placeholder). It prices the helpdesk
+# staffed in shifts and a committed round-the-clock team a document states per shift (the
+# engine's round-the-clock seats). Everything else is v23.
+# v23 (2026-10-23): v22 plus two fixes to the middle of the price (OPEN_QUESTIONS 160).
+# (1) The shared model error is centred on its median: the triangle (1 - down, 1, 1 + up) with
+# up larger than down has its median above 1 (1.17 for medium_large), so it lifted P50 17% above
+# the planned cost while it widened the range; that lift came from the triangle's shape, not
+# from overrun data. Each draw is now divided by the triangle's median: same width, P50 not
+# lifted. The widths themselves are v21's (still placeholder, not narrowed).
+# (2) Size bands blend at their edges: PM, exit days and audit fees moved in one step at 1,000
+# and 4,000 build person-days (999 -> 1,001 doubled the project manager). They now move in a
+# straight line from 25% below to 25% above each edge (750-1,250 and 3,000-5,000 pd; the
+# share is a placeholder). Everything else is v22.
+# v22 (2026-10-23): v21 plus round-the-clock support on call (OPEN_QUESTIONS 157). A tender
+# asking for "round-the-clock technical support" usually means a team in office hours and an
+# engineer on call at night and on holidays for urgent (severity 1) problems, not a helpdesk
+# staffed in shifts (4.2 people per seat). On call is priced as 1.3 people per seat: the office
+# hours seat plus 0.3 of a person for the on-call rota and the call-outs (placeholder, not
+# measured); its penalty reserve is the round-the-clock one. Everything else is v21.
+# v21 (2026-10-23): v20 plus round 3 (OPEN_QUESTIONS 153): the range widens with the project's
+# size. The shared project-level model error (model_spread_by_size) was the same for every size
+# (about 0.75x-1.25x of P50); bigger projects carry more unknowns (scope not yet written down,
+# integrations, change requests), so their range is wider and leans higher. The steps are a
+# what-if picked on the back-test with PBD as the control (PBD 0.80x -> 0.85x of its published
+# price, still inside its range): placeholder, not measured.
+# Everything else is v20.
+# v20 (2026-10-23): v19 plus round 1 of the outside review of the PBD and clinic estimates
+# (OPEN_QUESTIONS 144). (1) Review and tests follow the reuse: a component's review and testing
+# shrink in proportion to its own work after reuse, and the whole-system testing block follows
+# the project's (reuse.follow_tasks / project_wide_components). (2) Ceilings on work that grew
+# out of proportion with the build (effort_caps): review at most 15% and pre-build at most 15%
+# of the build's engineering days, the architect at most max(3 days, a share of the build by
+# project size) + 4 days per hard problem (all by project size, below). The
+# ceilings are the review's priors, not measurements (placeholder). (3) The review of
+# AI-written code is shared like other review (0.7 developer / 0.3 senior developer), and its
+# share of the saved effort (0.25) is marked placeholder: it has no measured source. (4) The SSL
+# certificate is a free domain-validated one unless the document asks for an organisation-
+# validated one (rate card v9), and the client may provide the certificate or the address.
+# Everything else is v19.
+# v19 (2026-10-22): v18 plus what the build reuses (reuse, below): built on a CMS (Drupal,
+# WordPress) or on a framework with generated admin screens, the screens and record-keeping work
+# (ui_design and crud task shares) is smaller; integration, architecture, data migration and
+# security work are unchanged. The factors are uncalibrated priors from an outside review, not
+# measurements (OPEN_QUESTIONS 138). Also from that review (OPEN_QUESTIONS 139): no penalty
+# reserve without a penalty clause; a free .gov.in address only when the document names one;
+# review billed 70% developer / 30% senior developer; the languages factor not applied again when
+# a multilingual framework is built; a wider range (not a higher plan) on hard-problem
+# components. Everything else is v18.
+# v18 (2026-10-22): v17 with the team's AI savings applied to effort data of unknown era. The
+# catalog hours were checked against 825 finished projects from pre-AI datasets (Desharnais,
+# China, Kitchenham, Maxwell, Finnish; v15 effort_multiplier 1.4), so the calibrated hours are a
+# without-AI baseline; the AI savings per task type (published studies, below) then apply once.
+# Before, 71 of 73 catalog blocks got no saving while the price still paid for AI tools and the
+# review of AI-written code, so "with AI" came out dearer than "without AI" (OPEN_QUESTIONS 137).
+# v17 (2026-10-22): v16 with four things no longer counted twice or added unasked (review of the
+# PBD tender estimate, OPEN_QUESTIONS 135). (1) Accessibility: when the project has its own
+# accessibility component, the accessibility factor is not applied to every other component too.
+# (2) A squeezed schedule is paid once: the build effort carries the compression multiplier, the
+# programme (management, test servers) runs over the deadline, and the range gets no extra
+# compression risk on top. (3) Test servers on the same provider as production (they were
+# always priced on AWS). (4) High uptime means two of everything (ha), not a disaster-recovery
+# site: a standby site is priced only when the document asks for one (disaster_recovery).
+# v16 (2026-10-19): v15 with one risk mechanism and no market-fitted numbers. (1) No fixed contingency:
+# the Monte Carlo already carries the risk (P50 above the planned cost is the risk allowance), and a
+# clarity-based contingency on top counted the same risk twice (user's decision, 2026-10-19). (2) No
+# market_by_size bands: they were fitted on the same 56 contracts they were shown against and
+# scaled with our own P50; the summary now shows the published prices of comparable projects
+# directly. Nothing else changes (effort_multiplier stays 1.4).
+# v15 (2026-10-18): v14 with the effort level checked against real effort: 825 finished projects (Desharnais, China, Kitchenham, Maxwell, Finnish datasets; median 8.3 hours per function point) put our hours at about 0.6-0.7x of real effort, so build effort x 1.4 (to about 6.5 h/FP, below the old datasets' median for today's faster tools).
+# v14 (2026-10-18): should-cost. With catalog v5 (effort per block from published effort data) the price is no longer tuned to market prices: no size factor, and the range reflects how much teams' hours differ for the same scope.
+# v13 (2026-10-18): v12 with the size factor following the feature points smoothly (no jump between project sizes) and lean project management whenever no formal reports and meetings are asked for.
+# v12 (2026-10-18): v11 priced by what is built, not who orders it: no client-type factors (one size factor per project size fitted on all client types), lean delivery by project size only, and extra review of AI-written code.
+# v11 (2026-10-16): v10 plus in-between project sizes (small to medium, medium to large) at the geometric middle of their neighbours.
+# v10 (2026-10-16): v9 plus project size (small / medium / large) factors; small projects are delivered lean whatever the client.
+# v9 (2026-10-16): v8 with AI productivity savings set from published evidence (lower than the v8 guesses).
+# v8 (2026-10-16): v7 with separate calibration for private companies and for startups / small businesses.
+# v7 (2026-10-16): v6 plus a simple AI model tier for chatbots and AI features.
+# v6 (2026-10-16): v5 plus lean delivery and calibration for private and small-business projects.
+# v5 (2026-10-16): v4 plus third-party services, build-phase tools, translation and client-paid items.
+# v4: adds the 'none' AI level; calibrated with AI use matched to each contract's year.
+# Parameter set v3 (2026-10-16): v2 plus calibration dials from back-testing
+# on real published contracts (seeds/benchmarks/). India: one-line published scopes limit accuracy; errors range -84% to +102%.
+version: v27
+effective_date: 2026-10-27
+status: active
+
+calendar:
+  source: placeholder
+  pd_per_month: 22
+  pd_per_year: 264
+  hours_per_month: 730
+  hours_per_year: 8760
+  days_per_year: 365
+  seconds_per_day: 86400
+
+# Brief 7.1 seed defaults
+complexity_multipliers: {low: 0.7, medium: 1.0, high: 1.5, very_high: 2.2}
+complexity_source: placeholder
+
+nfr:
+  source: placeholder
+  uptime_sla: {"99.0": 1.0, "99.5": 1.05, "99.9": 1.12, "99.95": 1.2}
+  security_level: {standard: 1.0, high: 1.1, very_high: 1.25}
+  per_additional_language: 0.04   # multiplier = 1 + 0.04 x (languages - 1), capped
+  languages_cap: 1.4
+  accessibility: {"false": 1.0, "true": 1.08}
+  accessibility_components: [accessibility_gigw_compliance]   # v17: built as its own work, not again per component
+  languages_components: [multilingual_i18n]   # v19: the same for languages (outside review: priced twice)
+  concurrency_bands:
+    - {name: low, max_peak_users: 200, multiplier: 1.0, db_tier: small}
+    - {name: medium, max_peak_users: 1000, multiplier: 1.05, db_tier: medium}
+    - {name: high, max_peak_users: 5000, multiplier: 1.12, db_tier: large}
+    - {name: very_high, max_peak_users: null, multiplier: 1.25, db_tier: large}
+
+# Brief 7.1: share of effort AI tools save, by task type, scaled by team AI maturity.
+ai_productivity:
+  # Effort saved per task type at "medium" AI adoption (research 2026-10-16). Sources: McKinsey 2023
+  # (docs 45-50%, code generation 35-45%, refactoring 20-30%, complex tasks <10%); Peng et al. 2023
+  # (55.8% faster, greenfield task); Cui et al. 2025 (+26% tasks, 4,867 developers); Google RCT 2024
+  # (~21% faster); METR 2025 (experienced devs 19% slower on large codebases) and 2026 update (-4%
+  # to -18%, weak); DORA 2024; Faros 2025 (+91% review time); Veracode 2025 (AI code vulnerable in 45%
+  # of tasks). Project-level check: Bain 2025 10-15%, TCS 20-30% gains (10-15% passed to clients).
+  # Rows marked low-confidence are reasoned defaults, not measurements.
+  source: "Published AI productivity studies 2023-2026 (see comment); low-confidence rows are reasoned defaults"
+  task_savings:
+    documentation: 0.45      # medium confidence
+    crud: 0.35               # medium
+    tests: 0.3               # low
+    architecture: 0.05       # medium
+    integration: 0.05        # medium
+    review_uat: 0.0          # medium
+    pm: 0.0                  # medium
+    analysis: 0.15           # low
+    ui_design: 0.15          # low
+    ai_engineering: 0.1      # low
+    data_migration: 0.25     # low
+    security_testing: 0.0    # low
+    devops: 0.15             # low
+    training: 0.2            # low
+  maturity_scale: {none: 0.0, low: 0.5, medium: 1.0, high: 1.25}  # none = no AI tools
+  max_saving: 0.5            # no study shows more than about 56% on any task
+  # AI-written code must still be read, tested and fixed (Faros 2025: review time +91%; Veracode
+  # 2025: security flaws in 45% of AI-written tasks). With review at about a tenth of build
+  # effort, +91% review is about +9% of the work, i.e. about a quarter of a typical 35% saving.
+  # Low confidence: a reasoned figure, not a measurement.
+  review_share_of_saved: 0.25
+  review_role: role.senior_developer
+  # v20: the review is shared like other review work (task_roles.split.review_uat); it was all
+  # billed at the senior rate, so a quarter of the saved days cost about 60% of the money saved.
+  review_task: review_uat
+  unknown_era_is_pre_ai: true   # v18: calibrated hours are a pre-AI baseline (825 pre-AI projects, v15)
+  field_sources:
+    review_share_of_saved: placeholder   # v20: a reasoned figure (see above), never measured
+
+# v19: what the build reuses (questionnaire build_type). "custom" already assumes the usual
+# frameworks (the catalog hours come from ordinary projects), so it keeps factor 1; a CMS or a
+# framework that generates the admin screens shrinks only the screen and record-keeping work.
+# Priors from an outside review of the PBD and clinic estimates (2026-10-22), not measured:
+# calibrate on back-test projects tagged with their build type.
+reuse:
+  source: placeholder
+  tasks: [crud, ui_design]
+  factor_by_build_type: {cms: 0.45, framework: 0.7}
+  # v20: what is not built is not reviewed or tested either: review and tests shrink with the
+  # component's own work after reuse; the whole-system testing block with the project's.
+  follow_tasks: [review_uat, tests]
+  project_wide_components: [functional_testing_uat_support]
+
+# v20: ceilings on the summed component effort, before pricing (outside review, 2026-10-23: on
+# the clinic run review was 24.5% of the build, pre-build 23% and the architect 37 days for a
+# booking app). The build base is the build-stage engineering work (screens, records,
+# integration, AI, data, devops, tests, security testing). Priors from that review, not
+# measured: calibrate on recorded project hours.
+effort_caps:
+  source: placeholder
+  base_tasks: [crud, ui_design, integration, ai_engineering, data_migration, devops, tests, security_testing]
+  review_task: review_uat
+  review_max_share: 0.15
+  pre_build_max_share: 0.15
+  # By project size (review and integration overhead grows with size; the flat 15% clipped
+  # real work on medium and large projects). Placeholder guesses from the outside review
+  # (2026-10-23) for small, medium and large only.
+  # IN-BETWEEN SIZES ARE A GUESS, NOT DATA: small_medium and medium_large are the midpoints
+  # of their two neighbours, (small + medium) / 2 and (medium + large) / 2, written out here so
+  # the engine only reads values (no interpolation in code). Replace them when projects of
+  # those sizes are recorded.
+  review_max_share_by_size: {small: 0.15, small_medium: 0.175, medium: 0.20, medium_large: 0.225, large: 0.25}
+  pre_build_max_share_by_size: {small: 0.15, small_medium: 0.165, medium: 0.18, medium_large: 0.19, large: 0.20}
+  architecture_task: architecture
+  # The architect: at least architecture_base_pd days, or a share of the build's engineering
+  # days by project size, whichever is more, plus architecture_pd_per_hard_problem per hard
+  # problem. Round 2 had the 3 days only, which cut PBD's architect from 29 to 3 days; the
+  # share by size (OPEN_QUESTIONS 148) is a guess, not measured: about 3% of the build on a
+  # small project to 6% on a large one (a solution architect a day or two a month on a small
+  # build, more on a large one). small_medium and medium_large are midpoints, as above.
+  architecture_base_pd: 3
+  architecture_pd_per_hard_problem: 4
+  architecture_max_share_by_size: {small: 0.03, small_medium: 0.035, medium: 0.04, medium_large: 0.05, large: 0.06}
+
+task_roles:
+  source: placeholder
+  roles:
+    analysis: role.business_analyst
+    architecture: role.solution_architect
+    ui_design: role.ui_ux_designer
+    crud: role.developer
+    integration: role.senior_developer
+    ai_engineering: role.ml_engineer
+    data_migration: role.data_engineer
+    tests: role.qa_engineer
+    security_testing: role.security_engineer
+    devops: role.devops_engineer
+    documentation: role.technical_writer
+    review_uat: role.senior_developer
+    pm: role.project_manager
+    training: role.trainer
+  # v19: review is mostly peer review by developers, with sign-off by a senior developer (it was
+  # all billed at the senior rate). Shares are an outside review's prior (placeholder).
+  split:
+    review_uat: {role.developer: 0.7, role.senior_developer: 0.3}
+
+# Brief 7.3. max_team_curve is piecewise linear in build effort (person-months) with a positive
+# intercept on every segment, so natural duration = effort / team never falls as scope grows.
+timeline:
+  source: placeholder
+  min_duration_months: 2
+  duration_quantum_months: 0.1
+  max_team_curve:
+    - {x: 0, y: 3}
+    - {x: 30, y: 6}
+    - {x: 120, y: 12}
+    - {x: 600, y: 25}
+  size_bands:
+    - {name: small, max_build_pd: 1000, pm_fte: 0.5, om_pm_fte: 0.1, exit_management_pd: 10, audit_band: small}
+    - {name: medium, max_build_pd: 4000, pm_fte: 1.0, om_pm_fte: 0.25, exit_management_pd: 20, audit_band: medium}
+    - {name: large, max_build_pd: null, pm_fte: 2.0, om_pm_fte: 0.5, exit_management_pd: 40, audit_band: large}
+  compression_curve:          # x = deadline / natural duration, y = cost multiplier
+    - {x: 0.6, y: 1.4}
+    - {x: 1.0, y: 1.0}
+  infeasible_below_ratio: 0.5
+  programme_follows_deadline: true   # v17: management and test servers over the deadline when squeezed
+  size_band_blend_share: 0.25         # v23: values blend from 25% below to 25% above each band edge (placeholder)
+
+programme:
+  source: placeholder
+  pm_role: role.project_manager
+  steering_interval_months: 3
+  steering_rate_key: other.steering_meeting
+  mis_pd_per_month: 1
+  mis_role: role.business_analyst
+  travel_trips_per_month: 1
+  travel_rate_key: travel.outstation_trip
+  non_prod_environments: 2
+  environment_rate_key: other.non_prod_environment.month
+  environment_rate_key_by_provider:  # v17: test servers on production's provider (small servers)
+    aws: cloud.aws.app_server_small.month
+    indian_cloud: cloud.indian_cloud.app_server_small.month
+
+# Brief 7.4 hosting sizing (services/hosting)
+hosting:
+  source: placeholder
+  pattern_by_sla: {"99.0": single, "99.5": ha, "99.9": ha, "99.95": ha}   # v17: DR only when asked (disaster_recovery)
+  concurrent_users_per_vcpu: 100   # v2: was 25; 25 put 10 servers behind 1,000 concurrent users
+  vcpu_per_app_server: 4
+  min_app_servers: {single: 1, ha: 2, ha_dr: 2}
+  small_app_server_max_vcpus: 2    # v12: up to ~200 users online at once runs on small (2 vCPU) servers
+  small_site:   # v25: one small server runs the application and its database together
+    source: "reasoned: a 2 vCPU / 4 GB server (EC2 t3.medium, the rate card's small server) runs a web application and PostgreSQL for up to ~200 users online at once; AWS free tier covers basic EC2 metrics, 10 custom metrics, 10 alarms and 5 GB of logs a month (https://aws.amazon.com/cloudwatch/pricing/); v26: a single EC2 instance has an instance-level uptime commitment of 99.5% (https://aws.amazon.com/compute/sla/), so 99.5% does not by itself need two servers"
+    monitoring_free_providers: [aws]   # their free tier covers one small server
+    single_for_sla: ["99.5"]   # v26: a site at this uptime runs on one server while its load fits it
+    single_max_vcpus: 4        # v26: one standard server (vcpu_per_app_server), about 400 online at once
+  bundle:       # v25: one hosting line a year, from rate card v10 hosting.<provider>.<pattern>.<band>.month
+    source: "derived: rate card v10 prices are the v9 cloud items summed at the middle of each concurrency band; the spread is the same sum at the band's two ends (peak users online 1-200, 201-1,000, 1,001-5,000, 5,001-20,000) divided by the middle"
+    price_points: [100, 200, 400, 1000, 2500, 5000, 10000, 20000]   # v26: rate card v11 prices the whole set-up at these numbers online; hosting follows a straight line between the two nearest
+    band_spread:
+      aws:
+        single: {low: {down: 0.06, up: 0.06}, medium: {down: 0.32, up: 0.32}, high: {down: 0.35, up: 0.53}, very_high: {down: 0.41, up: 0.85}}
+        ha: {low: {down: 0.01, up: 0.01}, medium: {down: 0.02, up: 0.23}, high: {down: 0.26, up: 0.39}, very_high: {down: 0.36, up: 0.74}}
+        ha_dr: {low: {down: 0.01, up: 0.01}, medium: {down: 0.01, up: 0.23}, high: {down: 0.25, up: 0.38}, very_high: {down: 0.36, up: 0.74}}
+      indian_cloud:
+        single: {low: {down: 0.03, up: 0.03}, medium: {down: 0.23, up: 0.23}, high: {down: 0.26, up: 0.39}, very_high: {down: 0.36, up: 0.75}}
+        ha: {low: {down: 0.00, up: 0.00}, medium: {down: 0.01, up: 0.14}, high: {down: 0.17, up: 0.25}, very_high: {down: 0.29, up: 0.60}}
+        ha_dr: {low: {down: 0.00, up: 0.00}, medium: {down: 0.01, up: 0.14}, high: {down: 0.17, up: 0.25}, very_high: {down: 0.29, up: 0.59}}
+  db_instances: {single: 1, ha: 2, ha_dr: 2}
+  base_storage_gb: 50
+  db_storage_gb: 20
+  backup_factor: 2.0
+  monthly_active_share: 0.1     # share of registered users active in a month
+  transfer_mb_per_active_user_month: 50
+  dr_cost_factor: 0.5
+  reserved_discount: {aws: 0.3, indian_cloud: 0.2, on_prem: 0}
+  forex_rate_key: forex.USD_INR
+  forex_buffer: 0.03
+  mb_per_gb: 1024
+  gb_per_tb: 1024
+  on_prem:
+    source: placeholder
+    server_rate_key: onprem.server.unit
+    storage_tb_rate_key: onprem.storage.tb
+    colocation_rate_key: onprem.colocation.rack_month
+    servers_per_rack: 10
+    hw_amc_percent: 0.1
+
+ai_runtime:
+  source: placeholder
+  token_input_rate_key: llm_token.default.input
+  token_output_rate_key: llm_token.default.output
+  tokens_per_unit: 1000000
+  volume_growth_per_year: 0.15
+  annual_price_change: 0.0
+  gpu_rate_key: gpu_hour.l4
+  simple_token_input_rate_key: llm_token.simple.input
+  simple_token_output_rate_key: llm_token.simple.output
+  peak_factor: 3
+  queries_per_second_per_gpu: 2
+  min_gpus: {single: 1, ha: 2, ha_dr: 2}
+
+maintenance:
+  source: placeholder
+  helpdesk_seats_by_users:     # seats grow sub-linearly with registered users
+    - {max_users: 10000, seats: 1}
+    - {max_users: 100000, seats: 2}
+    - {max_users: 1000000, seats: 4}
+    - {max_users: null, seats: 8}
+  # v24: "24x7" = 168 hours ÷ 48-hour week = 3.5, plus about 15% leave and relief cover (reasoned);
+  # "24x7_on_call" v22 (placeholder)
+  helpdesk_coverage_fte: {"8x5": 1.0, "24x7": 4.0, "24x7_on_call": 1.3}
+  helpdesk_role: role.helpdesk_executive
+  bugfix_share_of_build_pd: 0.06
+  bugfix_role: role.developer
+  patching_share_of_build_pd: 0.02
+  patching_role: role.devops_engineer
+  upgrade_share_of_build_pd: 0.03
+  upgrade_role: role.senior_developer
+  change_request_share_of_build_pd: 0.05
+  change_request_role: role.developer
+  upkeep_one_line: true   # v25: bug fixes, patching, upgrades and change requests as one line a year
+  staff_replace_work: true   # v25: stated onsite developers do the upkeep, an onsite PM the O&M PM
+  # v25: the go-live audit is the first year's audit, so the annual re-audit starts in support
+  # year 2 (N support years: N audits, one every 12 months from go-live, not N + 1)
+  annual_audit_from_year: 2
+  # v25: hypercare is the first weeks of support year 1: that year's upkeep and O&M project
+  # management are priced for the rest of the year only, (52 - hypercare weeks) / 52
+  hypercare_in_year_one: true
+  annual_audit_rate_prefix: audit_fee.cert_in_annual
+  ssl_rate_key: licence.ssl_certificate.year
+  domain_rate_key: licence.domain.year
+  # v19: free .gov.in only when the document names such an address (questionnaire web_domain)
+  domain_rate_key_by_type: {gov_in: licence.domain.year, commercial: licence.domain_commercial.year}
+  # v20: a free domain-validated certificate unless the document asks for OV (questionnaire ssl_type)
+  ssl_rate_key_by_type: {dv_free: licence.ssl_certificate_dv.year, ov: licence.ssl_certificate.year}
+  rule_of_thumb_low: 0.15     # industry: annual maintenance = 15-25% of build
+  rule_of_thumb_high: 0.25
+
+go_live:
+  source: placeholder
+  cert_in_audit_rate_prefix: audit_fee.cert_in
+  cert_in_reaudit_rate_prefix: audit_fee.cert_in_reaudit
+  stqc_rate_key: audit_fee.stqc
+  trainer_role: role.trainer
+  training_pd_per_session: 1.5
+  travel_rate_key: travel.outstation_trip
+  trips_per_outstation_session: 2
+  hypercare_team_fte: {role.developer: 2, role.devops_engineer: 0.5, role.project_manager: 0.25}
+  pd_per_week: 5
+
+escalation:
+  source: placeholder
+  labour: 0.08
+  prices: 0.08
+
+commercial:
+  source: placeholder
+  cost_of_capital: 0.12
+  pbg_rate_key: bank_charge.pbg_commission
+  payment_delay_months: 2
+  ld_reserve_build_percent: 0.01
+  penalty_reserve_run_percent: {"8x5": 0.01, "24x7": 0.02, "24x7_on_call": 0.02}
+  # v16: no fixed contingency; unclear requirements widen the Monte Carlo spreads instead
+  # (uncertainty.clarity_spread), so the risk allowance is P50 minus the planned cost.
+  contingency_at_clarity:     # x = average requirement clarity (1-5), y = contingency
+    - {x: 1, y: 0}
+    - {x: 5, y: 0}
+  exit_role: role.project_manager
+  gst_percent: 0.18
+  penalty_needs_clause: true   # v19: no penalty reserve without a penalty clause (penalty_clause)
+
+uncertainty:
+  source: placeholder
+  default_clarity: 3
+  clarity_spread:             # optimistic (down) / pessimistic (up) fraction around likely
+    1: {down: 0.25, up: 0.75}
+    2: {down: 0.2, up: 0.5}
+    3: {down: 0.15, up: 0.35}
+    4: {down: 0.12, up: 0.25}
+    5: {down: 0.1, up: 0.15}
+  template_match_extra_up: {none: 0.1, weak: 0.05, strong: 0.0}
+  tag_extra_up: {integration: 0.25, ai: 0.2, data_migration: 0.2}
+  compression_extra_up_per_unit: 0.0   # v17: the compression multiplier already prices the squeeze
+  om_extra_up_per_year: 0.03
+  hosting: {down: 0.1, up: 0.25}
+  ai_runtime: {down: 0.4, up: 1.0}
+  fixed_fee: {down: 0.05, up: 0.15}
+  monte_carlo_runs: 10000
+  distribution: triangular
+  # v19: a component holding a hard problem (concurrency, money movement, legacy data...) gets
+  # this on top of its clarity spread: at clarity 3, 0.85-1.35x becomes 0.75-2.2x (an outside
+  # review's prior; the planned cost does not change)
+  hard_problem_extra: {down: 0.1, up: 0.85}
+
+confidence:
+  source: placeholder
+  weight_clarity: 0.5
+  weight_template: 0.3
+  weight_freshness: 0.2
+  template_score: {none: 0.0, weak: 0.5, strong: 1.0}
+  fresh_days: 180
+  stale_days: 730
+  high_threshold: 0.75
+  medium_threshold: 0.5
+
+# Questionnaire defaults. Any default used is listed as an assumption on the estimate.
+defaults:
+  source: placeholder
+  values:
+    usage_fees_in_scope: false   # clients usually pay SMS, email, maps and app-store fees directly
+    om_years: 3
+    team_ai_maturity: medium
+    deadline_months: null
+    uptime_sla: "99.5"
+    security_level: standard
+    languages: 2
+    gigw_accessibility: true
+    users_total: 10000
+    peak_concurrent_users: 200
+    documents_per_month: 1000
+    avg_document_mb: 1
+    chatbot_queries_per_day: 1000
+    tokens_in_per_query: 2000
+    tokens_out_per_query: 400
+    hosting_provider: aws
+    hosting_pricing: on_demand
+    ai_runtime_mode: api
+    licensing: open_source
+    support_sla: 8x5
+    onsite_resources: []
+    change_request_pd_per_year: null
+    cert_in_audit: true
+    stqc_certification: false
+    training_sessions: 4
+    training_outstation_sessions: 0
+    hypercare_weeks: 4
+    emd_paise: 0
+    emd_lock_months: 6
+    pbg_percent: 0.03
+    pbg_validity_months: null
+    payment_schedule:
+      - {at_build_fraction: 0.5, offset_months: 0, percent: 0.2}
+      - {at_build_fraction: 1.0, offset_months: 0, percent: 0.4}
+      - {at_build_fraction: 1.0, offset_months: 3, percent: 0.4}
+    margin_percent: 0.15
+    disaster_recovery: false   # v17: a standby site only when the document asks for one
+    penalty_clause: true       # v19: government contracts usually have one; the quick form asks
+    web_domain: gov_in         # v19: government projects; the quick form follows the document
+    ssl_type: dv_free          # v20: Let's Encrypt unless the document asks for an OV certificate
+    contingency_percent: null
+    gst_percent: null
+    escalation_labour: null
+    escalation_prices: null
+
+# Calibration (back-test 2026-10-16): dials chosen to minimise the typical error against the
+# benchmark contracts marked `use: true`; re-run with `python -m app.cli backtest --country X`.
+calibration:
+  source: "should-cost: no factor fitted to market prices. Effort per block from published effort data (catalog v5); the spread between teams from ISBSG (Java h/FP P10-P90 4.8-29.4, P25-P75 5.9-15.6) and Anda, Sjoberg & Mockus 2009 (35 firms, one specification)."
+  # v15: catalog v5 hours (mostly agency feature-hour tables) came to 3.8-5.0 hours per function point for whole projects without AI tools (build, launch and management; function points counted with IFPUG average weights from a reasoned count per block), against a median of 8.3 (P25 4.6, P75 15.9) in 825 finished projects in five public datasets (Desharnais 81, China 499, Kitchenham 145, Maxwell 62, Finnish 38; ISBSG Java median 6.4-8.0). x 1.4 brings them to about 6.5 h/FP: below the datasets' median, which comes from older tools.
+  effort_multiplier: 1.4
+  run_multiplier: 1.0
+  # a ready-made product (SaaS, WordPress, Shopify, a chatbot platform) is set up and configured, not built: reasoned share of the custom build effort
+  answer_effort_multiplier: {build_type: {ready_product: 0.2}}
+  # how much the hours of different teams differ for the same scope, after adding up the blocks (research: about 0.7x to 1.6x of the middle estimate)
+  should_cost: true
+  # how much the hours of different teams differ for the same scope, after adding up the blocks (research: about 0.7x to 1.6x of the middle estimate); gives a range of about 0.75x to 1.25x of P50 (a wider, more skewed spread lifts P50 well above the planned cost)
+  # v21: wider and higher with the project's size (round 3, placeholder; see the header)
+  model_spread_centre: median  # v23: each draw divided by the triangle's median, so P50 is not lifted
+  model_spread_by_size:
+    small: {down: 0.45, up: 0.8}
+    small_medium: {down: 0.5, up: 0.9}
+    medium: {down: 0.6, up: 1.1}
+    medium_large: {down: 0.7, up: 1.35}
+    large: {down: 0.75, up: 1.6}
+  model_spread:
+    government: {down: 0.35, up: 0.7}
+    private: {down: 0.35, up: 0.7}
+    small_business: {down: 0.35, up: 0.7}
+  # v16: no market_by_size bands (in-sample, scaled to our own P50); the summary compares with
+  # the published prices of comparable projects (seeds/benchmarks) instead.
+  notes: "Should-cost: what the work should cost from its hours (checked against 825 finished projects at project level) and rates, not what vendors charged. Not fitted to contract prices; real contracts are shown beside it as published, not as a check of the hours."
+
+# Third-party running costs, build-phase tools and client-paid items (new in this version).
+# Prices come from the rate card (each with its source); the volumes below are assumptions.
+third_party:
+  source: placeholder
+  services:
+    - key: sms
+      label: SMS messages
+      rate_key: service.sms.message
+      basis: monthly
+      components: [notifications, integration_sms_email_gateway]
+      units_per_active_user_month: 2   # OTPs and status alerts
+    - key: email
+      label: Email sending
+      rate_key: service.email.thousand
+      per_units: 1000
+      basis: monthly
+      components: [notifications, integration_sms_email_gateway]
+      units_per_active_user_month: 10
+    - key: aadhaar_ekyc
+      label: Aadhaar eKYC checks
+      rate_key: service.aadhaar_ekyc.check
+      basis: per_user
+      components: [integration_aadhaar_ekyc]
+      # v12: listed for every client (paid to the provider); government departments may be exempt (open question)
+      regions: [india]
+      first_year_units_per_user: 1      # every user verified once when they join
+      later_year_units_per_user: 0.2    # new users in later years
+    - key: maps
+      label: Map loads
+      rate_key: service.maps.thousand_loads
+      per_units: 1000
+      basis: monthly
+      components: [maps_location]
+      units_per_active_user_month: 20
+      free_units_per_month: 70000   # Google Maps free usage per month
+    - key: apple_developer
+      label: Apple developer account
+      rate_key: service.app_store.apple_year
+      basis: fixed
+      components: [custom_mobile_app]
+      rate_period: year
+    - key: google_play
+      label: Google Play registration (one-off)
+      rate_key: service.app_store.google_once
+      basis: fixed
+      components: [custom_mobile_app]
+      rate_period: one_off
+    - key: waf_base
+      label: Web firewall and DDoS protection
+      rate_key: security.waf.base_month
+      basis: fixed
+      rate_period: month
+      needs_cloud_hosting: true
+      min_users: 10000            # medium and large systems
+    - key: waf_requests
+      label: Web firewall requests
+      rate_key: security.waf.million_requests
+      per_units: 1000000
+      basis: monthly
+      needs_cloud_hosting: true
+      min_users: 10000
+      units_per_active_user_month: 300   # page and API requests
+  ai_features:
+    components: [custom_ai_feature]
+    calls_per_active_user_month: 20
+    tokens_in_per_call: 2000
+    tokens_out_per_call: 500
+  dev_tools:
+    ai_coding_rate_key: tools.ai_coding.seat_month
+    dev_suite_rate_key: tools.dev_suite.seat_month
+  translation:
+    rate_key: service.translation.word
+    words_per_component: 800     # labels, messages, help text and static pages per building block
+    annual_update_share: 0.1
+  client_paid_notes:
+    - key: payment_gateway
+      label: Online payment fees
+      components: [integration_payment_gateway, ecommerce_storefront]
+      rate_keys: [client.payment_gateway.fee]
+      text: "The payment company charges about {0} of each online payment (standard plan, plus GST). The client pays this directly; it is not in this price."
+
+# Lean delivery for private and small-business projects (new in this version): management and
+# hypercare scale with the work, not the calendar (rule of thumb: project management is 10-15%
+# of project effort); a test environment is one small cloud server.
+lean:
+  source: placeholder
+  segments: []                 # v12: by project size only, whoever the client is
+  sizes: [small, small_medium]
+  unless_governance: true      # v13: a full-time project manager only with formal reports and meetings
+  pm_share_of_build_pd: 0.12
+  hypercare_share_of_build_pd: 0.05
+  om_pm_share_of_build_pd: 0.02
+  exit_share_of_build_pd: 0.02     # v27: handover follows the work on lean delivery (placeholder, reasoned: 1-2% of the build)
+  environment_rate_key: cloud.aws.app_server.month

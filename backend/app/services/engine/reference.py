@@ -420,6 +420,9 @@ class EffortCaps(Sourced):
                                                    (architecture_task, after the pre-build cap)
       floor    = max(architecture_base_pd, architecture_max_share_by_size[size] × base)
                  when the size is listed, else architecture_base_pd
+      tests    ≤ tests_max_share_by_size[size] × tested  (tests_task, every component; v28+,
+                 only when the size is listed; both before AI savings), tested = the build-stage
+                 base tasks other than tests_task
 
     The shares by project size (`*_by_size`, keys as the answer project_size) replace the flat
     share when the size is known and listed: review, integration and design overhead grows with
@@ -435,6 +438,9 @@ class EffortCaps(Sourced):
     architecture_pd_per_hard_problem: Decimal = Field(ge=0)
     review_max_share_by_size: dict[str, Decimal] = {}
     pre_build_max_share_by_size: dict[str, Decimal] = {}
+    # v28+: testing follows the work on the listed project sizes (OPEN_QUESTIONS 180)
+    tests_task: TaskType | None = None
+    tests_max_share_by_size: dict[str, Decimal] = {}
     architecture_max_share_by_size: dict[str, Decimal] = {}
 
     @model_validator(mode="after")
@@ -829,6 +835,7 @@ class Lean(Sourced):
       build PM pd    = min(pm_fte × months × pd_per_month, pm_share_of_build_pd × build_pd)
       hypercare pd   = min(weeks × pd_per_week × Σ fte, hypercare_share_of_build_pd × build_pd)
       O&M PM pd/year = min(om_pm_fte × pd_per_year, om_pm_share_of_build_pd × build_pd)
+      exit pd        = min(exit_management_pd, exit_share_of_build_pd × build_pd)  (v27+)
     """
 
     segments: list[str]
@@ -839,6 +846,8 @@ class Lean(Sourced):
     pm_share_of_build_pd: Decimal = Field(gt=0, le=1)
     hypercare_share_of_build_pd: Decimal = Field(gt=0, le=1)
     om_pm_share_of_build_pd: Decimal = Field(gt=0, le=1)
+    # v27+: handover at the end of the contract follows the work (OPEN_QUESTIONS 179)
+    exit_share_of_build_pd: Decimal | None = Field(default=None, gt=0, le=1)
     environment_rate_key: str | None = None
 
 

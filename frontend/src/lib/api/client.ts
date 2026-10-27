@@ -77,6 +77,7 @@ export type Size = Schemas["Size"];
 export type Evidence = Schemas["VerifiedEvidence"];
 export type UnclearPoint = Schemas["UnclearPoint"];
 export type QuestionImpact = Schemas["QuestionImpact"];
+export type QuickSchedule = Schemas["QuickSchedule"];
 export type OptionPrice = Schemas["OptionPrice"];
 export type PrebidQuery = Schemas["PrebidQuery"];
 export type OutcomeIn = Schemas["OutcomeIn"];
@@ -350,6 +351,13 @@ export const api = {
     send<DraftOut>("POST", "/quick-estimate/draft-stories", body),
   questionImpact: (body: QuickRequest, signal?: AbortSignal) =>
     request<QuestionImpact[]>("/quick-estimate/impact", {
+      method: "POST",
+      body: JSON.stringify(body),
+      signal,
+    }),
+
+  quickSchedule: (body: QuickRequest, signal?: AbortSignal) =>
+    request<QuickSchedule>("/quick-estimate/schedule", {
       method: "POST",
       body: JSON.stringify(body),
       signal,

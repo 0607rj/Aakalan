@@ -12,7 +12,7 @@ import {
   type Scenario,
   type ScenarioResult,
 } from "@/lib/api/client";
-import { formatPaise } from "@/lib/format";
+import { formatPaise, weeksToMonths } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 import { SectionTitle } from "./cost-summary";
@@ -24,6 +24,8 @@ interface Preset {
   /** Only offered for these countries (all when omitted). */
   countries?: string[];
 }
+
+const MAX_DEADLINE_WEEKS = 260; // five years, the engine's 60 months
 
 // Hosting comparisons put hosting in the cost, on each kind of server.
 const PRESETS: Preset[] = [
@@ -103,13 +105,13 @@ export function CompareOptions({
   const [error, setError] = React.useState<string | null>(null);
 
   const deadlineOn = selected.includes(DEADLINE);
-  const deadlineMonths = Number(deadline);
+  const deadlineWeeks = Number(deadline); // asked in weeks, priced in months
   const deadlineValid =
     !deadlineOn ||
     (deadline.trim() !== "" &&
-      Number.isInteger(deadlineMonths) &&
-      deadlineMonths >= 1 &&
-      deadlineMonths <= 60);
+      Number.isInteger(deadlineWeeks) &&
+      deadlineWeeks >= 1 &&
+      deadlineWeeks <= MAX_DEADLINE_WEEKS);
   const canCompare = selected.length > 0 && deadlineValid;
 
   function toggle(id: string) {
@@ -124,8 +126,8 @@ export function CompareOptions({
       .map((p) => ({ name: p.label, overrides: p.overrides }));
     if (deadlineOn) {
       scenarios.push({
-        name: `Deadline of ${deadlineMonths} months`,
-        overrides: { deadline_months: deadlineMonths },
+        name: `Deadline of ${deadlineWeeks} weeks`,
+        overrides: { deadline_months: weeksToMonths(deadlineWeeks) },
       });
     }
     setRunning(true);
@@ -194,21 +196,21 @@ export function CompareOptions({
             type="number"
             inputMode="numeric"
             min={1}
-            max={60}
+            max={MAX_DEADLINE_WEEKS}
             value={deadline}
             onChange={(e) => {
               setDeadline(e.target.value);
               if (!deadlineOn) toggle(DEADLINE);
             }}
             className="h-8 w-16"
-            aria-label="Deadline in months"
+            aria-label="Deadline in weeks"
           />
-          months
+          weeks
         </label>
       </div>
       {!deadlineValid ? (
         <span className="text-sm text-destructive">
-          Enter a whole number of months between 1 and 60.
+          Enter a whole number of weeks between 1 and {MAX_DEADLINE_WEEKS}.
         </span>
       ) : null}
 

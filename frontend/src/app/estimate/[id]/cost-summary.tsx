@@ -220,6 +220,13 @@ function sum(items: CostItem[]): number {
   return items.reduce((s, i) => s + i.amount_paise, 0);
 }
 
+/** Running cost per year after launch (before margin, risk buffer and tax): the average of the
+ * support years, or null without support. */
+export function runningPerYear(summary: QuickSummary): number | null {
+  const years = summary.support_years;
+  return years > 0 ? sum(summary.cost_items.filter(isRecurring)) / years : null;
+}
+
 /** Low and high ends of items: each item's share of the price's range, so they add up. */
 function sumRange(items: CostItem[]): [number, number] {
   return [
@@ -644,8 +651,7 @@ export function OngoingCosts({ summary }: { summary: QuickSummary }) {
   const oneTime = items.filter(
     (i) => !isRecurring(i) && categoryOf(i) !== "charges",
   );
-  const runningTotal = sum(running);
-  const perYear = years > 0 ? runningTotal / years : null;
+  const perYear = runningPerYear(summary);
   const sized = summary.client_pays.filter((c) => c.total_paise !== null);
   const unsized = summary.client_pays.filter((c) => c.total_paise === null);
   const clientTotal = sized.reduce((s, c) => s + (c.total_paise ?? 0), 0);

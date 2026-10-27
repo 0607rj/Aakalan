@@ -58,7 +58,9 @@ Pipeline inside `core.calculate`:
    `EffortPlan` worked out once from all components (project reuse ratio, effort caps) scales
    review, tests, pre-build and architect work → `timeline.build_timeline`:
    natural duration from a monotone max-team curve, size band, compression / extension, or
-   *not feasible* with a phased plan.
+   *not feasible* with a phased plan. `core.schedule` works out the timeline and the fastest
+   deadline that still gets a price without pricing anything; the quick estimate prices a
+   deadline below it at that fastest time and says so (OPEN_QUESTIONS 179).
 3. Base lines: component labour (× compression), go-live, hosting (`services/hosting`),
    AI runtime, maintenance, programme, EMD and exit.
 4. Derived commercial lines from `commercial.derived_amounts` (contingency, working capital,
@@ -238,7 +240,7 @@ bid results (`POST /projects/{id}/outcome`) and builds the calibration report (`
 
 Reference data is per country (`region` on rate cards and parameter sets; currency on the rate
 card). `services/settings.py` applies the company's margin / buffer / effort multipliers to a
-copy of the parameter set before pricing. The headline back-test is the **production path** (`backtest_production`, OPEN_QUESTIONS 161): each benchmark with a saved reading (`tests/fixtures/readings_v9`, the readings plus staff lines entered by hand, OPEN_QUESTIONS 162) is priced as an upload is, through the review form's pre-fill (`services/quick/prefill.review_prefill`, which the form itself loads from `GET /documents/{id}/form`) and `plan_quick` with the reading passed in. Staff during support come from the reading's staff lines (prompt v9): `services/extraction/staffing.py` applies the rules in code (price table wins, call-off as written, staffed shifts only for a committed team, months from the line, helpdesk only when asked for, chatbot complex only with the buyer's systems) and raises the pre-bid queries; the request's `staff` list becomes the engine's `onsite_resources` (`maintenance.onsite.v2` / `support_staff.v2` for months or round-the-clock seats), and the form shows these key answers first, ordered by price impact (`key_answers`). The rest of this paragraph describes the **legacy path, not the production path**: `services/calibration/backtest.py` prices the
+copy of the parameter set before pricing. The headline back-test is the **production path** (`backtest_production`, OPEN_QUESTIONS 161): each benchmark with a saved reading (`tests/fixtures/readings_v9`, the readings plus staff lines entered by hand, OPEN_QUESTIONS 162) is priced as an upload is, through the review form's pre-fill (`services/quick/prefill.review_prefill`, which the form itself loads from `GET /documents/{id}/form`) and `plan_quick` with the reading passed in. Staff during support come from the reading's staff lines (prompt v9): `services/extraction/staffing.py` applies the rules in code (price table wins, call-off as written, staffed shifts only for a committed team, months from the line, helpdesk only when asked for, chatbot complex only with the buyer's systems) and raises the pre-bid queries; the request's `staff` list becomes the engine's `onsite_resources` (`maintenance.onsite.v2` / `support_staff.v2` for months or round-the-clock seats), and the form shows these key answers first within their topic (support, build), ordered by price impact (`key_answers`); the form asks one topic at a time (quick config `topics`, OPEN_QUESTIONS 177). The rest of this paragraph describes the **legacy path, not the production path**: `services/calibration/backtest.py` prices the
 benchmark contracts in `seeds/benchmarks/<country>.yaml` with the same quick-estimate mapping
 (features at the level matching each project's size class, the size pinned to that class,
 government projects above small with the audit and formal reporting asked for). From

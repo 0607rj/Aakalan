@@ -93,6 +93,13 @@ def band_fee(t: LineBuilder, effort_pd: Decimal, prefix: str) -> Decimal:
     return _blend(t, mix, f"{prefix} fee", low, t.rate_local(f"{prefix}.{upper}"))
 
 
+def fastest_months(ctx: PricingContext, natural_months: Decimal) -> Decimal:
+    """fastest = ceil_to(natural_months × infeasible_below_ratio, duration_quantum): the
+    shortest deadline that still gets a price (a bigger team, priced by the compression curve)."""
+    tl = ctx.p.timeline
+    return ceil_to(natural_months * tl.infeasible_below_ratio, tl.duration_quantum_months)
+
+
 def compression_multiplier(ctx: PricingContext, ratio: Decimal) -> Decimal:
     """1.0 at ratio >= 1; linear along compression_curve below it (extrapolated past its end)."""
     if ratio >= ONE:
@@ -166,9 +173,7 @@ def phased_plan(
                 natural_duration_months=natural_duration(ctx, pd).months,
             )
         )
-    minimum = ceil_to(
-        timeline.natural_duration_months * floor, ctx.p.timeline.duration_quantum_months
-    )
+    minimum = fastest_months(ctx, timeline.natural_duration_months)
     return Infeasibility(
         message=(
             f"A {timeline.deadline_months}-month deadline is below "

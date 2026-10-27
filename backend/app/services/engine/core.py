@@ -30,6 +30,7 @@ from app.services.engine.outputs import (
     MarketCheck,
     RangeDriver,
     SanityCheck,
+    Schedule,
     SpreadFactor,
     Timeline,
     Totals,
@@ -44,7 +45,7 @@ from app.services.engine.third_party import (
     third_party_lines,
     translation_lines,
 )
-from app.services.engine.timeline import build_timeline, phased_plan
+from app.services.engine.timeline import build_timeline, fastest_months, phased_plan
 from app.services.hosting.sizing import hosting_lines
 
 ENGINE_VERSION = "1.0.0"
@@ -64,6 +65,18 @@ MAINTENANCE_BUCKETS = (
 def calculate(inp: EstimateInput) -> EstimateResult:
     with localcontext(ENGINE_CONTEXT):
         return _calculate(inp)
+
+
+def schedule(inp: EstimateInput) -> Schedule:
+    """The build's natural duration, the deadline's effect on it and the fastest deadline that
+    still gets a price, without pricing anything (fast: no lines, no Monte Carlo)."""
+    with localcontext(ENGINE_CONTEXT):
+        ctx = PricingContext(inp)
+        timeline = build_timeline(ctx, [base_effort(ctx, ci) for ci in inp.components])
+        return Schedule(
+            timeline=timeline,
+            fastest_months=fastest_months(ctx, timeline.natural_duration_months),
+        )
 
 
 def _calculate(inp: EstimateInput) -> EstimateResult:

@@ -118,7 +118,7 @@ def test_production_path_back_test() -> None:
     assert report.path == "production"
     assert sorted(r.id for r in report.rows) == sorted(two)
     by_id = {r.id: r for r in report.rows}
-    # the tyre tender's 3-month deadline cannot be met: priced without it, and said so
+    # the tyre tender's 3-month deadline cannot be met: priced at the fastest, and said so
     assert by_id[TYRE].infeasible_deadline == 3
     assert by_id[BATTERY].infeasible_deadline is None
     assert all(r.estimate_pre_ai_minor and r.ratio_pre_ai for r in report.rows)

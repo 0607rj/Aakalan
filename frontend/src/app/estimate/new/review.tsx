@@ -7,7 +7,7 @@ import { ErrorNotice, WarningNotice } from "@/components/status";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { currencySymbol } from "@/lib/format";
+import { currencySymbol, monthsToWeeks } from "@/lib/format";
 import {
   api,
   errorText,
@@ -28,19 +28,20 @@ import {
   DOCUMENT_STEPS,
   optionsCurrency,
   QuestionGroup,
-  QuestionHeading,
   relevantQuestions,
   setChoice,
   shownChoice,
   StepIndicator,
   unchosen,
   useQuestionImpact,
+  useSchedule,
+  BuildTime,
+  StepHeader,
 } from "./parts";
 import {
   allFeatures,
   answerLabel,
   CheckStep,
-  DetailsStep,
   effectiveLevels,
   featureSummary,
   featuresWithLevels,
@@ -70,10 +71,9 @@ import {
 } from "./feature-sections";
 import { PrebidQueries } from "./prebid";
 import {
-  KEY_STEP,
-  KeyAnswersStep,
-  keyQuestionKeys,
+  Queries,
   sentStaff,
+  StaffEditor,
   staffError,
   staffRows,
   type StaffRow,
@@ -81,6 +81,7 @@ import {
 
 /** A number the document may state (its limits are what the user may type). */
 type Fact = FactValue;
+type Question = QuickOptions["questions"][number];
 
 const PAISE_PER_RUPEE = 100;
 const PERCENT = 100;
@@ -215,11 +216,10 @@ export function ReviewForm({
     prefill.staff ? staffRows(prefill.staff) : null,
   );
   const staffHasErrors = (staff ?? []).some((r) => staffError(r) !== null);
-  // the answers that move the price most are asked once, on their own screen
+  // the answers that move the price most (the API orders them by price effect) come first in
+  // their topic, each with its clause and any pre-bid query
   const keyAnswers = prefill.key_answers ?? [];
-  const keyKeys = keyQuestionKeys(keyAnswers);
-  const omYearsInKey =
-    keyKeys.has("support_years") && extraction.numbers.om_years !== undefined;
+  const keyRank = new Map(keyAnswers.map((k, i) => [k.key as string, i]));
   const everything = allFeatures(options, features, choices);
   // a mobile app, other software or old data count too (ticked through their question)
   const anyFeature = everything.length > 0 || customFeatures.length > 0;
@@ -251,10 +251,8 @@ export function ReviewForm({
     visibleFacts.map((f) => [f.key, factError(f, facts[f.key] ?? "")]),
   );
   const hasErrors = Object.values(errors).some(Boolean) || staffHasErrors;
-  // the facts screen, without the support years when the key answers ask them
-  const factsShown = visibleFacts.filter(
-    (f) => !(omYearsInKey && f.key === "om_years"),
-  );
+  // the numbers shown on the topic screens (the EMD is read and used, never shown)
+  const factsShown = visibleFacts.filter((f) => !f.hidden);
   const overrides: Record<string, number> = {};
   for (const fact of visibleFacts) {
     const text = (facts[fact.key] ?? "").trim();
@@ -265,34 +263,37 @@ export function ReviewForm({
   // a stated number answers its question (e.g. the registered users pick the scale)
   const byNumber = answersFromNumbers(options.questions, overrides);
   const omYearsGiven = (facts.om_years ?? "").trim() !== "";
-  const questions = relevantQuestions(
+  const isOpen = (q: Question) => extraction.choices[q.key] === undefined;
+  const relevant = relevantQuestions(
     options.questions,
     choices,
     everything,
     customFeatures.map((c) => c.category),
-  ).filter(
+  );
+  // Every question of a topic is shown (OPEN_QUESTIONS 177): the document's answer with its
+  // page, else the usual answer to confirm; not when a stated number answers it, nor what the
+  // document decides when it says nothing (e.g. first version or the full product).
+  const questions = relevant.filter(
     (q) =>
       !(q.key === "support_years" && omYearsGiven) &&
-      // the document decides these (what is built), and a stated number answers its question
-      q.on_upload !== "document" &&
       byNumber[q.key] === undefined &&
-      !keyKeys.has(q.key),
+      !(q.on_upload === "document" && isOpen(q)),
   );
-  const isOpen = (q: (typeof questions)[number]) =>
-    extraction.choices[q.key] === undefined;
-  const openQuestions = questions.filter(
-    (q) => q.group === "main" && isOpen(q),
-  );
-  const details = questions.filter((q) => q.group === "detail" && isOpen(q));
-  const foundQuestions = questions.filter((q) => !isOpen(q));
+  const rank = (key: string) => keyRank.get(key) ?? keyAnswers.length;
+  const topicQuestions = (topic: string) =>
+    questions
+      .filter((q) => q.topic === topic)
+      .sort((a, b) => rank(a.key) - rank(b.key));
+  const topicFacts = (topic: string) =>
+    factsShown.filter((f) => f.topic === topic);
+  const hasTopic = (topic: string) =>
+    topicQuestions(topic).length > 0 ||
+    topicFacts(topic).length > 0 ||
+    (topic === "support" && staff !== null) ||
+    (topic === "contract" && terms !== null);
   // what the document does not state and is priced at the usual answer (a weak document
   // leaves many of these; each is worth confirming with the department before bidding)
-  const assumed = relevantQuestions(
-    options.questions,
-    choices,
-    everything,
-    customFeatures.map((c) => c.category),
-  ).filter(
+  const assumed = relevant.filter(
     (q) =>
       isOpen(q) &&
       byNumber[q.key] === undefined &&
@@ -333,24 +334,30 @@ export function ReviewForm({
     feature_stories: {}, // the document's own stories are used
     description: "", // nothing typed: the document says what it is
   };
-  const [first, ...rest] = openQuestions.map((q) => `q:${q.key}`);
+  // what is built, then one screen per topic in the form's order (OPEN_QUESTIONS 177)
   const steps = useSteps([
     "found",
-    ...(keyAnswers.length > 0 ? [KEY_STEP] : []),
     ...(scopeGroups.length > 0 ? ["scope"] : []),
-    ...(first ? [first] : []),
-    ...(customizing && leveled.length > 0 ? ["levels"] : []),
-    ...(factsShown.length > 0 || terms ? ["facts"] : []),
-    ...rest,
-    ...(foundQuestions.length > 0 ? ["found_answers"] : []),
-    ...(details.length > 0 ? ["details"] : []),
+    ...options.topics.flatMap((t) =>
+      hasTopic(t.key)
+        ? [
+            `t:${t.key}`,
+            ...(t.key === "build" && customizing && leveled.length > 0
+              ? ["levels"]
+              : []),
+          ]
+        : [],
+    ),
     "check",
   ]);
   const impacts = useQuestionImpact(
-    anyFeature &&
-      !hasErrors &&
-      (steps.current.startsWith("q:") || steps.current === "details")
-      ? request
+    anyFeature && !hasErrors && steps.current.startsWith("t:") ? request : null,
+  );
+  // the build time beside the deadline (contract); the deadline itself does not change it
+  const { deadline_months: deadlineMonths, ...otherNumbers } = overrides;
+  const schedule = useSchedule(
+    anyFeature && !hasErrors && steps.current === "t:contract"
+      ? { ...request, overrides: otherNumbers }
       : null,
   );
 
@@ -415,9 +422,225 @@ export function ReviewForm({
 
   if (submitting) return <Calculating labels={DOCUMENT_STEPS} />;
 
-  const question = steps.current.startsWith("q:")
-    ? openQuestions.find((q) => `q:${q.key}` === steps.current)
-    : undefined;
+  const topic = options.topics.find((t) => `t:${t.key}` === steps.current);
+
+  /** A number the document may state: as found (with its page), or typed. */
+  function factBox(fact: Fact) {
+    const found = extraction.numbers[fact.key];
+    const value = facts[fact.key] ?? "";
+    const unchanged = found !== undefined && value === initialFacts[fact.key];
+    return (
+      <div key={fact.key} className="flex flex-col gap-2">
+        <Label htmlFor={`fact-${fact.key}`} className="eyebrow">
+          {fact.label}
+          {fact.unit === "rupees" ? ` (${currencySymbol(currency)})` : ""}
+        </Label>
+        {fact.hint ? (
+          <span className="-mt-1 text-sm text-muted-foreground">
+            {fact.hint}
+          </span>
+        ) : null}
+        <Input
+          id={`fact-${fact.key}`}
+          type="number"
+          inputMode="decimal"
+          min={fact.min}
+          max={fact.max ?? undefined}
+          value={value}
+          placeholder="Not stated"
+          onChange={(e) =>
+            setFacts((now) => ({ ...now, [fact.key]: e.target.value }))
+          }
+          className="h-10 max-w-48"
+        />
+        {errors[fact.key] ? (
+          <span className="text-sm text-destructive">{errors[fact.key]}</span>
+        ) : null}
+        {found && unchanged ? (
+          <Citation evidence={found.evidence} approximatePages={approx} />
+        ) : found ? (
+          <span className="text-sm text-muted-foreground">
+            Changed by you (document says {initialFacts[fact.key]})
+          </span>
+        ) : (
+          <span className="text-sm text-muted-foreground">
+            Not in the document: we use a typical value.
+          </span>
+        )}
+      </div>
+    );
+  }
+
+  /** One question: the document's answer with its page (change it if wrong), else the usual
+   * answer to confirm; with any pre-bid query about it. */
+  function questionBlock(q: Question) {
+    const found = extraction.choices[q.key];
+    const queries = keyAnswers.find((k) => k.key === q.key)?.queries ?? [];
+    if (found) {
+      const selected = q.options.find((o) => o.value === choices[q.key]);
+      const open = changing[q.key] ?? false;
+      return (
+        <div
+          key={q.key}
+          className="flex flex-col gap-3 rounded-xl border bg-card p-4"
+        >
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="flex flex-col gap-1">
+              <span className="text-sm text-muted-foreground">{q.label}</span>
+              <span className="font-semibold">
+                {selected?.label ?? found.label}
+                {selected?.hint ? (
+                  <span className="font-normal text-muted-foreground">
+                    {" "}
+                    ({selected.hint})
+                  </span>
+                ) : null}
+              </span>
+              {choices[q.key] === asChoice(found) ? (
+                <Citation evidence={found.evidence} approximatePages={approx} />
+              ) : (
+                <span className="text-sm text-muted-foreground">
+                  Changed by you
+                </span>
+              )}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setChanging((now) => ({ ...now, [q.key]: !open }))}
+            >
+              {open ? "Done" : "Change"}
+            </Button>
+          </div>
+          {open ? (
+            <QuestionGroup
+              question={q}
+              value={shownChoice(q, choices)}
+              onChange={(value) => changeChoice(q.key, value)}
+              hideLegend
+              impact={impacts.get(q.key)}
+              currency={currency}
+            />
+          ) : null}
+          <Queries queries={queries} approximatePages={approx} />
+        </div>
+      );
+    }
+    return (
+      <div key={q.key} className="flex flex-col gap-3">
+        <div className="flex flex-col gap-1">
+          <span className="font-wide text-lg">{q.label}</span>
+          <span className="text-sm text-muted-foreground">
+            {q.must_choose
+              ? "Your decision: pick one."
+              : prefill.answered.includes(q.key)
+                ? "The document mentions this, so we picked the matching answer."
+                : "Not in the document: we picked the usual answer. Change it if you know."}
+          </span>
+        </div>
+        <QuestionGroup
+          question={q}
+          value={shownChoice(q, choices)}
+          impact={impacts.get(q.key)}
+          currency={currency}
+          hideLegend
+          onChange={(value) => changeChoice(q.key, value)}
+        />
+        <Queries queries={queries} approximatePages={approx} />
+      </div>
+    );
+  }
+
+  /** A topic's screen: the answers that move the price most first, then the numbers, the
+   * other questions and (contract) the payment terms. */
+  function topicScreen(key: string) {
+    const shown = topicQuestions(key);
+    const first = shown.filter((q) => keyRank.has(q.key));
+    const others = shown.filter((q) => !keyRank.has(q.key));
+    const numbers = topicFacts(key);
+    const staffKey = keyAnswers.find((k) => k.key === "staff");
+    // pre-bid queries of a key answer a stated number replaced (e.g. the support years)
+    const orphanQueries = keyAnswers
+      .filter(
+        (k) =>
+          k.key !== "staff" &&
+          !shown.some((q) => q.key === k.key) &&
+          options.questions.find((q) => q.key === k.key)?.topic === key,
+      )
+      .flatMap((k) => k.queries);
+    return (
+      <>
+        {key === "support" && staff !== null ? (
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-1">
+              <span className="font-wide text-lg">Staff during support</span>
+              <span className="text-sm text-muted-foreground">
+                Read from the document. Check the people and the months.
+              </span>
+            </div>
+            <StaffEditor
+              rows={staff}
+              onChange={setStaff}
+              approximatePages={approx}
+            />
+            <Queries
+              queries={staffKey?.queries ?? []}
+              approximatePages={approx}
+            />
+          </div>
+        ) : null}
+        {first.map(questionBlock)}
+        {numbers.length > 0 ? (
+          <div className="grid gap-x-6 gap-y-5 border-y py-6 sm:grid-cols-2 lg:grid-cols-3">
+            {numbers.map(factBox)}
+          </div>
+        ) : null}
+        <Queries queries={orphanQueries} approximatePages={approx} />
+        {others.map(questionBlock)}
+        {key === "build" && leveled.length > 0 ? (
+          <button
+            type="button"
+            className="w-fit text-sm font-medium text-primary hover:underline"
+            onClick={() => {
+              setCustomizing(true);
+              steps.goTo("levels");
+            }}
+          >
+            Want to set each feature&apos;s level yourself? Change levels →
+          </button>
+        ) : null}
+        {key === "contract" ? (
+          <BuildTime
+            plan={schedule}
+            weeks={
+              deadlineMonths === undefined
+                ? null
+                : monthsToWeeks(Number(deadlineMonths))
+            }
+          />
+        ) : null}
+        {key === "contract" && terms ? (
+          <div className="flex flex-col gap-2 rounded-xl border bg-card p-4">
+            <span className="font-semibold">
+              When you get paid, as the document says
+            </span>
+            <span>{terms.payments.map((p) => p.label).join(", ")}</span>
+            <Citation evidence={terms.evidence} approximatePages={approx} />
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={useTerms}
+                onChange={(e) => setUseTerms(e.target.checked)}
+                className="size-4 accent-primary"
+              />
+              Use these payment terms in the price (late payments mean more cost
+              of waiting for money)
+            </label>
+          </div>
+        ) : null}
+      </>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-8">
@@ -428,17 +651,12 @@ export function ReviewForm({
         {steps.current === "found" ? (
           <>
             <section className="flex flex-col gap-4">
-              <div>
-                <h1 className="font-display text-3xl sm:text-4xl">
-                  Here&apos;s what we found in {doc.filename}
-                </h1>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {doc.pages} {approx ? "approximate " : ""}page
-                  {doc.pages === 1 ? "" : "s"} ·{" "}
-                  {extraction.reader === "ai" ? "Read by AI" : "Basic reading"}{" "}
-                  · Check the features, then continue.
-                </p>
-              </div>
+              <StepHeader
+                eyebrow={`${doc.pages} ${approx ? "approximate " : ""}page${doc.pages === 1 ? "" : "s"} · ${extraction.reader === "ai" ? "read by AI" : "basic reading"}`}
+                title={<>Here&apos;s what we found in {doc.filename}</>}
+              >
+                Check the features, then continue.
+              </StepHeader>
               {extraction.reader !== "ai" ? (
                 <WarningNotice>
                   Read with basic keyword matching (no AI key set) — please
@@ -525,38 +743,6 @@ export function ReviewForm({
               }
             />
           </>
-        ) : steps.current === KEY_STEP ? (
-          <>
-            <KeyAnswersStep
-              keyAnswers={keyAnswers}
-              questions={options.questions}
-              choices={choices}
-              onChoice={changeChoice}
-              staff={staff}
-              onStaff={setStaff}
-              omYears={omYearsInKey ? (facts.om_years ?? "") : null}
-              onOmYears={(text) =>
-                setFacts((now) => ({ ...now, om_years: text }))
-              }
-              currency={currency}
-              approximatePages={approx}
-            />
-            {errors.om_years ? (
-              <span className="text-sm text-destructive">
-                Support years: {errors.om_years}
-              </span>
-            ) : null}
-            <StepButtons
-              onBack={steps.prev}
-              onNext={steps.next}
-              nextDisabled={staffHasErrors || Boolean(errors.om_years)}
-              hint={
-                staffHasErrors || errors.om_years
-                  ? "Fix the highlighted numbers."
-                  : null
-              }
-            />
-          </>
         ) : steps.current === "scope" ? (
           <>
             <ScopeStep
@@ -634,222 +820,30 @@ export function ReviewForm({
             />
             <StepButtons onBack={steps.prev} onNext={steps.next} />
           </>
-        ) : steps.current === "facts" ? (
-          <section className="flex flex-col gap-6">
-            <div>
-              <h1 className="font-display text-3xl sm:text-4xl">Key numbers</h1>
-              <p className="mt-1 text-muted-foreground">
-                Numbers from the document. Leave a box empty if it is not stated
-                — we will use a typical value.
-              </p>
-            </div>
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {factsShown.map((fact) => {
-                const found = extraction.numbers[fact.key];
-                const value = facts[fact.key] ?? "";
-                const unchanged =
-                  found !== undefined && value === initialFacts[fact.key];
-                return (
-                  <div
-                    key={fact.key}
-                    className="flex flex-col gap-2 rounded-xl border bg-card p-4"
-                  >
-                    <Label
-                      htmlFor={`fact-${fact.key}`}
-                      className="font-semibold"
-                    >
-                      {fact.label}
-                      {fact.unit === "rupees"
-                        ? ` (${currencySymbol(currency)})`
-                        : ""}
-                    </Label>
-                    <Input
-                      id={`fact-${fact.key}`}
-                      type="number"
-                      inputMode="decimal"
-                      min={fact.min}
-                      max={fact.max ?? undefined}
-                      value={value}
-                      placeholder="Not stated in the document"
-                      onChange={(e) =>
-                        setFacts((now) => ({
-                          ...now,
-                          [fact.key]: e.target.value,
-                        }))
-                      }
-                      className="h-10"
-                    />
-                    {errors[fact.key] ? (
-                      <span className="text-sm text-destructive">
-                        {errors[fact.key]}
-                      </span>
-                    ) : null}
-                    {found && unchanged ? (
-                      <Citation
-                        evidence={found.evidence}
-                        approximatePages={approx}
-                      />
-                    ) : found ? (
-                      <span className="text-sm text-muted-foreground">
-                        Changed by you (document says {initialFacts[fact.key]})
-                      </span>
-                    ) : null}
-                  </div>
-                );
-              })}
-            </div>
-            {terms ? (
-              <div className="flex flex-col gap-2 rounded-xl border bg-card p-4">
-                <span className="font-semibold">
-                  When you pay, as the document says
-                </span>
-                <span>{terms.payments.map((p) => p.label).join(", ")}</span>
-                <Citation evidence={terms.evidence} approximatePages={approx} />
-                <label className="flex items-center gap-2 text-sm">
-                  <input
-                    type="checkbox"
-                    checked={useTerms}
-                    onChange={(e) => setUseTerms(e.target.checked)}
-                    className="size-4 accent-primary"
-                  />
-                  Use these payment terms in the price (late payments mean more
-                  cost of waiting for money)
-                </label>
-              </div>
-            ) : null}
+        ) : topic ? (
+          <section className="flex flex-col gap-8">
+            <StepHeader eyebrow="From the document" title={topic.label}>
+              {topic.hint}. What the document says shows its page; what it does
+              not say is the usual answer: change it if you know better.
+            </StepHeader>
+            {topicScreen(topic.key)}
             <StepButtons
               onBack={steps.prev}
               onNext={steps.next}
-              nextDisabled={hasErrors}
-              hint={hasErrors ? "Fix the highlighted numbers." : null}
-            />
-          </section>
-        ) : question ? (
-          <section className="flex flex-col gap-6">
-            <QuestionHeading
-              question={question}
-              impact={impacts.get(question.key)}
-              currency={currency}
-            />
-            <p className="-mt-4 text-sm text-muted-foreground">
-              {question.must_choose
-                ? "Your decision: pick one."
-                : prefill.answered.includes(question.key)
-                  ? "The document mentions this, so we picked the matching answer."
-                  : "The document doesn't say, so we picked the usual answer."}
-            </p>
-            <QuestionGroup
-              question={question}
-              value={shownChoice(question, choices)}
-              impact={impacts.get(question.key)}
-              currency={currency}
-              hideLegend
-              onChange={(value) => changeChoice(question.key, value)}
-            />
-            {question.key === VERSION && leveled.length > 0 ? (
-              <button
-                type="button"
-                className="w-fit text-sm font-medium text-primary hover:underline"
-                onClick={() => {
-                  setCustomizing(true);
-                  steps.goTo("levels");
-                }}
-              >
-                Want to set each feature yourself? Change levels →
-              </button>
-            ) : null}
-            <StepButtons
-              onBack={steps.prev}
-              onNext={steps.next}
-              nextDisabled={unchosen([question], choices).length > 0}
+              nextDisabled={
+                topicFacts(topic.key).some((f) => errors[f.key]) ||
+                (topic.key === "support" && staffHasErrors) ||
+                unchosen(topicQuestions(topic.key), choices).length > 0
+              }
               hint={
-                unchosen([question], choices).length > 0
-                  ? "Pick an answer to continue."
-                  : null
+                topicFacts(topic.key).some((f) => errors[f.key]) ||
+                (topic.key === "support" && staffHasErrors)
+                  ? "Fix the highlighted numbers."
+                  : unchosen(topicQuestions(topic.key), choices).length > 0
+                    ? "Pick an answer for each question."
+                    : null
               }
             />
-          </section>
-        ) : steps.current === "details" ? (
-          <>
-            <DetailsStep
-              questions={details}
-              choices={choices}
-              onChange={changeChoice}
-              impacts={impacts}
-              currency={currency}
-            />
-            <StepButtons onBack={steps.prev} onNext={steps.next} />
-          </>
-        ) : steps.current === "found_answers" ? (
-          <section className="flex flex-col gap-4">
-            <div>
-              <h1 className="font-display text-3xl sm:text-4xl">
-                Also found in the document
-              </h1>
-              <p className="mt-1 text-muted-foreground">
-                These answers come from the document. Change any that are wrong.
-              </p>
-            </div>
-            {foundQuestions.map((q) => {
-              const found = extraction.choices[q.key];
-              const selected = q.options.find(
-                (o) => o.value === choices[q.key],
-              );
-              const open = changing[q.key] ?? false;
-              return (
-                <div
-                  key={q.key}
-                  className="flex flex-col gap-3 rounded-xl border bg-card p-4"
-                >
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div className="flex flex-col gap-1">
-                      <span className="text-sm text-muted-foreground">
-                        {q.label}
-                      </span>
-                      <span className="font-semibold">
-                        {selected?.label ?? found?.label}
-                        {selected?.hint ? (
-                          <span className="font-normal text-muted-foreground">
-                            {" "}
-                            ({selected.hint})
-                          </span>
-                        ) : null}
-                      </span>
-                      {found && choices[q.key] === asChoice(found) ? (
-                        <Citation
-                          evidence={found.evidence}
-                          approximatePages={approx}
-                        />
-                      ) : (
-                        <span className="text-sm text-muted-foreground">
-                          Changed by you
-                        </span>
-                      )}
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() =>
-                        setChanging((now) => ({ ...now, [q.key]: !open }))
-                      }
-                    >
-                      {open ? "Done" : "Change"}
-                    </Button>
-                  </div>
-                  {open ? (
-                    <QuestionGroup
-                      question={q}
-                      value={shownChoice(q, choices)}
-                      onChange={(value) => changeChoice(q.key, value)}
-                      hideLegend
-                      impact={impacts.get(q.key)}
-                      currency={currency}
-                    />
-                  ) : null}
-                </div>
-              );
-            })}
-            <StepButtons onBack={steps.prev} onNext={steps.next} />
           </section>
         ) : (
           <>
@@ -866,37 +860,30 @@ export function ReviewForm({
                     customFeatures.map((c) => c.name),
                   ),
                 },
-                ...keyAnswers.map((k) => {
-                  const q = options.questions.find((x) => x.key === k.key);
-                  return {
-                    step: KEY_STEP,
-                    label: k.label,
-                    value:
-                      k.key === "staff"
-                        ? staffSummary(staff ?? [])
-                        : k.key === "support_years" && omYearsInKey
-                          ? `${facts.om_years ?? ""} years`
-                          : q
-                            ? answerLabel(q, choices[q.key])
-                            : k.value,
-                  };
-                }),
-                ...questions.map((q) => ({
-                  step: openQuestions.includes(q)
-                    ? `q:${q.key}`
-                    : details.includes(q)
-                      ? "details"
-                      : "found_answers",
-                  label: q.label,
-                  value: answerLabel(q, choices[q.key]),
-                })),
-                ...factsShown
-                  .filter((f) => (facts[f.key] ?? "").trim() !== "")
-                  .map((f) => ({
-                    step: "facts",
-                    label: f.label,
-                    value: facts[f.key] ?? "",
+                // the answers in the order asked: one topic at a time
+                ...options.topics.flatMap((t) => [
+                  ...(t.key === "support" && staff !== null
+                    ? [
+                        {
+                          step: "t:support",
+                          label: "Staff during support",
+                          value: staffSummary(staff),
+                        },
+                      ]
+                    : []),
+                  ...topicQuestions(t.key).map((q) => ({
+                    step: `t:${t.key}`,
+                    label: q.label,
+                    value: answerLabel(q, choices[q.key]),
                   })),
+                  ...topicFacts(t.key)
+                    .filter((f) => (facts[f.key] ?? "").trim() !== "")
+                    .map((f) => ({
+                      step: `t:${t.key}`,
+                      label: f.label,
+                      value: facts[f.key] ?? "",
+                    })),
+                ]),
                 {
                   step: "found",
                   label: "Not included",

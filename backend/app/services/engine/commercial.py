@@ -140,6 +140,15 @@ def base_commercial_lines(ctx: PricingContext, timeline: Timeline) -> list[CostL
             formula_id="commercial.exit.v1",
         )
         pd = band_value(t, timeline.build_effort_pd, "exit_management_pd")
+        lean = ctx.p.lean
+        if lean is not None and lean.exit_share_of_build_pd is not None and t.lean():
+            t.formula_id = "commercial.exit.v2"  # v27+: follows the work on lean delivery
+            share: Decimal = t.param("lean", "exit_share_of_build_pd")
+            pd = t.step(
+                "lean handover person-days",
+                f"min({pd:.2f}, {share} × {timeline.build_effort_pd:.2f})",
+                min(pd, share * timeline.build_effort_pd),
+            )
         role: str = t.param("commercial", "exit_role")
         t.add_role_pd(role, pd)
         spreads.clarity(t, ctx.overall_clarity())

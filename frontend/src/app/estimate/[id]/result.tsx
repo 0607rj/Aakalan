@@ -21,6 +21,8 @@ import {
   formatDate,
   formatDecimal,
   formatRange,
+  monthsToWeeks,
+  monthsToWeeksUp,
 } from "@/lib/format";
 import { useLoad } from "@/lib/use-load";
 
@@ -31,6 +33,7 @@ import {
   CostSummary,
   Disclosure,
   OngoingCosts,
+  runningPerYear,
   SectionTitle,
   WhatsIncluded,
 } from "./cost-summary";
@@ -125,6 +128,7 @@ function Headline({ summary }: { summary: QuickSummary }) {
     formatApprox(paise, summary.currency);
   const risk = summary.risk_allowance_paise;
   const tax = summary.currency === "INR" ? "GST" : "tax";
+  const perYear = runningPerYear(summary);
   return (
     <section
       aria-labelledby="estimate-heading"
@@ -160,6 +164,18 @@ function Headline({ summary }: { summary: QuickSummary }) {
 
       <RangeBand summary={summary} />
 
+      {summary.deadline_priced_months && summary.deadline_asked_months ? (
+        <p className="settle rounded-lg bg-warning-muted px-4 py-3 text-sm text-warning">
+          Your deadline of{" "}
+          {monthsToWeeks(Number(summary.deadline_asked_months))} weeks is
+          shorter than the fastest possible: more people would not finish
+          sooner. This is priced for{" "}
+          {monthsToWeeksUp(Number(summary.deadline_priced_months))} weeks, with
+          the biggest team that still helps. To keep your date, launch the most
+          important features first and the rest later.
+        </p>
+      ) : null}
+
       <dl className="settle grid grid-cols-2 gap-x-8 gap-y-5 border-t pt-6 [--d:4] sm:grid-cols-3 lg:grid-cols-5">
         <Fact
           label="Building and launch only"
@@ -168,6 +184,13 @@ function Headline({ summary }: { summary: QuickSummary }) {
             summary.build_only_high_paise,
           )}
         />
+        {perYear !== null ? (
+          // one-time and yearly apart, so the build is not read as the whole price
+          <Fact
+            label="Then, running per year"
+            value={formatApprox(perYear, summary.currency)}
+          />
+        ) : null}
         <Fact
           label="Time to build"
           value={`${formatDecimal(summary.build_months, 1)} months`}

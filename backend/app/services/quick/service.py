@@ -33,7 +33,7 @@ from app.models import (
     User,
 )
 from app.services.engine.components import AI_KEPT_KEY
-from app.services.engine.core import calculate
+from app.services.engine.core import calculate, schedule
 from app.services.engine.inputs import (
     AnswerIn,
     ComponentInstanceIn,
@@ -188,7 +188,8 @@ class QuickRequest(BaseModel):
     feature_units: dict[str, int] = {}
     custom_features: list[CustomFeature] = []
     choices: dict[str, str | int] = {}
-    deadline_months: int | None = Field(default=None, ge=1, le=60)
+    # the form asks weeks and sends them as months (weeks × 12 ÷ 52, two decimals)
+    deadline_months: int | float | None = Field(default=None, gt=0, le=60)
     document_id: str | None = None  # a document uploaded via POST /documents
     overrides: dict[str, int | float] = {}
     # When the vendor is paid, as read from the document (shares add up to 1).
@@ -493,6 +494,9 @@ class QuickSummary(BaseModel):
     size_check: SizeCheckOut | None = None
     assumed: list[AssumedAnswer] = []  # answers nobody gave, priced at the usual answer
     not_included: list[NotIncludedOut] = []  # not in the price, and why
+    # a deadline too short to build in, priced at the fastest possible time (OPEN_QUESTIONS 179)
+    deadline_asked_months: Decimal | None = None
+    deadline_priced_months: Decimal | None = None
 
 
 def _default(cfg: QuickConfig, req: QuickRequest, key: str) -> str | int:
@@ -1333,21 +1337,53 @@ def create_quick_estimate(db: Session, user: User, cfg: QuickConfig, req: QuickR
                 confirmed_at=now,
             )
         )
+    rows = {}
     for k, (v, reqs) in plan.answers.items():
-        db.add(
-            QuestionnaireAnswer(
-                org_id=user.org_id,
-                project_id=project.id,
-                key=k,
-                value=v,
-                source="user",
-                requirement_ids=[ids[r] for r in reqs],
-            )
+        rows[k] = QuestionnaireAnswer(
+            org_id=user.org_id,
+            project_id=project.id,
+            key=k,
+            value=v,
+            source="user",
+            requirement_ids=[ids[r] for r in reqs],
         )
+        db.add(rows[k])
     db.flush()
     db.refresh(project)
-    inp = estimates.build_input(db, project, as_of=now.date(), seed=request_seed(req, doc))
+    seed = request_seed(req, doc)
+    inp = estimates.build_input(db, project, as_of=now.date(), seed=seed)
+    fastest = fastest_deadline(inp)
+    if fastest is not None:
+        # too short to build in even with a bigger team: priced at the fastest possible time,
+        # and the summary says so (OPEN_QUESTIONS 179); the request keeps the deadline asked
+        rows[DEADLINE].value = float(fastest)
+        db.flush()
+        inp = estimates.build_input(db, project, as_of=now.date(), seed=seed)
     return estimates.create_estimate(db, project, user, inp)
+
+
+DEADLINE = "deadline_months"
+
+
+def fastest_deadline(inp: EstimateInput) -> Decimal | None:
+    """The fastest deadline that still gets a price, when the one asked for is shorter
+    (OPEN_QUESTIONS 179); None when the deadline (or none) is priced as it is."""
+    plan = schedule(inp)
+    return plan.fastest_months if plan.timeline.status == "not_feasible" else None
+
+
+def at_fastest(inp: EstimateInput) -> EstimateInput:
+    """The input with a deadline too short to build in moved to the fastest possible one."""
+    fastest = fastest_deadline(inp)
+    if fastest is None:
+        return inp
+    answers = [
+        AnswerIn(key=a.key, value=fastest, requirement_ids=a.requirement_ids)
+        if a.key == DEADLINE
+        else a
+        for a in inp.answers
+    ]
+    return inp.model_copy(update={"answers": answers})
 
 
 def request_seed(req: QuickRequest, doc: Document | None) -> int:
@@ -1438,8 +1474,10 @@ def question_impact(
     most-likely total moves (brief: ask the questions that change the price most, first)."""
     req, likely = _impact_pricer(db, user, cfg, req)
     out = []
+    # "document" questions are asked only on the review form of an uploaded document
+    skipped = ("hidden",) if req.document_id else ("hidden", "document")
     for key, question in cfg.questions.items():
-        if question.group in ("hidden", "document"):  # never asked on the form
+        if question.group in skipped:
             continue
         if key == "support_years" and "om_years" in req.overrides:
             continue
@@ -1477,9 +1515,26 @@ def _impact_pricer(
     req = with_catalog_blocks(db, user, cfg, req, research=False)
     _, extraction, filename = _document_context(db, user, req.document_id)
     today = datetime.now(UTC).date()
+    reference = _reference(db, user, cfg, req, today)
+
+    def likely(variant: QuickRequest) -> int | None:
+        plan = plan_quick(cfg, _fit_levels(cfg, variant), extraction, filename)
+        inp = plan_to_input(
+            plan, req.name, reference, today, cfg.impact.seed, cfg.impact.monte_carlo_runs
+        )
+        totals = calculate(at_fastest(inp)).totals
+        return totals.p50_paise if totals else None
+
+    return req, likely
+
+
+def _reference(
+    db: Session, user: User, cfg: QuickConfig, req: QuickRequest, today: date
+) -> dict[str, Any]:
+    """Today's reference data for pricing a form that is not saved."""
     # a client planning a budget sees market prices, not this company's own settings
     settings = CompanySettings() if req.mode == "client" else company_settings(db, user.org_id)
-    reference = {
+    return {
         "taxonomy": get_taxonomy(db),
         "catalog": catalog_for(db, user.org_id),
         "rate_card": apply_company_rates(get_rate_card(db, None, today, req.country), settings),
@@ -1489,15 +1544,50 @@ def _impact_pricer(
         "clarity": cfg.requirement_clarity,
     }
 
-    def likely(variant: QuickRequest) -> int | None:
-        plan = plan_quick(cfg, variant, extraction, filename)
-        inp = plan_to_input(
-            plan, req.name, reference, today, cfg.impact.seed, cfg.impact.monte_carlo_runs
-        )
-        totals = calculate(inp).totals
-        return totals.p50_paise if totals else None
 
-    return req, likely
+class QuickSchedule(BaseModel):
+    """How long the form's build takes, shown beside the deadline (OPEN_QUESTIONS 179)."""
+
+    usual_months: Decimal  # with the usual team
+    fastest_months: Decimal  # with the biggest team that still helps; shorter is not priced
+
+
+def quick_schedule(db: Session, user: User, cfg: QuickConfig, req: QuickRequest) -> QuickSchedule:
+    """The usual and the fastest time to build the form's project (nothing is saved or
+    priced)."""
+    req = with_company_defaults(db, user, req)
+    req = with_catalog_blocks(db, user, cfg, req, research=False)
+    _, extraction, filename = _document_context(db, user, req.document_id)
+    today = datetime.now(UTC).date()
+    plan = plan_quick(cfg, req, extraction, filename)
+    inp = plan_to_input(
+        plan,
+        req.name,
+        _reference(db, user, cfg, req, today),
+        today,
+        cfg.impact.seed,
+        cfg.impact.monte_carlo_runs,
+    )
+    out = schedule(inp)
+    return QuickSchedule(
+        usual_months=out.timeline.natural_duration_months, fastest_months=out.fastest_months
+    )
+
+
+def _fit_levels(cfg: QuickConfig, req: QuickRequest) -> QuickRequest:
+    """A variant whose other answer drops a feature an answer added (e.g. "no other software"
+    drops its connection) drops that feature's level and modules too."""
+    options = {key: _choice(cfg, req, key) for key in cfg.questions}
+    try:
+        keys = {*req.features, *added_features(options)}
+    except ValueError:
+        return req
+    return req.model_copy(
+        update={
+            "feature_levels": {k: v for k, v in req.feature_levels.items() if k in keys},
+            "feature_units": {k: v for k, v in req.feature_units.items() if k in keys},
+        }
+    )
 
 
 def key_answer_impact(
@@ -1580,7 +1670,7 @@ def priced_options(
         inp = plan_to_input(
             plan, req.name, reference, today, cfg.impact.seed, cfg.impact.monte_carlo_runs
         )
-        totals = calculate(inp).totals
+        totals = calculate(at_fastest(inp)).totals
         return totals.p50_paise if totals else None
 
     base_plan = plan_quick(cfg, req, extraction, filename)
@@ -1803,6 +1893,13 @@ def summarise(
             summary.not_included = not_included(cfg, req, priced, extraction)
         except (HTTPException, ValueError):  # saved with an older set of questions
             pass
+        asked = req.overrides.get(DEADLINE, req.deadline_months)
+        priced_deadline = timeline.get("deadline_months")
+        if asked is not None and priced_deadline is not None:
+            asked_months, priced_months = Decimal(str(asked)), Decimal(str(priced_deadline))
+            if asked_months < priced_months:  # moved to the fastest possible time
+                summary.deadline_asked_months = asked_months
+                summary.deadline_priced_months = priced_months
     emd = next(
         (
             a["value"]
@@ -1839,8 +1936,28 @@ def summarise(
                 reused=_reused_build(cfg, cfg.size_check, project),
             )
     return with_reality(
-        cfg, summary, emd_paise, result.get("sanity_checks", []), shared_requirements(estimate)
+        cfg,
+        summary,
+        emd_paise,
+        result.get("sanity_checks", []),
+        shared_requirements(estimate),
+        _chatbot_use(estimate),
     )
+
+
+CHATBOT_COMPONENT = "ai_chatbot_rag"  # the chatbot feature's main block
+
+
+def _chatbot_use(estimate: Estimate) -> tuple[int, int] | None:
+    """(chatbot questions a day, registered users) the estimate priced, when it has a chatbot."""
+    snapshot = estimate.inputs_snapshot
+    if not any(c["catalog_key"] == CHATBOT_COMPONENT for c in snapshot.get("components", [])):
+        return None
+    answers = {a["key"]: a["value"] for a in snapshot.get("answers", [])}
+    per_day, users = answers.get("chatbot_queries_per_day"), answers.get("users_total")
+    if isinstance(per_day, int) and isinstance(users, int):
+        return per_day, users
+    return None
 
 
 def _shares(amounts: list[int], planned: int, total: int) -> list[int]:
@@ -1963,6 +2080,7 @@ def with_reality(
     emd_paise: int | None = None,
     sanity_checks: list[dict[str, Any]] | None = None,
     shared: list[SharedRequirement] | None = None,
+    chatbot: tuple[int, int] | None = None,
 ) -> QuickSummary:
     """The summary with its "does this price look real?" checks (when configured). The engine's
     support rule of thumb is explained with the independent check's direction: support looks
@@ -1990,6 +2108,7 @@ def with_reality(
         support_rule=_support_rule(sanity_checks or []),
         build_looks=_build_looks(summary.independent_check),
         shared=shared or [],
+        chatbot=chatbot,
     )
     return summary.model_copy(update={"reality": reality})
 

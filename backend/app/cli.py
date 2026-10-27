@@ -107,7 +107,7 @@ def cmd_backtest(args: argparse.Namespace) -> None:
                 f"  {'pre-AI' if row.pre_ai else 'with AI'}"
                 f" (with AI x{row.ratio_with_ai}, without x{row.ratio_pre_ai})"
                 + (
-                    f"  [{row.infeasible_deadline}-month deadline cannot be met: priced without it]"
+                    f"  [{row.infeasible_deadline}-month deadline cannot be met: at the fastest]"
                     if row.infeasible_deadline
                     else ""
                 )

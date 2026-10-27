@@ -73,10 +73,12 @@ def reality_check(
     support_rule: SupportRule | None = None,
     build_looks: Literal["high", "low"] | None = None,
     shared: list[SharedRequirement] | None = None,
+    chatbot: tuple[int, int] | None = None,
 ) -> RealityOut:
     """Each check: ok, or a plain reason to look again. Verdict "check" if any is not ok.
     `build_looks`: what the independent check says of the build, so a support share outside
-    the rule of thumb points at the side that is probably wrong."""
+    the rule of thumb points at the side that is probably wrong. `chatbot`: (questions a day,
+    registered users) priced, when there is a chatbot."""
     checks: list[Check] = []
     work = sum(f.amount_paise for f in features)
     setup = sum(f.amount_paise for f in features if f.standard)
@@ -174,6 +176,9 @@ def reality_check(
         checks.append(emd_check)
     if shared:
         checks.append(_shared_check(shared))
+    chatbot_check = _chatbot_check(rules, chatbot, run_parts_paise.get("ai_usage", 0))
+    if chatbot_check is not None:
+        checks.append(chatbot_check)
     verdict: Literal["realistic", "check"] = "realistic" if all(c.ok for c in checks) else "check"
     return RealityOut(verdict=verdict, checks=checks)
 
@@ -236,6 +241,36 @@ def _short(paise: int) -> str:
     if paise < PAISE_PER_LAKH:
         return f"₹{(Decimal(paise) / PAISE_PER_THOUSAND).quantize(0, ROUND_HALF_UP)}k"
     return _inr(Decimal(paise))
+
+
+def _chatbot_check(
+    rules: RealityCheck, chatbot: tuple[int, int] | None, ai_usage_paise: int
+) -> Check | None:
+    """Chatbot questions a day per registered user = queries_per_day ÷ users_total, against
+    chatbot_queries_per_user_max: every user asking several questions every day for years is
+    rare, and the AI usage bill grows with it."""
+    limit = rules.chatbot_queries_per_user_max
+    if chatbot is None or limit is None:
+        return None
+    per_day, users = chatbot
+    if per_day <= 0 or users <= 0:
+        return None
+    per_user = (Decimal(per_day) / Decimal(users)).quantize(Decimal("0.1"), ROUND_HALF_UP)
+    ok = per_user <= limit
+    bill = (
+        f" The AI usage bill is {_inr(Decimal(ai_usage_paise))} in all." if ai_usage_paise else ""
+    )
+    return Check(
+        key="chatbot_use",
+        ok=ok,
+        title=f"Chatbot: {per_day:,} questions a day for {users:,} users "
+        f"({per_user} per user a day)",
+        detail="A usual amount of chatbot use."
+        if ok
+        else "That is every user asking the chatbot several questions every day, for every "
+        f"year of support.{bill} Check the questions per day (a few hundred is usual for a "
+        'portal this size) and whether the chatbot really needs the larger AI model ("Hard").',
+    )
 
 
 def _emd_check(rules: RealityCheck, price_paise: int | None, emd_paise: int | None) -> Check | None:

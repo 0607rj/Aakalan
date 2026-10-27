@@ -4,12 +4,12 @@ import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 import {
+  ArrowRightIcon,
+  CheckCircleIcon,
   FileArrowUpIcon,
   PencilSimpleLineIcon,
 } from "@phosphor-icons/react/dist/ssr";
 
-import { IconTile } from "@/components/site/illustrations";
-import { FlowFigure } from "@/components/site/page-art";
 import { ErrorNotice, Loading } from "@/components/status";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,7 +23,12 @@ import {
   type Suggestion,
   type Template,
 } from "@/lib/api/client";
-import { currencySymbol, formatDate } from "@/lib/format";
+import {
+  currencySymbol,
+  formatDate,
+  monthsToWeeks,
+  weeksToMonths,
+} from "@/lib/format";
 import { useLoad } from "@/lib/use-load";
 import { cn } from "@/lib/utils";
 
@@ -43,6 +48,9 @@ import {
   StepIndicator,
   unchosen,
   useQuestionImpact,
+  useSchedule,
+  BuildTime,
+  StepHeader,
 } from "./parts";
 import {
   allFeatures,
@@ -63,6 +71,8 @@ import {
   StepButtons,
   useSteps,
   VERSION,
+  detailsTopics,
+  topicSteps,
 } from "./steps";
 import {
   type CustomItem,
@@ -78,6 +88,9 @@ import {
 } from "./feature-sections";
 import { ReviewForm } from "./review";
 import { UploadStep } from "./upload-step";
+
+/** The longest deadline the form takes: five years (the engine's 60 months). */
+const MAX_DEADLINE_WEEKS = 260;
 
 /** The tick-box path (no document, or the document could not be read): one screen at a time. */
 function ManualForm({
@@ -160,7 +173,7 @@ function ManualForm({
     ...(peakValid && peakNumber !== null ? { [PEAK]: peakNumber } : {}),
   };
   const [deadline, setDeadline] = React.useState(
-    saved?.deadline_months ? String(saved.deadline_months) : "",
+    saved?.deadline_months ? String(monthsToWeeks(saved.deadline_months)) : "",
   );
   const [submitting, setSubmitting] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -170,12 +183,13 @@ function ManualForm({
     saved?.description ?? "",
   );
 
-  const deadlineMonths = deadline.trim() === "" ? null : Number(deadline);
+  // asked in weeks, priced in months
+  const deadlineWeeks = deadline.trim() === "" ? null : Number(deadline);
   const deadlineValid =
-    deadlineMonths === null ||
-    (Number.isInteger(deadlineMonths) &&
-      deadlineMonths >= 1 &&
-      deadlineMonths <= 60);
+    deadlineWeeks === null ||
+    (Number.isInteger(deadlineWeeks) &&
+      deadlineWeeks >= 1 &&
+      deadlineWeeks <= MAX_DEADLINE_WEEKS);
   const typeDone = name.trim().length > 0 && projectType !== null;
   const kind = options.project_types.find((t) => t.key === projectType);
   const everything = allFeatures(options, features, choices);
@@ -193,20 +207,23 @@ function ManualForm({
   );
   const questions = relevant.filter((q) => q.group === "main");
   const details = relevant.filter((q) => q.group === "detail");
-  const [first, ...rest] = questions.map((q) => `q:${q.key}`);
-  // Like public cost calculators: what it is, one feature tick list, a few questions and the
-  // deadline; the extras ("What else does it need?") and details come last and are optional.
+  // Like public cost calculators: what it is, one feature tick list and its extras, then the
+  // questions one topic at a time (OPEN_QUESTIONS 177), the deadline with the contract.
+  const questionSteps = topicSteps(
+    options.topics,
+    questions,
+    details,
+    customizing && leveled.length > 0 ? VERSION : null,
+  );
   const stepKeys = [
     "type",
     "features",
-    ...(first ? [first] : []),
-    ...(customizing && leveled.length > 0 ? ["levels"] : []),
-    ...rest,
-    "deadline",
     ...(scopeGroups.length > 0 ? ["scope"] : []),
-    ...(details.length > 0 ? ["details"] : []),
+    ...questionSteps,
     "check",
   ];
+  const detailsStepOf = (topic: string) =>
+    questionSteps.find((k) => detailsTopics(k).includes(topic)) ?? "check";
   const steps = useSteps(stepKeys);
   // A refresh in the middle loses the answers: start again from the first screen.
   const current = !typeDone
@@ -251,7 +268,10 @@ function ManualForm({
     custom_features: customFeatures,
     choices,
     scope: pricedScope,
-    deadline_months: deadlineValid ? deadlineMonths : null,
+    deadline_months:
+      deadlineValid && deadlineWeeks !== null
+        ? weeksToMonths(deadlineWeeks)
+        : null,
     document_id: documentId,
     overrides,
     mode: "vendor",
@@ -262,8 +282,14 @@ function ManualForm({
     // kept so user stories can be drafted from it on the results page (never priced)
     description,
   };
+  // the build time beside the deadline; the deadline itself does not change it
+  const schedule = useSchedule(
+    current === "deadline" && canContinue
+      ? { ...request, deadline_months: null }
+      : null,
+  );
   const impacts = useQuestionImpact(
-    (current.startsWith("q:") || current === "details") && canContinue
+    (current.startsWith("q:") || current.startsWith("d:")) && canContinue
       ? request
       : null,
   );
@@ -339,84 +365,96 @@ function ManualForm({
 
       <div key={current} className="step-in flex flex-col gap-8">
         {current === "type" ? (
-          <section className="flex flex-col gap-6">
-            <div className="settle flex flex-col gap-2">
-              <p className="eyebrow">Step 1 of 3</p>
-              <h1 className="font-display text-3xl sm:text-4xl">
+          <section className="flex flex-col gap-8">
+            <header className="settle flex flex-col gap-2">
+              <p className="eyebrow">New estimate</p>
+              <h1 className="font-wide text-[2rem] leading-tight sm:text-[2.5rem]">
                 What do you want to build?
               </h1>
               <p className="max-w-2xl text-muted-foreground">
-                Give it a name and pick the closest kind. Next, you choose what
-                it should do.
+                Name it and pick the closest kind. Next, you choose what it
+                should do.
               </p>
-            </div>
-            <div className="slab flex flex-col gap-2 p-5 sm:p-6">
-              <Label htmlFor="project-name" className="text-base">
-                Project name
-              </Label>
-              <Input
+            </header>
+
+            <label className="flex flex-col gap-2">
+              <span className="eyebrow">Name</span>
+              <input
                 id="project-name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g. Booking app for a clinic"
-                className="h-12 max-w-xl rounded-lg px-4 text-base"
+                autoComplete="off"
+                className="font-wide w-full border-b-2 border-foreground/15 bg-transparent pb-2 text-2xl transition-colors placeholder:text-muted-foreground/50 focus:border-tape focus:outline-none sm:text-3xl"
               />
               <span className="text-xs text-muted-foreground">
                 Only for you, to find it again in your list.
               </span>
-            </div>
-            <div className="flex flex-col gap-1">
-              <h2 className="text-lg font-semibold">Which one is closest?</h2>
-              <p className="text-sm text-muted-foreground">
-                It only decides which features we show first. You can still tick
-                anything.
-              </p>
-            </div>
-            <div
-              role="radiogroup"
-              aria-label="Kind of software"
-              className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3"
-            >
-              {options.project_types.map((t) => {
-                const active = t.key === projectType;
-                return (
-                  <button
-                    key={t.key}
-                    type="button"
-                    role="radio"
-                    aria-checked={active}
-                    onClick={() => setProjectType(t.key)}
-                    className={cn(
-                      "flex flex-col gap-2 rounded-xl border bg-card p-4 text-left transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
-                      active
-                        ? "border-primary bg-tape-soft/50 ring-1 ring-primary"
-                        : "hover:border-primary/40 hover:bg-panel-2",
-                    )}
-                  >
-                    <span className="flex items-center justify-between">
-                      <span
-                        className={cn(
-                          "flex size-9 items-center justify-center rounded-lg transition-colors",
-                          active
-                            ? "bg-primary text-primary-foreground"
-                            : "bg-tape-soft text-primary",
-                        )}
-                      >
-                        <TypeIcon kind={t.key} />
-                      </span>
+            </label>
+
+            <div className="flex flex-col gap-3">
+              <span className="eyebrow">Which one is closest?</span>
+              <div
+                role="radiogroup"
+                aria-label="Kind of software"
+                className="grid grid-cols-1 overflow-hidden rounded-xl border bg-card sm:grid-cols-2 lg:grid-cols-3"
+              >
+                {options.project_types.map((t, i) => {
+                  const active = t.key === projectType;
+                  const count =
+                    t.features.length > 0
+                      ? `${t.features.length} features shown first`
+                      : "Every feature to choose from";
+                  return (
+                    <button
+                      key={t.key}
+                      type="button"
+                      role="radio"
+                      aria-checked={active}
+                      onClick={() => setProjectType(t.key)}
+                      className={cn(
+                        "group relative flex flex-col gap-2 border-foreground/10 p-5 text-left transition-colors focus-visible:bg-panel-2 focus-visible:outline-none sm:p-6",
+                        // inner rules of the grid: a line above every row but the first
+                        i > 0 && "border-t",
+                        i === 1 && "sm:border-t-0",
+                        i === 2 && "lg:border-t-0",
+                        i % 2 === 1 && "sm:border-l lg:border-l-0",
+                        i % 3 !== 0 && "lg:border-l",
+                        active ? "bg-tape-soft/60" : "hover:bg-panel-2",
+                      )}
+                    >
                       {active ? (
-                        <span className="text-xs font-semibold text-primary">
-                          Selected
-                        </span>
+                        <span
+                          aria-hidden="true"
+                          className="absolute inset-x-0 top-0 h-0.5 bg-tape"
+                        />
                       ) : null}
-                    </span>
-                    <span className="font-semibold">{t.label}</span>
-                    <span className="text-sm text-muted-foreground">
-                      {t.hint}
-                    </span>
-                  </button>
-                );
-              })}
+                      <span className="flex items-start justify-between gap-3">
+                        <span className="text-tape">
+                          <TypeIcon kind={t.key} />
+                        </span>
+                        <CheckCircleIcon
+                          size={20}
+                          weight="fill"
+                          aria-hidden="true"
+                          className={cn(
+                            "text-tape transition-opacity",
+                            active ? "opacity-100" : "opacity-0",
+                          )}
+                        />
+                      </span>
+                      <span className="font-semibold">{t.label}</span>
+                      <span className="text-sm text-muted-foreground">
+                        {t.hint}
+                      </span>
+                      <span className="mt-auto pt-2 font-mono text-xs text-muted-foreground">
+                        {count}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              <KindPreview options={options} kind={projectType} />
             </div>
             <StepButtons
               onBack={onBack}
@@ -429,15 +467,10 @@ function ManualForm({
           </section>
         ) : current === "features" ? (
           <section className="flex flex-col gap-8">
-            <div>
-              <h1 className="font-display text-3xl sm:text-4xl">
-                What should it do?
-              </h1>
-              <p className="mt-1 text-muted-foreground">
-                Describe it and we find the features, or tick them yourself.
-                Each feature can be ticked, left out, or marked not included.
-              </p>
-            </div>
+            <StepHeader eyebrow="Features" title="What should it do?">
+              Describe it and we find the features, or tick them yourself. Each
+              feature can be ticked, left out, or marked not included.
+            </StepHeader>
             <DescribeBox
               onText={setDescription}
               onSuggested={(s) => {
@@ -624,6 +657,7 @@ function ManualForm({
                 .filter((n) => n.kind === "scope")
                 .map((n) => n.key)}
               onNotIncluded={(key) => toggleOut("scope", key)}
+              offerNotIncluded={false}
             />
             <StepButtons onBack={steps.prev} onNext={steps.next} />
           </>
@@ -689,10 +723,15 @@ function ManualForm({
               }
             />
           </section>
-        ) : current === "details" ? (
+        ) : current.startsWith("d:") ? (
           <>
             <DetailsStep
-              questions={details}
+              sections={options.topics
+                .filter((t) => detailsTopics(current).includes(t.key))
+                .map((topic) => ({
+                  topic,
+                  questions: details.filter((q) => q.topic === topic.key),
+                }))}
               choices={choices}
               onChange={change}
               impacts={impacts}
@@ -701,39 +740,40 @@ function ManualForm({
             <StepButtons onBack={steps.prev} onNext={steps.next} />
           </>
         ) : current === "deadline" ? (
-          <section className="flex flex-col gap-6">
-            <div>
-              <h1 className="font-display text-3xl sm:text-4xl">
-                Is there a deadline?
-              </h1>
-              <p className="mt-1 text-muted-foreground">
-                A tight deadline needs a bigger team, which costs more. Leave it
-                empty if there is no fixed date.
-              </p>
-            </div>
-            <div className="slab flex max-w-sm flex-col gap-2 p-5 sm:p-6">
-              <Label htmlFor="deadline" className="text-base">
-                Months from start to launch
-              </Label>
-              <div className="flex items-center gap-2">
-                <Input
+          <section className="flex flex-col gap-8">
+            <StepHeader eyebrow="Optional" title="Is there a deadline?">
+              A tight deadline needs a bigger team, which costs more. Leave it
+              empty if there is no fixed date.
+            </StepHeader>
+            <div className="flex flex-col gap-2">
+              <label htmlFor="deadline" className="eyebrow">
+                Weeks from start to launch
+              </label>
+              <div className="flex items-baseline gap-3">
+                <input
                   id="deadline"
                   type="number"
                   inputMode="numeric"
                   min={1}
-                  max={60}
+                  max={MAX_DEADLINE_WEEKS}
                   value={deadline}
                   onChange={(e) => setDeadline(e.target.value)}
-                  className="h-11 w-28 text-base"
+                  placeholder="None"
+                  className="font-wide w-32 border-b-2 border-foreground/15 bg-transparent pb-1 text-3xl tabular-nums transition-colors placeholder:text-muted-foreground/50 focus:border-tape focus:outline-none"
                 />
-                <span className="text-muted-foreground">months</span>
+                <span className="text-muted-foreground">weeks</span>
               </div>
               {!deadlineValid ? (
                 <span className="text-sm text-destructive">
-                  Enter a whole number of months between 1 and 60.
+                  Enter a whole number of weeks between 1 and{" "}
+                  {MAX_DEADLINE_WEEKS}.
                 </span>
               ) : null}
             </div>
+            <BuildTime
+              plan={schedule}
+              weeks={deadlineValid ? deadlineWeeks : null}
+            />
             <StepButtons
               onBack={steps.prev}
               onNext={steps.next}
@@ -760,35 +800,50 @@ function ManualForm({
                     customFeatures.map((c) => c.name),
                   ),
                 },
-                ...questions.map((q) => ({
-                  step: `q:${q.key}`,
-                  label: q.label,
-                  value: answerLabel(q, choices[q.key]),
-                })),
-                ...(peakNumber !== null && peakValid
-                  ? [
-                      {
-                        step: `q:${SCALE}`,
-                        label: "People online at the same time",
-                        value: peakNumber.toLocaleString("en-IN"),
-                      },
-                    ]
-                  : []),
-                ...details.map((q) => ({
-                  step: "details",
-                  label: q.label,
-                  value: answerLabel(q, choices[q.key]),
-                })),
                 {
                   step: "features",
                   label: "Not included",
                   value: notIncludedText(options, notIncluded),
                 },
-                {
-                  step: "deadline",
-                  label: "Deadline",
-                  value: deadlineMonths ? `${deadlineMonths} months` : "None",
-                },
+                // the answers in the order asked: one topic at a time
+                ...options.topics.flatMap((topic) => [
+                  ...questions
+                    .filter((q) => q.topic === topic.key)
+                    .flatMap((q) => [
+                      {
+                        step: `q:${q.key}`,
+                        label: q.label,
+                        value: answerLabel(q, choices[q.key]),
+                      },
+                      ...(q.key === SCALE && peakNumber !== null && peakValid
+                        ? [
+                            {
+                              step: `q:${SCALE}`,
+                              label: "People online at the same time",
+                              value: peakNumber.toLocaleString("en-IN"),
+                            },
+                          ]
+                        : []),
+                    ]),
+                  ...details
+                    .filter((q) => q.topic === topic.key)
+                    .map((q) => ({
+                      step: detailsStepOf(topic.key),
+                      label: q.label,
+                      value: answerLabel(q, choices[q.key]),
+                    })),
+                  ...(topic.key === "contract"
+                    ? [
+                        {
+                          step: "deadline",
+                          label: "Deadline",
+                          value: deadlineWeeks
+                            ? `${deadlineWeeks} weeks`
+                            : "None",
+                        },
+                      ]
+                    : []),
+                ]),
               ]}
               onChange={steps.goTo}
             />
@@ -832,7 +887,7 @@ function PeakOnline({
     (o) => String(o.value) === String(value),
   )?.peak_online;
   return (
-    <div className="slab flex max-w-xl flex-col gap-2 p-5 sm:p-6">
+    <div className="flex max-w-xl flex-col gap-2 border-t pt-6">
       <Label htmlFor="peak-online" className="text-base">
         People online at the same time{" "}
         <span className="font-normal text-muted-foreground">(optional)</span>
@@ -902,29 +957,31 @@ function DescribeBox({
   }
 
   return (
-    <div className="slab flex flex-col gap-3 border-primary/30 p-5 sm:p-6">
-      <Label htmlFor="describe" className="text-base font-semibold">
-        Describe your project in your own words
-      </Label>
-      <textarea
-        id="describe"
-        value={text}
-        onChange={(e) => {
-          setText(e.target.value);
-          onText(e.target.value);
-        }}
-        rows={3}
-        maxLength={4000}
-        placeholder="e.g. An app for my clinic where patients book an appointment with a doctor, pay the fee online and get an SMS reminder."
-        className="w-full rounded-lg border bg-background px-4 py-3 text-base focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-      />
-      <div className="flex flex-wrap items-center gap-3">
-        <Button onClick={suggest} disabled={!ready || busy}>
-          {busy ? "Reading…" : "Find features"}
-        </Button>
-        <span className="text-sm text-muted-foreground">
-          We only tick features; you can untick them or add others yourself.
-        </span>
+    <div className="flex flex-col gap-3">
+      <label htmlFor="describe" className="eyebrow">
+        Describe it in your own words
+      </label>
+      <div className="overflow-hidden rounded-xl border bg-card transition-colors focus-within:border-tape">
+        <textarea
+          id="describe"
+          value={text}
+          onChange={(e) => {
+            setText(e.target.value);
+            onText(e.target.value);
+          }}
+          rows={3}
+          maxLength={4000}
+          placeholder="e.g. An app for my clinic where patients book an appointment with a doctor, pay the fee online and get an SMS reminder."
+          className="block w-full resize-y bg-transparent px-5 py-4 text-base focus:outline-none"
+        />
+        <div className="flex flex-wrap items-center gap-3 border-t bg-panel-2/60 px-5 py-3">
+          <Button onClick={suggest} disabled={!ready || busy}>
+            {busy ? "Reading…" : "Find features"}
+          </Button>
+          <span className="text-sm text-muted-foreground">
+            We only tick features; you can untick them or add others yourself.
+          </span>
+        </div>
       </div>
       {message ? <p className="text-sm">{message}</p> : null}
       <ErrorNotice message={error} />
@@ -1003,6 +1060,68 @@ function CountryChoice({
   );
 }
 
+/** Under the kinds: the features the chosen kind usually needs, and the others it shows first
+ * on the next screen (nothing is ticked for the user). */
+function KindPreview({
+  options,
+  kind,
+}: {
+  options: QuickOptions;
+  kind: string | null;
+}) {
+  const type = options.project_types.find((t) => t.key === kind);
+  if (!type) return null;
+  const label = (key: string) =>
+    options.features.find((f) => f.key === key)?.label ?? key;
+  const ticked = type.suggested.map(label);
+  const shown = type.features
+    .filter((k) => !type.suggested.includes(k))
+    .map(label);
+  return (
+    <div className="settle flex flex-col gap-3 border-t pt-4 text-sm">
+      {ticked.length > 0 ? (
+        <p className="flex flex-wrap items-baseline gap-x-3 gap-y-2">
+          <span className="eyebrow">Usually needed</span>
+          {ticked.map((f) => (
+            <span
+              key={f}
+              className="rounded-full bg-tape-soft px-2.5 py-0.5 font-medium text-primary"
+            >
+              {f}
+            </span>
+          ))}
+        </p>
+      ) : null}
+      {shown.length > 0 ? (
+        <p className="flex flex-wrap items-baseline gap-x-3 gap-y-1 text-muted-foreground">
+          <span className="eyebrow">Also shown first</span>
+          {shown.join(" · ")}
+        </p>
+      ) : (
+        <p className="text-muted-foreground">
+          Every feature is listed; tick what it should do.
+        </p>
+      )}
+    </div>
+  );
+}
+
+/** What happens after choosing, as ruled columns (as on "Your estimates"). */
+const START_STEPS = [
+  {
+    title: "Upload or describe",
+    text: "A PDF or Word requirement document, or a few lines about what the software should do.",
+  },
+  {
+    title: "Check and answer",
+    text: "Untick anything wrong, add anything missing, and answer a few short questions.",
+  },
+  {
+    title: "See your cost",
+    text: "Low, likely and high, feature by feature, with the team it needs.",
+  },
+];
+
 function StartChoice({
   options,
   onCountry,
@@ -1016,49 +1135,95 @@ function StartChoice({
   onManual: () => void;
   onTemplate: (id: string) => void;
 }) {
-  const card =
-    "slab group flex flex-col gap-3 p-5 text-left transition-colors hover:border-primary/50 sm:p-6";
+  const ways = [
+    {
+      key: "upload",
+      onClick: onUpload,
+      icon: FileArrowUpIcon,
+      title: "Upload the requirement document",
+      text: "PDF or Word. We read it and fill in the details for you to check.",
+      recommended: true,
+    },
+    {
+      key: "manual",
+      onClick: onManual,
+      icon: PencilSimpleLineIcon,
+      title: "No document? Describe it yourself",
+      text: "A few lines about the software, or tick what it should do.",
+      recommended: false,
+    },
+  ];
   return (
     <section className="flex flex-col gap-8">
-      <div className="grid items-center gap-10 lg:grid-cols-[1.2fr_0.8fr]">
-        <div className="settle flex flex-col gap-2">
-          <p className="eyebrow">New estimate</p>
-          <h1 className="font-display text-3xl sm:text-4xl">
-            How would you like to start?
-          </h1>
-          <p className="max-w-2xl text-muted-foreground">
-            The quickest way is to upload the requirement document. We read it
-            and fill in the details for you to check.
-          </p>
-        </div>
-        <FlowFigure className="hidden w-full max-w-sm justify-self-end lg:flex" />
-      </div>
+      <header className="settle flex flex-col gap-2 border-b pb-8">
+        <p className="eyebrow">New estimate</p>
+        <h1 className="font-wide text-[2rem] leading-tight sm:text-[2.5rem]">
+          How would you like to start?
+        </h1>
+        <p className="max-w-xl text-muted-foreground">
+          The quickest way is to upload the requirement document.
+        </p>
+      </header>
+
       <CountryChoice options={options} onChange={onCountry} />
-      <div className="grid gap-4 md:grid-cols-2">
-        <button type="button" onClick={onUpload} className={card}>
-          <IconTile icon={FileArrowUpIcon} />
-          <span className="flex flex-wrap items-center gap-2 text-lg font-semibold">
-            Upload the requirement document
-            <span className="rounded-full bg-tape-soft px-2 py-0.5 text-xs font-semibold text-primary">
-              Recommended
+
+      <div className="settle grid grid-cols-1 overflow-hidden rounded-xl border bg-card sm:grid-cols-2">
+        {ways.map((way, i) => (
+          <button
+            key={way.key}
+            type="button"
+            onClick={way.onClick}
+            className={cn(
+              "group flex items-start gap-4 p-5 text-left transition-colors hover:bg-panel-2 focus-visible:bg-panel-2 focus-visible:outline-none sm:p-6",
+              i > 0 && "border-t sm:border-t-0 sm:border-l",
+            )}
+          >
+            <way.icon
+              size={22}
+              weight="duotone"
+              aria-hidden="true"
+              className="mt-0.5 shrink-0 text-tape"
+            />
+            <span className="flex min-w-0 flex-1 flex-col gap-1">
+              <span className="flex flex-wrap items-center gap-2 font-semibold">
+                {way.title}
+                {way.recommended ? (
+                  <span className="rounded-full bg-tape-soft px-2 py-0.5 text-xs font-semibold text-primary">
+                    Recommended
+                  </span>
+                ) : null}
+              </span>
+              <span className="text-sm text-muted-foreground">{way.text}</span>
             </span>
-          </span>
-          <span className="text-sm text-muted-foreground">
-            PDF or Word. Every item links to its page.
-          </span>
-        </button>
-        <button type="button" onClick={onManual} className={card}>
-          <IconTile icon={PencilSimpleLineIcon} tone="ai" />
-          <span className="text-lg font-semibold">
-            No document, I&apos;ll describe it myself
-          </span>
-          <span className="text-sm text-muted-foreground">
-            Tick what the software should do, then answer a few short questions,
-            one at a time.
-          </span>
-        </button>
+            <ArrowRightIcon
+              size={18}
+              weight="bold"
+              aria-hidden="true"
+              className="mt-0.5 shrink-0 text-muted-foreground transition-[transform,color] group-hover:translate-x-1 group-hover:text-tape"
+            />
+          </button>
+        ))}
       </div>
+
       <SavedTemplates onUse={onTemplate} />
+
+      <section className="flex flex-col gap-6 pt-2">
+        <p className="eyebrow">What happens next</p>
+        <ol className="grid grid-cols-1 gap-8 sm:grid-cols-3">
+          {START_STEPS.map((step, i) => (
+            <li
+              key={step.title}
+              className="flex flex-col gap-2 border-t-2 border-foreground/10 pt-5 first:border-tape"
+            >
+              <span className="font-mono text-sm text-muted-foreground">
+                0{i + 1}
+              </span>
+              <span className="font-wide text-lg">{step.title}</span>
+              <span className="text-sm text-muted-foreground">{step.text}</span>
+            </li>
+          ))}
+        </ol>
+      </section>
     </section>
   );
 }
@@ -1176,12 +1341,12 @@ function SavedTemplates({ onUse }: { onUse: (id: string) => void }) {
   }
   return (
     <section className="flex flex-col gap-3">
-      <h2 className="text-lg font-semibold">Or start from a saved template</h2>
-      <ul className="flex flex-col divide-y rounded-2xl border bg-card">
+      <p className="eyebrow">Or start from a saved template</p>
+      <ul className="flex flex-col divide-y border-y">
         {state.data.map((t) => (
           <li
             key={t.id}
-            className="flex flex-wrap items-center justify-between gap-3 px-5 py-3"
+            className="flex flex-wrap items-center justify-between gap-3 py-3"
           >
             <span className="flex flex-col">
               <span className="font-medium">{t.name}</span>

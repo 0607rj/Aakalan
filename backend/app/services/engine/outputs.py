@@ -143,6 +143,14 @@ class Timeline(Out):
     status: Literal["natural", "compressed", "extended", "not_feasible"]
 
 
+class Schedule(Out):
+    """The build's timeline and the fastest deadline that still gets a price, worked out
+    without pricing anything."""
+
+    timeline: Timeline
+    fastest_months: Decimal
+
+
 class ManpowerRow(Out):
     role: str
     stage: str

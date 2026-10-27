@@ -77,13 +77,28 @@ def test_bad_input_is_rejected(client: TestClient, admin_headers: H) -> None:
     assert quick(client, admin_headers, features=[], custom_features=bad_type).status_code == 422
 
 
-def test_impossible_deadline_is_explained(client: TestClient, admin_headers: H) -> None:
+def test_too_short_deadline_is_priced_at_the_fastest(client: TestClient, admin_headers: H) -> None:
+    """A deadline too short to build in, even with a bigger team, is priced at the fastest
+    possible time and the summary says so (OPEN_QUESTIONS 179); the form shows both times."""
     features = ["online_forms", "approval_workflow", "documents", "dashboards", "payments", "crm"]
-    s = quick(
-        client, admin_headers, features=features, deadline_months=1, choices={"scale": "over_10l"},
-        feature_levels=dict.fromkeys(features, "advanced"),
-    ).json()  # fmt: skip
-    assert not s["feasible"] and s["likely_paise"] is None and "deadline" in s["message"]
+    body = {
+        "features": features, "choices": {"scale": "over_10l"},
+        "feature_levels": dict.fromkeys(features, "advanced"),
+    }  # fmt: skip
+    plan = client.post(
+        "/quick-estimate/schedule", json={"name": "x", **body}, headers=admin_headers
+    ).json()
+    usual, fastest = float(plan["usual_months"]), float(plan["fastest_months"])
+    assert 1 < fastest < usual
+
+    s = quick(client, admin_headers, deadline_months=1, **body).json()
+    assert s["feasible"] and s["likely_paise"]
+    assert float(s["deadline_asked_months"]) == 1
+    assert float(s["deadline_priced_months"]) == fastest
+    assert float(s["build_months"]) == fastest
+    at_fastest = quick(client, admin_headers, deadline_months=fastest, **body).json()
+    assert at_fastest["deadline_priced_months"] is None  # priced as asked
+    assert at_fastest["likely_paise"] > quick(client, admin_headers, **body).json()["likely_paise"]
 
 
 def test_list_shows_latest_estimates(client: TestClient, admin_headers: H) -> None:
@@ -119,6 +134,41 @@ def test_questions_ranked_by_price_impact(client: TestClient, admin_headers: H) 
         "/quick-estimate/impact", json={**body, "overrides": {"om_years": 4}}, headers=admin_headers
     ).json()
     assert "support_years" not in {q["key"] for q in with_years}
+
+
+def test_impact_with_a_level_for_a_feature_an_answer_adds(
+    client: TestClient, admin_headers: H
+) -> None:
+    """A level for the connection "other software" adds: the "No" answer drops the connection,
+    and its level with it (the review form of the RailTel document failed here, 2026-10-27)."""
+    body = {
+        "name": "Impact",
+        "features": ["online_forms"],
+        "choices": {"integrations": "one_two"},
+        "feature_levels": {"connect_existing": "basic"},
+    }
+    r = client.post("/quick-estimate/impact", json=body, headers=admin_headers)
+    assert r.status_code == 200, r.text
+    integrations = next(q for q in r.json() if q["key"] == "integrations")
+    assert all(o["likely_paise"] for o in integrations["options"])
+
+
+def test_deadline_in_weeks_is_priced_as_part_months(client: TestClient, admin_headers: H) -> None:
+    """The form asks weeks and sends months to two decimals (12 weeks = 2.77 months)."""
+    s = quick(client, admin_headers, features=["online_forms"], deadline_months=2.77)
+    assert s.status_code == 201, s.text
+    assert (
+        quick(client, admin_headers, features=["online_forms"], deadline_months=0).status_code
+        == 422
+    )
+
+
+def test_every_question_has_a_topic(client: TestClient, admin_headers: H) -> None:
+    """The form asks one topic at a time, in the order of `topics` (OPEN_QUESTIONS 177)."""
+    options = client.get("/quick-estimate/options", headers=admin_headers).json()
+    topics = [t["key"] for t in options["topics"]]
+    assert topics == ["build", "users", "hosting", "support", "contract"]
+    assert all(q["topic"] in topics for q in options["questions"])
 
 
 def test_custom_features_are_priced(client: TestClient, admin_headers: H) -> None:
@@ -552,6 +602,10 @@ def test_scope_items_priced_and_shown(client: TestClient, admin_headers: H) -> N
     groups = {g["key"]: g for g in options["scope"]}
     assert groups["sign_in"]["feature"] is None  # every project
     assert groups["forms_scope"]["feature"] == "online_forms"
+    items = {i["key"]: i for g in options["scope"] for i in g["items"]}
+    assert all(i["hint"] for i in items.values())  # plain words for every extra on the form
+    assert items["enterprise_sso"]["advanced"] and not items["otp_codes"]["advanced"]
+    assert items["enterprise_sso"]["ask"] != items["enterprise_sso"]["label"]
     base = quick(client, admin_headers, features=["online_forms"]).json()
     more = quick(
         client, admin_headers, features=["online_forms"], scope=["enterprise_sso", "forms_ekyc"]

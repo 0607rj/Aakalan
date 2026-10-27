@@ -58,8 +58,17 @@ class Option(Frozen):
     retired: bool = False
 
 
+class Topic(Frozen):
+    """A part of the form (what to build, users, ...): asked in the order of `topics`."""
+
+    key: str
+    label: str
+    hint: str
+
+
 class Question(Frozen):
     label: str
+    topic: str  # the part of the form it belongs to (`topics`)
     default: str | int
     options: list[Option]
     # main = one screen each; detail = the optional details screen; hidden = not asked
@@ -404,9 +413,12 @@ class ScopeItem(Frozen):
     key: str
     label: str
     adds: dict[str, LevelKey] = Field(min_length=1)  # catalog component key -> level
-    note: str = ""  # what is and is not priced, in plain words (shown with the item)
+    note: str = ""  # what is and is not priced, in plain words (results and quote)
     partly_priced: bool = False  # part of the work has no evidence and is not priced
     keywords: list[str] = []  # whole words / phrases that suggest it in a document (any case)
+    ask: str = ""  # plain words on the form (else `label`, which the quote prints)
+    hint: str = ""  # what it is, with an example (form)
+    advanced: bool = False  # folded under "For large or government projects" on the form
 
 
 class ScopeGroup(Frozen):
@@ -468,6 +480,8 @@ class RealityCheck(Frozen):
     emd_share_min: Decimal | None = Field(default=None, gt=0, le=1)
     emd_share_max: Decimal | None = Field(default=None, gt=0, le=1)
     emd_band_factor: Decimal | None = Field(default=None, ge=1)  # 1: anywhere outside the range
+    # chatbot questions a day per registered user above which the AI usage is called unusual
+    chatbot_queries_per_user_max: Decimal | None = Field(default=None, gt=0)
 
 
 class OnsiteEventDays(Frozen):
@@ -615,6 +629,7 @@ class QuickConfig(Frozen):
     base_answers: dict[str, Any] = {}
     project_types: list[ProjectType] = []
     features: list[Feature]
+    topics: list[Topic] = Field(min_length=1)  # the form's parts, in the order asked
     questions: dict[str, Question]
     plain_drivers: dict[str, str]
     keywords: Keywords
@@ -663,6 +678,14 @@ class QuickConfig(Frozen):
             if question is None:
                 raise ValueError(f"client_provided: unknown question {item.question!r}")
             question.option(item.value)  # raises when the option does not exist
+        return self
+
+    @model_validator(mode="after")
+    def _topics(self) -> "QuickConfig":
+        keys = {t.key for t in self.topics}
+        unknown = {k: q.topic for k, q in self.questions.items() if q.topic not in keys}
+        if unknown:
+            raise ValueError(f"questions with an unknown topic: {unknown}")
         return self
 
     @model_validator(mode="after")

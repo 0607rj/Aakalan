@@ -35,6 +35,7 @@ class Fact(BaseModel):
 
     key: str
     label: str
+    hint: str = ""  # a short example under the label
     unit: Literal["count", "rupees", "percent"]
     min: int
     max: int | None = None
@@ -42,22 +43,25 @@ class Fact(BaseModel):
     needs_feature: str | None = None  # shown only when this feature is ticked
     only_if_found: bool = False  # shown only when the document states it
     india_term: bool = False  # Indian bid terms: elsewhere only when the document states them
+    topic: str  # the part of the form it is shown in (quick config `topics`)
+    # read from the document and used (e.g. the EMD for the price check), never shown on the form
+    hidden: bool = False
 
 
 # fmt: off
 FACTS: tuple[Fact, ...] = (
-    Fact(key="users_total", label="Registered users", unit="count", min=0, integer=True),
-    Fact(key="peak_concurrent_users", label="Users online at the same time", unit="count", min=0, integer=True),  # noqa: E501
-    Fact(key="om_years", label="Years of support after launch", unit="count", min=0, max=10, integer=True),  # noqa: E501
-    Fact(key="deadline_months", label="Deadline (months)", unit="count", min=1, max=60, integer=True),  # noqa: E501
-    Fact(key="languages", label="Languages", unit="count", min=1, max=30, integer=True),
-    Fact(key="chatbot_queries_per_day", label="Chatbot questions per day", unit="count", min=0, integer=True, needs_feature="ai_chatbot"),  # noqa: E501
-    Fact(key="documents_per_month", label="Documents uploaded per month", unit="count", min=0, integer=True, only_if_found=True),  # noqa: E501
-    Fact(key="onsite_staff", label="Staff at your office during support", unit="count", min=0, max=50, integer=True, only_if_found=True),  # noqa: E501
-    Fact(key="support_staff", label="Dedicated support staff (offsite)", unit="count", min=0, max=50, integer=True, only_if_found=True),  # noqa: E501
-    Fact(key="onsite_days", label="Days they are needed in all (empty = every support year)", unit="count", min=1, max=2000, integer=True, only_if_found=True),  # noqa: E501
-    Fact(key="emd_paise", label="EMD amount", unit="rupees", min=0, integer=False, india_term=True),
-    Fact(key="pbg_percent", label="Performance guarantee (%)", unit="percent", min=0, max=100, integer=False, india_term=True),  # noqa: E501
+    Fact(key="users_total", label="Registered users", unit="count", min=0, integer=True, topic="users"),  # noqa: E501
+    Fact(key="peak_concurrent_users", label="Users online at the same time", unit="count", min=0, integer=True, topic="users"),  # noqa: E501
+    Fact(key="om_years", label="Years of support after launch", unit="count", min=0, max=10, integer=True, topic="support"),  # noqa: E501
+    Fact(key="deadline_months", label="Deadline (months)", unit="count", min=1, max=60, integer=True, topic="contract"),  # noqa: E501
+    Fact(key="languages", label="Languages the system must work in", hint="English and Hindi = 2", unit="count", min=1, max=30, integer=True, topic="users"),  # noqa: E501
+    Fact(key="chatbot_queries_per_day", label="Chatbot questions per day", unit="count", min=0, integer=True, needs_feature="ai_chatbot", topic="users"),  # noqa: E501
+    Fact(key="documents_per_month", label="Documents uploaded per month", unit="count", min=0, integer=True, only_if_found=True, topic="users"),  # noqa: E501
+    Fact(key="onsite_staff", label="Staff at your office during support", unit="count", min=0, max=50, integer=True, only_if_found=True, topic="support"),  # noqa: E501
+    Fact(key="support_staff", label="Dedicated support staff (offsite)", unit="count", min=0, max=50, integer=True, only_if_found=True, topic="support"),  # noqa: E501
+    Fact(key="onsite_days", label="Days they are needed in all (empty = every support year)", unit="count", min=1, max=2000, integer=True, only_if_found=True, topic="support"),  # noqa: E501
+    Fact(key="emd_paise", label="EMD amount", unit="rupees", min=0, integer=False, india_term=True, topic="contract", hidden=True),  # noqa: E501
+    Fact(key="pbg_percent", label="Performance guarantee (%)", unit="percent", min=0, max=100, integer=False, india_term=True, topic="contract"),  # noqa: E501
 )
 # fmt: on
 

@@ -114,6 +114,9 @@ backend/
     jobs/                 # Huey instance and tasks
   seeds/                  # taxonomy/v1..v2, catalog/v1..v7, rate_cards/, parameters/,
                           #   quick_estimate.yaml (plain features/questions for simple mode)
+                          #   + `topics`: the form asks one topic at a time (build, users, hosting,
+                          #   support, contract) on both paths; every question / number has one
+                          #   (OPEN_QUESTIONS 177); the EMD is read, never shown (`Fact.hidden`)
                           #   + `commonly_needed`: the fixed 8 features the features screen asks
                           #   about when the description did not mention them (OPEN_QUESTIONS 150)
                           #   + `cms_built_in`: on a CMS build, what the CMS already has is
@@ -161,6 +164,14 @@ backend/
                           #   with rate card v11, hosting is priced by the actual number online on a
                           #   straight line between price points (`hosting.bundle.price_points`,
                           #   `hosting.bundle.v2`), not at the middle of the load band
+                          #   parameters v27+ (OPEN_QUESTIONS 179): on lean delivery the handover
+                          #   (exit management) is min(band days, `lean.exit_share_of_build_pd` ×
+                          #   build); a deadline too short to build in is priced at the fastest
+                          #   possible time (`engine.core.schedule`, `quick.service.at_fastest`),
+                          #   shown beside the deadline (POST /quick-estimate/schedule)
+                          #   parameters v28+ (OPEN_QUESTIONS 180): on small and small-to-medium
+                          #   projects the tests task is at most `effort_caps.tests_max_share_by_size`
+                          #   (0.40) of the tested work; medium and larger unchanged
                           #   parameters v23+ (OPEN_QUESTIONS 160): the shared model factor is
                           #   centred on its median (widens, no P50 lift) and is a range driver;
                           #   size-band values blend across band edges (size_band_blend_share)

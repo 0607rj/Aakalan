@@ -715,6 +715,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/quick-estimate/schedule": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Build Time
+         * @description The usual and the fastest time to build this form's project, for the deadline question
+         *     (nothing is saved or priced).
+         */
+        post: operations["build_time_quick_estimate_schedule_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/quick-estimate/standard-blocks": {
         parameters: {
             query?: never;
@@ -2082,6 +2103,11 @@ export interface components {
             /** Label */
             label: string;
             /**
+             * Hint
+             * @default
+             */
+            hint: string;
+            /**
              * Unit
              * @enum {string}
              */
@@ -2104,6 +2130,13 @@ export interface components {
              * @default false
              */
             india_term: boolean;
+            /** Topic */
+            topic: string;
+            /**
+             * Hidden
+             * @default false
+             */
+            hidden: boolean;
             /** Value */
             value: number | null;
         };
@@ -3238,6 +3271,8 @@ export interface components {
             key: string;
             /** Label */
             label: string;
+            /** Topic */
+            topic: string;
             /** Default */
             default: string | number;
             /** Options */
@@ -3337,6 +3372,8 @@ export interface components {
             features: components["schemas"]["FeatureOut"][];
             /** Default Level */
             default_level: string;
+            /** Topics */
+            topics: components["schemas"]["TopicOut"][];
             /** Questions */
             questions: components["schemas"]["QuestionOut"][];
             /** Custom Feature Types */
@@ -3400,7 +3437,7 @@ export interface components {
                 [key: string]: string | number;
             };
             /** Deadline Months */
-            deadline_months?: number | null;
+            deadline_months?: (number) | null;
             /** Document Id */
             document_id?: string | null;
             /**
@@ -3488,7 +3525,7 @@ export interface components {
                 [key: string]: string | number;
             };
             /** Deadline Months */
-            deadline_months?: number | null;
+            deadline_months?: (number) | null;
             /** Document Id */
             document_id?: string | null;
             /**
@@ -3532,6 +3569,16 @@ export interface components {
              * @default
              */
             description: string;
+        };
+        /**
+         * QuickSchedule
+         * @description How long the form's build takes, shown beside the deadline (OPEN_QUESTIONS 179).
+         */
+        QuickSchedule: {
+            /** Usual Months */
+            usual_months: string;
+            /** Fastest Months */
+            fastest_months: string;
         };
         /** QuickSummary */
         QuickSummary: {
@@ -3698,6 +3745,10 @@ export interface components {
              * @default []
              */
             not_included: components["schemas"]["NotIncludedOut"][];
+            /** Deadline Asked Months */
+            deadline_asked_months?: string | null;
+            /** Deadline Priced Months */
+            deadline_priced_months?: string | null;
         };
         /** RangeDriver */
         RangeDriver: {
@@ -4155,6 +4206,21 @@ export interface components {
              * @default false
              */
             partly_priced: boolean;
+            /**
+             * Ask
+             * @default
+             */
+            ask: string;
+            /**
+             * Hint
+             * @default
+             */
+            hint: string;
+            /**
+             * Advanced
+             * @default false
+             */
+            advanced: boolean;
         };
         /** SecondOpinionOut */
         SecondOpinionOut: {
@@ -4613,6 +4679,15 @@ export interface components {
              */
             token_type: string;
             user: components["schemas"]["UserOut"];
+        };
+        /** TopicOut */
+        TopicOut: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Hint */
+            hint: string;
         };
         /** Totals */
         Totals: {
@@ -6344,6 +6419,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["QuestionImpact"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    build_time_quick_estimate_schedule_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QuickRequest-Input"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuickSchedule"];
                 };
             };
             /** @description Validation Error */

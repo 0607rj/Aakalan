@@ -37,11 +37,14 @@ class EffortPlan:
     review_scale: Decimal = ONE
     pre_build_scale: Decimal = ONE
     architecture_scale: Decimal = ONE
+    tests_scale: Decimal = ONE
     base_pd: Decimal = ZERO
     review_pd: Decimal = ZERO
     pre_build_pd: Decimal = ZERO
     architecture_pd: Decimal = ZERO
     architecture_cap_pd: Decimal = ZERO
+    tests_pd: Decimal = ZERO
+    tested_pd: Decimal = ZERO
 
     def scale(self, caps: EffortCaps | None, stage: str, task: TaskType) -> Decimal:
         if caps is None:
@@ -51,6 +54,8 @@ class EffortPlan:
             s *= self.review_scale
         if task is caps.architecture_task:
             s *= self.architecture_scale
+        if task is caps.tests_task:
+            s *= self.tests_scale
         return s
 
 
@@ -86,7 +91,9 @@ def _make_plan(ctx: PricingContext) -> EffortPlan:
           (work = every task but reuse.follow_tasks; project-wide testing blocks left out).
     2. Each component's effort with that ratio, uncapped (after AI savings).
     3. The caps (EffortCaps), in order: review, pre-build (after the review cap), architect
-       (after both). Each scale = min(1, ceiling / total); no build base = no caps."""
+       (after both), tests (v28+, by project size; on the work before AI savings, so the
+       team's AI tools still save on the capped tests). Each scale = min(1, ceiling / total);
+       no build base = no caps."""
     reuse, caps = ctx.p.reuse, ctx.p.effort_caps
     if (reuse is None or not reuse.follow_tasks) and caps is None:
         return NO_PLAN
@@ -103,10 +110,11 @@ def _make_plan(ctx: PricingContext) -> EffortPlan:
     plan = EffortPlan(project_reuse_ratio=ratio)
     if caps is None:
         return plan
-    efforts = [
-        (ci, catalog, _task_efforts(_scratch(ctx, catalog), ci, catalog, plan)[0])
+    worked = [
+        (ci, catalog, *_task_efforts(_scratch(ctx, catalog), ci, catalog, plan))
         for ci, catalog in items
     ]
+    efforts = [(ci, catalog, e) for ci, catalog, e, _ in worked]
     base = dsum(
         pd
         for _, catalog, e in efforts
@@ -132,16 +140,37 @@ def _make_plan(ctx: PricingContext) -> EffortPlan:
     )
     hard = sum(1 for ci, _, _ in efforts if ci.hard_problem)
     arch_cap = architecture_floor(ctx, caps, base) + caps.architecture_pd_per_hard_problem * hard
+    tests = tested = ZERO
+    tests_scale = ONE
+    tests_share = caps.tests_max_share_by_size.get(ctx.q.project_size or "")
+    if caps.tests_task is not None and tests_share is not None:
+        # before AI savings: the cap sets the work, the team's AI tools then save on it
+        unsaved = [
+            (catalog, {k: pd + saved.get(k, ZERO) for k, pd in e.items()})
+            for _, catalog, e, saved in worked
+        ]
+        tests = dsum(e.get(caps.tests_task, ZERO) for _, e in unsaved)
+        tested = dsum(  # the development work tested: the build base without the tests
+            pd
+            for catalog, e in unsaved
+            if _stage(catalog) == BUILD
+            for task, pd in e.items()
+            if task in caps.base_tasks and task is not caps.tests_task
+        )
+        tests_scale = min(ONE, tests_share * tested / tests) if tests else ONE
     return EffortPlan(
         project_reuse_ratio=ratio,
         review_scale=review_scale,
         pre_build_scale=pre_scale,
         architecture_scale=min(ONE, arch_cap / arch) if arch else ONE,
+        tests_scale=tests_scale,
         base_pd=base,
         review_pd=review,
         pre_build_pd=pre,
         architecture_pd=arch,
         architecture_cap_pd=arch_cap,
+        tests_pd=tests,
+        tested_pd=tested,
     )
 
 
@@ -382,6 +411,15 @@ def _caps(
             f" × hard problems) {plan.architecture_cap_pd:.2f} pd"
             f" / {plan.architecture_pd:.2f} pd)",
             plan.architecture_scale,
+        )
+    if caps.tests_task in tasks and plan.tests_scale < ONE:
+        sized: str = t.driver("project_size")
+        share = t.param("effort_caps", "tests_max_share_by_size", sized)
+        t.param("effort_caps", "tests_task")
+        t.step(
+            f"cap {caps.tests_task.value}",
+            f"min(1, {share} × tested work {plan.tested_pd:.2f} pd / tests {plan.tests_pd:.2f} pd)",
+            plan.tests_scale,
         )
 
 

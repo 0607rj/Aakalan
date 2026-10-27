@@ -155,3 +155,23 @@ export function humanize(key: string): string {
   const text = key.replace(/[._]/g, " ").trim();
   return text.charAt(0).toUpperCase() + text.slice(1);
 }
+
+/** A calendar year has 52 weeks and 12 months: the form asks deadlines in weeks, the engine
+ * prices months. */
+const WEEKS_PER_YEAR = 52;
+const MONTHS_PER_YEAR = 12;
+
+/** Weeks as months, to two decimals (12 weeks -> 2.77). */
+export function weeksToMonths(weeks: number): number {
+  return Math.round(((weeks * MONTHS_PER_YEAR) / WEEKS_PER_YEAR) * 100) / 100;
+}
+
+/** Months as whole weeks (2.77 -> 12). */
+export function monthsToWeeks(months: number): number {
+  return Math.round((months * WEEKS_PER_YEAR) / MONTHS_PER_YEAR);
+}
+
+/** Whole weeks that hold this many months (a shortest time: never shown shorter than it is). */
+export function monthsToWeeksUp(months: number): number {
+  return Math.ceil((months * WEEKS_PER_YEAR) / MONTHS_PER_YEAR - 1e-9);
+}

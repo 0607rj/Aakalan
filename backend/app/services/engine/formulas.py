@@ -10,8 +10,9 @@ FORMULAS: dict[str, str] = {
         " own work after reuse / before (project build work for reuse.project_wide_components)"
         " when task is in reuse.follow_tasks, else 1; cap(task) = min(1, ceiling / total) for the"
         " review task (review_max_share × build base), every pre-build task (pre_build_max_share"
-        " × build base) and the architecture task (architecture_base_pd +"
-        " architecture_pd_per_hard_problem × hard problems); s_task as v4"
+        " × build base), the architecture task (architecture_base_pd +"
+        " architecture_pd_per_hard_problem × hard problems) and, v28+ on listed project sizes, the"
+        " tests task (tests_max_share_by_size × tested work); s_task as v4"
     ),
     "component_labour.v4": (
         "Σ_task base_effort_pd[size] × effort_multiplier × quantity × task_share × M_complexity"
@@ -200,6 +201,10 @@ FORMULAS: dict[str, str] = {
     # commercial (brief 7.5)
     "commercial.emd.v1": "emd × cost_of_capital × lock_months / months_per_year",
     "commercial.exit.v1": "exit_management_pd[size_band] × rate(exit_role)",
+    "commercial.exit.v2": (
+        "min(exit_management_pd[size_band], exit_share × build_pd) × rate(exit_role)"
+        "  (lean delivery)"
+    ),
     "commercial.contingency.v1": "contingency_percent × base_total",
     "commercial.working_capital.v2": (
         "build_base × ∫ max(0, cost_share(τ) − receipts_share(τ)) dτ"

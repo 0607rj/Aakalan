@@ -87,3 +87,12 @@ def test_one_requirement_priced_by_several_blocks_is_flagged() -> None:
     )
     assert "FR-07 (Alerts): Notifications ₹33k + SMS gateway ₹2.5 lakh" in check.detail
     assert "same_requirement" not in run(shares(100, ("A", 100)), shared=[])
+
+
+def test_chatbot_use_per_user() -> None:
+    """5,000 chatbot questions a day for 1,000 users (the RailTel estimate of 2026-10-27) is 5
+    per user every day: flagged; 500 a day for 10,000 users is usual; no chatbot, no check."""
+    f = shares(100, ("A", 100))
+    assert run(f, chatbot=(5000, 1000))["chatbot_use"] is False
+    assert run(f, chatbot=(500, 10000))["chatbot_use"]
+    assert "chatbot_use" not in run(f)

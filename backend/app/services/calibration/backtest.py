@@ -61,6 +61,7 @@ from app.services.quick.service import (
     CustomFeature,
     QuickPlan,
     QuickRequest,
+    fastest_deadline,
     plan_quick,
     plan_to_input,
 )
@@ -242,7 +243,7 @@ class BacktestRow(BaseModel):
     ratio_ai_target: float | None = None
     inside_range_pre_ai: bool | None = None
     inside_range_ai_target: bool | None = None
-    # production path: the stated deadline cannot be met, so it is priced without it
+    # production path: the stated deadline cannot be met, so it is priced at the fastest
     infeasible_deadline: int | None = None
 
 
@@ -675,8 +676,8 @@ def reading_range_for(
 ) -> tuple[tuple[int, int, int] | None, str, int | None]:
     """Our (P10, P50, P90) for a tender priced as the app prices it: the review form's request
     for its reading, planned with the reading passed in (as POST /quick-estimates does), the
-    project size it gets, and a stated deadline that could not be met (dropped and priced
-    again without it; the app would show the plan as not feasible, with no price)."""
+    project size it gets, and a stated deadline that could not be met (priced again at the
+    fastest possible time, as the app does, OPEN_QUESTIONS 179)."""
     req = reading_request(cfg, reading, country, ai_level)
     extraction = reading.extraction.model_dump(mode="json")
     filename = reading.files_read[0]
@@ -685,7 +686,17 @@ def reading_range_for(
     deadline = req.overrides.get("deadline_months")
     if found is not None or deadline is None:
         return found, plan.project_size, None
-    over = {k: v for k, v in req.overrides.items() if k != "deadline_months"}
+    inp = plan_to_input(
+        plan,
+        req.name[:300],
+        reference,
+        as_of or datetime.now(UTC).date(),
+        BACKTEST_SEED,
+        BACKTEST_RUNS,
+    )
+    fastest = fastest_deadline(inp)
+    assert fastest is not None  # no price only for a deadline too short to build in
+    over = {**req.overrides, "deadline_months": float(fastest)}
     plan = plan_quick(cfg, req.model_copy(update={"overrides": over}), extraction, filename)
     found = priced_range(plan, req.name, reference, tax_included, as_of)
     return found, plan.project_size, int(deadline)

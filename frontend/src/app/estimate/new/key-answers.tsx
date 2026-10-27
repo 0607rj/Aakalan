@@ -2,16 +2,9 @@
 
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { formatPaise } from "@/lib/format";
-import type {
-  FoundStaff,
-  KeyAnswer,
-  QuickQuestion,
-  StaffItem,
-  UnclearPoint,
-} from "@/lib/api/client";
+import type { FoundStaff, StaffItem, UnclearPoint } from "@/lib/api/client";
 
-import { type Choice, Citation, QuestionGroup, shownChoice } from "./parts";
+import { Citation } from "./parts";
 
 const MAX_STAFF = 1000; // StaffItem.count
 const MAX_MONTHS = 240; // StaffItem.months
@@ -69,7 +62,8 @@ export function sentStaff(rows: StaffRow[]): StaffItem[] {
     });
 }
 
-function Queries({
+/** The pre-bid queries the reading raised about one answer. */
+export function Queries({
   queries,
   approximatePages,
 }: {
@@ -107,7 +101,8 @@ function Queries({
   );
 }
 
-function StaffEditor({
+/** The staff during support the document asks for: people, months, or left out. */
+export function StaffEditor({
   rows,
   onChange,
   approximatePages,
@@ -208,117 +203,3 @@ function StaffEditor({
     </ul>
   );
 }
-
-/** The answers that move a tender's price most, biggest first, each with its clause and any
- * pre-bid query next to it (OPEN_QUESTIONS 162). */
-export function KeyAnswersStep({
-  keyAnswers,
-  questions,
-  choices,
-  onChoice,
-  staff,
-  onStaff,
-  omYears,
-  onOmYears,
-  currency,
-  approximatePages,
-}: {
-  keyAnswers: KeyAnswer[];
-  questions: QuickQuestion[];
-  choices: Record<string, Choice>;
-  onChoice: (key: string, value: Choice) => void;
-  staff: StaffRow[] | null;
-  onStaff: (rows: StaffRow[]) => void;
-  /** The support years the document states (a number); null: asked as a question. */
-  omYears: string | null;
-  onOmYears: (text: string) => void;
-  currency: string;
-  approximatePages: boolean;
-}) {
-  const byKey = new Map(questions.map((q) => [q.key, q]));
-  return (
-    <section className="flex flex-col gap-6">
-      <div>
-        <h1 className="font-display text-3xl sm:text-4xl">
-          The answers that move the price most
-        </h1>
-        <p className="mt-1 text-muted-foreground">
-          Read from the document, biggest price effect first. Check each one
-          against its clause.
-        </p>
-      </div>
-      {keyAnswers.map((k) => {
-        const question = byKey.get(k.key);
-        return (
-          <div
-            key={k.key}
-            className="flex flex-col gap-3 rounded-xl border bg-card p-4"
-          >
-            <div className="flex flex-col gap-1">
-              <span className="font-semibold">{k.label}</span>
-              <span className="text-sm text-muted-foreground">
-                {k.stated
-                  ? "From the document."
-                  : "The document doesn't say, so the usual answer is priced."}
-                {k.impact_paise ? (
-                  <>
-                    {" "}
-                    Can change the price by about{" "}
-                    {formatPaise(k.impact_paise, currency)}.
-                  </>
-                ) : null}
-              </span>
-            </div>
-            {k.key === "staff" && staff !== null ? (
-              <StaffEditor
-                rows={staff}
-                onChange={onStaff}
-                approximatePages={approximatePages}
-              />
-            ) : k.key === "support_years" && omYears !== null ? (
-              <div className="flex flex-col gap-1">
-                <Label htmlFor="key-om-years" className="text-sm">
-                  Years of support after launch
-                </Label>
-                <Input
-                  id="key-om-years"
-                  type="number"
-                  inputMode="numeric"
-                  min={0}
-                  max={10}
-                  value={omYears}
-                  onChange={(e) => onOmYears(e.target.value)}
-                  className="h-9 w-24"
-                />
-              </div>
-            ) : question ? (
-              <QuestionGroup
-                question={question}
-                value={shownChoice(question, choices)}
-                onChange={(value) => onChoice(k.key, value)}
-                hideLegend
-                currency={currency}
-              />
-            ) : (
-              <span>{k.value}</span>
-            )}
-            {k.key !== "staff" && k.evidence.length > 0 ? (
-              <Citation
-                evidence={k.evidence}
-                approximatePages={approximatePages}
-              />
-            ) : null}
-            <Queries queries={k.queries} approximatePages={approximatePages} />
-          </div>
-        );
-      })}
-    </section>
-  );
-}
-
-/** The question keys the key-answers screen asks (not asked again on other screens). */
-export function keyQuestionKeys(keyAnswers: KeyAnswer[]): Set<string> {
-  return new Set(keyAnswers.map((k) => k.key).filter((k) => k !== "staff"));
-}
-
-export const KEY_STEP = "key_answers";

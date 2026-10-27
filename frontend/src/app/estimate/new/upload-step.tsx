@@ -25,7 +25,7 @@ import {
 } from "@/lib/api/client";
 import { cn } from "@/lib/utils";
 
-import { DOCUMENT_STEPS, StepIndicator } from "./parts";
+import { DOCUMENT_STEPS, StepHeader, StepIndicator } from "./parts";
 
 const NEXT: { icon: IconType; tone: Tone; text: string }[] = [
   {
@@ -107,16 +107,13 @@ export function UploadStep({
   return (
     <div className="flex flex-col gap-8">
       <StepIndicator labels={DOCUMENT_STEPS} current={1} />
-      <div className="settle flex flex-col gap-2">
-        <p className="eyebrow">Step 1 of 3</p>
-        <h1 className="font-display text-3xl sm:text-4xl">
-          Upload the requirement document
-        </h1>
-        <p className="max-w-2xl text-muted-foreground">
-          We read it, list what it asks for with page numbers, and you check the
-          list before any price is worked out.
-        </p>
-      </div>
+      <StepHeader
+        eyebrow="New estimate"
+        title="Upload the requirement document"
+      >
+        We read it, list what it asks for with page numbers, and you check the
+        list before any price is worked out.
+      </StepHeader>
 
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <div className="flex flex-col gap-4">

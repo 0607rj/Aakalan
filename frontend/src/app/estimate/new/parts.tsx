@@ -43,9 +43,10 @@ import {
   type QuestionImpact,
   type QuickQuestion,
   type QuickRequest,
+  type QuickSchedule,
   type StandardBlock,
 } from "@/lib/api/client";
-import { formatPaise } from "@/lib/format";
+import { formatPaise, monthsToWeeks, monthsToWeeksUp } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export type Choice = string | number;
@@ -340,14 +341,20 @@ export function FeatureCard({
   return (
     <div
       className={cn(
-        "flex flex-col gap-2 rounded-xl border bg-card p-4 transition-[border-color,background-color,box-shadow] duration-200 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring",
+        "relative flex flex-col gap-2 overflow-hidden rounded-xl border bg-card p-4 transition-[border-color,background-color] duration-200 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring",
         checked
-          ? "border-primary bg-tape-soft/50 shadow-[0_0_0_1px_var(--primary)]"
+          ? "border-tape/40 bg-tape-soft/60"
           : excluded
             ? "border-dashed bg-transparent opacity-60"
             : "hover:border-primary/40 hover:bg-panel-2",
       )}
     >
+      {checked ? (
+        <span
+          aria-hidden="true"
+          className="absolute inset-x-0 top-0 h-0.5 bg-tape"
+        />
+      ) : null}
       <label className="flex cursor-pointer items-start gap-3">
         <input
           type="checkbox"
@@ -401,6 +408,82 @@ export function useQuestionImpact(
     };
   }, [key]);
   return impacts;
+}
+
+/**
+ * How long the form's project takes to build: with the usual team, and with the biggest team
+ * that still helps (OPEN_QUESTIONS 179). Asked from the API as the form changes (debounced;
+ * nothing is saved or priced); null until known or when it fails.
+ */
+export function useSchedule(body: QuickRequest | null): QuickSchedule | null {
+  const [plan, setPlan] = React.useState<QuickSchedule | null>(null);
+  const key = body ? JSON.stringify(body) : null;
+  React.useEffect(() => {
+    if (key === null) return;
+    const controller = new AbortController();
+    const timer = window.setTimeout(() => {
+      api
+        .quickSchedule(JSON.parse(key) as QuickRequest, controller.signal)
+        .then(setPlan)
+        .catch(() => setPlan(null));
+    }, IMPACT_DEBOUNCE_MS);
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [key]);
+  return plan;
+}
+
+/** The usual and fastest time to build beside the deadline, and what a typed deadline does. */
+export function BuildTime({
+  plan,
+  weeks,
+}: {
+  plan: QuickSchedule | null;
+  weeks: number | null;
+}) {
+  if (!plan) return null;
+  const usual = monthsToWeeks(Number(plan.usual_months));
+  const fastest = Math.max(1, monthsToWeeksUp(Number(plan.fastest_months)));
+  const note =
+    weeks === null
+      ? null
+      : weeks < fastest
+        ? `Shorter than the fastest possible. More people would not finish sooner, so we price it for ${fastest} weeks and say so. To keep your date, launch the most important features first and the rest later.`
+        : weeks < usual
+          ? "Shorter than usual: a bigger team works in parallel, which costs more."
+          : null;
+  return (
+    <div className="flex flex-col gap-3">
+      <dl className="grid max-w-md grid-cols-2 divide-x rounded-xl border bg-card">
+        <div className="flex flex-col gap-1 px-4 py-3">
+          <dt className="text-sm text-muted-foreground">Usual time</dt>
+          <dd className="font-wide text-xl tabular-nums">
+            about {usual} weeks
+          </dd>
+        </div>
+        <div className="flex flex-col gap-1 px-4 py-3">
+          <dt className="text-sm text-muted-foreground">Fastest possible</dt>
+          <dd className="font-wide text-xl tabular-nums">
+            about {fastest} weeks
+          </dd>
+        </div>
+      </dl>
+      {note ? (
+        <p
+          className={cn(
+            "max-w-xl text-sm",
+            weeks !== null && weeks < fastest
+              ? "text-warning"
+              : "text-muted-foreground",
+          )}
+        >
+          {note}
+        </p>
+      ) : null}
+    </div>
+  );
 }
 
 /**
@@ -474,6 +557,30 @@ export function StandardBlocks({
   );
 }
 
+/** The header of every screen of the form: a small label, the title, one line under it (the
+ * same as the "Your estimates" and start pages). */
+export function StepHeader({
+  eyebrow,
+  title,
+  children,
+}: {
+  eyebrow: string;
+  title: React.ReactNode;
+  children?: React.ReactNode;
+}) {
+  return (
+    <header className="settle flex flex-col gap-2">
+      <p className="eyebrow">{eyebrow}</p>
+      <h1 className="font-wide text-[2rem] leading-tight text-balance sm:text-[2.5rem]">
+        {title}
+      </h1>
+      {children ? (
+        <p className="max-w-2xl text-muted-foreground">{children}</p>
+      ) : null}
+    </header>
+  );
+}
+
 /** A section heading of the features screen, with its count so the page reads at a glance. */
 export function SectionHeading({
   title,
@@ -487,10 +594,10 @@ export function SectionHeading({
   return (
     <div className="flex flex-col gap-2">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <h2 className="text-lg font-semibold">
+        <h2 className="font-wide text-lg">
           {title}
           {count !== undefined ? (
-            <span className="ml-2 rounded-full bg-tape-soft px-2 py-0.5 align-[1px] text-xs font-semibold text-primary tabular-nums">
+            <span className="ml-2 font-mono text-sm font-normal text-muted-foreground tabular-nums">
               {count}
             </span>
           ) : null}
@@ -514,17 +621,19 @@ export function QuestionHeading({
   impact?: QuestionImpact;
   currency?: string;
 }) {
+  const Icon = QUESTION_ICONS[question.key] ?? QuestionIcon;
   return (
     <div className="settle flex flex-col gap-2">
-      <span className="mb-2 flex items-center gap-3">
-        <IconTile
-          icon={QUESTION_ICONS[question.key] ?? QuestionIcon}
-          tone={question.key.startsWith("ai") ? "ai" : "tape"}
-          size="lg"
+      <span className="flex items-center gap-2 text-tape">
+        <Icon
+          size={18}
+          weight="duotone"
+          aria-hidden="true"
+          className={question.key.startsWith("ai") ? "text-ai" : undefined}
         />
         <span className="eyebrow">A question</span>
       </span>
-      <h1 className="font-display text-3xl text-balance sm:text-4xl">
+      <h1 className="font-wide text-[2rem] leading-tight text-balance sm:text-[2.5rem]">
         {question.label}
       </h1>
       <p className="max-w-2xl text-muted-foreground">
@@ -558,9 +667,7 @@ export function QuestionGroup({
   );
   return (
     <fieldset className="flex flex-col gap-3">
-      <legend
-        className={cn("mb-3 text-base font-semibold", hideLegend && "sr-only")}
-      >
+      <legend className={cn("font-wide mb-3 text-lg", hideLegend && "sr-only")}>
         {question.label}
         {impact && impact.impact_paise > 0 && !hideLegend ? (
           <span className="mt-0.5 block text-sm font-normal text-muted-foreground">
@@ -569,7 +676,7 @@ export function QuestionGroup({
           </span>
         ) : null}
       </legend>
-      <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="flex flex-col divide-y overflow-hidden rounded-xl border bg-card">
         {question.options.map((option) => {
           const selected = option.value === value;
           const price = prices.get(String(option.value));
@@ -577,30 +684,43 @@ export function QuestionGroup({
             <label
               key={String(option.value)}
               className={cn(
-                "flex cursor-pointer flex-col gap-1.5 rounded-xl border bg-card p-4 transition-[border-color,background-color,box-shadow] duration-200 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring",
-                selected
-                  ? "border-primary bg-tape-soft/50 shadow-[0_0_0_1px_var(--primary)]"
-                  : "hover:border-primary/40 hover:bg-panel-2",
+                "relative flex cursor-pointer items-start gap-4 px-5 py-4 transition-colors has-[:focus-visible]:bg-panel-2",
+                selected ? "bg-tape-soft/60" : "hover:bg-panel-2",
               )}
             >
-              <span className="flex items-start gap-3">
-                <input
-                  type="radio"
-                  name={question.key}
-                  checked={selected}
-                  onChange={() => onChange(option.value)}
-                  className="sr-only"
+              {selected ? (
+                <span
+                  aria-hidden="true"
+                  className="absolute inset-y-0 left-0 w-0.5 bg-tape"
                 />
-                <Mark on={selected} round />
-                <span className="font-semibold">{option.label}</span>
-              </span>
-              {option.hint ? (
-                <span className="pl-8 text-sm text-muted-foreground">
-                  {option.hint}
-                </span>
               ) : null}
+              <input
+                type="radio"
+                name={question.key}
+                checked={selected}
+                onChange={() => onChange(option.value)}
+                className="sr-only"
+              />
+              <span className="mt-0.5">
+                <Mark on={selected} round />
+              </span>
+              <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+                <span className="font-semibold">{option.label}</span>
+                {option.hint ? (
+                  <span className="text-sm text-muted-foreground">
+                    {option.hint}
+                  </span>
+                ) : null}
+              </span>
               {prices.has(String(option.value)) ? (
-                <span className="pl-8 text-xs font-medium text-primary tabular-nums">
+                <span
+                  className={cn(
+                    "shrink-0 pt-0.5 text-right font-mono text-sm tabular-nums",
+                    selected
+                      ? "font-medium text-foreground"
+                      : "text-muted-foreground",
+                  )}
+                >
                   {price === null || price === undefined
                     ? "not possible"
                     : `≈ ${formatPaise(price, currency)}`}

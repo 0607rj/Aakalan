@@ -14,12 +14,58 @@ import {
   NotIncludedToggle,
   Mark,
   QuestionGroup,
+  StepHeader,
   shownChoice,
 } from "./parts";
 
 export type Level = "basic" | "standard" | "advanced";
 export type Feature = QuickOptions["features"][number];
 export type Question = QuickOptions["questions"][number];
+export type Topic = QuickOptions["topics"][number];
+
+/** The optional details screen of consecutive topics, e.g. "d:hosting+support". */
+export function detailsStep(topics: string[]): string {
+  return `d:${topics.join("+")}`;
+}
+
+export function detailsTopics(step: string): string[] {
+  return step.startsWith("d:") ? step.slice(2).split("+") : [];
+}
+
+/**
+ * The manual form's question screens, one topic at a time (OPEN_QUESTIONS 177): each main
+ * question on its own screen (the levels right after the version, when wanted), a topic's
+ * optional detail questions on one screen after its main ones (the details of topics next to
+ * each other share a screen), and the deadline with the contract. A topic never comes back.
+ */
+export function topicSteps(
+  topics: Topic[],
+  main: Question[],
+  details: Question[],
+  levelsAfter: string | null,
+): string[] {
+  const out: string[] = [];
+  let pending: string[] = [];
+  const flush = () => {
+    if (pending.length > 0) out.push(detailsStep(pending));
+    pending = [];
+  };
+  for (const topic of topics) {
+    const own = main.filter((q) => q.topic === topic.key);
+    if (own.length > 0) flush();
+    for (const q of own) {
+      out.push(`q:${q.key}`);
+      if (q.key === levelsAfter) out.push("levels");
+    }
+    if (details.some((q) => q.topic === topic.key)) pending.push(topic.key);
+    if (topic.key === "contract") {
+      flush();
+      out.push("deadline");
+    }
+  }
+  flush();
+  return out;
+}
 
 /** The first-version / full-product question: its answer sets every feature's level. */
 export const VERSION = "version";
@@ -173,7 +219,7 @@ export function StepButtons({
   hint?: string | null;
 }) {
   return (
-    <div className="sticky bottom-0 z-10 flex flex-wrap items-center gap-3 border-t bg-background/90 py-4 backdrop-blur">
+    <div className="sticky bottom-0 z-10 flex flex-wrap items-center gap-3 border-t bg-background py-4 shadow-[0_-8px_16px_-12px_rgb(0_0_0/0.15)]">
       <Button variant="ghost" size="lg" className="h-11" onClick={onBack}>
         ← Back
       </Button>
@@ -215,30 +261,33 @@ export function LevelsStep({
   onChange: (key: string, level: Level) => void;
 }) {
   return (
-    <section className="flex flex-col gap-6">
-      <div>
-        <h1 className="font-display text-3xl sm:text-4xl">
-          Change the level of any feature (optional)
-        </h1>
-        <p className="mt-1 max-w-3xl text-muted-foreground">
-          Your answer on the last screen set every feature. Pick Basic for the
-          simple version and Advanced for a large, detailed one.
-        </p>
-      </div>
-      <div className="flex flex-col gap-4">
+    <section className="flex flex-col gap-8">
+      <StepHeader eyebrow="Optional" title="Change the level of any feature">
+        Your answer on the last screen set every feature. Pick Basic for the
+        simple version and Advanced for a large, detailed one.
+      </StepHeader>
+      <div className="flex flex-col divide-y overflow-hidden rounded-xl border bg-card">
         {features.map((feature) => {
           const value = levels[feature.key] ?? defaultLevel;
+          const chosen = feature.levels.find((l) => l.key === value);
           return (
             <fieldset
               key={feature.key}
-              className="flex flex-col gap-3 rounded-xl border bg-card p-4"
+              className="flex flex-col gap-3 px-5 py-4 md:flex-row md:items-center md:justify-between md:gap-6"
             >
               <legend className="sr-only">{feature.label}</legend>
-              <span className="font-semibold">{feature.label}</span>
+              <span className="flex min-w-0 flex-col gap-0.5">
+                <span className="font-semibold">{feature.label}</span>
+                {chosen ? (
+                  <span className="text-sm text-muted-foreground">
+                    {chosen.hint}
+                  </span>
+                ) : null}
+              </span>
               <div
                 role="radiogroup"
                 aria-label={feature.label}
-                className="grid gap-3 sm:grid-cols-3"
+                className="inline-flex w-fit shrink-0 rounded-lg border bg-background p-0.5"
               >
                 {feature.levels.map((level) => {
                   const selected = level.key === value;
@@ -246,28 +295,22 @@ export function LevelsStep({
                     <label
                       key={level.key}
                       className={cn(
-                        "flex cursor-pointer flex-col gap-1.5 rounded-xl border p-3 transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring",
+                        "cursor-pointer rounded-md px-3 py-1.5 text-sm font-medium transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring",
                         selected
-                          ? "border-primary bg-tape-soft/50 ring-1 ring-primary"
-                          : "hover:border-primary/40 hover:bg-panel-2",
+                          ? "bg-tape text-primary-foreground"
+                          : "text-muted-foreground hover:text-foreground",
                       )}
                     >
-                      <span className="flex items-start gap-3">
-                        <input
-                          type="radio"
-                          name={`level-${feature.key}`}
-                          checked={selected}
-                          onChange={() =>
-                            onChange(feature.key, level.key as Level)
-                          }
-                          className="sr-only"
-                        />
-                        <Mark on={selected} round />
-                        <span className="font-medium">{level.label}</span>
-                      </span>
-                      <span className="pl-8 text-sm text-muted-foreground">
-                        {level.hint}
-                      </span>
+                      <input
+                        type="radio"
+                        name={`level-${feature.key}`}
+                        checked={selected}
+                        onChange={() =>
+                          onChange(feature.key, level.key as Level)
+                        }
+                        className="sr-only"
+                      />
+                      {level.label}
                     </label>
                   );
                 })}
@@ -297,32 +340,25 @@ export function CheckStep({
   children?: React.ReactNode;
 }) {
   return (
-    <section className="flex flex-col gap-6">
-      <div>
-        <h1 className="font-display text-3xl sm:text-4xl">
-          Check your answers
-        </h1>
-        <p className="mt-1 text-muted-foreground">
-          Change anything that is not right, then calculate.
-        </p>
-      </div>
-      <dl className="slab flex flex-col divide-y overflow-hidden">
+    <section className="flex flex-col gap-8">
+      <StepHeader eyebrow="Last step" title="Check your answers">
+        Change anything that is not right, then calculate.
+      </StepHeader>
+      <dl className="flex flex-col divide-y border-y">
         {rows.map((row) => (
           <div
             key={`${row.step}-${row.label}`}
-            className="flex flex-wrap items-start justify-between gap-3 px-5 py-3"
+            className="grid grid-cols-1 items-baseline gap-x-6 gap-y-1 py-4 sm:grid-cols-[12rem_1fr_auto]"
           >
-            <div className="flex min-w-0 flex-col gap-0.5">
-              <dt className="text-sm text-muted-foreground">{row.label}</dt>
-              <dd className="font-medium break-words">{row.value}</dd>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
+            <dt className="text-sm text-muted-foreground">{row.label}</dt>
+            <dd className="font-medium break-words">{row.value}</dd>
+            <button
+              type="button"
               onClick={() => onChange(row.step)}
+              className="w-fit text-sm font-medium text-primary hover:underline focus-visible:underline focus-visible:outline-none"
             >
               Change
-            </Button>
+            </button>
           </div>
         ))}
       </dl>
@@ -360,39 +396,47 @@ export function featureSummary(
 }
 
 /** The optional details on one screen: skipped questions keep the usual answer. */
+/** The optional detail questions of one topic, or of topics next to each other (each under
+ * its own heading). */
 export function DetailsStep({
-  questions,
+  sections,
   choices,
   onChange,
   impacts,
   currency,
 }: {
-  questions: Question[];
+  sections: { topic: Topic; questions: Question[] }[];
   choices: Record<string, Choice>;
   onChange: (key: string, value: Choice) => void;
   impacts: Map<string, QuestionImpact>;
   currency: string;
 }) {
+  const many = sections.length > 1;
   return (
-    <section className="flex flex-col gap-8">
-      <div>
-        <h1 className="font-display text-3xl sm:text-4xl">
-          A few more details (optional)
-        </h1>
-        <p className="mt-1 max-w-3xl text-muted-foreground">
-          Answer what you know and skip the rest — we use the usual answer for
-          anything you leave as it is.
-        </p>
-      </div>
-      {questions.map((q) => (
-        <QuestionGroup
-          key={q.key}
-          question={q}
-          value={shownChoice(q, choices)}
-          impact={impacts.get(q.key)}
-          currency={currency}
-          onChange={(value) => onChange(q.key, value)}
-        />
+    <section className="flex flex-col gap-10">
+      <StepHeader
+        eyebrow={`Optional · ${sections.map((s) => s.topic.label).join(" · ")}`}
+        title={many ? "A few more details" : sections[0]?.topic.label}
+      >
+        Answer what you know and skip the rest. We use the usual answer for
+        anything you leave as it is.
+      </StepHeader>
+      {sections.map((section) => (
+        <div key={section.topic.key} className="flex flex-col gap-8">
+          {many ? (
+            <h2 className="eyebrow border-b pb-2">{section.topic.label}</h2>
+          ) : null}
+          {section.questions.map((q) => (
+            <QuestionGroup
+              key={q.key}
+              question={q}
+              value={shownChoice(q, choices)}
+              impact={impacts.get(q.key)}
+              currency={currency}
+              onChange={(value) => onChange(q.key, value)}
+            />
+          ))}
+        </div>
       ))}
     </section>
   );
@@ -416,9 +460,13 @@ export function chosenScope(groups: ScopeGroup[], chosen: string[]): string[] {
   return chosen.filter((k) => keys.has(k));
 }
 
+type ScopeItem = ScopeGroup["items"][number];
+
 /** What else the features need: each ticked item adds the work it takes; something already
  * in the project is not counted again. Suggestions (from a document or the user's own words)
- * are marked, never ticked for the user: nothing here is priced unless ticked. */
+ * are marked, never ticked for the user: nothing here is priced unless ticked. The items every
+ * project may need show first ("Often needed"), then one list per ticked feature; the
+ * `advanced` ones (security, compliance, office login) are folded away until wanted. */
 export function ScopeStep({
   groups,
   chosen,
@@ -429,6 +477,7 @@ export function ScopeStep({
   onTickSuggested,
   notIncluded,
   onNotIncluded,
+  offerNotIncluded = true,
 }: {
   groups: ScopeGroup[];
   chosen: string[];
@@ -440,25 +489,58 @@ export function ScopeStep({
   /** Items marked "Not included" (printed on the quote as not in the price). */
   notIncluded?: string[];
   onNotIncluded?: (key: string) => void;
+  /** Offer "Mark as not included" on every item (a mark made before can still be undone). */
+  offerNotIncluded?: boolean;
 }) {
   const offered = new Set(groups.flatMap((g) => g.items.map((i) => i.key)));
   const waiting = suggested.filter(
     (k) => offered.has(k) && !chosen.includes(k),
   );
+  const often = groups
+    .filter((g) => g.feature === null)
+    .flatMap((g) => g.items.filter((i) => !i.advanced));
+  const perFeature = groups
+    .filter((g) => g.feature !== null)
+    .map((g) => ({ ...g, items: g.items.filter((i) => !i.advanced) }))
+    .filter((g) => g.items.length > 0);
+  const advanced = groups.flatMap((g) => g.items.filter((i) => i.advanced));
+  const advancedInUse = advanced.filter(
+    (i) =>
+      chosen.includes(i.key) ||
+      suggested.includes(i.key) ||
+      (notIncluded?.includes(i.key) ?? false),
+  ).length;
+
+  const list = (items: ScopeItem[]) => (
+    <div className="flex flex-col divide-y overflow-hidden rounded-xl border bg-card">
+      {items.map((item) => (
+        <ScopeRow
+          key={item.key}
+          item={item}
+          checked={chosen.includes(item.key)}
+          isSuggested={suggested.includes(item.key)}
+          excluded={notIncluded?.includes(item.key) ?? false}
+          note={notes[item.key]}
+          onToggle={() => onToggle(item.key)}
+          onNotIncluded={
+            onNotIncluded &&
+            (offerNotIncluded || (notIncluded?.includes(item.key) ?? false))
+              ? () => onNotIncluded(item.key)
+              : undefined
+          }
+        />
+      ))}
+    </div>
+  );
+
   return (
-    <section className="flex flex-col gap-6">
-      <div>
-        <h1 className="font-display text-3xl sm:text-4xl">
-          What else does it need? (optional)
-        </h1>
-        <p className="mt-1 max-w-3xl text-muted-foreground">
-          Tick only what the software really needs. Each item adds the work it
-          takes; anything already included is not counted twice. Nothing here is
-          priced unless you tick it.
-        </p>
-      </div>
+    <section className="flex flex-col gap-8">
+      <StepHeader eyebrow="Optional" title="Any extras?">
+        Extras that add work beyond the features. Tick only what you need:
+        nothing here is priced unless you tick it, and nothing is counted twice.
+      </StepHeader>
       {waiting.length > 0 ? (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-dashed px-4 py-3 text-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-y border-dashed border-tape/40 py-3 text-sm">
           <span>
             {waiting.length} suggested from {source}, marked{" "}
             <strong>Suggested</strong>. They are not included until you tick
@@ -476,69 +558,110 @@ export function ScopeStep({
           ) : null}
         </div>
       ) : null}
-      <div className="flex flex-col gap-4">
-        {groups.map((group) => (
-          <fieldset
-            key={group.key}
-            className="flex flex-col gap-3 rounded-xl border bg-card p-4"
-          >
-            <legend className="sr-only">{group.label}</legend>
-            <span className="font-semibold">{group.label}</span>
-            <div className="grid gap-2 sm:grid-cols-2">
-              {group.items.map((item) => {
-                const isSuggested = suggested.includes(item.key);
-                const checked = chosen.includes(item.key);
-                const excluded = notIncluded?.includes(item.key) ?? false;
-                return (
-                  <div key={item.key} className="flex flex-col gap-1">
-                    <label
-                      className={cn(
-                        "flex cursor-pointer items-start gap-3 rounded-lg border border-transparent p-2 hover:bg-panel-2 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring",
-                        isSuggested &&
-                          !checked &&
-                          "border-dashed border-primary/40",
-                        excluded && "opacity-60",
-                      )}
-                    >
-                      <input
-                        type="checkbox"
-                        checked={checked}
-                        onChange={() => onToggle(item.key)}
-                        className="sr-only"
-                      />
-                      <Mark on={checked} />
-                      <span className="flex flex-col gap-1">
-                        <span>
-                          {item.label}
-                          {isSuggested ? " " : null}
-                          {isSuggested ? (
-                            <span className="ml-1 rounded bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary">
-                              Suggested
-                            </span>
-                          ) : null}
-                        </span>
-                        {item.note ? (
-                          <span className="text-sm text-muted-foreground">
-                            {item.partly_priced ? "Partly priced. " : ""}
-                            {item.note}
-                          </span>
-                        ) : null}
-                        {notes[item.key] ?? null}
-                      </span>
-                    </label>
-                    {onNotIncluded && !checked ? (
-                      <NotIncludedToggle
-                        excluded={excluded}
-                        onClick={() => onNotIncluded(item.key)}
-                      />
-                    ) : null}
-                  </div>
-                );
-              })}
-            </div>
-          </fieldset>
-        ))}
-      </div>
+      {often.length > 0 ? (
+        <fieldset className="flex flex-col gap-3">
+          <legend className="sr-only">Often needed</legend>
+          <span className="font-wide text-lg">Often needed</span>
+          {list(often)}
+        </fieldset>
+      ) : null}
+      {perFeature.map((group) => (
+        <fieldset key={group.key} className="flex flex-col gap-3">
+          <legend className="sr-only">{group.label}</legend>
+          <span className="font-wide text-lg">
+            {group.label}
+            <span className="ml-2 font-sans text-sm font-normal text-muted-foreground">
+              for this feature
+            </span>
+          </span>
+          {list(group.items)}
+        </fieldset>
+      ))}
+      {advanced.length > 0 ? (
+        <details
+          open={advancedInUse > 0 ? true : undefined}
+          className="group/adv flex flex-col border-y"
+        >
+          <summary className="flex cursor-pointer list-none items-center gap-3 py-4 [&::-webkit-details-marker]:hidden">
+            <span className="text-muted-foreground transition-transform group-open/adv:rotate-90">
+              ›
+            </span>
+            <span className="flex flex-col gap-0.5">
+              <span className="font-wide text-lg">
+                For large or government projects
+              </span>
+              <span className="text-sm text-muted-foreground">
+                Security checks, data protection rules, office login.{" "}
+                {advanced.length} items
+                {advancedInUse > 0 ? `, ${advancedInUse} in use` : ""}.
+              </span>
+            </span>
+          </summary>
+          <div className="pb-5">{list(advanced)}</div>
+        </details>
+      ) : null}
     </section>
+  );
+}
+
+/** One extra: plain words, what it is, and a tick. */
+function ScopeRow({
+  item,
+  checked,
+  isSuggested,
+  excluded,
+  note,
+  onToggle,
+  onNotIncluded,
+}: {
+  item: ScopeItem;
+  checked: boolean;
+  isSuggested: boolean;
+  excluded: boolean;
+  note?: React.ReactNode;
+  onToggle: () => void;
+  onNotIncluded?: () => void;
+}) {
+  return (
+    <div
+      className={cn(
+        "relative flex flex-col gap-1 transition-colors",
+        checked && "bg-tape-soft/60",
+        isSuggested && !checked && "bg-primary/5",
+        excluded && "opacity-60",
+      )}
+    >
+      {checked ? (
+        <span aria-hidden className="absolute inset-y-0 left-0 w-1 bg-tape" />
+      ) : null}
+      <label className="flex cursor-pointer items-start gap-3 px-5 py-4 hover:bg-panel-2/60 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring has-[:focus-visible]:ring-inset">
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={onToggle}
+          className="sr-only"
+        />
+        <Mark on={checked} />
+        <span className="flex min-w-0 flex-col gap-0.5">
+          <span className="font-medium">
+            {item.ask || item.label}
+            {isSuggested ? (
+              <span className="ml-2 rounded bg-primary/10 px-1.5 py-0.5 text-xs font-medium text-primary">
+                Suggested
+              </span>
+            ) : null}
+          </span>
+          {item.hint ? (
+            <span className="text-sm text-muted-foreground">{item.hint}</span>
+          ) : null}
+          {note ?? null}
+        </span>
+      </label>
+      {onNotIncluded && !checked ? (
+        <div className="-mt-2 pb-3 pl-13">
+          <NotIncludedToggle excluded={excluded} onClick={onNotIncluded} />
+        </div>
+      ) : null}
+    </div>
   );
 }

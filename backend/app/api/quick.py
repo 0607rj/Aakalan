@@ -18,6 +18,7 @@ from app.services.quick.service import (
     PricedOption,
     QuestionImpact,
     QuickRequest,
+    QuickSchedule,
     QuickSummary,
     StoriesOut,
     confirm_check,
@@ -26,6 +27,7 @@ from app.services.quick.service import (
     feature_level_options,
     priced_options,
     question_impact,
+    quick_schedule,
     save_stories,
     standard_blocks,
     summarise,
@@ -56,9 +58,16 @@ def _int_or_none(value: object) -> int | None:
     return int(value) if isinstance(value, int | float | str) and str(value).isdigit() else None
 
 
+class TopicOut(BaseModel):
+    key: str
+    label: str
+    hint: str
+
+
 class QuestionOut(BaseModel):
     key: str
     label: str
+    topic: str  # the part of the form it belongs to (QuickOptions.topics)
     default: str | int
     options: list[OptionOut]
     group: str = "main"  # main = one screen each; detail = the optional details screen
@@ -109,6 +118,9 @@ class ScopeItemOut(BaseModel):
     label: str
     note: str = ""  # what is and is not priced
     partly_priced: bool = False  # part of the work is not priced (no evidence)
+    ask: str = ""  # plain words on the form (else `label`)
+    hint: str = ""  # what it is, with an example
+    advanced: bool = False  # folded under "For large or government projects"
 
 
 class ScopeGroupOut(BaseModel):
@@ -136,6 +148,7 @@ class QuickOptions(BaseModel):
     project_types: list[ProjectTypeOut]
     features: list[FeatureOut]
     default_level: str
+    topics: list[TopicOut]  # the form's parts, in the order asked
     questions: list[QuestionOut]
     custom_feature_types: list[CustomTypeOut]
     scope: list[ScopeGroupOut] = []  # what else a feature may need (QuickRequest.scope)
@@ -209,7 +222,13 @@ def options(db: DbSession, user: CurrentUser, country: str = "india") -> QuickOp
                 feature=g.feature,
                 items=[
                     ScopeItemOut(
-                        key=i.key, label=i.label, note=i.note, partly_priced=i.partly_priced
+                        key=i.key,
+                        label=i.label,
+                        note=i.note,
+                        partly_priced=i.partly_priced,
+                        ask=i.ask,
+                        hint=i.hint,
+                        advanced=i.advanced,
                     )
                     for i in g.items
                 ],
@@ -217,10 +236,12 @@ def options(db: DbSession, user: CurrentUser, country: str = "india") -> QuickOp
             for g in cfg.scope
         ],
         project_types=[ProjectTypeOut(**t.model_dump()) for t in cfg.project_types],
+        topics=[TopicOut(**t.model_dump()) for t in cfg.topics],
         questions=[
             QuestionOut(
                 key=key,
                 label=q.label,
+                topic=q.topic,
                 default=ai_level if key == AI_USE and ai_level is not None else q.default,
                 options=[
                     OptionOut(
@@ -363,6 +384,13 @@ def ask_second_opinion(estimate_id: str, db: DbSession, user: EditorUser) -> Sec
 def impact(body: QuickRequest, db: DbSession, user: CurrentUser) -> list[QuestionImpact]:
     """Which questions change the price most for this form (nothing is saved)."""
     return question_impact(db, user, quick_config(), body)
+
+
+@router.post("/quick-estimate/schedule", response_model=QuickSchedule)
+def build_time(body: QuickRequest, db: DbSession, user: CurrentUser) -> QuickSchedule:
+    """The usual and the fastest time to build this form's project, for the deadline question
+    (nothing is saved or priced)."""
+    return quick_schedule(db, user, quick_config(), body)
 
 
 class StandardBlockOut(BaseModel):
