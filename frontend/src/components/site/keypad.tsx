@@ -33,7 +33,7 @@ export function Keypad({ className }: { className?: string }) {
     >
       <div
         aria-hidden="true"
-        className="grid grid-cols-4 gap-2 rounded-[22px] border bg-card p-3 shadow-[0_40px_100px_-30px_rgb(27_36_51/0.25)] sm:gap-2.5 sm:p-4"
+        className="grid grid-cols-4 gap-2 rounded-[22px] border bg-card p-3 shadow-[0_1px_2px_rgb(27_36_51/0.05),0_12px_28px_-20px_rgb(27_36_51/0.2)] sm:gap-2.5 sm:p-4"
       >
         {KEY_ROWS.flat().map((k) => {
           const sum = SUMS[k];

@@ -160,7 +160,7 @@ export default function HomePage() {
               <CostSky />
             </AppWindow>
             {/* the result, as the app would tell it (an example) */}
-            <div className="absolute -bottom-8 left-4 flex w-[17rem] items-start gap-3 rounded-xl border bg-card/95 p-4 shadow-[0_24px_60px_-24px_rgb(27_36_51/0.45)] backdrop-blur sm:-left-8">
+            <div className="absolute -bottom-8 left-4 flex w-[17rem] items-start gap-3 rounded-xl border bg-card/95 p-4 shadow-[0_1px_2px_rgb(27_36_51/0.06),0_10px_24px_-16px_rgb(27_36_51/0.25)] backdrop-blur sm:-left-8">
               <LogoMark className="size-8 shrink-0" />
               <span className="flex flex-col gap-0.5">
                 <span className="font-mono text-[11px] text-muted-foreground">
