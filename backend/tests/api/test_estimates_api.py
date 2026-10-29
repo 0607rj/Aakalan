@@ -132,7 +132,9 @@ def test_saved_estimate_unchanged_when_catalog_v6_arrives(
     assert int(new["catalog_version"][1:]) >= 6 and labour == {"component_labour.v4"}
     newest = estimate(client, estimator_headers, project["id"])
     labour = {ln["formula_id"] for ln in newest["lines"] if ln["component_instance_id"]}
-    assert labour == {"component_labour.v5"}  # parameters v20+: effort caps and follow tasks
+    # parameters v20+: effort caps and follow tasks (v5); v29+: the pre-build cap at the usual
+    # complexity (v6, OPEN_QUESTIONS 183)
+    assert labour == {"component_labour.v6"}
 
     again = client.get(f"/estimates/{old['id']}", headers=estimator_headers).json()
     keys = ("likely_paise", "p10_paise", "p50_paise", "p90_paise")

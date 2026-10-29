@@ -99,6 +99,7 @@ def build_input(
                 quantity=c.quantity,
                 requirement_ids=[x for x in c.requirement_ids if x in priced_ids],
                 hard_problem=bool(c.driver_values.get("hard_problem", False)),
+                size_mix=c.driver_values.get("size_mix"),  # OPEN_QUESTIONS 183
             )
             for c in project.components
         ],

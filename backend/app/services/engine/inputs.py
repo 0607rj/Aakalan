@@ -51,6 +51,19 @@ class ComponentInstanceIn(Strict):
     # Holds a hard problem the document describes (concurrency, money movement, legacy data,
     # ...): a wider range (uncertainty.hard_problem_extra) and no reuse discount (v19+).
     hard_problem: bool = False
+    # A block priced between sizes (OPEN_QUESTIONS 183): base effort = Σ base_effort_pd[s] ×
+    # share, e.g. {S: 0.3, M: 0.7} near the edge of two project sizes, or {M: 0.3} for a block
+    # the next project size adds. None = base_effort_pd[size].
+    size_mix: dict[Size, Decimal] | None = None
+
+    @model_validator(mode="after")
+    def _mix_shares(self) -> "ComponentInstanceIn":
+        mix = self.size_mix
+        if mix is not None and (
+            not mix or any(not 0 < v <= 1 for v in mix.values()) or sum(mix.values()) > 1
+        ):
+            raise ValueError("size_mix shares must be above 0 and add up to at most 1")
+        return self
 
 
 class OnsiteResource(Strict):
@@ -81,6 +94,13 @@ class PaymentMilestone(Strict):
     percent: Decimal = Field(gt=0, le=1)
 
 
+class SizeBlend(Strict):
+    """The neighbouring project size and the share of it (OPEN_QUESTIONS 184)."""
+
+    size: Literal["small", "small_medium", "medium", "medium_large", "large"]
+    share: Decimal = Field(gt=0, lt=1)
+
+
 class Questionnaire(Strict):
     """Project drivers. Every field is required here; `resolve_questionnaire` fills gaps from
     `ParameterSet.defaults` and records each default as an assumption."""
@@ -109,9 +129,10 @@ class Questionnaire(Strict):
     change_request_pd_per_year: Decimal | None = Field(ge=0)
     cert_in_audit: bool
     stqc_certification: bool
-    training_sessions: int = Field(ge=0)
-    training_outstation_sessions: int = Field(ge=0)
-    hypercare_weeks: int = Field(ge=0)
+    # whole numbers, or between two project sizes' numbers near their edge (OPEN_QUESTIONS 184)
+    training_sessions: int | Decimal = Field(ge=0)
+    training_outstation_sessions: int | Decimal = Field(ge=0)
+    hypercare_weeks: int | Decimal = Field(ge=0)
     emd_paise: int = Field(ge=0)
     emd_lock_months: Decimal = Field(ge=0)
     pbg_percent: Decimal = Field(ge=0, le=1)
@@ -171,6 +192,9 @@ class Questionnaire(Strict):
     # a parameter set that has a size curve (v13+), the size factor follows the points smoothly
     # instead of jumping between project sizes. None = use project_size.
     size_points: int | None = Field(default=None, ge=0)
+    # Near the edge of two project sizes (OPEN_QUESTIONS 184): the neighbouring size and the
+    # share of it, so what follows the size (lean delivery) moves in a line. None = none.
+    size_blend: SizeBlend | None = None
 
     @model_validator(mode="after")
     def _schedule(self) -> "Questionnaire":

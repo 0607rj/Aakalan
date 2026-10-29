@@ -12,6 +12,7 @@ from app.services.engine.outputs import CostLineOut
 from app.services.engine.reference import (
     BaselineEra,
     CatalogComponent,
+    Complexity,
     Driver,
     EffortCaps,
     Size,
@@ -127,9 +128,16 @@ def _make_plan(ctx: PricingContext) -> EffortPlan:
     review = dsum(e.get(caps.review_task, ZERO) for _, _, e in efforts)
     review_share, pre_share = cap_shares(ctx, caps)
     review_scale = min(ONE, review_share * base / review) if review else ONE
+    multipliers = ctx.p.complexity_multipliers
+    by_usual = caps.pre_build_cap_at_usual_complexity
+
+    def at_usual(ci: ComponentInstanceIn) -> Decimal:
+        """v29+: the pre-build cap counts each block at the usual (medium) complexity."""
+        return multipliers[Complexity.MEDIUM] / multipliers[ci.complexity] if by_usual else ONE
+
     pre = dsum(
-        pd * (review_scale if task is caps.review_task else ONE)
-        for _, catalog, e in efforts
+        pd * (review_scale if task is caps.review_task else ONE) * at_usual(ci)
+        for ci, catalog, e in efforts
         if _stage(catalog) == PRE_BUILD
         for task, pd in e.items()
     )
@@ -306,12 +314,20 @@ def base_effort(ctx: PricingContext, ci: ComponentInstanceIn) -> ComponentEffort
     return ComponentEffort(ci, catalog, dsum(per_task.values()), dsum(saved.values()))
 
 
+def mixed_base_pd(ci: ComponentInstanceIn, catalog: CatalogComponent) -> Decimal:
+    """base_effort_pd[size], or Σ base_effort_pd[s] × share for a block priced between sizes
+    (size_mix, OPEN_QUESTIONS 183)."""
+    if ci.size_mix is None:
+        return catalog.base_effort_pd[Size(ci.size)]
+    return dsum(catalog.base_effort_pd[s] * share for s, share in ci.size_mix.items())
+
+
 def _raw_efforts(
     t: LineBuilder, ci: ComponentInstanceIn, catalog: CatalogComponent
 ) -> dict[TaskType, Decimal]:
     """Per task, before reuse, caps and AI savings:
     base_pd[size] × effort_multiplier × quantity × share × M_complexity × M_nfr × licence."""
-    base: Decimal = catalog.base_effort_pd[Size(ci.size)] * t.calibration("effort_multiplier")
+    base = mixed_base_pd(ci, catalog) * t.calibration("effort_multiplier")
     m_cx: Decimal = t.param("complexity_multipliers", ci.complexity.value)
     m_nfr = nfr_multiplier(t, catalog)
     lic = ONE
@@ -471,10 +487,14 @@ def component_line(
     Catalog v6+ components also record where their effort data comes from and whether the AI
     saving was applied (formula component_labour.v3); with a parameter set that prices reuse
     (v19+), the formula is component_labour.v4; with review and tests following the reuse or
-    effort caps (v20+), component_labour.v5."""
+    effort caps (v20+), component_labour.v5; v29+ (pre-build cap at the usual complexity)
+    or a block priced between sizes, v6."""
     ci, catalog = effort.instance, effort.catalog
     stage = _stage(catalog)
-    if effort_plan(ctx) is not NO_PLAN:
+    caps = ctx.p.effort_caps
+    if ci.size_mix is not None or (caps is not None and caps.pre_build_cap_at_usual_complexity):
+        formula_id = "component_labour.v6"
+    elif effort_plan(ctx) is not NO_PLAN:
         formula_id = "component_labour.v5"
     elif catalog.source_era is None:
         formula_id = "component_labour.v2"
@@ -494,7 +514,8 @@ def component_line(
         size=ci.size.value,
         complexity=ci.complexity.value,
         quantity=ci.quantity,
-        base_effort_pd=str(catalog.base_effort_pd[Size(ci.size)]),
+        base_effort_pd=str(mixed_base_pd(ci, catalog)),
+        **({"size_mix": {s.value: str(v) for s, v in ci.size_mix.items()}} if ci.size_mix else {}),
         compression_multiplier=str(compression),
     )
     if catalog.source_era is not None:

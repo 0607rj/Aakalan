@@ -562,6 +562,8 @@ class PlannedComponent:
     label: str | None = None
     hard_problem: bool = False  # a feature the document's hard problems belong to
     quantity: int = 1  # how many modules of this size (a feature's or extra's units)
+    # a standard block priced between two project sizes (OPEN_QUESTIONS 183); None = `size`
+    size_mix: dict[Size, Decimal] | None = None
 
 
 @dataclass
@@ -741,13 +743,31 @@ def plan_quick(
             component_reqs.setdefault(key, []).append(code)
         plan.scope.append(item.key)
     complexity = {k: c for o in options.values() for k, c in o.component_complexity.items()}
+    # near a tier edge the standard blocks are partly the next tier's (OPEN_QUESTIONS 183);
+    # a block a feature or scope item asks for is priced in full as before
+    near, share = (None, Decimal(0)) if project_size else cfg.sizing.neighbour(points)
+    near_blocks = (
+        [k for k in _standard_components(near, options) if k not in removed] if near else []
+    )
+    for key in near_blocks:
+        component_reqs.setdefault(key, [])
     for key, reqs in component_reqs.items():
-        if key in standard:  # a standard building block: sized by the project
+        if key in standard or (key in near_blocks and key not in component_level):
             cx = complexity.get(key, Complexity.MEDIUM)  # e.g. a design that is ready
-            size = tier.base_size
-            if key in scope_level:
-                size = _bigger(size, cfg.sizing.levels[scope_level[key]].component_size)
-            plan.components.append(PlannedComponent(key, size, cx, reqs))
+            parts = [(tier.base_size, 1 - share)] if key in standard else []
+            if near is not None and key in near_blocks:
+                parts.append((near.base_size, share))
+            mix: dict[Size, Decimal] = {}
+            for s, w in parts:
+                if key in scope_level:  # a scope item asks at least this size of the block
+                    s = _bigger(s, cfg.sizing.levels[scope_level[key]].component_size)
+                if w > 0:
+                    mix[s] = mix.get(s, Decimal(0)) + w
+            size = max(mix, key=lambda s: (mix[s], SIZE_RANK[s]))
+            exact = len(mix) == 1 and mix[size] == 1
+            plan.components.append(
+                PlannedComponent(key, size, cx, reqs, size_mix=None if exact else mix)
+            )
         else:
             level = cfg.sizing.levels[component_level[key]]
             plan.components.append(
@@ -802,13 +822,23 @@ def plan_quick(
     plan.answers["project_size"] = (tier.project_size, [])
     if project_size is None:  # the size factor follows the feature points (parameter sets v13+)
         plan.answers["size_points"] = (points, [])
+    if near is not None:  # near a tier edge, what follows the size moves in a line
+        plan.answers["size_blend"] = ({"size": near.project_size, "share": str(share)}, [])
     for k, v in tier.answers.items():
+        # e.g. training sessions and hypercare weeks between the two sizes' numbers
+        # (OPEN_QUESTIONS 184); a number only one size sets is kept
+        other = near.answers.get(k) if near else None
+        if isinstance(v, int | float) and isinstance(other, int | float) and other != v:
+            v = str(Decimal(str(v)) * (1 - share) + Decimal(str(other)) * share)
         plan.answers[k] = (v, [])
     for key, option in options.items():
         found = found_choices.get(key)
         kept = found is not None and found["value"] == option.value
-        ids = cited(found, cfg.questions[key].label) if kept else []
-        for k, v in option.answers.items():
+        question = cfg.questions[key]
+        ids = cited(found, question.label) if kept else []
+        # a stated count (e.g. 15,000 users) sets the numbers that follow it, not the band's
+        stated = req.overrides.get(question.answered_by_number or "")
+        for k, v in question.answers_of(option, stated).items():
             plan.answers[k] = (v, ids)
     for f in features:
         for k, v in f.sets.items():
@@ -1050,7 +1080,7 @@ def _detail(question: Any, option: Option) -> str:
     the number of users), else the option's hint."""
     if question.detail:
         try:
-            return str(question.detail.format(**option.answers))
+            return str(question.detail.format(**question.answers_of(option)))
         except (KeyError, IndexError, ValueError):
             return ""
     return option.hint
@@ -1330,7 +1360,14 @@ def create_quick_estimate(db: Session, user: User, cfg: QuickConfig, req: QuickR
                 size=c.size.value,
                 complexity=c.complexity.value,
                 quantity=c.quantity,
-                driver_values={"hard_problem": True} if c.hard_problem else {},
+                driver_values={
+                    **({"hard_problem": True} if c.hard_problem else {}),
+                    **(
+                        {"size_mix": {s.value: str(w) for s, w in c.size_mix.items()}}
+                        if c.size_mix
+                        else {}
+                    ),
+                },
                 requirement_ids=[ids[r] for r in c.requirements],
                 status="confirmed",
                 confirmed_by=user.id,
@@ -1453,6 +1490,7 @@ def plan_to_input(
                 quantity=c.quantity,
                 requirement_ids=c.requirements,
                 hard_problem=c.hard_problem,
+                size_mix=c.size_mix,
             )
             for i, c in enumerate(plan.components, start=1)
         ],
@@ -1482,10 +1520,16 @@ def question_impact(
         if key == "support_years" and "om_years" in req.overrides:
             continue
         prices = []
+        # each band at its own count, not at the typed one (e.g. the users typed)
+        by = question.answered_by_number
+        base = req
+        if by and by in req.overrides:
+            rest = {k: v for k, v in req.overrides.items() if k != by}
+            base = req.model_copy(update={"overrides": rest})
         for option in question.options:
             if option.retired:  # not offered on the form
                 continue
-            variant = req.model_copy(update={"choices": {**req.choices, key: option.value}})
+            variant = base.model_copy(update={"choices": {**req.choices, key: option.value}})
             prices.append(
                 OptionPrice(
                     value=option.value,
