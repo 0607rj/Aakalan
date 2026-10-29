@@ -12,8 +12,6 @@ import {
 
 import { ErrorNotice, Loading } from "@/components/status";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import {
   api,
   errorText,
@@ -51,6 +49,14 @@ import {
   useSchedule,
   BuildTime,
   StepHeader,
+  bandOf,
+  readUsersNumber,
+  SCALE,
+  USERS_NUMBERS,
+  type UsersNumber,
+  UsersNumbers,
+  usersNumbersValid,
+  usersOverrides,
 } from "./parts";
 import {
   allFeatures,
@@ -157,20 +163,25 @@ function ManualForm({
   const [notIncluded, setNotIncluded] = React.useState<NotIncluded[]>(
     () => saved?.not_included ?? [],
   );
-  // people online at the same time, typed by the user (empty: the user band's own number)
-  const [peakOnline, setPeakOnline] = React.useState(() => {
-    const n = saved?.overrides?.[PEAK];
-    return n ? String(n) : "";
-  });
-  const peakNumber = peakOnline.trim() === "" ? null : Number(peakOnline);
-  const peakValid =
-    peakNumber === null ||
-    (Number.isInteger(peakNumber) && peakNumber >= 1 && peakNumber <= MAX_PEAK);
+  // the users, people online at once and chatbot questions a day typed under the users
+  // question (empty: what the band means), as on the review form (OPEN_QUESTIONS 182)
+  const [usersNumbers, setUsersNumbers] = React.useState<
+    Partial<Record<UsersNumber, string>>
+  >(() =>
+    Object.fromEntries(
+      USERS_NUMBERS.filter((k) => saved?.overrides?.[k] !== undefined).map(
+        (k) => [k, String(saved?.overrides?.[k])],
+      ),
+    ),
+  );
+  const usersValid = usersNumbersValid(usersNumbers);
   const overrides = {
     ...Object.fromEntries(
-      Object.entries(saved?.overrides ?? {}).filter(([k]) => k !== PEAK),
+      Object.entries(saved?.overrides ?? {}).filter(
+        ([k]) => !(USERS_NUMBERS as readonly string[]).includes(k),
+      ),
     ),
-    ...(peakValid && peakNumber !== null ? { [PEAK]: peakNumber } : {}),
+    ...usersOverrides(usersNumbers),
   };
   const [deadline, setDeadline] = React.useState(
     saved?.deadline_months ? String(monthsToWeeks(saved.deadline_months)) : "",
@@ -295,6 +306,21 @@ function ManualForm({
   );
 
   function change(key: string, value: Choice) {
+    if (key === SCALE) {
+      // a band the typed users are not in replaces them
+      const typed = readUsersNumber(usersNumbers.users_total ?? "");
+      const question = options.questions.find((q) => q.key === SCALE);
+      if (
+        typeof typed === "number" &&
+        question &&
+        bandOf(question, typed) !== value
+      )
+        setUsersNumbers((now) => ({ ...now, users_total: "" }));
+    }
+    choose(key, value);
+  }
+
+  function choose(key: string, value: Choice) {
     answered.current.add(key);
     setTouched((now) => (now.includes(key) ? now : [...now, key]));
     if (key === VERSION) setLevels({}); // a new overall level resets hand-picked ones
@@ -692,15 +718,23 @@ function ManualForm({
               impact={impacts.get(question.key)}
               currency={currency}
               hideLegend
+              compact={question.key === SCALE}
               onChange={(value) => change(question.key, value)}
             />
             {question.key === SCALE ? (
-              <PeakOnline
+              <UsersNumbers
                 question={question}
-                value={choices[question.key] ?? question.default}
-                text={peakOnline}
-                valid={peakValid}
-                onChange={setPeakOnline}
+                band={choices[question.key] ?? question.default}
+                values={usersNumbers}
+                chatbot={everything.includes("ai_chatbot")}
+                onChange={(key, text) => {
+                  setUsersNumbers((now) => ({ ...now, [key]: text }));
+                  const n = readUsersNumber(text);
+                  const band =
+                    typeof n === "number" ? bandOf(question, n) : undefined;
+                  if (key === "users_total" && band !== undefined)
+                    choose(SCALE, band); // the band the typed users fall in
+                }}
               />
             ) : null}
             {question.key === VERSION && leveled.length > 0 ? (
@@ -720,7 +754,7 @@ function ManualForm({
               onNext={steps.next}
               nextDisabled={
                 unchosen([question], choices).length > 0 ||
-                (question.key === SCALE && !peakValid)
+                (question.key === SCALE && !usersValid)
               }
               hint={
                 unchosen([question], choices).length > 0
@@ -779,6 +813,7 @@ function ManualForm({
             <BuildTime
               plan={schedule}
               weeks={deadlineValid ? deadlineWeeks : null}
+              keepTeam="this estimate does not include them: upload the requirement document so its staff lines are priced."
             />
             <StepButtons
               onBack={steps.prev}
@@ -821,14 +856,14 @@ function ManualForm({
                         label: q.label,
                         value: answerLabel(q, choices[q.key]),
                       },
-                      ...(q.key === SCALE && peakNumber !== null && peakValid
-                        ? [
-                            {
+                      ...(q.key === SCALE
+                        ? Object.entries(usersOverrides(usersNumbers)).map(
+                            ([k, n]) => ({
                               step: `q:${SCALE}`,
-                              label: "People online at the same time",
-                              value: peakNumber.toLocaleString("en-IN"),
-                            },
-                          ]
+                              label: USERS_LABELS[k as UsersNumber],
+                              value: n.toLocaleString("en-IN"),
+                            }),
+                          )
                         : []),
                     ]),
                   ...details
@@ -870,59 +905,6 @@ function ManualForm({
           </>
         )}
       </div>
-    </div>
-  );
-}
-
-/** The number of people online at once: the user band's own number unless typed. It sets the
- * servers and hosting; the features set the build. */
-function PeakOnline({
-  question,
-  value,
-  text,
-  valid,
-  onChange,
-}: {
-  question: QuickOptions["questions"][number];
-  value: Choice;
-  text: string;
-  valid: boolean;
-  onChange: (text: string) => void;
-}) {
-  const assumed = question.options.find(
-    (o) => String(o.value) === String(value),
-  )?.peak_online;
-  return (
-    <div className="flex max-w-xl flex-col gap-2 border-t pt-6">
-      <Label htmlFor="peak-online" className="text-base">
-        People online at the same time{" "}
-        <span className="font-normal text-muted-foreground">(optional)</span>
-      </Label>
-      <Input
-        id="peak-online"
-        type="number"
-        inputMode="numeric"
-        min={1}
-        max={MAX_PEAK}
-        value={text}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={
-          assumed ? `We assume ${assumed.toLocaleString("en-IN")}` : ""
-        }
-        className="h-11 w-56 text-base"
-      />
-      <span className="text-sm text-muted-foreground">
-        {assumed
-          ? `For this many users we assume ${assumed.toLocaleString("en-IN")} at once. `
-          : ""}
-        Type your own if you know it: it decides the servers and hosting, not
-        the building cost.
-      </span>
-      {!valid ? (
-        <span className="text-sm text-destructive">
-          Enter a whole number from 1 to {MAX_PEAK.toLocaleString("en-IN")}.
-        </span>
-      ) : null}
     </div>
   );
 }
@@ -1013,10 +995,12 @@ function RuledOutBecause({ quote }: { quote?: string }) {
 
 const MIN_DESCRIPTION = 10; // characters, as the API requires
 
-/** The users question, and the people online at once the user may type under it. */
-const SCALE = "scale";
-const PEAK = "peak_concurrent_users";
-const MAX_PEAK = 10_000_000; // a typing guard only: the engine sizes any number
+/** The numbers typed under the users question, as listed on the check step. */
+const USERS_LABELS: Record<UsersNumber, string> = {
+  users_total: "Exact number of users",
+  peak_concurrent_users: "People online at the same time",
+  chatbot_queries_per_day: "Chatbot questions a day",
+};
 
 /** The "Something else" kind: every feature, nothing ticked to start with. */
 const OTHER_TYPE = "other";

@@ -37,6 +37,14 @@ import {
   useSchedule,
   BuildTime,
   StepHeader,
+  answersFromNumbers,
+  bandOf,
+  readUsersNumber,
+  SCALE,
+  USERS_NUMBERS,
+  type UsersNumber,
+  UsersNumbers,
+  usersNumbersValid,
 } from "./parts";
 import {
   allFeatures,
@@ -250,9 +258,14 @@ export function ReviewForm({
   const errors = Object.fromEntries(
     visibleFacts.map((f) => [f.key, factError(f, facts[f.key] ?? "")]),
   );
-  const hasErrors = Object.values(errors).some(Boolean) || staffHasErrors;
+  const hasErrors =
+    Object.values(errors).some(Boolean) ||
+    staffHasErrors ||
+    !usersNumbersValid(facts);
   // the numbers shown on the topic screens (the EMD is read and used, never shown)
-  const factsShown = visibleFacts.filter((f) => !f.hidden);
+  const factsShown = visibleFacts.filter(
+    (f) => !f.hidden && !isUsersNumber(f.key),
+  );
   const overrides: Record<string, number> = {};
   for (const fact of visibleFacts) {
     const text = (facts[fact.key] ?? "").trim();
@@ -276,7 +289,7 @@ export function ReviewForm({
   const questions = relevant.filter(
     (q) =>
       !(q.key === "support_years" && omYearsGiven) &&
-      byNumber[q.key] === undefined &&
+      (byNumber[q.key] === undefined || q.key === SCALE) &&
       !(q.on_upload === "document" && isOpen(q)),
   );
   const rank = (key: string) => keyRank.get(key) ?? keyAnswers.length;
@@ -397,6 +410,15 @@ export function ReviewForm({
   }
 
   function changeChoice(key: string, value: Choice) {
+    const scale = options.questions.find((q) => q.key === SCALE);
+    const typed = readUsersNumber(facts.users_total ?? "");
+    if (
+      key === SCALE &&
+      scale &&
+      typeof typed === "number" &&
+      bandOf(scale, typed) !== value
+    )
+      setFacts((now) => ({ ...now, users_total: "" })); // a band the users are not in
     answered.current.add(key);
     setTouched((now) => (now.includes(key) ? now : [...now, key]));
     if (key === VERSION) setLevels({}); // a new overall level resets hand-picked ones
@@ -475,9 +497,10 @@ export function ReviewForm({
    * answer to confirm; with any pre-bid query about it. */
   function questionBlock(q: Question) {
     const found = extraction.choices[q.key];
+    const value = byNumber[q.key] ?? shownChoice(q, choices);
     const queries = keyAnswers.find((k) => k.key === q.key)?.queries ?? [];
     if (found) {
-      const selected = q.options.find((o) => o.value === choices[q.key]);
+      const selected = q.options.find((o) => o.value === value);
       const open = changing[q.key] ?? false;
       return (
         <div
@@ -496,7 +519,7 @@ export function ReviewForm({
                   </span>
                 ) : null}
               </span>
-              {choices[q.key] === asChoice(found) ? (
+              {value === asChoice(found) ? (
                 <Citation evidence={found.evidence} approximatePages={approx} />
               ) : (
                 <span className="text-sm text-muted-foreground">
@@ -515,14 +538,16 @@ export function ReviewForm({
           {open ? (
             <QuestionGroup
               question={q}
-              value={shownChoice(q, choices)}
-              onChange={(value) => changeChoice(q.key, value)}
+              value={value}
+              onChange={(v) => changeChoice(q.key, v)}
               hideLegend
+              compact={q.key === SCALE}
               impact={impacts.get(q.key)}
               currency={currency}
             />
           ) : null}
           <Queries queries={queries} approximatePages={approx} />
+          {q.key === SCALE ? usersNumbers(q, value) : null}
         </div>
       );
     }
@@ -540,14 +565,42 @@ export function ReviewForm({
         </div>
         <QuestionGroup
           question={q}
-          value={shownChoice(q, choices)}
+          value={value}
           impact={impacts.get(q.key)}
           currency={currency}
           hideLegend
-          onChange={(value) => changeChoice(q.key, value)}
+          compact={q.key === SCALE}
+          onChange={(v) => changeChoice(q.key, v)}
         />
         <Queries queries={queries} approximatePages={approx} />
+        {q.key === SCALE ? usersNumbers(q, value) : null}
       </div>
+    );
+  }
+
+  /** Under the users question: the users, people online at once and chatbot questions a day
+   * the document states (with the page), as on the manual form (OPEN_QUESTIONS 182). */
+  function usersNumbers(q: Question, band: Choice | undefined) {
+    const note = (key: UsersNumber) => {
+      const found = extraction.numbers[key];
+      if (!found) return null;
+      return (facts[key] ?? "") === initialFacts[key] ? (
+        <Citation evidence={found.evidence} approximatePages={approx} />
+      ) : (
+        <span className="text-sm text-muted-foreground">
+          Changed by you (document says {initialFacts[key] || "nothing"})
+        </span>
+      );
+    };
+    return (
+      <UsersNumbers
+        question={q}
+        band={band}
+        values={facts}
+        chatbot={visibleFacts.some((f) => f.key === "chatbot_queries_per_day")}
+        onChange={(key, text) => setFacts((now) => ({ ...now, [key]: text }))}
+        notes={Object.fromEntries(USERS_NUMBERS.map((k) => [k, note(k)]))}
+      />
     );
   }
 
@@ -616,6 +669,11 @@ export function ReviewForm({
               deadlineMonths === undefined
                 ? null
                 : monthsToWeeks(Number(deadlineMonths))
+            }
+            keepTeam={
+              staff !== null
+                ? "add them under Staff during support (the support topic), or the price leaves them out."
+                : "the price leaves them out: this reading has no staff list (read the document again)."
             }
           />
         ) : null}
@@ -992,28 +1050,6 @@ function staffSummary(rows: StaffRow[]): string {
     .join("; ");
 }
 
-/** Answers that follow from a stated number: e.g. 50,000 registered users pick the smallest
- * scale option whose max_users covers them (an option with no limit covers everything). */
-function answersFromNumbers(
-  questions: {
-    key: string;
-    answered_by_number?: string | null;
-    options: { value: Choice; unsure?: boolean; max_users?: number | null }[];
-  }[],
-  numbers: Record<string, number>,
-): Record<string, Choice> {
-  const answers: Record<string, Choice> = {};
-  for (const q of questions) {
-    const n = q.answered_by_number ? numbers[q.answered_by_number] : undefined;
-    if (n === undefined) continue;
-    const fits = q.options
-      .filter((o) => !o.unsure && (o.max_users == null || o.max_users >= n))
-      .sort(
-        (a, b) =>
-          (a.max_users ?? Number.POSITIVE_INFINITY) -
-          (b.max_users ?? Number.POSITIVE_INFINITY),
-      );
-    if (fits[0]) answers[q.key] = fits[0].value;
-  }
-  return answers;
+function isUsersNumber(key: string): boolean {
+  return (USERS_NUMBERS as readonly string[]).includes(key);
 }

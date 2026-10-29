@@ -2361,7 +2361,7 @@
           "quick estimate"
         ],
         "summary": "Suggest",
-        "description": "Features (and answers) suggested from the user's own description; nothing is saved\nor priced, the user ticks and confirms them on the form.",
+        "description": "Features (and answers) suggested from the user's own description; nothing is priced,\nthe user ticks and confirms them on the form. The AI's reading is kept for the company, so\nthe same words give the same features every time (OPEN_QUESTIONS 181).",
         "operationId": "suggest_quick_estimate_suggest_post",
         "requestBody": {
           "content": {
@@ -9149,6 +9149,23 @@
             "type": "boolean",
             "title": "Must Choose",
             "default": false
+          },
+          "curve": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": {
+                    "type": "integer"
+                  },
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Curve"
           }
         },
         "type": "object",

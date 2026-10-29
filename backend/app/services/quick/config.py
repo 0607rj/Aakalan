@@ -4,6 +4,7 @@ questions that map to catalog components and questionnaire drivers. No prices li
 import re
 from decimal import Decimal
 from functools import lru_cache
+from itertools import pairwise
 from pathlib import Path
 from typing import Any, Literal
 
@@ -58,6 +59,31 @@ class Option(Frozen):
     retired: bool = False
 
 
+class NumberCurve(Frozen):
+    """Numbers that follow a question's number (e.g. people online at once, chatbot questions a
+    day and documents a month follow the registered users) on a straight line between points,
+    flat below the first and above the last, so one user more never steps the price
+    (OPEN_QUESTIONS 182). Each point holds the question's number and the numbers that follow."""
+
+    source: str
+    points: list[dict[str, int]] = Field(min_length=2)
+
+    def at(self, by: str, n: float) -> dict[str, int]:
+        """Each following number at `n`, rounded to a whole number (half up)."""
+        pts = sorted(self.points, key=lambda p: p[by])
+        x = Decimal(str(n))
+        if x >= pts[-1][by]:
+            lo, hi = pts[-2], pts[-1]
+        else:
+            lo, hi = next((a, b) for a, b in pairwise(pts) if x < b[by])
+        share = min(max((x - lo[by]) / (hi[by] - lo[by]), Decimal(0)), Decimal(1))
+        return {
+            k: int((lo[k] + (hi[k] - lo[k]) * share).quantize(Decimal(1), "ROUND_HALF_UP"))
+            for k in lo
+            if k != by
+        }
+
+
 class Topic(Frozen):
     """A part of the form (what to build, users, ...): asked in the order of `topics`."""
 
@@ -100,6 +126,9 @@ class Question(Frozen):
     detail: str | None = None
     # Only applies when this number is set (e.g. onsite_period needs onsite_staff).
     only_with_override: str | None = None
+    # Numbers that follow `answered_by_number` (OPEN_QUESTIONS 182): each option's missing
+    # numbers come from it at the option's own count, and a stated count sets them all.
+    curve: NumberCurve | None = None
 
     @model_validator(mode="after")
     def _default_exists(self) -> "Question":
@@ -108,7 +137,24 @@ class Question(Frozen):
             raise ValueError(f"default {self.default!r} is not an option")
         if self.from_not_priced and "yes" not in values:
             raise ValueError("a question answered by a not-priced topic needs a 'yes' option")
+        if self.curve is not None:
+            by = self.answered_by_number
+            if by is None or any(set(p) != set(self.curve.points[0]) for p in self.curve.points):
+                raise ValueError("a curve needs answered_by_number and the same keys at each point")
+            if by not in self.curve.points[0]:
+                raise ValueError(f"every curve point needs {by}")
         return self
+
+    def answers_of(self, option: Option, number: float | None = None) -> dict[str, Any]:
+        """What an option means in numbers: its answers, with the numbers the curve gives at
+        `number` (a stated count) or at the option's own count filling the rest."""
+        by = self.answered_by_number
+        n = number if number is not None else option.answers.get(by) if by else None
+        if self.curve is None or by is None or n is None:
+            return option.answers
+        if number is None:  # the option's own numbers win; the curve fills what it leaves out
+            return {**self.curve.at(by, n), **option.answers}
+        return {**option.answers, **self.curve.at(by, n), by: number}
 
     def option(self, value: str | int) -> Option:
         for o in self.options:
@@ -209,15 +255,46 @@ class Sizing(Frozen):
     stories: StorySizing | None = None  # levels from a document's user stories
     # The most modules one feature or extra feature can be (units; 1 = no more than one).
     max_units: int = Field(default=1, ge=1)
+    # OPEN_QUESTIONS 183: around each tier edge E (a tier's max_points) the standard blocks move
+    # in a straight line from the lower tier's to the upper tier's between E × (1 − share) and
+    # E × (1 + share) feature points, so one feature more never switches every block to the
+    # next size at once. None = the blocks step at the edges.
+    tier_blend_share: Decimal | None = Field(default=None, gt=0, lt=1)
 
     @model_validator(mode="after")
     def _open_tier(self) -> "Sizing":
         if not self.tiers or self.tiers[-1].max_points is not None:
             raise ValueError("sizing.tiers must end with an open tier")
+        share = self.tier_blend_share
+        edges = [Decimal(t.max_points) for t in self.tiers if t.max_points is not None]
+        if share is not None and any(a * (1 + share) > b * (1 - share) for a, b in pairwise(edges)):
+            raise ValueError("sizing.tier_blend_share: the windows of two edges overlap")
         return self
 
     def tier(self, points: int) -> SizeTier:
         return next(t for t in self.tiers if t.max_points is None or points <= t.max_points)
+
+    def neighbour(self, points: int) -> tuple[SizeTier | None, Decimal]:
+        """The tier next to `points`' own whose standard blocks are partly priced, and the
+        share they take (OPEN_QUESTIONS 183): at an edge E between tiers A and B, a project of
+        p points is (p − lo) / (hi − lo) of the way from A to B, lo = E × (1 − share),
+        hi = E × (1 + share). Outside every window: (None, 0)."""
+        share = self.tier_blend_share
+        if share is None:
+            return None, Decimal(0)
+        own = self.tier(points)
+        for lower, upper in pairwise(self.tiers):
+            assert lower.max_points is not None
+            edge = Decimal(lower.max_points)
+            lo, hi = edge * (1 - share), edge * (1 + share)
+            if not lo < points < hi:
+                continue
+            toward_upper = (Decimal(points) - lo) / (hi - lo)
+            if own is lower:
+                return upper, toward_upper
+            if own is upper:
+                return lower, 1 - toward_upper
+        return None, Decimal(0)
 
     def tier_for(self, size: str) -> SizeTier:
         for t in self.tiers:

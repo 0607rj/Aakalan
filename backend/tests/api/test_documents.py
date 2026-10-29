@@ -131,7 +131,7 @@ def test_basic_reader_without_a_key(
     assert n["emd_paise"]["value"] == 50_000_000 and n["pbg_percent"]["value"] == 0.03
     c = ex["choices"]
     assert c["availability"]["value"] == "high" and c["hosting"]["value"] == "indian_cloud"
-    assert c["scale"]["value"] == "up_to_1l"  # 50,000 users
+    assert c["scale"]["value"] == "up_to_50k"  # 50,000 users
     assert doc["project_name"].startswith("Request for Proposal")
 
 

@@ -385,7 +385,7 @@
    "choices": {
     "version": "full",
     "platforms": "web_mobile",
-    "scale": "up_to_10k",
+    "scale": "up_to_5k",
     "integrations": "many",
     "old_data": "no",
     "build_type": "framework",

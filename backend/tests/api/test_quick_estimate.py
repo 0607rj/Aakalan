@@ -20,7 +20,7 @@ def test_options_are_plain_language(client: TestClient, admin_headers: H) -> Non
     body = r.json()
     assert {f["key"] for f in body["features"]} >= {"online_forms", "ai_chatbot", "payments"}
     scale = next(q for q in body["questions"] if q["key"] == "scale")
-    assert scale["default"] == "up_to_10k" and len(scale["options"]) == 7
+    assert scale["default"] == "up_to_10k" and len(scale["options"]) == 11
     assert scale["options"][-1]["unsure"]  # every key question can be answered "Not sure"
     mains = [q["key"] for q in body["questions"] if q["group"] == "main"]
     assert mains[:3] == ["version", "platforms", "scale"]
@@ -684,3 +684,35 @@ def test_ai_saving_kept_is_its_own_internal_item(
     seen = client.get(f"/estimates/{kept['estimate_id']}/summary", headers=viewer_headers).json()
     assert seen["ai_saving"]["kept_paise"] is None
     assert "ai_saving_kept" not in {i["key"] for i in seen["cost_items"]}
+
+
+def test_users_price_smoothly(client: TestClient, admin_headers: H) -> None:
+    """A typed user count is priced as typed, and the people online at once and the chatbot's
+    questions follow it on the users curve, not the top of its band (OPEN_QUESTIONS 182)."""
+    body = quick(client, admin_headers, choices={"scale": "up_to_25k"}).json()
+    assert (body["users_total"], body["peak_online"]) == (25000, 333)  # the band's top
+    prices = []
+    for users in (10_000, 15_000, 25_000):
+        r = quick(
+            client,
+            admin_headers,
+            choices={"scale": "up_to_25k" if users > 10_000 else "up_to_10k"},
+            overrides={"users_total": users},
+        )
+        assert r.status_code == 201, r.text
+        prices.append(r.json()["likely_paise"])
+    s = r.json()
+    assert (s["users_total"], s["peak_online"]) == (25000, 333)
+    assert prices[0] < prices[1] < prices[2]
+    typed = quick(
+        client, admin_headers, choices={"scale": "up_to_25k"}, overrides={"users_total": 15000}
+    ).json()
+    assert (typed["users_total"], typed["peak_online"]) == (15000, 244)
+    # a stated number of people online wins over the curve
+    own = quick(
+        client,
+        admin_headers,
+        choices={"scale": "up_to_25k"},
+        overrides={"users_total": 15000, "peak_concurrent_users": 900},
+    ).json()
+    assert own["peak_online"] == 900

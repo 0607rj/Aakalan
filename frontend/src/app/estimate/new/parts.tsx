@@ -37,6 +37,8 @@ import {
 } from "@phosphor-icons/react/dist/ssr";
 
 import { IconTile, type IconType } from "@/components/site/illustrations";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import {
   api,
   type Evidence,
@@ -439,9 +441,12 @@ export function useSchedule(body: QuickRequest | null): QuickSchedule | null {
 export function BuildTime({
   plan,
   weeks,
+  keepTeam,
 }: {
   plan: QuickSchedule | null;
   weeks: number | null;
+  /** What to do when the client wants people for the whole (longer) period. */
+  keepTeam: string;
 }) {
   if (!plan) return null;
   const usual = monthsToWeeks(Number(plan.usual_months));
@@ -453,7 +458,9 @@ export function BuildTime({
         ? `Shorter than the fastest possible. More people would not finish sooner, so we price it for ${fastest} weeks and say so. To keep your date, launch the most important features first and the rest later.`
         : weeks < usual
           ? "Shorter than usual: a bigger team works in parallel, which costs more."
-          : null;
+          : weeks > usual
+            ? `Longer than the build needs: the team builds in about ${usual} weeks and hands over early, so the extra time adds no cost. If the client wants people kept for the whole ${weeks} weeks (a project manager, developers or support staff), ${keepTeam}`
+            : null;
   return (
     <div className="flex flex-col gap-3">
       <dl className="grid max-w-md grid-cols-2 divide-x rounded-xl border bg-card">
@@ -652,8 +659,11 @@ export function QuestionGroup({
   hideLegend = false,
   impact,
   currency = "INR",
+  compact = false,
 }: {
   question: QuickQuestion;
+  /** Two columns on wider screens (a long list, e.g. the user bands). */
+  compact?: boolean;
   /** undefined: nothing chosen yet (a must-choose question). */
   value: Choice | undefined;
   onChange: (value: Choice) => void;
@@ -676,7 +686,14 @@ export function QuestionGroup({
           </span>
         ) : null}
       </legend>
-      <div className="flex flex-col divide-y overflow-hidden rounded-xl border bg-card">
+      <div
+        className={cn(
+          "overflow-hidden rounded-xl border bg-card",
+          compact
+            ? "grid divide-y sm:grid-cols-2 sm:divide-y-0 sm:[&>label]:border-b sm:[&>label:nth-child(odd)]:border-r"
+            : "flex flex-col divide-y",
+        )}
+      >
         {question.options.map((option) => {
           const selected = option.value === value;
           const price = prices.get(String(option.value));
@@ -732,6 +749,189 @@ export function QuestionGroup({
       </div>
     </fieldset>
   );
+}
+
+/** The users question: the numbers typed under it on both flows (OPEN_QUESTIONS 182). */
+export const SCALE = "scale";
+export const USERS_NUMBERS = [
+  "users_total",
+  "peak_concurrent_users",
+  "chatbot_queries_per_day",
+] as const;
+export type UsersNumber = (typeof USERS_NUMBERS)[number];
+const MAX_USERS_NUMBER = 1_000_000_000; // a typing guard only: the engine prices any number
+
+/** A typed users number: empty = not typed (null), else a whole number, or "invalid". */
+export function readUsersNumber(text: string): number | null | "invalid" {
+  if (text.trim() === "") return null;
+  const n = Number(text);
+  return Number.isInteger(n) && n >= 1 && n <= MAX_USERS_NUMBER ? n : "invalid";
+}
+
+/** The numbers that follow `n` users on the question's curve (as the API prices them): a
+ * straight line between its points, flat outside them, rounded half up. */
+export function followingNumbers(
+  question: Pick<QuickQuestion, "curve" | "answered_by_number">,
+  n: number,
+): Record<string, number> {
+  const by = question.answered_by_number;
+  if (!by || !question.curve || question.curve.length < 2) return {};
+  const points = [...question.curve].sort((a, b) => a[by] - b[by]);
+  const last = points.length - 1;
+  const i =
+    n >= points[last][by]
+      ? last - 1
+      : points.findIndex((_, j) => n < points[j + 1][by]);
+  const lo = points[i];
+  const hi = points[i + 1];
+  const share = Math.min(Math.max((n - lo[by]) / (hi[by] - lo[by]), 0), 1);
+  return Object.fromEntries(
+    Object.keys(lo)
+      .filter((k) => k !== by)
+      .map((k) => [k, Math.round(lo[k] + (hi[k] - lo[k]) * share)]),
+  );
+}
+
+/** Answers that follow a stated number: e.g. 50,000 registered users pick the smallest
+ * scale option whose max_users covers them (an option with no limit covers everything). */
+export function answersFromNumbers(
+  questions: {
+    key: string;
+    answered_by_number?: string | null;
+    options: { value: Choice; unsure?: boolean; max_users?: number | null }[];
+  }[],
+  numbers: Record<string, number>,
+): Record<string, Choice> {
+  const answers: Record<string, Choice> = {};
+  for (const q of questions) {
+    const n = q.answered_by_number ? numbers[q.answered_by_number] : undefined;
+    if (n === undefined) continue;
+    const fits = q.options
+      .filter((o) => !o.unsure && (o.max_users == null || o.max_users >= n))
+      .sort(
+        (a, b) =>
+          (a.max_users ?? Number.POSITIVE_INFINITY) -
+          (b.max_users ?? Number.POSITIVE_INFINITY),
+      );
+    if (fits[0]) answers[q.key] = fits[0].value;
+  }
+  return answers;
+}
+
+/** The band a typed user count falls in (undefined: no count). */
+export function bandOf(
+  question: QuickQuestion,
+  n: number | null,
+): Choice | undefined {
+  if (n === null || !question.answered_by_number) return undefined;
+  return answersFromNumbers([question], { [question.answered_by_number]: n })[
+    question.key
+  ];
+}
+
+/**
+ * Under the users question, the same on both flows: the exact number of users, the people
+ * online at once and (with a chatbot) its questions a day, all optional. Empty = what the
+ * band, or the typed users, mean on the question's curve; a typed number is priced as typed.
+ */
+export function UsersNumbers({
+  question,
+  band,
+  values,
+  onChange,
+  chatbot,
+  notes = {},
+}: {
+  question: QuickQuestion;
+  band: Choice | undefined;
+  values: Partial<Record<UsersNumber, string>>;
+  onChange: (key: UsersNumber, text: string) => void;
+  chatbot: boolean;
+  /** Under a box, e.g. where the document states it. */
+  notes?: Partial<Record<UsersNumber, React.ReactNode>>;
+}) {
+  const typed = readUsersNumber(values.users_total ?? "");
+  const option = question.options.find((o) => String(o.value) === String(band));
+  const users = typeof typed === "number" ? typed : (option?.max_users ?? null);
+  const follow = users !== null ? followingNumbers(question, users) : {};
+  const assumed = (key: UsersNumber) =>
+    key === "users_total" ? option?.max_users : follow[key];
+  const boxes: { key: UsersNumber; label: string; hint: string }[] = [
+    {
+      key: "users_total",
+      label: "Exact number of users",
+      hint: "If you know it: the price follows this number, not the top of the range.",
+    },
+    {
+      key: "peak_concurrent_users",
+      label: "People online at the same time",
+      hint: "It decides the servers and hosting, not the building cost.",
+    },
+    ...(chatbot
+      ? [
+          {
+            key: "chatbot_queries_per_day" as const,
+            label: "Chatbot questions a day",
+            hint: "It decides the cost of AI usage.",
+          },
+        ]
+      : []),
+  ];
+  return (
+    <div className="grid gap-x-6 gap-y-5 border-t pt-6 sm:grid-cols-2 lg:grid-cols-3">
+      {boxes.map(({ key, label, hint }) => {
+        const n = assumed(key);
+        return (
+          <div key={key} className="flex flex-col gap-2">
+            <Label htmlFor={`users-${key}`} className="eyebrow">
+              {label}{" "}
+              <span className="font-normal text-muted-foreground normal-case">
+                (optional)
+              </span>
+            </Label>
+            <Input
+              id={`users-${key}`}
+              type="number"
+              inputMode="numeric"
+              min={1}
+              value={values[key] ?? ""}
+              onChange={(e) => onChange(key, e.target.value)}
+              placeholder={n ? `We assume ${n.toLocaleString("en-IN")}` : ""}
+              className="h-10 max-w-56"
+            />
+            <span className="text-sm text-muted-foreground">{hint}</span>
+            {readUsersNumber(values[key] ?? "") === "invalid" ? (
+              <span className="text-sm text-destructive">
+                Enter a whole number, 1 or more.
+              </span>
+            ) : null}
+            {notes[key] ?? null}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+/** Whether every typed users number is empty or a whole number (the form can continue). */
+export function usersNumbersValid(
+  values: Partial<Record<UsersNumber, string>>,
+): boolean {
+  return USERS_NUMBERS.every(
+    (k) => readUsersNumber(values[k] ?? "") !== "invalid",
+  );
+}
+
+/** The typed users numbers the API prices (empty and invalid ones left out). */
+export function usersOverrides(
+  values: Partial<Record<UsersNumber, string>>,
+): Record<string, number> {
+  const out: Record<string, number> = {};
+  for (const k of USERS_NUMBERS) {
+    const n = readUsersNumber(values[k] ?? "");
+    if (typeof n === "number") out[k] = n;
+  }
+  return out;
 }
 
 /** "Page 2 · Clause 4.3", with the exact sentence from the document on demand. */

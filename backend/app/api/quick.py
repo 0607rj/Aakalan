@@ -78,6 +78,9 @@ class QuestionOut(BaseModel):
     on_upload: str = "ask"  # document = on file upload, the document decides; never asked
     answered_by_number: str | None = None  # not asked when this number is known
     must_choose: bool = False  # nothing pre-selected: the user must pick an answer
+    # the numbers that follow answered_by_number, on a straight line between these points
+    # (the form shows them as "we assume ..."; the API prices them the same way)
+    curve: list[dict[str, int]] | None = None
 
 
 class LevelOut(BaseModel):
@@ -253,7 +256,7 @@ def options(db: DbSession, user: CurrentUser, country: str = "india") -> QuickOp
                         add_features=dict(o.add_features),
                         feature_level=o.feature_level,
                         max_users=o.max_users,
-                        peak_online=_int_or_none(o.answers.get("peak_concurrent_users")),
+                        peak_online=_int_or_none(q.answers_of(o).get("peak_concurrent_users")),
                     )
                     for o in q.options
                 ],
@@ -265,6 +268,7 @@ def options(db: DbSession, user: CurrentUser, country: str = "india") -> QuickOp
                 on_upload=q.on_upload,
                 answered_by_number=q.answered_by_number,
                 must_choose=q.must_choose,
+                curve=q.curve.points if q.curve else None,
             )
             for key, q in form_questions(cfg, country).items()
         ],
