@@ -14,7 +14,7 @@ from itertools import pairwise
 from typing import Any
 
 from app.services.engine import spreads
-from app.services.engine.context import LineBuilder, PricingContext
+from app.services.engine.context import LineBuilder, PricingContext, toward_lean
 from app.services.engine.money import ONE, ZERO, dsum, interpolate, paise_to_rupees
 from app.services.engine.outputs import CostLineOut, Timeline
 from app.services.engine.timeline import band_value
@@ -141,13 +141,21 @@ def base_commercial_lines(ctx: PricingContext, timeline: Timeline) -> list[CostL
         )
         pd = band_value(t, timeline.build_effort_pd, "exit_management_pd")
         lean = ctx.p.lean
-        if lean is not None and lean.exit_share_of_build_pd is not None and t.lean():
-            t.formula_id = "commercial.exit.v2"  # v27+: follows the work on lean delivery
+        lean_share = t.lean() if lean is not None and lean.exit_share_of_build_pd else ZERO
+        if lean_share:
+            # v27+: follows the work on lean delivery; v3 between full and lean (v29+)
+            t.formula_id = "commercial.exit.v2" if lean_share == ONE else "commercial.exit.v3"
             share: Decimal = t.param("lean", "exit_share_of_build_pd")
-            pd = t.step(
-                "lean handover person-days",
-                f"min({pd:.2f}, {share} × {timeline.build_effort_pd:.2f})",
-                min(pd, share * timeline.build_effort_pd),
+            pd = toward_lean(
+                t,
+                "handover person-days",
+                pd,
+                t.step(
+                    "lean handover person-days",
+                    f"min({pd:.2f}, {share} × {timeline.build_effort_pd:.2f})",
+                    min(pd, share * timeline.build_effort_pd),
+                ),
+                lean_share,
             )
         role: str = t.param("commercial", "exit_role")
         t.add_role_pd(role, pd)

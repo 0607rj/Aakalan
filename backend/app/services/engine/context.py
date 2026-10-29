@@ -123,6 +123,7 @@ class PricingContext:
             "ssl_in_scope": False,
             "ssl_type": bool(self.p.maintenance.ssl_rate_key_by_type),
             "ai_passthrough_percent": False,  # default: all passed through, as before
+            "size_blend": False,  # set by the quick form near a size edge; never a note
         }.get(key, True)
 
     def assumptions(self) -> list[AssumptionOut]:
@@ -365,23 +366,41 @@ class LineBuilder:
         p_out = self.rate_local(self.param("ai_runtime", keys[1]))
         return p_in, p_out
 
-    def lean(self) -> bool:
-        """True when the parameter set has lean delivery for this buyer segment or project
-        size (recorded)."""
+    def lean(self) -> Decimal:
+        """How much of the delivery is lean (recorded): 1 when the parameter set has lean
+        delivery for this buyer segment or project size, or no formal reports and meetings
+        (unless_governance); 0 when not. Near the edge of a lean and a full project size
+        (size_blend, OPEN_QUESTIONS 184): (1 − share) × [own size lean] + share × [neighbour
+        lean], so a lean line moves in a line from lean to full: full − lean × (full − lean
+        value)."""
         lean = self.ctx.p.lean
         if lean is None:
-            return False
+            return ZERO
         segment: str = self.driver("buyer_segment")
         if segment in lean.segments:
             self.param("lean", "segments")
-            return True
-        if lean.sizes and self.driver("project_size") in lean.sizes:
-            self.param("lean", "sizes")
-            return True
+            return ONE
+        by_size = ZERO
+        if lean.sizes:
+            own = ONE if self.driver("project_size") in lean.sizes else ZERO
+            blend = self.ctx.q.size_blend
+            by_size = own
+            if blend is not None:
+                self.driver("size_blend")
+                near = ONE if blend.size in lean.sizes else ZERO
+                by_size = self.step(
+                    "lean share",
+                    f"(1 − {blend.share}) × {own} + {blend.share} × {near} ({blend.size})",
+                    (ONE - blend.share) * own + blend.share * near,
+                )
+            if by_size:
+                self.param("lean", "sizes")
+            if by_size == ONE:
+                return ONE
         if lean.unless_governance and not self.driver("governance_overheads"):
             self.param("lean", "unless_governance")
-            return True
-        return False
+            return ONE
+        return by_size
 
     def step(self, label: str, expression: str, value: Decimal) -> Decimal:
         self.steps.append(TraceStep(label=label, expression=expression, value=value))
@@ -498,3 +517,17 @@ class LineBuilder:
             trace=trace,
             follows_build=self.follows_build,
         )
+
+
+def toward_lean(
+    t: LineBuilder, label: str, full: Decimal, lean: Decimal, share: Decimal
+) -> Decimal:
+    """full − share × (full − lean): the lean value when share is 1, in a line between the two
+    near the edge of a lean and a full project size (OPEN_QUESTIONS 184)."""
+    if share == ONE:
+        return lean
+    return t.step(
+        f"{label} between full and lean",
+        f"{full:.2f} − {share} × ({full:.2f} − {lean:.2f})",
+        full - share * (full - lean),
+    )

@@ -4,7 +4,7 @@ travel, environments) lines."""
 from decimal import Decimal
 
 from app.services.engine import spreads
-from app.services.engine.context import LineBuilder, PricingContext
+from app.services.engine.context import LineBuilder, PricingContext, toward_lean
 from app.services.engine.money import ONE, ZERO, ceil
 from app.services.engine.outputs import CostLineOut, Timeline
 from app.services.engine.run_costs import after_hypercare, staff_doing
@@ -67,7 +67,7 @@ def golive_lines(ctx: PricingContext, timeline: Timeline) -> list[CostLineOut]:
         label="Training delivery",
         formula_id="golive.training_labour.v1",
     )
-    sessions: int = t.driver("training_sessions")
+    sessions: Decimal = t.driver("training_sessions")
     if sessions:
         pd_per: Decimal = t.param("go_live", "training_pd_per_session")
         role: str = t.param("go_live", "trainer_role")
@@ -84,7 +84,7 @@ def golive_lines(ctx: PricingContext, timeline: Timeline) -> list[CostLineOut]:
         label="Training travel (outstation sessions)",
         formula_id="golive.training_travel.v1",
     )
-    outstation: int = t.driver("training_outstation_sessions")
+    outstation: Decimal = t.driver("training_outstation_sessions")
     if outstation:
         trips: Decimal = t.param("go_live", "trips_per_outstation_session")
         trip_rate = t.rate_local(t.param("go_live", "travel_rate_key"))
@@ -99,13 +99,14 @@ def golive_lines(ctx: PricingContext, timeline: Timeline) -> list[CostLineOut]:
         label="Hypercare after go-live",
         formula_id="golive.hypercare.v1",
     )
-    weeks: int = t.driver("hypercare_weeks")
+    weeks: Decimal = t.driver("hypercare_weeks")
     if weeks:
         pd_per_week: Decimal = t.param("go_live", "pd_per_week")
         team: dict[str, Decimal] = t.param("go_live", "hypercare_team_fte")
         scale = ONE
-        if t.lean():
-            t.formula_id = "golive.hypercare.v2"
+        lean = t.lean()
+        if lean:
+            t.formula_id = "golive.hypercare.v2" if lean == ONE else "golive.hypercare.v3"
             full = weeks * pd_per_week * sum(team.values(), ZERO)
             share: Decimal = t.param("lean", "hypercare_share_of_build_pd")
             t.step("build effort", "Σ component effort (pd)", timeline.build_effort_pd)
@@ -115,6 +116,7 @@ def golive_lines(ctx: PricingContext, timeline: Timeline) -> list[CostLineOut]:
                 f"min(1, {share} × {timeline.build_effort_pd:.2f} / {full:.2f})",
                 min(ONE, cap / full) if full else ONE,
             )
+            scale = toward_lean(t, "hypercare scale", ONE, scale, lean)
         total = ZERO
         for role, fte in team.items():
             pd = weeks * pd_per_week * fte * scale
@@ -168,13 +170,20 @@ def programme_lines(ctx: PricingContext, timeline: Timeline) -> list[CostLineOut
     pd_month: Decimal = t.param("calendar", "pd_per_month")
     pm_role: str = t.param("programme", "pm_role")
     pd = t.step("PM person-days", f"{fte} FTE × {months} × {pd_month}", fte * months * pd_month)
-    if t.lean():
-        t.formula_id = "programme.pm.v2"
+    lean = t.lean()
+    if lean:
+        t.formula_id = "programme.pm.v2" if lean == ONE else "programme.pm.v3"
         share: Decimal = t.param("lean", "pm_share_of_build_pd")
-        pd = t.step(
-            "lean PM person-days",
-            f"min({pd:.2f}, {share} × {timeline.build_effort_pd:.2f})",
-            min(pd, share * timeline.build_effort_pd),
+        pd = toward_lean(
+            t,
+            "PM person-days",
+            pd,
+            t.step(
+                "lean PM person-days",
+                f"min({pd:.2f}, {share} × {timeline.build_effort_pd:.2f})",
+                min(pd, share * timeline.build_effort_pd),
+            ),
+            lean,
         )
     t.add_role_pd(pm_role, pd)
     lines.append(t.finish(pd * t.rate_local(pm_role)))
@@ -218,10 +227,15 @@ def programme_lines(ctx: PricingContext, timeline: Timeline) -> list[CostLineOut
         env_rate = t.rate_local(
             t.param("programme", "environment_rate_key_by_provider", ctx.q.hosting_provider)
         )
-    elif lean_key and t.lean():
-        env_rate = t.rate_local(t.param("lean", "environment_rate_key"))
     else:
-        env_rate = t.rate_local(t.param("programme", "environment_rate_key"))
+        lean = t.lean() if lean_key else ZERO
+        if lean == ONE:
+            env_rate = t.rate_local(t.param("lean", "environment_rate_key"))
+        else:
+            env_rate = t.rate_local(t.param("programme", "environment_rate_key"))
+            if lean:  # near the edge of a lean and a full project size (OPEN_QUESTIONS 184)
+                lean_rate = t.rate_local(t.param("lean", "environment_rate_key"))
+                env_rate = toward_lean(t, "environment month rate", env_rate, lean_rate, lean)
     lines.append(t.finish(months * envs * env_rate))
 
     for year in range(1, ctx.q.om_years + 1):
@@ -239,13 +253,20 @@ def programme_lines(ctx: PricingContext, timeline: Timeline) -> list[CostLineOut
         fte = band_value(t, timeline.build_effort_pd, "om_pm_fte")
         pd_year: Decimal = t.param("calendar", "pd_per_year")
         pd = fte * pd_year
-        if t.lean():
-            t.formula_id = "programme.om_pm.v2"
+        lean = t.lean()
+        if lean:
+            t.formula_id = "programme.om_pm.v2" if lean == ONE else "programme.om_pm.v3"
             om_share: Decimal = t.param("lean", "om_pm_share_of_build_pd")
-            pd = t.step(
-                "lean O&M PM person-days",
-                f"min({pd:.2f}, {om_share} × {timeline.build_effort_pd:.2f})",
-                min(pd, om_share * timeline.build_effort_pd),
+            pd = toward_lean(
+                t,
+                "O&M PM person-days",
+                pd,
+                t.step(
+                    "lean O&M PM person-days",
+                    f"min({pd:.2f}, {om_share} × {timeline.build_effort_pd:.2f})",
+                    min(pd, om_share * timeline.build_effort_pd),
+                ),
+                lean,
             )
         done, names = staff_doing(ctx, "management", year)
         if done:  # v25+: a stated onsite PM is the O&M project manager
