@@ -92,9 +92,13 @@ backend/
                           #   code checking every page, else AI analysis as catalog blocks; saved
                           #   per org (ResearchedComponent, auto-approved) and reused; config
                           #   `research:` in quick_estimate.yaml; nothing searched without a key;
-                          #   the form lists them by section ("Researched before", no new search);
+                          #   the form lists the company's own by section ("Researched before");
                           #   library.py shares every block with all companies (no tenant data):
-                          #   table shared_researched_components + seeds/research/library.yaml
+                          #   table shared_researched_components + seeds/research/library.yaml;
+                          #   a shared block prices a matching typed feature but is never listed
+                          #   or named to another company (`catalog_for(shared=False)` for lists,
+                          #   results show the user's own words; OPEN_QUESTIONS 185);
+                          #   deploy/update.sh keeps the server's own entries (cli library-merge)
       documents/          # upload storage + PDF/DOCX parsing to page texts
       extraction/         # tender reading: AI (LLMClient) or basic keyword reader + citation check,
                           #   describe.py: "Find features" from a typed description; the AI's

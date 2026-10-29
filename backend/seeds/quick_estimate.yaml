@@ -1204,7 +1204,10 @@ research:
   feature_level_factor: 0.9
   match_threshold: 0.6
   retry_no_evidence_days: 30
-  share: true  # every researched feature joins the shared library (seeds/research/library.yaml) for all users
+  # every researched feature joins the shared library (seeds/research/library.yaml) and prices
+  # a matching feature typed by any company, but is never listed by name to another company
+  # (OPEN_QUESTIONS 185); false: each company is priced by its own research only
+  share: true
   fetch_timeout_seconds: 15
   fetch_max_bytes: 3000000
   quote_window_chars: 300

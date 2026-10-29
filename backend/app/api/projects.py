@@ -271,7 +271,7 @@ def _errors(exc: Exception) -> Any:
 
 @router.get("/catalog", response_model=CatalogOut)
 def catalog(db: DbSession, user: CurrentUser) -> CatalogOut:
-    cat = catalog_for(db, user.org_id)
+    cat = catalog_for(db, user.org_id, shared=False)  # other companies' blocks never listed
     return CatalogOut(
         version=cat.version,
         components=[

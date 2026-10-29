@@ -14,6 +14,7 @@ from app.core.security import hash_password
 from app.llm.client import FakeClient, set_llm_client
 from app.models import Organisation, Role, User
 from app.models.base import utcnow
+from app.services.research import library
 from app.services.research.fetch import set_page_fetcher
 from app.services.research.library import read_library
 from tests.conftest import TEST_PASSWORD, login
@@ -94,7 +95,7 @@ def test_web_research_is_saved_and_reused(
     asked = len(fakes)
     again = estimate(client, admin_headers, "Geofencing alerts for fleet")
     assert len(fakes) == asked  # found in the catalog: no AI call
-    assert again["researched"][0]["name"] == name
+    assert again["researched"][0]["name"] == "Geofencing alerts for fleet"  # as typed
 
     # the form lists it under its section; ticked, it is sent with its block: no search
     options = client.get("/quick-estimate/options", headers=admin_headers).json()
@@ -182,11 +183,31 @@ def test_unknown_catalog_key_is_refused(client: TestClient, admin_headers: H) ->
     assert client.post("/quick-estimates", json=body, headers=admin_headers).status_code == 422
 
 
+def other_company(client: TestClient, db: Session, email: str) -> H:
+    other = Organisation(name=f"Other SI ({email})")
+    db.add(other)
+    db.flush()
+    db.add(
+        User(
+            org_id=other.id,
+            email=email,
+            full_name="Other",
+            role=Role.ADMIN,
+            password_hash=hash_password(TEST_PASSWORD),
+            email_verified_at=utcnow(),
+        )
+    )
+    db.commit()
+    return login(client, email)
+
+
 def test_research_is_shared_with_every_company(
     client: TestClient, admin_headers: H, db: Session, fakes: list[str]
 ) -> None:
     """Researched once by one company, the feature joins the shared library (table and file):
-    another company is priced by it and sees it on the form, with no AI call of its own."""
+    another company that types it is priced by it with no AI call of its own, but never sees
+    it listed or named, since its name shows what the first company bids on (OPEN_QUESTIONS
+    185)."""
     ai(fakes, [], [{"block": "push_notifications", "level": "standard", "why": "alerts"}])
     name = "Parcel locker pickup slots"
     first = estimate(client, admin_headers, name)
@@ -197,28 +218,40 @@ def test_research_is_shared_with_every_company(
     [entry] = [e for e in library if e.key == key]
     assert entry.name == name and entry.method == "analysis" and entry.spec["key"] == key
 
-    other = Organisation(name="Other SI (research)")
-    db.add(other)
-    db.flush()
-    db.add(
-        User(
-            org_id=other.id,
-            email="research@other.local",
-            full_name="Other",
-            role=Role.ADMIN,
-            password_hash=hash_password(TEST_PASSWORD),
-            email_verified_at=utcnow(),
-        )
-    )
-    db.commit()
-    them = login(client, "research@other.local")
+    them = other_company(client, db, "research@other.local")
     asked = len(fakes)
-    theirs = estimate(client, them, name)
+    typed = "Pickup slots for parcel locker"
+    theirs = estimate(client, them, typed)
     assert len(fakes) == asked  # priced from the library: no search
-    assert trace_key(client, them, theirs, name) == key
+    assert trace_key(client, them, theirs, typed) == key
+    assert [r["name"] for r in theirs["researched"]] == [typed]  # their words, not the block's
     options = client.get("/quick-estimate/options", headers=them).json()
-    assert [r["section"] for r in options["researched"] if r["catalog_key"] == key] == ["mobile"]
-    assert (
-        client.get("/research-blocks", headers=them).json() == []
-    )  # nothing of the first company's
+    assert all(r["catalog_key"] != key for r in options["researched"])  # never listed
+    catalog = client.get("/catalog", headers=them).json()["components"]
+    assert all(c["key"] != key for c in catalog)
+    assert client.get("/research-blocks", headers=them).json() == []
+    mine = client.get("/quick-estimate/options", headers=admin_headers).json()
+    assert [r["name"] for r in mine["researched"] if r["catalog_key"] == key] == [name]
     retire_all(client, admin_headers)
+
+
+def test_sharing_off_keeps_each_company_to_its_own(
+    client: TestClient,
+    admin_headers: H,
+    db: Session,
+    fakes: list[str],
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """`research.share: false`: nothing new is shared and the shared blocks price nobody else."""
+    monkeypatch.setattr(library, "sharing_on", lambda: False)
+    ai(fakes, [], [{"block": "push_notifications", "level": "standard", "why": "alerts"}])
+    name = "Cold storage temperature log"
+    first = estimate(client, admin_headers, name)
+    key = trace_key(client, admin_headers, first, name)
+    assert all(e.key != key for e in read_library(get_settings().resolved_research_library))
+    them = other_company(client, db, "private@other.local")
+    asked = len(fakes)
+    estimate(client, them, name)
+    assert len(fakes) > asked  # not in the library: researched for them
+    retire_all(client, admin_headers)
+    retire_all(client, them)

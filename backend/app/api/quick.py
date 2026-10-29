@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 from app.api.deps import CurrentUser, DbSession, EditorUser, can_see_margin
 from app.core.tenancy import get_owned, scoped
 from app.llm.client import LLMNotConfiguredError, LLMRefusedError
-from app.models import Estimate, Project, ResearchedComponent, SharedResearchedComponent
+from app.models import Estimate, Project, ResearchedComponent
 from app.services.extraction.describe import Suggestion, suggest_features
 from app.services.quick import second_opinion
 from app.services.quick.config import quick_config
@@ -34,7 +34,6 @@ from app.services.quick.service import (
     summary_for,
 )
 from app.services.quick.stories import DraftIn, DraftOut, draft_stories
-from app.services.research.library import shared_blocks
 from app.services.research.service import ai_available, catalog_sections, research_rows
 from app.services.settings import company_settings
 
@@ -161,18 +160,16 @@ class QuickOptions(BaseModel):
 
 
 def researched_options(db: DbSession, org_id: str, types: set[str]) -> list[ResearchedOut]:
-    """Researched features to offer: the organisation's active ones and the shared library's
-    (each key once, none the organisation retired), in catalog section order, then by name."""
+    """Researched features to offer: the organisation's own active ones, in catalog section
+    order, then by name. The shared library is never listed (another company's feature names
+    would show what it bids on); it prices a typed feature that matches it (OPEN_QUESTIONS 185)."""
     sections = catalog_sections()
     order = {k: i for i, k in enumerate(sections)}
-    own = research_rows(db, org_id)
-    seen = {r.key for r in own if r.status != "active"}
-    rows: list[ResearchedComponent | SharedResearchedComponent] = []
-    candidates: list[ResearchedComponent | SharedResearchedComponent] = [
-        *(r for r in own if r.status == "active" and r.spec),
-        *shared_blocks(db),
-    ]
-    for r in candidates:
+    seen: set[str] = set()
+    rows: list[ResearchedComponent] = []
+    for r in research_rows(db, org_id):
+        if r.status != "active" or not r.spec:
+            continue
         if r.key not in seen and r.base_type in types:
             rows.append(r)
             seen.add(r.key)

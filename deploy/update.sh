@@ -6,12 +6,26 @@ set -euo pipefail
 export PATH="$HOME/.local/bin:$PATH"
 cd "$(dirname "$0")/.."
 
+# The app adds features it researches to the shared library file: set the server's copy aside
+# so the pull never stops on it, and put its extra entries back after (app.cli library-merge).
+library=backend/seeds/research/library.yaml
+saved_library=""
+if ! git diff --quiet -- "$library"; then
+  mkdir -p data
+  saved_library="$PWD/data/library.saved.yaml"
+  cp "$library" "$saved_library"
+  git checkout -- "$library"
+fi
+
 git pull --ff-only
 api_url=$(grep -E '^NEXT_PUBLIC_API_URL=' .env | cut -d= -f2-)
 mkdir -p data
 
 cd backend
 uv sync --frozen --no-dev
+if [ -n "$saved_library" ]; then
+  uv run --no-sync python -m app.cli library-merge "$saved_library"
+fi
 uv run --no-sync alembic upgrade head
 uv run --no-sync python -m app.cli seed
 cd ../frontend

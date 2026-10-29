@@ -243,6 +243,15 @@ def cmd_catalog_table(args: argparse.Namespace) -> None:
     sys.stdout.write(f"Catalog {catalog.version}: {len(table)} blocks -> {args.md}, {args.xlsx}\n")
 
 
+def cmd_library_merge(args: argparse.Namespace) -> None:
+    """Put a saved copy's extra shared-library entries back into the library file."""
+    from app.services.research.library import merge_library
+
+    path = get_settings().resolved_research_library
+    added = merge_library(path, Path(args.saved))
+    sys.stdout.write(f"Research library: {added} entries kept from {args.saved}.\n")
+
+
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(prog="app.cli")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -278,6 +287,11 @@ def main(argv: list[str] | None = None) -> None:
     p_cat.add_argument("--md", default=str(BACKEND_DIR.parent / "docs" / "CATALOG.md"))
     p_cat.add_argument("--xlsx", default=str(BACKEND_DIR.parent / "data" / "catalog.xlsx"))
     p_cat.set_defaults(func=cmd_catalog_table)
+    p_lib = sub.add_parser(
+        "library-merge", help="keep a saved library file's extra entries (deploy/update.sh)"
+    )
+    p_lib.add_argument("saved")
+    p_lib.set_defaults(func=cmd_library_merge)
     args = parser.parse_args(argv)
     args.func(args)
 

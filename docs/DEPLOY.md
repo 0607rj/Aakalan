@@ -66,7 +66,10 @@ cd ~/Aakalan && bash deploy/update.sh
 ```
 
 It pulls the code, installs, migrates, loads new seed versions, rebuilds the website and restarts
-the services.
+the services. The app adds the features it researches to `backend/seeds/research/library.yaml`
+on the server; the script sets that file aside before the pull and puts its extra entries back
+after (`python -m app.cli library-merge`), so the pull never stops on it. A copy stays in
+`data/library.saved.yaml`.
 
 ## Adding the domain (HTTPS)
 

@@ -532,7 +532,7 @@ def save(
     )
     db.add(row)
     db.flush()
-    if research.share:
+    if library.sharing_on():
         library.share(db, row, method)
     return row
 

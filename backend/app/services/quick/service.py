@@ -2199,18 +2199,22 @@ NO_SUPPORT = "No support after launch (handed over to the client)"
 
 
 def researched_features(estimate: Estimate) -> list[ResearchedFeature]:
-    """Researched blocks this estimate used, from its own snapshot (never today's data)."""
+    """Researched blocks this estimate used, from its own snapshot (never today's data). Each
+    is named as this estimate's own feature, never by the block's name: a block from the shared
+    library carries another company's wording (OPEN_QUESTIONS 185)."""
     snap = estimate.inputs_snapshot
-    used = {c["catalog_key"] for c in snap.get("components", [])}
+    labels: dict[str, str] = {}
+    for comp in snap.get("components", []):
+        labels.setdefault(comp["catalog_key"], comp.get("label") or "")
     out = []
     for c in snap.get("catalog", {}).get("components", []):
-        if c["key"] not in used or not c["key"].startswith(RESEARCH_PREFIX):
+        if c["key"] not in labels or not c["key"].startswith(RESEARCH_PREFIX):
             continue
         evidence = c.get("evidence") or []
         web = any(e.get("url") for e in evidence)
         out.append(
             ResearchedFeature(
-                name=c["name"],
+                name=labels[c["key"]] or c["name"],
                 method="web" if web else "analysis",
                 section=c.get("section"),
                 summary=c.get("source", ""),

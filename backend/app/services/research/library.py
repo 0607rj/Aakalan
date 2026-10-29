@@ -8,7 +8,8 @@ The table `shared_researched_components` is the live copy every request reads; t
 (settings.resolved_research_library, `seeds/research/library.yaml`) mirrors it, so the library
 is kept in the repository and seeded into new installs. Estimates snapshot the blocks they use,
 so a later addition never changes an estimate. `research.share` in quick_estimate.yaml turns
-sharing off."""
+sharing off: then nothing new is shared and no organisation reads the shared blocks, so each
+one is priced by its own research only (OPEN_QUESTIONS 185)."""
 
 import logging
 import threading
@@ -70,6 +71,18 @@ def _write(path: Path, entries: list[LibraryEntry]) -> None:
     tmp.replace(path)
 
 
+def merge_library(path: Path, other: Path) -> int:
+    """Add `other`'s entries that `path` lacks (by key), keeping `path`'s order: the server's
+    own additions put back after an update pulls the repository's file (deploy/update.sh)."""
+    with _LOCK:
+        entries = read_library(path)
+        keys = {e.key for e in entries}
+        extra = [e for e in read_library(other) if e.key not in keys]
+        if extra:
+            _write(path, [*entries, *extra])
+    return len(extra)
+
+
 def _append(entry: LibraryEntry) -> None:
     path = get_settings().resolved_research_library
     try:
@@ -116,7 +129,18 @@ def share(db: Session, row: ResearchedComponent, method: str) -> None:
     )
 
 
+def sharing_on() -> bool:
+    """`research.share` in quick_estimate.yaml (off when there is no research block)."""
+    from app.services.quick.config import quick_config
+
+    research = quick_config().research
+    return bool(research and research.share)
+
+
 def shared_blocks(db: Session) -> list[SharedResearchedComponent]:
+    """The active shared blocks, or none while sharing is off."""
+    if not sharing_on():
+        return []
     return list(
         db.scalars(
             select(SharedResearchedComponent)
