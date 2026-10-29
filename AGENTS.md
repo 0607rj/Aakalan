@@ -175,6 +175,17 @@ backend/
                           #   parameters v28+ (OPEN_QUESTIONS 180): on small and small-to-medium
                           #   projects the tests task is at most `effort_caps.tests_max_share_by_size`
                           #   (0.40) of the tested work; medium and larger unchanged
+                          #   parameters v29+ (OPEN_QUESTIONS 182): a deadline longer than the
+                          #   build is built in the natural time (no stretched management);
+                          #   helpdesk seats on a line by users (`helpdesk_seats_points`);
+                          #   quick config `scale.curve`: online at once, chatbot questions and
+                          #   documents follow the users (a typed count priced as typed); both
+                          #   forms show the same users block (`UsersNumbers` in parts.tsx)
+                          #   near a size-tier edge the standard blocks are priced between two
+                          #   sizes (`sizing.tier_blend_share`, component `size_mix`); the
+                          #   pre-build cap counts work at the usual complexity (OPEN_QUESTIONS 183)
+                          #   and lean delivery (PM, hypercare, handover), training sessions and
+                          #   hypercare weeks move in a line across the edge (`size_blend`, 184)
                           #   parameters v23+ (OPEN_QUESTIONS 160): the shared model factor is
                           #   centred on its median (widens, no P50 lift) and is a range driver;
                           #   size-band values blend across band edges (size_band_blend_share)
