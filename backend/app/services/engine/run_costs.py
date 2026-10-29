@@ -6,8 +6,9 @@ from decimal import Decimal
 from app.services.engine import spreads
 from app.services.engine.context import LineBuilder, PricingContext
 from app.services.engine.inputs import OnsiteResource
-from app.services.engine.money import ONE, ZERO, ceil
+from app.services.engine.money import ONE, ZERO, ceil, interpolate
 from app.services.engine.outputs import CostLineOut
+from app.services.engine.reference import Point
 from app.services.engine.timeline import band_fee
 
 OFFICE_HOURS = "8x5"  # the support hours dedicated support staff cover (support_staff.v1)
@@ -52,7 +53,7 @@ def after_hypercare(t: LineBuilder, year: int) -> Decimal:
     other years or before v25. Hypercare is priced at go-live, so those weeks are not again."""
     if year != 1 or not t.ctx.p.maintenance.hypercare_in_year_one:
         return ONE
-    weeks: int = t.driver("hypercare_weeks")
+    weeks: Decimal = t.driver("hypercare_weeks")
     if not weeks:
         return ONE
     t.param("maintenance", "hypercare_in_year_one")
@@ -324,11 +325,20 @@ def maintenance_lines(ctx: PricingContext, build_effort_pd: Decimal) -> list[Cos
         if ctx.q.helpdesk_in_scope:
             t = _run(ctx, "helpdesk", "run.helpdesk", year, "Helpdesk", "maintenance.helpdesk.v2")
             users: int = t.driver("users_total")
-            tiers = ctx.p.maintenance.helpdesk_seats_by_users
-            tier = next(
-                i for i, x in enumerate(tiers) if x.max_users is None or users <= x.max_users
-            )
-            seats: Decimal = t.param("maintenance", "helpdesk_seats_by_users", tier, "seats")
+            if ctx.p.maintenance.helpdesk_seats_points:  # v29+: seats grow with the users
+                t.formula_id = "maintenance.helpdesk.v3"
+                points: list[Point] = t.param("maintenance", "helpdesk_seats_points")
+                seats = t.step(
+                    "helpdesk seats",
+                    f"interpolate(helpdesk_seats_points, {users})",
+                    interpolate(points, Decimal(users)),
+                )
+            else:
+                tiers = ctx.p.maintenance.helpdesk_seats_by_users
+                tier = next(
+                    i for i, x in enumerate(tiers) if x.max_users is None or users <= x.max_users
+                )
+                seats = t.param("maintenance", "helpdesk_seats_by_users", tier, "seats")
             sla: str = t.driver("support_sla")
             coverage: Decimal = t.param("maintenance", "helpdesk_coverage_fte", sla)
             t.param("calendar", "pd_per_year")

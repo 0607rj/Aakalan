@@ -3,6 +3,12 @@ shows the expression. Change a formula -> bump its version suffix so old traces 
 
 FORMULAS: dict[str, str] = {
     # components (brief 7.1)
+    "component_labour.v6": (
+        "as component_labour.v5, with base_effort_pd = Σ_s base_effort_pd[s] × size_mix[s] for a"
+        " standard block priced between two project sizes, and (v29+) the pre-build cap's total"
+        " counting each pre-build block at the usual complexity: Σ pd × M_medium / M_complexity"
+        " (OPEN_QUESTIONS 183)"
+    ),
     "component_labour.v5": (
         "Σ_task base_effort_pd[size] × effort_multiplier × quantity × task_share × M_complexity"
         " × M_nfr × licence_effort_factor × M_reuse(task) × M_follow(task) × cap(task)"
@@ -64,6 +70,21 @@ FORMULAS: dict[str, str] = {
     "programme.pm.v2": (
         "min(pm_fte[size_band] × programme_months × pd_per_month, pm_share × build_pd)"
         " × rate(pm)  (lean delivery)"
+    ),
+    "programme.pm.v3": (
+        "full − lean_share × (full − min(full, pm_share × build_pd)), full = pm_fte[size_band] ×"
+        " programme_months × pd_per_month; lean_share between 0 and 1 near the edge of a lean"
+        " and a full project size (OPEN_QUESTIONS 184)"
+    ),
+    "programme.om_pm.v3": (
+        "as programme.om_pm.v2 with full − lean_share × (full − lean pd) (OPEN_QUESTIONS 184)"
+    ),
+    "golive.hypercare.v3": (
+        "as golive.hypercare.v2 with scale = 1 − lean_share × (1 − lean scale) (OPEN_QUESTIONS 184)"
+    ),
+    "commercial.exit.v3": (
+        "band pd − lean_share × (band pd − min(band pd, exit_share × build_pd)) × rate(exit_role)"
+        " (OPEN_QUESTIONS 184)"
     ),
     "programme.steering.v1": "ceil(programme_months / interval_months) × meeting_rate",
     "programme.mis.v1": "programme_months × mis_pd_per_month × rate(mis_role)",
@@ -149,6 +170,10 @@ FORMULAS: dict[str, str] = {
     "maintenance.helpdesk.v2": (
         "seats[users tier] × coverage_fte[support_sla] × pd_per_year × run_multiplier"
         " × rate(helpdesk) × (1 + escalation_labour)^year"
+    ),
+    "maintenance.helpdesk.v3": (
+        "interpolate(helpdesk_seats_points, users_total) × coverage_fte[support_sla]"
+        " × pd_per_year × run_multiplier × rate(helpdesk) × (1 + escalation_labour)^year"
     ),
     "maintenance.bugfix.v2": (
         "build_pd × bugfix_share × run_multiplier × rate × (1 + escalation_labour)^year"

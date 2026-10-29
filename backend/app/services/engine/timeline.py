@@ -129,7 +129,7 @@ def build_timeline(ctx: PricingContext, efforts: Sequence[ComponentEffort]) -> T
                 # v17+: the squeeze is paid once, in the build effort; the programme then
                 # runs over the same shorter period.
                 programme = deadline
-        elif ratio > ONE:
+        elif ratio > ONE and not ctx.p.timeline.longer_deadline_builds_at_natural:
             status = "extended"
             delivery = programme = deadline
     return Timeline(

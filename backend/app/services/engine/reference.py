@@ -442,6 +442,10 @@ class EffortCaps(Sourced):
     tests_task: TaskType | None = None
     tests_max_share_by_size: dict[str, Decimal] = {}
     architecture_max_share_by_size: dict[str, Decimal] = {}
+    # v29+ (OPEN_QUESTIONS 183): the pre-build cap is set on the pre-build work at the usual
+    # (medium) complexity, so a ready design makes the design work smaller instead of handing
+    # the freed days to discovery (which then cost more, at an analyst's rate).
+    pre_build_cap_at_usual_complexity: bool = False
 
     @model_validator(mode="after")
     def _base(self) -> "EffortCaps":
@@ -460,6 +464,10 @@ class Timeline(Sourced):
     # v17+: a squeezed build also runs its programme (management, test servers) over the
     # deadline, not the natural duration it was squeezed from.
     programme_follows_deadline: bool = False
+    # v29+ (OPEN_QUESTIONS 182): a deadline longer than the natural duration is built in the
+    # natural duration (the team hands over early); before v29 the delivery and the programme
+    # ran over the whole deadline.
+    longer_deadline_builds_at_natural: bool = False
     # v23+ (OPEN_QUESTIONS 160): around each band edge E, a band's values (PM, exit days, audit
     # fees) move in a straight line from the lower band's to the upper band's between
     # E × (1 − share) and E × (1 + share), so one person-day more never steps the price.
@@ -575,6 +583,9 @@ class HelpdeskTier(Frozen):
 
 class Maintenance(Sourced):
     helpdesk_seats_by_users: list[HelpdeskTier]
+    # v29+ (OPEN_QUESTIONS 182): seats on a straight line through these points (x = registered
+    # users, y = seats, flat outside them); None = the steps of helpdesk_seats_by_users.
+    helpdesk_seats_points: list[Point] | None = None
     helpdesk_coverage_fte: dict[str, Decimal]  # by support SLA
     helpdesk_role: str
     bugfix_share_of_build_pd: Decimal
