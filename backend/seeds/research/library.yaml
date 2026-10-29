@@ -2523,3 +2523,132 @@ blocks:
     scope: dev-only
     ok: true
     reason: ''
+- key: researched_assign_member_onboarding_team
+  name: Assign team members to onboarding
+  section: business
+  base_type: module
+  method: analysis
+  added: '2026-10-27'
+  spec:
+    source: 'AI analysis (no published hours found): Approval workflow engine (basic), Customer management
+      (CRM) (basic); hours are those blocks'' own catalog hours (S / L = one size smaller / larger); low
+      confidence'
+    key: researched_assign_member_onboarding_team
+    name: Assign team members to onboarding
+    category: custom
+    bucket: build.module_development
+    description: Lets an admin or manager assign team members to a customer or employee onboarding process,
+      so each person knows which onboarding tasks they own.
+    task_mix:
+      crud: '0.55'
+      tests: '0.2'
+      ui_design: '0.05'
+      documentation: '0.05'
+      review_uat: '0.15'
+    base_effort_pd:
+      S: '33.8'
+      M: '33.8'
+      L: '95.6'
+    applicable_drivers:
+    - languages
+    - accessibility
+    - concurrency
+    tags: []
+    licence: null
+    section: business
+    source_era: unknown
+    era_reason: Composed from catalog blocks; AI use behind their hours is not established
+    confidence: low
+    evidence:
+    - id: researched_assign_member_onboarding_team.1
+      citation: 'AI analysis 2026-10-27: workflow_engine basic (Assigning owners to onboarding steps and
+        tracking their status resembles a simple task-assignment workflow.); crm_module basic (Linking
+        team members to an onboarding record with activity history is similar to assigning owners to contacts
+        or leads.)'
+      source_type: expert_judgement
+      published: null
+      url: null
+      era: unknown
+      era_basis: not_established
+      ai_workflow: null
+      sample_size: null
+      quality: low
+  sources:
+  - kind: part
+    block: workflow_engine
+    level: basic
+    why: Assigning owners to onboarding steps and tracking their status resembles a simple task-assignment
+      workflow.
+  - kind: part
+    block: crm_module
+    level: basic
+    why: Linking team members to an onboarding record with activity history is similar to assigning owners
+      to contacts or leads.
+- key: researched_document_internal_repository_staff
+  name: Internal document repository for staff
+  section: business
+  base_type: module
+  method: analysis
+  added: '2026-10-27'
+  spec:
+    source: 'AI analysis (no published hours found): Document management (standard), Search (basic), Master
+      data management (basic), SSO / identity integration (Parichay, LDAP) (basic); hours are those blocks''
+      own catalog hours (S / L = one size smaller / larger); low confidence'
+    key: researched_document_internal_repository_staff
+    name: Internal document repository for staff
+    category: custom
+    bucket: build.module_development
+    description: A secure internal repository where staff can upload, organise, version, find
+      and retrieve company documents according to their access rights.
+    task_mix:
+      crud: '0.55'
+      tests: '0.2'
+      ui_design: '0.05'
+      documentation: '0.05'
+      review_uat: '0.15'
+    base_effort_pd:
+      S: '20.3'
+      M: '39.4'
+      L: '103.6'
+    applicable_drivers:
+    - languages
+    - accessibility
+    - concurrency
+    tags: []
+    licence: null
+    section: business
+    source_era: unknown
+    era_reason: Composed from catalog blocks; AI use behind their hours is not established
+    confidence: low
+    evidence:
+    - id: researched_document_internal_repository_staff.1
+      citation: 'AI analysis 2026-10-27: document_management standard (Core need is upload, versioning,
+        metadata and secure storage and retrieval of documents.); search_module basic (Staff need to find
+        documents by name, metadata or category.); master_data_management basic (Admin-managed document
+        categories, departments and types used as metadata.); integration_sso_identity basic (Internal
+        staff would typically sign in through the organisation''s existing identity (LDAP/SSO).)'
+      source_type: expert_judgement
+      published: null
+      url: null
+      era: unknown
+      era_basis: not_established
+      ai_workflow: null
+      sample_size: null
+      quality: low
+  sources:
+  - kind: part
+    block: document_management
+    level: standard
+    why: Core need is upload, versioning, metadata and secure storage and retrieval of documents.
+  - kind: part
+    block: search_module
+    level: basic
+    why: Staff need to find documents by name, metadata or category.
+  - kind: part
+    block: master_data_management
+    level: basic
+    why: Admin-managed document categories, departments and types used as metadata.
+  - kind: part
+    block: integration_sso_identity
+    level: basic
+    why: Internal staff would typically sign in through the organisation's existing identity (LDAP/SSO).
