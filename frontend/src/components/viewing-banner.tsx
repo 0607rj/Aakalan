@@ -23,7 +23,7 @@ export function ViewingBanner() {
   }
 
   return (
-    <div className="bg-tape text-primary-foreground">
+    <div className="fixed inset-x-0 bottom-0 z-50 bg-tape text-primary-foreground">
       <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-x-4 gap-y-2 px-4 py-2.5 text-sm sm:px-6">
         <EyeIcon size={18} weight="bold" aria-hidden="true" />
         <span className="flex-1">

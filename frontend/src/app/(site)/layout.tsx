@@ -10,7 +10,7 @@ export default function SiteLayout({
   return (
     <>
       <SiteNavBar />
-      <div className="flex flex-1 flex-col">{children}</div>
+      <div className="flex flex-1 flex-col leading-[1.55]">{children}</div>
       <Footer />
     </>
   );

@@ -1,3 +1,4 @@
+import { AppHero } from "@/components/app-hero";
 import type { Metadata } from "next";
 
 import { AccountSummary, ChangePassword } from "./change-password";
@@ -14,7 +15,9 @@ export const metadata: Metadata = {
 export default function AccountPage() {
   return (
     <div className="flex flex-col gap-8">
-      <AccountSummary />
+      <AppHero>
+        <AccountSummary />
+      </AppHero>
       <AiSavingSetting />
       <ChangePassword />
     </div>

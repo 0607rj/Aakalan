@@ -57,7 +57,7 @@ export function SectionTitle({
   return (
     <span className="flex items-center gap-3">
       <IconTile icon={icon} tone={tone} size="sm" />
-      <h2 className={cn("text-xl font-semibold", className)}>{children}</h2>
+      <h2 className={cn("font-wide text-xl", className)}>{children}</h2>
     </span>
   );
 }
@@ -79,7 +79,10 @@ export function Disclosure({
   children: React.ReactNode;
 }) {
   return (
-    <details className="fold group border-t" open={defaultOpen}>
+    <details
+      className="fold group rounded-[24px] bg-card px-[clamp(22px,3vw,32px)] shadow-[0_1px_2px_rgb(0_0_0/0.05),0_18px_40px_-24px_rgb(0_0_0/0.28)]"
+      open={defaultOpen}
+    >
       <summary className="flex cursor-pointer list-none items-center justify-between gap-4 py-6 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none [&::-webkit-details-marker]:hidden">
         <span className="flex flex-col gap-1">
           <SectionTitle
@@ -97,7 +100,7 @@ export function Disclosure({
           <Chevron />
         </span>
       </summary>
-      <div className="flex flex-col gap-10 pt-2 pb-10">{children}</div>
+      <div className="flex flex-col gap-10 border-t pt-8 pb-8">{children}</div>
     </details>
   );
 }

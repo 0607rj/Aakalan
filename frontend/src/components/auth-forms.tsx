@@ -2,12 +2,7 @@
 
 import * as React from "react";
 
-import {
-  CodeFigure,
-  FlowFigure,
-  SavedEstimatesFigure,
-} from "@/components/site/page-art";
-import { AppWindow } from "@/components/site/sections";
+import { DotScene, type DotSceneName } from "@/components/site/dot-scene";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,31 +14,27 @@ export type Scene = "login" | "signup" | "forgot" | "verify";
 
 const SCENES: Record<
   Scene,
-  { title: string; rest: string; window: string; art: () => React.ReactNode }
+  { title: string; rest: string; picture: DotSceneName }
 > = {
   login: {
     title: "Pick up where you left off.",
     rest: "Your estimates are all here.",
-    window: "your estimates",
-    art: () => <SavedEstimatesFigure />,
+    picture: "dial",
   },
   signup: {
     title: "Price your next project.",
     rest: "In minutes, feature by feature.",
-    window: "the way to a price",
-    art: () => <FlowFigure />,
+    picture: "waterfall",
   },
   forgot: {
     title: "Locked out?",
     rest: "A 6-digit code gets you back in.",
-    window: "inbox · your code",
-    art: () => <CodeFigure />,
+    picture: "dial",
   },
   verify: {
     title: "One quick check.",
     rest: "So only you can open your estimates.",
-    window: "inbox · your code",
-    art: () => <CodeFigure />,
+    picture: "dial",
   },
 };
 
@@ -55,8 +46,14 @@ const PROMISES = [
 
 /**
  * The screen for sign in, sign up, reset and confirm, in the public pages' style: on large
- * screens a large two-tone line, the screen's picture in a product window and Aakalan's
- * promises as a ruled list on the faint grid; the form on the right, unframed.
+ * screens the ember panel with a large two-tone line, the screen's dot picture (a safe's dial to
+ * get in, a price building up to start) and Aakalan's promises; the form on the right, unframed.
+ * The panel runs to the screen's edge and its right side sinks into the same white mist as the
+ * public pages' heroes, in uneven swells (the panel's orange is on that side, so the edge turns
+ * peach, not grey). The mist sits on the screen's centre line, so the clear orange and the white
+ * are the same width: the picture is centred in one, the form in the other.
+ * On phones the line sits on an ember band above the form that sinks into the mist below. The
+ * site's nav floats over the top, so both sides start below it.
  */
 export function AuthScreen({
   scene,
@@ -75,34 +72,49 @@ export function AuthScreen({
 }) {
   const side = SCENES[scene];
   return (
-    <div className="grid w-full flex-1 grid-cols-1 lg:grid-cols-[1.05fr_0.95fr]">
-      <aside className="relative hidden overflow-hidden border-r lg:block">
-        <div aria-hidden="true" className="grid-lines absolute inset-0" />
-        <div className="relative ml-auto flex h-full max-w-xl flex-col gap-10 px-10 pt-16 pb-12 xl:px-14">
+    <div className="grid w-full flex-1 grid-cols-1 [--mist-w:clamp(130px,14vw,240px)] lg:grid-cols-[calc(50%+var(--mist-w)/2)_1fr]">
+      {/* phones: the same line on an ember band under the nav, instead of the panel */}
+      <div className="ember px-4 pt-28 pb-24 sm:px-10 lg:hidden">
+        <p className="rise-in font-display relative mx-auto max-w-sm text-[2rem] leading-[1.05]">
+          {side.title}
+          <span className="block text-peach">{side.rest}</span>
+        </p>
+        <div aria-hidden="true" className="mist short" />
+      </div>
+      <aside className="ember flip hidden min-h-svh lg:block">
+        <div aria-hidden="true" className="mist-side" />
+        <div aria-hidden="true" className="mist-side-swells">
+          <i />
+          <i />
+          <i />
+          <i />
+          <i />
+        </div>
+        <div className="relative flex h-full flex-col gap-6 pt-32 pr-[var(--mist-w)] pb-12 pl-10 xl:pl-14">
           <h2 className="rise-in font-display text-[2.9rem] leading-[1]">
             {side.title}
-            <span className="block text-foreground/35">{side.rest}</span>
+            <span className="block text-peach">{side.rest}</span>
           </h2>
-          <div className="rise-in" style={{ "--rd": 1 } as React.CSSProperties}>
-            <AppWindow title={side.window}>{side.art()}</AppWindow>
+          <div className="relative -ml-10 min-h-[300px] flex-1 xl:-ml-14">
+            <DotScene scene={side.picture} className="inset-x-0 inset-y-4" />
           </div>
           <ol
-            className="rise-in flex flex-col border-t text-sm"
-            style={{ "--rd": 2 } as React.CSSProperties}
+            className="rise-in flex flex-col gap-2 text-sm"
+            style={{ "--rd": 1 } as React.CSSProperties}
           >
             {PROMISES.map((line, i) => (
-              <li key={line} className="flex gap-4 border-b py-3">
-                <span className="font-mono text-xs leading-5 text-tape">
+              <li key={line} className="flex gap-3">
+                <span className="font-mono text-xs leading-5 text-peach">
                   0{i + 1}
                 </span>
-                <span className="text-muted-foreground">{line}</span>
+                <span className="text-white/75">{line}</span>
               </li>
             ))}
           </ol>
         </div>
       </aside>
-      <div className="flex flex-col justify-center px-4 py-14 sm:px-10 sm:py-20 lg:justify-start lg:pt-16">
-        <div className="mx-auto flex w-full max-w-sm flex-col gap-8 lg:mr-auto lg:ml-12 xl:ml-20">
+      <div className="flex flex-col px-4 pt-10 pb-14 sm:px-10 sm:pb-20 lg:pt-36">
+        <div className="mx-auto flex w-full max-w-sm flex-col gap-8">
           <div className="settle flex flex-col gap-3">
             <p className="eyebrow">{eyebrow}</p>
             <h1 className="font-display text-[2.75rem] leading-none">

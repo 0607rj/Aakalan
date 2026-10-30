@@ -1,52 +1,30 @@
 import type { Metadata } from "next";
 import {
-  Bricolage_Grotesque,
-  Geist_Mono,
+  Google_Sans_Flex,
   IBM_Plex_Mono,
-  IBM_Plex_Sans,
-  Inter,
-  Instrument_Serif,
+  Stack_Sans_Headline,
 } from "next/font/google";
 
 import { RevealOnScroll } from "@/components/site/reveal";
 
 import "./globals.css";
 
-// IBM Plex Sans for everything people read and fill in, Plex Mono for small figures (the
-// theme in globals.css points the font tokens at them); the older faces stay loaded for now.
-const body = Inter({
+// Google Sans Flex for everything people read and fill in, Stack Sans Headline for headings,
+// IBM Plex Mono for figures (the theme in globals.css points the font tokens at them).
+const body = Google_Sans_Flex({
   subsets: ["latin"],
-  variable: "--font-inter",
+  variable: "--font-body",
   display: "swap",
 });
-const serif = Instrument_Serif({
+const head = Stack_Sans_Headline({
   subsets: ["latin"],
-  weight: "400",
-  style: ["normal", "italic"],
-  variable: "--font-instrument-serif",
-  display: "swap",
-});
-const plex = IBM_Plex_Sans({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-  variable: "--font-plex",
+  variable: "--font-headline",
   display: "swap",
 });
 const plexMono = IBM_Plex_Mono({
   subsets: ["latin"],
   weight: ["400", "500"],
   variable: "--font-plex-mono",
-  display: "swap",
-});
-// Headlines: a grotesque with some character, heavy and tight (the public pages' big type).
-const display = Bricolage_Grotesque({
-  subsets: ["latin"],
-  variable: "--font-bricolage",
-  display: "swap",
-});
-const mono = Geist_Mono({
-  subsets: ["latin"],
-  variable: "--font-geist-mono",
   display: "swap",
 });
 
@@ -60,7 +38,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${body.variable} ${serif.variable} ${mono.variable} ${plex.variable} ${plexMono.variable} ${display.variable} h-full antialiased`}
+      className={`${body.variable} ${head.variable} ${plexMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
       <head>

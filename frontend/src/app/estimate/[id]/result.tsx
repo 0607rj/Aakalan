@@ -11,6 +11,7 @@ import {
 import Link from "next/link";
 import { useParams } from "next/navigation";
 
+import { AppHero } from "@/components/app-hero";
 import { useCurrentUser } from "@/components/auth-guard";
 import { ErrorNotice, Loading } from "@/components/status";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -132,7 +133,7 @@ function Headline({ summary }: { summary: QuickSummary }) {
   return (
     <section
       aria-labelledby="estimate-heading"
-      className="slab flex flex-col gap-8 px-6 py-8 sm:px-10 sm:py-10"
+      className="slab app-rise flex flex-col gap-8 px-6 py-8 sm:px-10 sm:py-10"
     >
       <div className="flex flex-wrap items-end justify-between gap-x-10 gap-y-4">
         <div className="settle flex flex-col gap-1">
@@ -142,7 +143,7 @@ function Headline({ summary }: { summary: QuickSummary }) {
               : "Most likely price"}
             , with {tax}
           </h2>
-          <span className="text-5xl font-semibold tracking-tight text-primary tabular-nums sm:text-6xl">
+          <span className="font-wide mt-1 text-[clamp(3rem,7vw,4.5rem)] leading-none text-tape-bright tabular-nums">
             {shortMoney(summary.likely_paise, summary.currency)}
           </span>
           {summary.likely_without_tax_paise ? (
@@ -306,7 +307,7 @@ function Passthrough({ summary }: { summary: QuickSummary }) {
         passed to client: {s.passed_percent}%
       </span>
       {s.passed_percent < 100 ? (
-        <span className="text-muted-foreground">
+        <span className="opacity-60">
           {" "}
           The rest is kept as margin; the cost of the work is the same.
         </span>
@@ -315,7 +316,7 @@ function Passthrough({ summary }: { summary: QuickSummary }) {
         <span className="mt-1 block font-medium">
           AI saving kept: {formatApprox(s.kept_paise, summary.currency)} before
           GST — your discount room.{" "}
-          <span className="font-normal text-muted-foreground">
+          <span className="font-normal opacity-60">
             Internal: shown only to people who can see margin.
           </span>
         </span>
@@ -330,7 +331,7 @@ function AiSaving({ summary }: { summary: QuickSummary }) {
   const withoutAi = summary.traditional_paise;
   if (withAi === null || withoutAi === null || withoutAi <= withAi) {
     return summary.ai_saving ? (
-      <div className="rounded-lg bg-ai-soft px-5 py-4">
+      <div className="dark-card glow-low rounded-2xl px-5 py-4 sm:px-6">
         <Passthrough summary={summary} />
       </div>
     ) : null;
@@ -342,33 +343,45 @@ function AiSaving({ summary }: { summary: QuickSummary }) {
     : null;
   const monthsSaved = oldMonths !== null ? oldMonths - months : 0;
   return (
-    <div className="flex flex-col gap-2 rounded-lg bg-ai-soft px-5 py-4">
-      <div className="flex flex-wrap items-baseline gap-x-6 gap-y-1">
-        <span className="font-semibold text-ai">
-          AI tools save {money(withoutAi - withAi)}
+    <div className="dark-card glow-low grid gap-5 rounded-2xl p-5 sm:p-6 md:grid-cols-[1fr_auto_auto] md:items-center">
+      <div className="flex flex-col gap-2">
+        <span className="font-wide text-xl leading-snug">
+          AI tools save{" "}
+          <span className="text-peach">{money(withoutAi - withAi)}</span>
           {summary.ai_saving_percent ? ` (${summary.ai_saving_percent}%)` : ""}
           {monthsSaved >= 0.1
             ? ` and ${formatDecimal(monthsSaved, 1)} months`
             : ""}
         </span>
-        <span className="text-sm text-muted-foreground tabular-nums">
-          Without them:{" "}
-          <span className="line-through">
-            {money(withoutAi)}
-            {oldMonths !== null
-              ? ` · ${formatDecimal(oldMonths, 1)} months`
-              : ""}
-          </span>
+        <Passthrough summary={summary} />
+        <span className="text-xs text-white/55">
+          {summary.ai_saving && summary.ai_saving.passed_percent < 100
+            ? "Partly passed on in the price"
+            : "Already in the price"}
+          , after the cost of the tools and of checking their work. Not
+          guaranteed.
         </span>
       </div>
-      <Passthrough summary={summary} />
-      <span className="text-xs text-muted-foreground">
-        {summary.ai_saving && summary.ai_saving.passed_percent < 100
-          ? "Partly passed on in the price"
-          : "Already in the price"}
-        , after the cost of the tools and of checking their work. Not
-        guaranteed.
-      </span>
+      <div className="rounded-xl border border-white/12 bg-white/6 px-4 py-3">
+        <p className="text-xs text-white/60">Without AI tools</p>
+        <p className="font-wide mt-1 text-2xl text-white/55 tabular-nums line-through decoration-2">
+          {money(withoutAi)}
+        </p>
+        {oldMonths !== null ? (
+          <p className="text-xs text-white/50">
+            {formatDecimal(oldMonths, 1)} months
+          </p>
+        ) : null}
+      </div>
+      <div className="rounded-xl bg-white px-4 py-3 text-foreground">
+        <p className="text-xs text-muted-foreground">With AI tools</p>
+        <p className="font-wide mt-1 text-2xl text-tape-bright tabular-nums">
+          {money(withAi)}
+        </p>
+        <p className="text-xs text-muted-foreground">
+          {formatDecimal(months, 1)} months
+        </p>
+      </div>
     </div>
   );
 }
@@ -1037,44 +1050,42 @@ function SummaryView({
   const hasMarket =
     Boolean(summary.market) || summary.similar_projects.length > 0;
   return (
-    <div className="flex flex-col gap-10">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <div>
-          <Link
-            href="/projects"
-            className="group inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
-          >
-            <span
-              aria-hidden="true"
-              className="inline-block rotate-180 transition-transform group-hover:-translate-x-0.5"
+    <div className="flex flex-col gap-5">
+      <AppHero overlap>
+        <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-6">
+          <div>
+            <Link
+              href="/projects"
+              className="group inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
             >
-              <Chevron />
-            </span>
-            Your estimates
-          </Link>
-          <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-4xl">
-            {summary.name}
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {formatDate(summary.created_at)}
-          </p>
+              <span
+                aria-hidden="true"
+                className="inline-block rotate-180 transition-transform group-hover:-translate-x-0.5"
+              >
+                <Chevron />
+              </span>
+              Your estimates
+            </Link>
+            <h1 className="font-display mt-4 max-w-3xl text-[clamp(2.2rem,5vw,3.5rem)] leading-[1.02] text-balance">
+              {summary.name}
+            </h1>
+            <p className="mt-3 text-sm text-muted-foreground">
+              {formatDate(summary.created_at)}
+              {summary.indicative
+                ? " · Based on market prices and typical effort, not your own costs: a guide."
+                : ""}
+            </p>
+          </div>
+          <div className="flex flex-wrap items-start gap-3">
+            <Downloads
+              estimateId={summary.estimate_id}
+              name={summary.name}
+              blocked={exportBlocked(summary)}
+            />
+            <SaveTemplate summary={summary} />
+          </div>
         </div>
-        <div className="flex flex-wrap items-start gap-3">
-          <Downloads
-            estimateId={summary.estimate_id}
-            name={summary.name}
-            blocked={exportBlocked(summary)}
-          />
-          <SaveTemplate summary={summary} />
-        </div>
-      </div>
-
-      {summary.indicative ? (
-        <p className="rounded-lg bg-warning-muted px-4 py-3 text-sm text-warning">
-          Based on market prices and typical effort, not your own costs: a
-          guide.
-        </p>
-      ) : null}
+      </AppHero>
 
       {summary.feasible ? (
         <>
@@ -1128,7 +1139,7 @@ function SummaryView({
           />
         </>
       ) : (
-        <section className="slab flex flex-col items-start gap-4 px-6 py-8 sm:px-10">
+        <section className="slab app-rise flex flex-col items-start gap-4 px-6 py-8 sm:px-10">
           <SectionTitle icon={TimerIcon} tone="warning">
             The deadline is too short to give a price
           </SectionTitle>
@@ -1146,7 +1157,7 @@ function SummaryView({
         />
       ) : null}
 
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-3 border-t pt-8">
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-3 pt-6">
         <Link href="/estimate/new" className={buttonVariants({ size: "lg" })}>
           Start another estimate
         </Link>

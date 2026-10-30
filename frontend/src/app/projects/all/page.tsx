@@ -1,3 +1,4 @@
+import { AppHero } from "@/components/app-hero";
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -14,21 +15,21 @@ export const metadata: Metadata = {
 export default function AllProjectsPage() {
   return (
     <div className="flex flex-col gap-6">
-      <div>
+      <AppHero>
         <Link
           href="/projects"
           className="text-sm text-muted-foreground hover:text-foreground"
         >
           ← Back to your estimates
         </Link>
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight">
+        <h1 className="font-display mt-4 text-[clamp(2.2rem,5vw,3.25rem)] leading-[1]">
           Detailed projects
         </h1>
-        <p className="text-sm text-muted-foreground">
+        <p className="mt-3 max-w-xl text-muted-foreground">
           The expert workspace: requirements, questionnaire, components and the
           full cost breakdown with traces.
         </p>
-      </div>
+      </AppHero>
       <ProjectList />
     </div>
   );

@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 
-import { ChatFigure } from "@/components/site/page-art";
 import { Kicker, PageIntro, Section } from "@/components/site/sections";
 
 import { ContactForm } from "./contact-form";
@@ -30,29 +29,38 @@ export default function ContactPage() {
       <PageIntro
         title="Talk to us."
         rest="About a project, a price or a partnership."
-        art={<ChatFigure />}
+        scene="talk"
+        sceneClassName="sm:top-[calc(50svh+83px)] sm:left-[calc(50%-24px)]"
       >
         Write to us with the form below. A person reads every message and
         replies by email.
       </PageIntro>
-      <Section className="grid grid-cols-1 gap-12 py-16 sm:py-20 lg:grid-cols-[1.2fr_0.8fr] lg:gap-16">
-        <ContactForm />
-        <aside className="flex flex-col gap-6">
-          <Kicker>What we can help with</Kicker>
-          <dl className="flex flex-col border-t">
+      <Section className="grid grid-cols-1 items-start gap-6 pb-[clamp(72px,10vw,120px)] lg:grid-cols-[1.2fr_0.8fr]">
+        <div data-reveal className="soft-card p-7 sm:p-10">
+          <ContactForm />
+        </div>
+        <aside
+          data-reveal
+          className="dark-card glow-low flex flex-col gap-6 p-7 sm:p-10"
+        >
+          <Kicker tone="dark">What we can help with</Kicker>
+          <dl className="flex flex-col">
             {HELPS.map((h, i) => (
-              <div key={h.title} className="flex gap-4 border-b py-5">
-                <span className="font-mono text-xs leading-6 text-muted-foreground">
+              <div
+                key={h.title}
+                className="flex gap-4 border-b border-white/10 py-5 last:border-b-0"
+              >
+                <span className="font-mono text-xs leading-6 text-peach">
                   0{i + 1}
                 </span>
                 <span className="flex flex-col gap-1">
                   <dt className="font-semibold">{h.title}</dt>
-                  <dd className="text-muted-foreground">{h.body}</dd>
+                  <dd className="text-white/70">{h.body}</dd>
                 </span>
               </div>
             ))}
           </dl>
-          <p className="font-mono text-xs leading-relaxed text-muted-foreground">
+          <p className="font-mono text-xs leading-relaxed text-white/55">
             Please do not send a confidential requirement document through this
             form. Upload it inside your account instead, where only your
             organisation can see it.

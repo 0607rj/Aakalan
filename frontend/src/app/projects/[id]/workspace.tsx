@@ -1,5 +1,6 @@
 "use client";
 
+import { AppHero } from "@/components/app-hero";
 import * as React from "react";
 import Link from "next/link";
 import { useParams, useSearchParams } from "next/navigation";
@@ -50,29 +51,33 @@ export function ProjectWorkspace() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-2">
-        <Link
-          href="/projects/all"
-          className="text-sm text-muted-foreground hover:underline"
-        >
-          ← Detailed projects
-        </Link>
-        <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-2xl font-semibold tracking-tight">
-            {project.name}
-          </h1>
-          <Badge variant="outline" className="uppercase">
-            {project.buyer_type}
-          </Badge>
-          <Badge variant="outline">{project.domain}</Badge>
-          <Badge variant="secondary" className="capitalize">
-            {project.status}
-          </Badge>
+      <AppHero>
+        <div className="flex flex-col gap-3">
+          <Link
+            href="/projects/all"
+            className="text-sm text-muted-foreground hover:underline"
+          >
+            ← Detailed projects
+          </Link>
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="font-display text-[clamp(2rem,4.5vw,3rem)] leading-[1.05]">
+              {project.name}
+            </h1>
+            <Badge variant="outline" className="uppercase">
+              {project.buyer_type}
+            </Badge>
+            <Badge variant="outline">{project.domain}</Badge>
+            <Badge variant="secondary" className="capitalize">
+              {project.status}
+            </Badge>
+          </div>
+          {project.description ? (
+            <p className="text-sm text-muted-foreground">
+              {project.description}
+            </p>
+          ) : null}
         </div>
-        {project.description ? (
-          <p className="text-sm text-muted-foreground">{project.description}</p>
-        ) : null}
-      </div>
+      </AppHero>
 
       <nav className="flex gap-1 border-b" aria-label="Project sections">
         {TABS.map((t) => (

@@ -1,5 +1,6 @@
 "use client";
 
+import { AppHero } from "@/components/app-hero";
 import * as React from "react";
 import { useRouter } from "next/navigation";
 import {
@@ -485,19 +486,21 @@ export function AdminConsole() {
   }
   return (
     <div className="flex flex-col gap-10">
-      <div className="settle flex items-center gap-5">
-        <IconTile icon={ShieldStarIcon} size="lg" />
-        <div className="flex flex-col gap-1">
-          <p className="eyebrow">Admin</p>
-          <h1 className="font-display text-3xl sm:text-4xl">
-            Everyone on Aakalan
-          </h1>
-          <p className="text-muted-foreground">
-            Every company and person, their estimates, and their accounts.
-            Viewing an account is read only.
-          </p>
+      <AppHero>
+        <div className="settle flex items-center gap-5">
+          <IconTile icon={ShieldStarIcon} size="lg" />
+          <div className="flex flex-col gap-1">
+            <p className="eyebrow">Admin</p>
+            <h1 className="font-display text-3xl sm:text-4xl">
+              Everyone on Aakalan
+            </h1>
+            <p className="text-muted-foreground">
+              Every company and person, their estimates, and their accounts.
+              Viewing an account is read only.
+            </p>
+          </div>
         </div>
-      </div>
+      </AppHero>
       <Overview />
       <People />
     </div>

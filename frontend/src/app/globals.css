@@ -4,20 +4,23 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 /*
- * Aakalan's colours: an off-white page, white panels with hairline edges, near-black type.
- * Violet (`--tape`) marks the price, the main action and the ranges; purple (`--warm`) is the
- * most likely mark; green (`--ai`) is what AI tools save. IBM Plex for reading, Bricolage for
- * headlines.
+ * Aakalan's colours: an off-white page, white panels, near-black type, and one orange.
+ * Orange (`--tape`) marks the price, the main action and the ranges (a deeper orange, so white
+ * text on it stays readable; `--tape-bright` for large figures and fills); rust (`--warm`) is
+ * the most likely mark; green (`--ai`) is what AI tools save. The public pages open on an
+ * ember panel (`--ember-*`) that fades into the page. Google Sans Flex for reading, Stack Sans
+ * Headline for headings, IBM Plex Mono for figures.
  */
 :root {
   color-scheme: light;
-  --background: #f7f7f4;
-  --foreground: #16181d;
+  --background: #f6f6f3;
+  --foreground: #141414;
   --card: #ffffff;
   --card-foreground: var(--foreground);
   --muted: #efefeb;
-  --muted-foreground: #5d616b;
-  --border: #e4e4de;
+  --muted-foreground: #66665f;
+  --faint: #9a9a92;
+  --border: #e3e3dc;
   --input: #cfcfc8;
   --secondary: var(--muted);
   --secondary-foreground: var(--foreground);
@@ -32,10 +35,18 @@
   --primary: var(--tape);
   --ring: var(--tape);
   --primary-foreground: #ffffff;
-  --tape: #6d5ae6; /* violet: the price, the main action, the ranges */
-  --tape-2: #5845d6;
-  --tape-soft: #ebe8fc;
-  --warm: #a338d6; /* purple: the most likely mark */
+  --tape: #c94210; /* orange: the price, the main action, the ranges */
+  --tape-2: #a8360a;
+  --tape-soft: #ffe8dc;
+  --tape-bright: #ff4c00; /* large figures and fills, never under small white text */
+  --warm: #7a2a05; /* rust: the most likely mark */
+  --peach: #ffc49a;
+  /* the ember panel at the top of the public pages: orange falling to near black */
+  --ember-1: #c2500f;
+  --ember-2: #8a3307;
+  --ember-3: #4a1903;
+  --ember-4: #111110;
+  --night: #111110;
   --ai: #15803d; /* what AI tools save */
   --ai-soft: #e3f4e9;
   --radius: 0.5rem;
@@ -64,6 +75,10 @@
   --color-tape: var(--tape);
   --color-tape-2: var(--tape-2);
   --color-tape-soft: var(--tape-soft);
+  --color-tape-bright: var(--tape-bright);
+  --color-peach: var(--peach);
+  --color-faint: var(--faint);
+  --color-night: var(--night);
   --color-warm: var(--warm);
   --color-ai: var(--ai);
   --color-ai-soft: var(--ai-soft);
@@ -72,13 +87,13 @@
   --radius-md: var(--radius);
   --radius-lg: calc(var(--radius) + 4px);
   --font-sans:
-    var(--font-plex), "Segoe UI", ui-sans-serif, system-ui, -apple-system,
+    var(--font-body), "Segoe UI", ui-sans-serif, system-ui, -apple-system,
     Arial, sans-serif;
-  --font-serif: var(--font-plex), "Segoe UI", ui-sans-serif, sans-serif;
+  --font-serif: var(--font-body), "Segoe UI", ui-sans-serif, sans-serif;
   --font-mono:
     var(--font-plex-mono), ui-monospace, "Cascadia Mono", Consolas, monospace;
   --font-head:
-    var(--font-bricolage), var(--font-plex), "Segoe UI", ui-sans-serif,
+    var(--font-headline), var(--font-body), "Segoe UI", ui-sans-serif,
     sans-serif;
 }
 
@@ -98,6 +113,8 @@
   h1,
   h2,
   h3 {
+    font-family: var(--font-head);
+    font-weight: 600;
     text-wrap: balance;
     letter-spacing: -0.02em;
     line-height: 1.15;
@@ -114,18 +131,18 @@
 }
 
 @layer utilities {
-  /* Section headlines: the headline face, bold and tight. */
+  /* Section headlines: the headline face, semi-bold, a little tight. */
   .font-wide {
     font-family: var(--font-head);
-    font-weight: 700;
-    letter-spacing: -0.04em;
+    font-weight: 600;
+    letter-spacing: -0.025em;
   }
 
-  /* The few big statements: the headline face, heavier and tighter still. */
+  /* The few big statements: the same face, set larger and slightly tighter. */
   .font-display {
     font-family: var(--font-head);
-    font-weight: 750;
-    letter-spacing: -0.05em;
+    font-weight: 600;
+    letter-spacing: -0.035em;
   }
 
   /* A faint square grid of hairlines, fading out towards the edges (heroes, closings). */
@@ -244,6 +261,7 @@
 .app-ui {
   background: var(--background);
   color: var(--foreground);
+  overflow-x: clip;
 }
 
 .app-ui ::selection {
@@ -268,23 +286,55 @@
   filter: none;
 }
 
-/* A section of a page: a hairline rule above, no box. */
+/* A section of a page: a soft white card, like the public pages' cards. */
 .sheet {
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
-  border-top: 1px solid var(--border);
-  padding-top: 2rem;
+  background: var(--card);
+  border-radius: 24px;
+  padding: clamp(22px, 3vw, 32px);
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 0.05),
+    0 18px 40px -24px rgb(0 0 0 / 0.28);
 }
 
-/* A quiet raised surface for the few things that need one (the price, a warning). */
+/* A raised surface for the few things that need one (the price, a warning). */
 .slab {
   background: var(--card);
-  border: 1px solid var(--border);
-  border-radius: 0.75rem;
+  border-radius: 24px;
   box-shadow:
-    0 1px 2px rgb(0 0 0 / 0.04),
-    0 8px 24px -12px rgb(0 0 0 / 0.12);
+    0 1px 2px rgb(0 0 0 / 0.05),
+    0 18px 40px -24px rgb(0 0 0 / 0.28);
+}
+
+/* The top of a signed-in page on the ember panel (components/app-hero.tsx): full width under
+   the floating nav, with the page's colours turned light so its words read in white. */
+.app-hero {
+  margin-inline: calc(50% - 50vw);
+  margin-top: -7rem;
+  --foreground: #ffffff;
+  --muted-foreground: rgb(255 255 255 / 0.72);
+  --muted: rgb(255 255 255 / 0.14);
+  --secondary: rgb(255 255 255 / 0.14);
+  --border: rgb(255 255 255 / 0.16);
+  --input: rgb(255 255 255 / 0.3);
+  --card: rgb(255 255 255 / 0.1);
+}
+
+.app-hero .eyebrow {
+  color: var(--peach);
+}
+
+.mist.app {
+  height: clamp(90px, 11vw, 140px);
+}
+
+/* The card that rises out of the band above it. */
+.app-rise {
+  position: relative;
+  z-index: 5;
+  margin-top: calc(-1 * clamp(110px, 12vw, 140px));
 }
 
 /* Small figures in labels and table heads. */
@@ -400,27 +450,29 @@
   transform: translateY(20px);
 }
 
-/* The hero sky drifts very slowly. */
-@keyframes sky-drift {
-  from {
-    transform: translate(-2%, 1.2%) scale(1);
-  }
-  to {
-    transform: translate(2%, -1.2%) scale(1.05);
-  }
-}
-
 @keyframes sky-in {
   from {
     opacity: 0;
   }
 }
 
-/* The picture fades in once it has arrived, then drifts. */
-.cost-sky {
-  animation:
-    sky-in 0.9s var(--ease) both,
-    sky-drift 40s ease-in-out infinite alternate;
+/* A page's dot picture on the ember panel: the image is only a mask, painted white into peach. */
+.dot-scene {
+  background: linear-gradient(
+    180deg,
+    #ffffff 15%,
+    var(--peach) 55%,
+    #ff8a45 100%
+  );
+  opacity: 0.6;
+  mask: var(--scene-tall) center / contain no-repeat;
+  animation: sky-in 0.9s var(--ease) both;
+}
+
+@media (min-width: 640px) {
+  .dot-scene {
+    mask-image: var(--scene-wide);
+  }
 }
 
 /* Figures play once when they are revealed (.is-in), each piece after --d steps. */
@@ -462,40 +514,6 @@
   transform: scaleX(0);
 }
 
-/* The closing keypad: the sums people used to type press themselves, then "Estimate" lights. */
-@keyframes key-press {
-  45% {
-    color: var(--tape);
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.04),
-      inset 0 -1px 0 rgb(0 0 0 / 0.45),
-      0 0 0 1px color-mix(in srgb, var(--tape) 55%, transparent),
-      0 4px 12px color-mix(in srgb, var(--tape) 25%, transparent);
-    transform: translateY(2px);
-  }
-}
-
-@keyframes auto-lit {
-  to {
-    background: linear-gradient(180deg, var(--tape-2), var(--tape));
-    color: var(--primary-foreground);
-    box-shadow:
-      inset 0 1px 0 rgb(255 255 255 / 0.45),
-      inset 0 -3px 0 rgb(0 0 0 / 0.2),
-      0 0 0 1px color-mix(in srgb, var(--tape) 60%, transparent),
-      0 0 70px color-mix(in srgb, var(--tape) 40%, transparent);
-  }
-}
-
-.keypad.is-in .key.sum {
-  animation: key-press 0.4s var(--ease) both;
-  animation-delay: calc(0.15s + var(--d, 0) * 0.14s);
-}
-
-.keypad.is-in .keypad-auto {
-  animation: auto-lit 0.6s var(--ease) 1.3s both;
-}
-
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -515,5 +533,319 @@
   }
   to {
     transform: translateX(300%);
+  }
+}
+
+/* ---- the public pages: ember panel, mist, cards ------------------------------------- */
+
+/* The top of a public page: orange glowing from the upper left, falling to near black. */
+.ember {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  color: #ffffff;
+  background:
+    radial-gradient(70% 80% at 12% 18%, var(--ember-1) 0%, transparent 62%),
+    radial-gradient(55% 60% at 30% 95%, var(--ember-2) 0%, transparent 70%),
+    linear-gradient(
+      100deg,
+      var(--ember-2) 0%,
+      var(--ember-3) 48%,
+      var(--ember-4) 82%
+    );
+}
+
+/* The white mist the ember panel sinks into: blurred, rising in uneven swells. */
+.mist {
+  position: absolute;
+  z-index: 3;
+  inset: auto 0 -1px;
+  height: clamp(160px, 26vh, 260px);
+  pointer-events: none;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    color-mix(in srgb, var(--background) 30%, transparent) 28%,
+    color-mix(in srgb, var(--background) 78%, transparent) 52%,
+    var(--background) 72%
+  );
+  backdrop-filter: blur(14px);
+  mask-image: linear-gradient(180deg, transparent, #000 38%);
+}
+
+/* The ember mirrored: orange on the right, for a panel whose right side meets the white. */
+.ember.flip {
+  background:
+    radial-gradient(70% 80% at 88% 22%, var(--ember-1) 0%, transparent 62%),
+    radial-gradient(55% 60% at 70% 95%, var(--ember-2) 0%, transparent 70%),
+    linear-gradient(
+      260deg,
+      var(--ember-2) 0%,
+      var(--ember-3) 48%,
+      var(--ember-4) 82%
+    );
+}
+
+/* The ember's bottom mist on a short band (the sign-in screens on phones). */
+.mist.short {
+  height: 96px;
+}
+
+/* The same mist on a panel's right side, where it meets the white form. */
+.mist-side {
+  position: absolute;
+  z-index: 3;
+  inset: 0 -1px 0 auto;
+  width: var(--mist-w, clamp(130px, 14vw, 240px));
+  pointer-events: none;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--background) 30%, transparent) 28%,
+    color-mix(in srgb, var(--background) 78%, transparent) 52%,
+    var(--background) 72%
+  );
+  backdrop-filter: blur(14px);
+  mask-image: linear-gradient(90deg, transparent, #000 38%);
+}
+
+.mist-side-swells {
+  position: absolute;
+  z-index: 3;
+  top: -8%;
+  bottom: -8%;
+  right: -60px;
+  width: 380px;
+  pointer-events: none;
+  filter: blur(34px);
+}
+
+.mist-side-swells i {
+  position: absolute;
+  right: -150px;
+  border-radius: 50%;
+  background: var(--background);
+}
+
+.mist-side-swells i:nth-child(1) {
+  top: 0;
+  height: 30%;
+  width: 360px;
+}
+.mist-side-swells i:nth-child(2) {
+  top: 20%;
+  height: 28%;
+  width: 300px;
+}
+.mist-side-swells i:nth-child(3) {
+  top: 40%;
+  height: 24%;
+  width: 340px;
+}
+.mist-side-swells i:nth-child(4) {
+  top: 58%;
+  height: 28%;
+  width: 290px;
+}
+.mist-side-swells i:nth-child(5) {
+  top: 76%;
+  height: 30%;
+  width: 370px;
+}
+
+.mist-swells {
+  position: absolute;
+  z-index: 3;
+  left: -8%;
+  right: -8%;
+  bottom: -90px;
+  height: 420px;
+  pointer-events: none;
+  filter: blur(34px);
+}
+
+.mist-swells i {
+  position: absolute;
+  bottom: -140px;
+  border-radius: 50%;
+  background: var(--background);
+}
+
+.mist-swells i:nth-child(1) {
+  left: 0;
+  width: 34%;
+  height: 380px;
+}
+.mist-swells i:nth-child(2) {
+  left: 22%;
+  width: 30%;
+  height: 320px;
+}
+.mist-swells i:nth-child(3) {
+  left: 42%;
+  width: 26%;
+  height: 350px;
+}
+.mist-swells i:nth-child(4) {
+  left: 60%;
+  width: 30%;
+  height: 300px;
+}
+.mist-swells i:nth-child(5) {
+  left: 78%;
+  width: 30%;
+  height: 390px;
+}
+
+/* A short page top (inner pages): a lower mist. */
+/* Dark glass on the ember panel. */
+.glass {
+  background: rgb(28 10 3 / 0.55);
+  border: 1px solid rgb(255 255 255 / 0.12);
+  backdrop-filter: blur(18px) saturate(130%);
+  box-shadow:
+    0 30px 60px -30px rgb(0 0 0 / 0.7),
+    inset 0 1px 0 rgb(255 255 255 / 0.08);
+}
+
+.glass-pill {
+  background: rgb(255 255 255 / 0.1);
+  border: 1px solid rgb(255 255 255 / 0.22);
+  backdrop-filter: blur(10px);
+}
+
+/* A soft card on the page. */
+.soft-card {
+  background: var(--card);
+  border-radius: 24px;
+  box-shadow:
+    0 1px 2px rgb(0 0 0 / 0.05),
+    0 18px 40px -24px rgb(0 0 0 / 0.28);
+}
+
+/* A dark feature card, with an orange glow low on the right. */
+.dark-card {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border-radius: 28px;
+  background: var(--night);
+  color: #ffffff;
+}
+
+.dark-card.glow-low::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: auto -10% -40% 30%;
+  height: 80%;
+  background: radial-gradient(closest-side, rgb(255 76 0 / 0.26), transparent);
+  pointer-events: none;
+}
+
+.dark-card.warm {
+  background: linear-gradient(165deg, #7a5240 0%, #4a3127 45%, #241a16 100%);
+}
+
+/* The nav's three pills spread across the page at the top and gather once you scroll. */
+.pill-nav {
+  max-width: 76rem;
+  transition:
+    max-width 0.7s var(--ease),
+    padding 0.5s var(--ease);
+}
+
+@media (min-width: 768px) {
+  .pill-nav.near {
+    max-width: 860px;
+    padding-top: 0.625rem;
+    padding-bottom: 0.625rem;
+  }
+}
+
+/* Features sliding past in two rows, faded at both ends. */
+.tile-rows {
+  mask-image: linear-gradient(
+    90deg,
+    transparent,
+    #000 14%,
+    #000 86%,
+    transparent
+  );
+}
+
+@keyframes tiles-slide {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.tile-row {
+  animation: tiles-slide 46s linear infinite;
+}
+
+.tile-row.rev {
+  animation-direction: reverse;
+  animation-duration: 52s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tile-row {
+    animation: none;
+  }
+}
+
+/* A mist at the top of a band, the white coming down into the ember. */
+.mist.top {
+  inset: -1px 0 auto;
+  transform: scaleY(-1);
+}
+
+/* A field of small peach dots on the right of a band, drawn in CSS, fading out to the left. */
+.dot-field {
+  position: absolute;
+  inset: 0 0 0 35%;
+  z-index: 1;
+  pointer-events: none;
+  background-image: radial-gradient(
+    rgb(255 196 154 / 0.32) 1.2px,
+    transparent 1.6px
+  );
+  background-size: 16px 16px;
+  mask-image: radial-gradient(60% 70% at 72% 50%, #000, transparent);
+}
+
+/* The large step number beside the steps: outlined in orange, settling in on each change. */
+.step-numeral {
+  color: transparent;
+  -webkit-text-stroke: 2px var(--tape-bright);
+  animation: settle 0.5s var(--ease);
+}
+
+/* The closing card: the ember again, on one rounded card. */
+.closing {
+  position: relative;
+  overflow: hidden;
+  border-radius: 32px;
+  color: #ffffff;
+  background:
+    radial-gradient(70% 90% at 10% 10%, var(--ember-1) 0%, transparent 62%),
+    linear-gradient(
+      100deg,
+      var(--ember-2) 0%,
+      var(--ember-3) 50%,
+      var(--ember-4) 90%
+    );
+}
+
+/* The page's width: the same on every public page, the nav and the footer. */
+@utility page-wrap {
+  width: 100%;
+  max-width: 76rem;
+  margin-inline: auto;
+  padding-inline: 1rem;
+
+  @media (min-width: 40rem) {
+    padding-inline: 1.75rem;
   }
 }

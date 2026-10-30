@@ -13,7 +13,6 @@ import {
   NotPricedFigure,
   QuestionFigure,
 } from "@/components/site/illustrations";
-import { FeatureMosaic } from "@/components/site/page-art";
 import {
   AppWindow,
   FeatureRow,
@@ -51,18 +50,27 @@ const ALSO = [
   },
 ];
 
+/** Two rows of uneven width, so the four read as a pair of pairs. */
+const ALSO_SHAPE = [
+  "dark-card warm lg:col-span-3",
+  "soft-card lg:col-span-2",
+  "soft-card lg:col-span-2",
+  "dark-card glow-low lg:col-span-3",
+];
+
 export default function FeaturesPage() {
   return (
     <>
       <PageIntro
         title="Everything that goes into a fair software price."
-        art={<FeatureMosaic />}
+        scene="blocks"
+        sceneClassName="sm:top-[calc(50svh+83px)] sm:left-[calc(50%-24px)]"
       >
         It reads what you need, asks what it can&apos;t read, and shows where
         every number comes from.
       </PageIntro>
 
-      <Section>
+      <Section className="pt-4">
         <FeatureRow
           kicker="Per feature"
           n="01"
@@ -82,6 +90,7 @@ export default function FeaturesPage() {
         />
         <FeatureRow
           flip
+          tone="open"
           kicker="AI-era work"
           n="02"
           title="Priced for how software is built now."
@@ -94,6 +103,7 @@ export default function FeaturesPage() {
           }
         />
         <FeatureRow
+          tone="warm"
           kicker="Your document"
           n="03"
           title="Reads your requirement document."
@@ -112,6 +122,7 @@ export default function FeaturesPage() {
         />
         <FeatureRow
           flip
+          tone="open"
           kicker="Nothing quiet"
           n="04"
           title="Nothing left out quietly."
@@ -138,31 +149,41 @@ export default function FeaturesPage() {
         />
       </Section>
 
-      <Section className="border-t py-20 sm:py-28">
+      <Section className="py-[clamp(72px,10vw,120px)]">
         <Kicker n="06">Also included</Kicker>
         <Title claim="The rest of what a quote needs." className="mt-5" />
-        <dl className="mt-14 grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
+        <dl className="mt-12 grid gap-5 lg:grid-cols-5">
           {ALSO.map((a, i) => (
             <div
               key={a.title}
               data-reveal
               style={{ "--rd": i } as React.CSSProperties}
-              className="flex flex-col gap-2 border-t pt-6"
+              className={`flex items-start gap-5 p-8 ${ALSO_SHAPE[i]}`}
             >
-              <a.icon
-                size={24}
-                weight="duotone"
-                aria-hidden="true"
-                className="mb-2 text-tape"
-              />
-              <dt className="text-lg font-semibold">{a.title}</dt>
-              <dd className="text-muted-foreground">{a.body}</dd>
+              <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-tape-bright text-white">
+                <a.icon size={22} aria-hidden="true" />
+              </span>
+              <span className="flex flex-col gap-1.5">
+                <dt className="font-wide text-[1.45rem] leading-tight">
+                  {a.title}
+                </dt>
+                <dd
+                  className={
+                    i % 3 === 0 ? "text-white/72" : "text-muted-foreground"
+                  }
+                >
+                  {a.body}
+                </dd>
+              </span>
             </div>
           ))}
         </dl>
       </Section>
 
-      <StartBand />
+      <StartBand
+        title="See it on your own features."
+        rest="We'll do the sums."
+      />
     </>
   );
 }

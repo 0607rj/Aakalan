@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 /**
  * The mark: the A of Aakalan drawn as an estimate. Its two strokes are a bell curve, the spread
  * of possible costs; the crossbar is the low-to-high range, and the dot sits where the most likely
- * cost is (left of centre: overruns go further than savings). White and violet on an ink tile, so
+ * cost is (left of centre: overruns go further than savings). White and orange on an ink tile, so
  * it reads at 16px as well as large.
  */
 export function LogoMark({ className }: { className?: string }) {
@@ -26,7 +26,7 @@ export function LogoMark({ className }: { className?: string }) {
       />
       <path
         d="M11.5 24.5 H28.5"
-        stroke="#8f7ff0"
+        stroke="#ff6a26"
         strokeWidth="2.6"
         strokeLinecap="round"
       />
@@ -34,7 +34,7 @@ export function LogoMark({ className }: { className?: string }) {
         cx="18.4"
         cy="24.5"
         r="2.9"
-        fill="#c9bfff"
+        fill="#ffc49a"
         stroke="#16181d"
         strokeWidth="1.3"
       />
@@ -44,9 +44,12 @@ export function LogoMark({ className }: { className?: string }) {
 
 export function Logo({
   href = "/",
+  large = false,
   className,
 }: {
   href?: string;
+  /** The footer's size. */
+  large?: boolean;
   className?: string;
 }) {
   return (
@@ -55,12 +58,23 @@ export function Logo({
       className={cn("flex items-center gap-2.5 rounded-lg", className)}
       aria-label="Aakalan home"
     >
-      <LogoMark />
+      <LogoMark className={large ? "size-12" : undefined} />
       <span className="flex flex-col leading-none">
-        <span className="font-display text-[1.2rem] tracking-[-0.04em]">
+        <span
+          className={cn(
+            "font-head font-semibold tracking-[-0.02em]",
+            large ? "text-[1.75rem]" : "text-[1.15rem]",
+          )}
+        >
           Aakalan
         </span>
-        <span className="text-[11px] text-muted-foreground" lang="hi">
+        <span
+          className={cn(
+            "mt-[3px] leading-[1.55] text-muted-foreground",
+            large ? "text-[13px]" : "text-[11px]",
+          )}
+          lang="hi"
+        >
           आकलन
         </span>
       </span>

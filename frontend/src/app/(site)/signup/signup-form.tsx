@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 import {
   AuthScreen,
@@ -16,11 +16,17 @@ import { api, setToken } from "@/lib/api/client";
 
 const MIN_PASSWORD = 8;
 
+/** The form with the email the footer's box sent (`?email=`). */
+export function SignupFormFromLink() {
+  const email = useSearchParams().get("email") ?? "";
+  return <SignupForm initialEmail={email} />;
+}
+
 /** A new account (name, email, password); then the emailed code confirms the address and signs in. */
-export function SignupForm() {
+export function SignupForm({ initialEmail = "" }: { initialEmail?: string }) {
   const router = useRouter();
   const [fullName, setFullName] = React.useState("");
-  const [email, setEmail] = React.useState("");
+  const [email, setEmail] = React.useState(initialEmail);
   const [password, setPassword] = React.useState("");
   const [error, setError] = React.useState<string | null>(null);
   const [submitting, setSubmitting] = React.useState(false);

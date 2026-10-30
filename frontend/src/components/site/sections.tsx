@@ -1,62 +1,75 @@
 import Link from "next/link";
 import { ArrowRightIcon, PlusIcon } from "@phosphor-icons/react/dist/ssr";
 
-import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
+import type { DotSceneName } from "./dot-scene";
+import { EmberHero } from "./ember-hero";
+import { Keypad } from "./keypad";
+
 /*
- * The parts the public pages are made of. Structure comes from hairline rules and type, not
- * from boxes: a section is separated by a rule, a list by rules between its rows, and the only
- * framed things are the example windows, which stand for the product itself.
+ * The parts the public pages are made of. Each page opens on the ember panel and sinks into the
+ * off-white page; below, a section is a pill label, a two-tone headline and soft white cards,
+ * and the product's ideas sit on dark cards with the product's own windows inside them.
  */
 
+/** Tones of a feature: dark (the default) or warm cards, or `open`, on the page with no card. */
+export type CardTone = "dark" | "warm" | "open";
+
+const delay = (rd: number) => ({ "--rd": rd }) as React.CSSProperties;
+
 /**
- * The top of an inner page: a large two-tone headline (the claim, then the rest in grey) and
- * one paragraph on a faint grid, with the page's own picture beside them on large screens.
+ * The top of an inner page, on the ember panel: a large two-tone headline (the claim in white,
+ * the rest in peach) and one paragraph, with the page's own dot picture behind and beside them.
+ * `center` puts the words in the middle, for a picture that sits below them.
  */
 export function PageIntro({
   title,
   rest,
   children,
-  art,
+  scene,
+  sceneClassName,
+  center = false,
+  className,
 }: {
   title: string;
-  /** Said after the title in grey, as one sentence with it. */
+  /** Said after the title in peach, as one sentence with it. */
   rest?: string;
   children: React.ReactNode;
-  art?: React.ReactNode;
+  scene: DotSceneName;
+  sceneClassName?: string;
+  center?: boolean;
+  className?: string;
 }) {
   return (
-    <section className="relative overflow-hidden border-b">
-      <div aria-hidden="true" className="grid-lines absolute inset-0" />
+    <EmberHero scene={scene} sceneClassName={sceneClassName}>
       <div
         className={cn(
-          "relative mx-auto grid max-w-6xl grid-cols-1 items-center gap-12 px-4 pt-16 pb-16 sm:px-6 sm:pt-24 sm:pb-20",
-          art && "lg:grid-cols-[1.15fr_0.85fr]",
+          "relative page-wrap pt-32 pb-[26rem] sm:flex sm:min-h-[calc(100svh+90px)] sm:flex-col sm:justify-center sm:pt-24 sm:pb-36",
+          center && "text-center",
+          className,
         )}
       >
-        <div className="flex flex-col gap-6">
-          <h1 className="rise-in font-display max-w-4xl text-[clamp(2.6rem,6.4vw,4.75rem)] leading-[1]">
-            {title}
-            {rest ? <span className="text-foreground/40"> {rest}</span> : null}
-          </h1>
-          <div
-            className="rise-in max-w-xl text-lg leading-relaxed text-muted-foreground"
-            style={{ "--rd": 1 } as React.CSSProperties}
-          >
-            {children}
-          </div>
+        <h1
+          className={cn(
+            "rise-in font-display text-[clamp(2.6rem,6.4vw,4.75rem)] leading-[1]",
+            center ? "mx-auto max-w-4xl" : "max-w-[40rem]",
+          )}
+        >
+          {title}
+          {rest ? <span className="text-peach"> {rest}</span> : null}
+        </h1>
+        <div
+          className={cn(
+            "rise-in mt-6 max-w-xl text-lg leading-relaxed text-white/75",
+            center && "mx-auto",
+          )}
+          style={delay(1)}
+        >
+          {children}
         </div>
-        {art ? (
-          <div
-            className="rise-in mx-auto w-full max-w-md"
-            style={{ "--rd": 2 } as React.CSSProperties}
-          >
-            {art}
-          </div>
-        ) : null}
       </div>
-    </section>
+    </EmberHero>
   );
 }
 
@@ -70,10 +83,7 @@ export function Section({
   id?: string;
 }) {
   return (
-    <section
-      id={id}
-      className={cn("mx-auto w-full max-w-6xl px-4 sm:px-6", className)}
-    >
+    <section id={id} className={cn("page-wrap", className)}>
       {children}
     </section>
   );
@@ -98,31 +108,47 @@ export function Title({
     <h2
       data-reveal
       className={cn(
-        "font-wide max-w-4xl text-[2rem] leading-[1.05] sm:text-[3.1rem]",
-        center && "mx-auto text-center",
+        "font-wide max-w-4xl text-[clamp(2.1rem,4.8vw,3.5rem)] leading-[1.08]",
+        center && "mx-auto max-w-[20ch] text-center",
         className,
       )}
     >
       {claim}
-      {children ? (
-        <span className="text-foreground/40"> {children}</span>
-      ) : null}
+      {children ? <span className="text-faint"> {children}</span> : null}
     </h2>
   );
 }
 
-/** A small mono label above a headline: "01 · Per feature". */
+/** A small pill label above a headline: "01 What gets priced". */
 export function Kicker({
   n,
   children,
+  tone = "light",
 }: {
   n?: string;
   children: React.ReactNode;
+  tone?: "light" | "dark";
 }) {
   return (
-    <p data-reveal className="eyebrow flex items-center gap-2">
-      {n ? <span className="text-tape">{n}</span> : null}
-      {n ? <span aria-hidden="true">·</span> : null}
+    <p
+      data-reveal
+      className={cn(
+        "inline-flex w-fit items-center gap-2 rounded-full px-4 py-[7px] text-sm font-medium",
+        tone === "dark"
+          ? "glass-pill text-white"
+          : "border bg-card text-foreground",
+      )}
+    >
+      {n ? (
+        <span
+          className={cn(
+            "font-mono text-xs",
+            tone === "dark" ? "text-peach" : "text-tape",
+          )}
+        >
+          {n}
+        </span>
+      ) : null}
       {children}
     </p>
   );
@@ -146,9 +172,33 @@ export function TextLink({
   );
 }
 
+/** A white pill link with an arrow, for dark cards and the ember panel. */
+export function LightLink({
+  href,
+  children,
+}: {
+  href: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Link
+      href={href}
+      className="group inline-flex h-12 w-fit items-center gap-2 rounded-full bg-white px-6 font-medium text-foreground transition-transform hover:-translate-y-px"
+    >
+      {children}
+      <ArrowRightIcon
+        size={16}
+        weight="bold"
+        aria-hidden="true"
+        className="transition-transform group-hover:translate-x-0.5"
+      />
+    </Link>
+  );
+}
+
 /**
  * An example window of the product: a title bar with three dots and a mono title, and the
- * picture inside. The one framed thing on a page, so it reads as the product, not decoration.
+ * picture inside. It reads as the product itself, on the page or on a dark card.
  */
 export function AppWindow({
   title,
@@ -164,7 +214,7 @@ export function AppWindow({
   return (
     <div
       className={cn(
-        "overflow-hidden rounded-[14px] border bg-card shadow-[0_1px_2px_rgb(0_0_0/0.05),0_12px_28px_-20px_rgb(0_0_0/0.2)]",
+        "overflow-hidden rounded-[20px] border bg-card text-foreground shadow-[0_1px_2px_rgb(0_0_0/0.05),0_24px_48px_-28px_rgb(0_0_0/0.4)]",
         className,
       )}
     >
@@ -183,9 +233,15 @@ export function AppWindow({
   );
 }
 
+/** The frame of a feature card in its tone. */
+export function cardTone(tone: CardTone): string {
+  if (tone === "open") return "text-foreground";
+  return cn("dark-card", tone === "warm" ? "warm" : "glow-low");
+}
+
 /**
- * One idea of a page: words on one side, its example window on the other (sides alternate),
- * with a rule above. `points` are short facts shown as a ticked list.
+ * One idea of a page: words on one side, its example window on the other (sides alternate).
+ * Dark and warm cards carry white words; `points` are short facts in a list.
  */
 export function FeatureRow({
   kicker,
@@ -197,6 +253,7 @@ export function FeatureRow({
   link,
   art,
   flip = false,
+  tone = "dark",
 }: {
   kicker?: string;
   n?: string;
@@ -207,31 +264,54 @@ export function FeatureRow({
   link?: { href: string; label: string };
   art: React.ReactNode;
   flip?: boolean;
+  tone?: CardTone;
 }) {
+  const dark = tone !== "open";
   return (
-    <div className="grid grid-cols-1 items-center gap-10 border-t py-14 sm:py-20 lg:grid-cols-2 lg:gap-16">
+    <div
+      data-reveal
+      className={cn(
+        "mt-6 grid grid-cols-1 items-center gap-10 first:mt-0 lg:grid-cols-2 lg:gap-14",
+        dark ? "p-7 sm:p-11" : "px-1 py-10 sm:py-14",
+        cardTone(tone),
+      )}
+    >
       <div className={cn("flex flex-col gap-5", flip && "lg:order-2")}>
-        {kicker ? <Kicker n={n}>{kicker}</Kicker> : null}
-        <h2
-          data-reveal
-          className="font-wide max-w-xl text-[2rem] leading-[1.05] sm:text-[2.6rem]"
-        >
+        {kicker ? (
+          <p
+            className={cn(
+              "font-mono text-xs tracking-[0.06em] uppercase",
+              dark ? "text-white/55" : "text-muted-foreground",
+            )}
+          >
+            {n ? `${n} · ` : null}
+            {kicker}
+          </p>
+        ) : null}
+        <h2 className="font-wide max-w-xl text-[2rem] leading-[1.05] sm:text-[2.5rem]">
           {title}
-          {rest ? <span className="text-foreground/40"> {rest}</span> : null}
+          {rest ? (
+            <span className={dark ? "text-white/50" : "text-faint"}>
+              {" "}
+              {rest}
+            </span>
+          ) : null}
         </h2>
         <p
-          data-reveal
-          className="max-w-lg text-lg leading-relaxed text-muted-foreground"
+          className={cn(
+            "max-w-lg text-lg leading-relaxed",
+            dark ? "text-white/72" : "text-muted-foreground",
+          )}
         >
           {body}
         </p>
         {points?.length ? (
-          <ul data-reveal className="flex flex-col gap-2 text-sm">
+          <ul className="flex flex-col gap-2 text-sm">
             {points.map((p) => (
               <li key={p} className="flex items-center gap-2.5">
                 <span
                   aria-hidden="true"
-                  className="size-1.5 shrink-0 rounded-full bg-tape"
+                  className="size-1.5 shrink-0 rounded-full bg-tape-bright"
                 />
                 {p}
               </li>
@@ -239,23 +319,23 @@ export function FeatureRow({
           </ul>
         ) : null}
         {link ? (
-          <span data-reveal className="mt-1">
-            <TextLink href={link.href}>{link.label}</TextLink>
+          <span className="mt-1">
+            {dark ? (
+              <LightLink href={link.href}>{link.label}</LightLink>
+            ) : (
+              <TextLink href={link.href}>{link.label}</TextLink>
+            )}
           </span>
         ) : null}
       </div>
-      <div
-        data-reveal
-        style={{ "--rd": 1 } as React.CSSProperties}
-        className={cn(flip && "lg:order-1")}
-      >
+      <div style={delay(1)} className={cn("min-w-0", flip && "lg:order-1")}>
         {art}
       </div>
     </div>
   );
 }
 
-/** Questions as a ruled list that opens one answer at a time, with the heading beside it. */
+/** Questions on one white card, opening one answer at a time, with the heading beside it. */
 export function Faq({
   title,
   rest,
@@ -266,18 +346,18 @@ export function Faq({
   items: { q: string; a: React.ReactNode }[];
 }) {
   return (
-    <div className="grid grid-cols-1 gap-10 border-t py-14 sm:py-20 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16">
+    <div className="grid grid-cols-1 gap-10 lg:grid-cols-[1fr_1.4fr] lg:gap-16">
       <h2
         data-reveal
-        className="font-wide text-[2rem] leading-[1.05] sm:text-[2.6rem]"
+        className="font-wide text-[clamp(2.1rem,4.8vw,3.5rem)] leading-[1.08]"
       >
         {title}
-        {rest ? <span className="text-foreground/40"> {rest}</span> : null}
+        {rest ? <span className="text-faint"> {rest}</span> : null}
       </h2>
-      <div data-reveal className="flex flex-col border-t">
+      <div data-reveal className="soft-card flex flex-col px-[26px] py-1.5">
         {items.map((item) => (
-          <details key={item.q} className="group border-b">
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-6 py-5 font-semibold transition-colors hover:text-tape focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none [&::-webkit-details-marker]:hidden">
+          <details key={item.q} className="group border-b last:border-b-0">
+            <summary className="flex cursor-pointer list-none items-center justify-between gap-6 py-5 text-[1.05rem] font-medium transition-colors hover:text-tape focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none [&::-webkit-details-marker]:hidden">
               {item.q}
               <PlusIcon
                 size={16}
@@ -297,52 +377,46 @@ export function Faq({
 }
 
 /**
- * The closing band of every public page: a very large two-tone line on the faint grid, the
- * main action and a text link. `aside` is an optional picture on the right.
+ * The closing card of a page, on the ember again: a very large two-tone line, the main action
+ * and a text link, and the keypad.
  */
 export function StartBand({
   title = "Describe your software.",
   rest = "We'll do the sums.",
-  aside,
 }: {
   title?: string;
   rest?: string;
-  aside?: React.ReactNode;
 }) {
   return (
-    <section className="relative overflow-hidden border-t">
-      <div aria-hidden="true" className="grid-lines absolute inset-0" />
+    <section className="page-wrap pt-6 pb-[clamp(72px,10vw,120px)]">
       <div
-        className={cn(
-          "relative mx-auto grid max-w-6xl grid-cols-1 items-center gap-12 px-4 py-20 sm:px-6 sm:py-28",
-          aside && "lg:grid-cols-[1.3fr_0.7fr]",
-        )}
+        data-reveal
+        className="closing grid grid-cols-1 items-center gap-10 p-[clamp(32px,6vw,72px)] lg:grid-cols-[1.3fr_1fr]"
       >
-        <div className="flex flex-col items-start gap-8">
-          <h2
-            data-reveal
-            className="font-display text-[clamp(2.75rem,7vw,5.5rem)] leading-[0.98]"
-          >
+        <div>
+          <h2 className="font-wide text-[clamp(2.6rem,6vw,4.6rem)] leading-[1]">
             {title}
-            <span className="block text-foreground/35">{rest}</span>
+            <span className="block text-peach">{rest}</span>
           </h2>
-          <div
-            data-reveal
-            className="flex flex-wrap items-center gap-x-6 gap-y-4"
-          >
+          <div className="mt-8 flex flex-wrap items-center gap-x-[26px] gap-y-4">
             <Link
               href="/estimate/new"
-              className={buttonVariants({ size: "lg" })}
+              className="inline-flex h-[52px] items-center rounded-full bg-white px-[26px] font-medium text-foreground transition-transform hover:-translate-y-px"
             >
               Start an estimate
             </Link>
-            <TextLink href="/contact">Talk to us</TextLink>
+            <Link
+              href="/contact"
+              className="inline-flex items-center gap-1.5 border-b border-current pb-0.5 font-medium"
+            >
+              Talk to us <span aria-hidden="true">→</span>
+            </Link>
           </div>
-          <p data-reveal className="font-mono text-xs text-muted-foreground">
+          <p className="mt-[26px] text-[13px] text-white/72">
             Your requirement documents are seen only by your company.
           </p>
         </div>
-        {aside ? <div className="justify-self-center">{aside}</div> : null}
+        <Keypad />
       </div>
     </section>
   );

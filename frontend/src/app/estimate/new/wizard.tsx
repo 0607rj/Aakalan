@@ -1,5 +1,6 @@
 "use client";
 
+import { AppHero } from "@/components/app-hero";
 import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -423,7 +424,7 @@ function ManualForm({
               <div
                 role="radiogroup"
                 aria-label="Kind of software"
-                className="grid grid-cols-1 overflow-hidden rounded-xl border bg-card sm:grid-cols-2 lg:grid-cols-3"
+                className="grid grid-cols-1 overflow-hidden rounded-3xl bg-card shadow-[0_1px_2px_rgb(0_0_0/0.05),0_18px_40px_-24px_rgb(0_0_0/0.28)] sm:grid-cols-2 lg:grid-cols-3"
               >
                 {options.project_types.map((t, i) => {
                   const active = t.key === projectType;
@@ -1145,19 +1146,21 @@ function StartChoice({
   ];
   return (
     <section className="flex flex-col gap-8">
-      <header className="settle flex flex-col gap-2 border-b pb-8">
-        <p className="eyebrow">New estimate</p>
-        <h1 className="font-wide text-[2rem] leading-tight sm:text-[2.5rem]">
-          How would you like to start?
-        </h1>
-        <p className="max-w-xl text-muted-foreground">
-          The quickest way is to upload the requirement document.
-        </p>
-      </header>
+      <AppHero>
+        <header className="settle flex flex-col gap-3">
+          <p className="eyebrow">New estimate</p>
+          <h1 className="font-display text-[clamp(2.4rem,5.5vw,3.75rem)] leading-[1]">
+            How would you like to start?
+          </h1>
+          <p className="max-w-xl text-muted-foreground">
+            The quickest way is to upload the requirement document.
+          </p>
+        </header>
+      </AppHero>
 
       <CountryChoice options={options} onChange={onCountry} />
 
-      <div className="settle grid grid-cols-1 overflow-hidden rounded-xl border bg-card sm:grid-cols-2">
+      <div className="settle grid grid-cols-1 overflow-hidden rounded-3xl bg-card shadow-[0_1px_2px_rgb(0_0_0/0.05),0_18px_40px_-24px_rgb(0_0_0/0.28)] sm:grid-cols-2">
         {ways.map((way, i) => (
           <button
             key={way.key}

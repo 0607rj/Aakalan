@@ -1,10 +1,7 @@
 import type { Metadata } from "next";
 import { ArrowDownIcon, ArrowUpIcon } from "@phosphor-icons/react/dist/ssr";
 
-import { TraceFigure } from "@/components/site/illustrations";
-import { MeaningFigure } from "@/components/site/page-art";
 import {
-  AppWindow,
   Kicker,
   PageIntro,
   Section,
@@ -83,56 +80,62 @@ export default function AboutPage() {
       <PageIntro
         title="Aakalan means estimation."
         rest="Because software prices stopped adding up."
-        art={<MeaningFigure />}
+        scene="word"
+        center
+        className="pb-[24rem] sm:justify-start sm:pt-40 sm:pb-[20rem]"
+        sceneClassName="-bottom-[94px] sm:top-auto sm:-bottom-[min(205px,17.5vw)] sm:translate-y-0"
       >
         AI now does much of the typing. Nobody agrees what that does to the
         price, so quotes drift further apart.
       </PageIntro>
 
       {/* The question and our answer */}
-      <Section className="grid grid-cols-1 items-center gap-12 py-20 sm:py-28 lg:grid-cols-2 lg:gap-16">
+      <Section className="pb-[clamp(72px,10vw,120px)]">
         <div className="flex flex-col gap-6">
           <Kicker n="01">The question</Kicker>
-          <Title claim="How do you price software when AI writes much of the code?">
-            People still design, check and look after it.
-          </Title>
-          <p data-reveal className="text-lg text-muted-foreground">
+          <h2
+            data-reveal
+            className="font-display max-w-5xl text-[clamp(2.4rem,5.6vw,4.5rem)] leading-[1.02]"
+          >
+            How do you price software when AI writes much of the code?{" "}
+            <span className="text-faint">
+              People still design, check and look after it.
+            </span>
+          </h2>
+          <p data-reveal className="mt-4 text-lg text-muted-foreground">
             Price the work itself, and show the working:
           </p>
-          <ol data-reveal className="flex flex-col border-t">
+          <ol className="grid gap-x-10 sm:grid-cols-2 lg:grid-cols-4">
             {ANSWER.map((a, i) => (
               <li
                 key={a}
-                className="flex items-baseline gap-4 border-b py-3.5 font-medium"
+                data-reveal
+                style={delay(i)}
+                className="flex flex-col gap-4 border-t-2 border-foreground pt-5 pb-8"
               >
-                <span className="font-mono text-xs text-muted-foreground">
-                  0{i + 1}
+                <span className="font-mono text-sm text-tape">0{i + 1}</span>
+                <span className="font-wide text-[clamp(1.4rem,2.2vw,1.75rem)] leading-[1.15]">
+                  {a}
                 </span>
-                {a}
               </li>
             ))}
           </ol>
         </div>
-        <div data-reveal style={delay(1)}>
-          <AppWindow title="where one number comes from" bodyClassName="py-10">
-            <TraceFigure />
-          </AppWindow>
-        </div>
       </Section>
 
       {/* How we test the prices: a ruled table */}
-      <Section className="border-t py-20 sm:py-28">
+      <Section className="pb-[clamp(72px,10vw,120px)]">
         <Kicker n="02">How we test the prices</Kicker>
         <Title claim="Checked against real Indian projects." className="mt-5">
           Not tuned to them: our prices come from hours and rates.
         </Title>
-        <dl data-reveal className="mt-12 flex flex-col border-t">
+        <dl data-reveal className="soft-card mt-12 flex flex-col px-6 sm:px-8">
           {TESTS.map((t) => {
             const Icon = t.up ? ArrowUpIcon : ArrowDownIcon;
             return (
               <div
                 key={t.size}
-                className="grid gap-2 border-b py-5 sm:grid-cols-[14rem_1fr] sm:gap-8"
+                className="grid gap-2 border-b py-5 last:border-b-0 sm:grid-cols-[14rem_1fr] sm:gap-8"
               >
                 <dt className="flex items-center gap-2.5 font-semibold">
                   <Icon
@@ -157,49 +160,59 @@ export default function AboutPage() {
         </p>
       </Section>
 
-      {/* What we hold to: numbered columns */}
-      <Section className="border-t py-20 sm:py-28">
-        <Kicker n="03">What we hold to</Kicker>
-        <Title claim="Four rules." className="mt-5">
-          Every estimate follows them.
-        </Title>
-        <dl className="mt-14 grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-4">
+      {/* What we hold to: the heading stays while the rules go past */}
+      <Section className="grid grid-cols-1 gap-10 pb-[clamp(72px,10vw,120px)] lg:grid-cols-[0.8fr_1.2fr] lg:gap-16">
+        <div className="flex h-fit flex-col gap-5 lg:sticky lg:top-28">
+          <Kicker n="03">What we hold to</Kicker>
+          <Title claim="Four rules.">Every estimate follows them.</Title>
+        </div>
+        <dl className="flex flex-col">
           {PRINCIPLES.map((p, i) => (
             <div
               key={p.title}
               data-reveal
               style={delay(i)}
-              className="flex flex-col gap-3 border-t-2 border-foreground/10 pt-6 first:border-tape"
+              className="grid grid-cols-[2.5rem_1fr] gap-x-4 gap-y-2 border-t py-8 last:border-b"
             >
-              <span className="font-mono text-sm text-muted-foreground">
+              <span className="row-span-2 pt-2 font-mono text-sm text-tape">
                 0{i + 1}
               </span>
-              <dt className="font-wide text-xl leading-snug">{p.title}</dt>
-              <dd className="text-muted-foreground">{p.body}</dd>
+              <dt className="font-wide text-[clamp(1.5rem,2.6vw,2rem)] leading-[1.1]">
+                {p.title}
+              </dt>
+              <dd className="text-lg text-muted-foreground">{p.body}</dd>
             </div>
           ))}
         </dl>
       </Section>
 
-      {/* Who it is for: a ruled list */}
-      <Section className="grid grid-cols-1 gap-10 border-t py-20 sm:py-28 lg:grid-cols-[0.8fr_1.2fr] lg:gap-16">
-        <div className="flex flex-col gap-5">
-          <Kicker n="04">Who it is for</Kicker>
-          <Title
-            claim="Anyone who needs the number"
-            className="text-[2rem] sm:text-[2.6rem]"
-          >
-            before the work starts.
-          </Title>
+      {/* Who it is for: all on one dark card */}
+      <Section className="pb-2">
+        <div
+          data-reveal
+          className="dark-card glow-low grid grid-cols-1 gap-10 p-[clamp(28px,4vw,44px)] lg:grid-cols-[0.8fr_1.2fr] lg:gap-16"
+        >
+          <div className="flex flex-col gap-5">
+            <Kicker n="04" tone="dark">
+              Who it is for
+            </Kicker>
+            <h2 className="font-wide text-[clamp(2rem,4vw,2.9rem)] leading-[1.08]">
+              Anyone who needs the number{" "}
+              <span className="text-white/50">before the work starts.</span>
+            </h2>
+          </div>
+          <ul className="flex flex-col">
+            {AUDIENCE.map((a) => (
+              <li
+                key={a.title}
+                className="flex flex-col gap-1 border-b border-white/10 py-5 first:pt-0 last:border-b-0 last:pb-0"
+              >
+                <span className="font-wide text-xl">{a.title}</span>
+                <span className="text-white/70">{a.body}</span>
+              </li>
+            ))}
+          </ul>
         </div>
-        <ul data-reveal className="flex flex-col border-t">
-          {AUDIENCE.map((a) => (
-            <li key={a.title} className="flex flex-col gap-1 border-b py-6">
-              <span className="font-wide text-xl">{a.title}</span>
-              <span className="text-muted-foreground">{a.body}</span>
-            </li>
-          ))}
-        </ul>
       </Section>
 
       <StartBand />

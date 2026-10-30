@@ -288,3 +288,7 @@ Next.js 16 App Router under `frontend/src/app`. Hand-written shadcn/ui-style pri
 `src/components/ui`. API calls go through `src/lib/api/client.ts`; types are generated from the
 backend OpenAPI schema with `make openapi` (`src/lib/api/schema.d.ts`). The token is kept in
 `localStorage` (`aakalan.token`) for v1.
+
+The public pages and sign-in screens share `src/components/site`: `EmberHero` (the top panel with
+the white mist), `DotScene` (each page's dot picture, a mask from `public/hero`), `SiteNavBar` (floating pills that gather on scroll) and the cards in
+`sections.tsx`. Colours and fonts are tokens in `globals.css`, so the logged-in app follows them.

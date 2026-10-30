@@ -1,5 +1,6 @@
 "use client";
 
+import { AppHero } from "@/components/app-hero";
 import * as React from "react";
 import Link from "next/link";
 
@@ -59,7 +60,7 @@ function StartStrip() {
     },
   ];
   return (
-    <div className="settle grid grid-cols-1 overflow-hidden rounded-xl border bg-card sm:grid-cols-2">
+    <div className="settle grid grid-cols-1 overflow-hidden rounded-3xl bg-card shadow-[0_1px_2px_rgb(0_0_0/0.05),0_18px_40px_-24px_rgb(0_0_0/0.28)] sm:grid-cols-2">
       {ways.map((way, i) => (
         <Link
           key={way.href}
@@ -378,22 +379,26 @@ export function EstimatesHome() {
 
   return (
     <div className="flex flex-col gap-8">
-      <header className="settle flex flex-col gap-2 border-b pb-8">
-        <p className="eyebrow">{first ? `Hello, ${first}` : "Welcome"}</p>
-        <h1 className="font-wide text-[2rem] leading-tight sm:text-[2.5rem]">
-          Your estimates
-        </h1>
-        {state.kind === "ready" && state.data.length > 0 ? (
-          <Totals estimates={state.data} />
-        ) : (
-          <p className="max-w-xl text-muted-foreground">
-            The cost of building, launching and running software, as a low,
-            likely and high range.
-          </p>
-        )}
-      </header>
+      <AppHero overlap>
+        <header className="settle flex flex-col gap-3">
+          <p className="eyebrow">{first ? `Hello, ${first}` : "Welcome"}</p>
+          <h1 className="font-display text-[clamp(2.4rem,5.5vw,3.75rem)] leading-[1]">
+            Your estimates
+          </h1>
+          {state.kind === "ready" && state.data.length > 0 ? (
+            <Totals estimates={state.data} />
+          ) : (
+            <p className="max-w-xl text-muted-foreground">
+              The cost of building, launching and running software, as a low,
+              likely and high range.
+            </p>
+          )}
+        </header>
+      </AppHero>
 
-      <StartStrip />
+      <div className="app-rise">
+        <StartStrip />
+      </div>
 
       {state.kind === "loading" ? <Loading /> : null}
       {state.kind === "error" ? <ErrorNotice message={state.message} /> : null}
