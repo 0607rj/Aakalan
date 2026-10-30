@@ -683,3 +683,42 @@ def test_ai_reader_payment_terms_are_priced(client: TestClient, admin_headers: H
         "/quick-estimates", json={**body, "payment_schedule": bad}, headers=admin_headers
     )
     assert r.status_code == 422  # shares must add up to 100%
+
+
+def test_a_failed_count_blocks_export_until_someone_checks(
+    client: TestClient, admin_headers: H
+) -> None:
+    """OPEN_QUESTIONS 186: the counting call is tried again; when it still fails the check is
+    missing, and the report waits for a person to confirm the price."""
+    quote = "pilot project for the department's grievance portal"
+    counts = 0
+
+    def responder(system: str, user: str) -> object:
+        nonlocal counts
+        if "<already_found>" in user:
+            return {"other_features": []}
+        if "independent check" in system:
+            counts += 1
+            raise TimeoutError("the AI took too long")
+        return {
+            "project_name": "Grievance portal",
+            "summary": "A grievance portal.",
+            "features": [{"key": "grievances", "evidence": [{"page": 1, "clause_ref": "1.1", "quote": quote}]}],
+            "other_features": [], "choices": [], "numbers": [], "unclear_points": [], "not_priced": [],
+        }  # fmt: skip
+
+    set_llm_client(FakeClient(responder))
+    try:
+        doc = upload(client, admin_headers, "count.pdf", make_pdf(EXTRA_PAGES)).json()
+    finally:
+        set_llm_client(None)
+    assert counts == 2  # tried again once
+    assert doc["extraction"]["reader"] == "ai" and not doc["extraction"].get("inventory")
+    body = {"name": "Grievances", "document_id": doc["id"], "features": ["grievances"]}
+    s = client.post("/quick-estimates", json=body, headers=admin_headers).json()
+    check = s["independent_check"]
+    assert not check["available"] and check["needs_confirmation"]
+    url = f"/estimates/{s['estimate_id']}"
+    assert client.get(f"{url}/report.pdf", headers=admin_headers).status_code == 409
+    client.post(f"{url}/check/confirm", headers=admin_headers)
+    assert client.get(f"{url}/report.pdf", headers=admin_headers).status_code == 200

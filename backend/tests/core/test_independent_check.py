@@ -139,3 +139,37 @@ def test_support_warning_points_at_the_build() -> None:
     )
     assert "build first" in _support_share(rule, "high").detail
     assert "support hours" in _support_share(rule, None).detail
+
+
+def test_a_document_the_ai_read_but_could_not_count_waits_for_a_person() -> None:
+    """OPEN_QUESTIONS 186: a failed count is a missing check, not a passed one."""
+    base: dict[str, object] = {
+        "priced_pd": D(100),
+        "pd_per_month": D(22),
+        "project_size": None,
+        "top_lines": [],
+        "price_without_tax_paise": None,
+        "emd_paise": None,
+        "emd_rules": quick_config().reality_check,
+        "confirmed_at": None,
+        "ai_read": True,
+    }
+    missing = independent_check(rules(), None, **base)  # type: ignore[arg-type]
+    assert not missing.available and missing.needs_confirmation
+    assert "could not be made" in (missing.reason or "")
+    empty = clinic().model_copy(
+        update={
+            "entities": [],
+            "screens": [],
+            "roles": [],
+            "integrations": [],
+            "hard_problems": [],
+            "tenancy": "single",
+        }
+    )
+    too_little = independent_check(rules(), empty, **base)  # type: ignore[arg-type]
+    assert not too_little.available and too_little.needs_confirmation
+    # the EMD gate still works without the count
+    emd = {"price_without_tax_paise": 2_50_00_000_00, "emd_paise": 2_10_000_00, "ai_read": False}
+    far = independent_check(rules(), None, **{**base, **emd})  # type: ignore[arg-type]
+    assert far.emd_flagged and far.needs_confirmation

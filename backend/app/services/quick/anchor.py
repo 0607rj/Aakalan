@@ -7,7 +7,9 @@ selected integrations, hard problems), read from the document itself by
 services/extraction/inventory.py, and sums them with the figures in quick config
 `independent_check` (placeholder priors with a source). Code only; nothing here changes a
 price. When the two disagree beyond the ratio band, or the price is far outside the EMD range,
-a person must confirm before the estimate is exported.
+a person must confirm before the estimate is exported. So must they when a document read by
+the AI could not be counted (the counting call failed, or the document named too little):
+the check is then missing, not passed (OPEN_QUESTIONS 186).
 
   anchor_pd = (entities × pd_per_entity + Σ screens × screen_weight × pd_per_screen
                + roles × pd_per_role + selected integrations × pd_per_integration
@@ -176,20 +178,37 @@ def independent_check(
     emd_paise: int | None,
     emd_rules: RealityCheck | None,
     confirmed_at: datetime | None,
+    ai_read: bool = False,
 ) -> IndependentCheckOut:
-    if inv is None:
+    emd_message = _emd_block(rules, emd_rules, price_without_tax_paise, emd_paise)
+
+    def missing(reason: str, counts: list[CountLine]) -> IndependentCheckOut:
+        """No check: on a document the AI read, export waits for a person (as on a gap)."""
+        if ai_read:
+            reason += " Look at the price yourself before it is shared."
         return IndependentCheckOut(
             available=False,
-            reason="Made only for an uploaded document read by the AI.",
+            reason=reason,
+            counts=counts,
+            emd_flagged=emd_message is not None,
+            emd_message=emd_message,
+            needs_confirmation=ai_read or emd_message is not None,
+            confirmed_at=confirmed_at,
             note=NOTE,
+        )
+
+    if inv is None:
+        return missing(
+            "The check could not be made: counting what the system contains failed for this "
+            "document."
+            if ai_read
+            else "Made only for an uploaded document read by the AI.",
+            [],
         )
     pd, counts, factors = anchor_pd(rules, inv)
     if pd <= 0:
-        return IndependentCheckOut(
-            available=False,
-            reason="The document did not name enough of what the system contains to count.",
-            counts=counts,
-            note=NOTE,
+        return missing(
+            "The document did not name enough of what the system contains to count.", counts
         )
     ratio = (priced_pd / pd).quantize(Decimal("0.01"), ROUND_HALF_UP)
     priced_months = _months(priced_pd, pd_per_month)
@@ -216,7 +235,6 @@ def independent_check(
                 else "Check whether features or screens the document names are missing."
             )
         )
-    emd_message = _emd_block(rules, emd_rules, price_without_tax_paise, emd_paise)
     flagged = direction is not None
     return IndependentCheckOut(
         available=True,

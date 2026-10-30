@@ -57,7 +57,7 @@ export function IndependentCheckCard({
   const check = summary.independent_check;
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
-  if (!check?.available) return null;
+  if (!check || (!check.available && !check.needs_confirmation)) return null;
   const warn = check.needs_confirmation && !check.confirmed_at;
 
   async function confirm() {
@@ -70,6 +70,38 @@ export function IndependentCheckCard({
     } finally {
       setBusy(false);
     }
+  }
+
+  if (!check.available) {
+    // No check could be made on a document the AI read: missing, not passed.
+    return (
+      <section
+        className={cn("sheet", warn && "slab border-warning/50 px-6 pb-6")}
+      >
+        <SectionTitle icon={ShieldCheckIcon} tone={warn ? "warning" : "ai"}>
+          Independent check
+        </SectionTitle>
+        <p className="text-sm font-medium">{check.reason}</p>
+        {check.emd_message ? (
+          <p className="text-sm font-medium">{check.emd_message}</p>
+        ) : null}
+        {check.confirmed_at ? (
+          <p className="text-sm text-muted-foreground">
+            Price checked by hand on {formatDate(check.confirmed_at)}.
+          </p>
+        ) : (
+          <div className="flex flex-wrap items-center gap-3 border-t pt-4">
+            <p className="text-sm">
+              Downloads open once someone checks the price.
+            </p>
+            <Button size="sm" onClick={confirm} disabled={busy}>
+              {busy ? "Saving…" : "I have checked the price"}
+            </Button>
+          </div>
+        )}
+        <ErrorNotice message={error} />
+      </section>
+    );
   }
 
   return (

@@ -169,14 +169,19 @@ def upload_document(
 def _add_inventory(
     doc: Document, llm: LLMClient, cfg: QuickConfig, parsed: ParsedDocument, data: bytes, name: str
 ) -> None:
-    """What the system must contain, for the independent check (one more AI call). A failure
-    keeps the reading: the check then says it could not be made."""
-    try:
-        counted = count_system(
-            llm, cfg, parsed, pdf=data if parsed.scanned else None, document=name
-        )
-    except Exception:  # network / API / schema errors: the estimate works without the check
-        log.exception("counting what the system must contain failed")
+    """What the system must contain, for the independent check (one more AI call, tried
+    `inventory_tries` times). A failure keeps the reading: the check then says it could not be
+    made, and the price waits for a person's look before export (OPEN_QUESTIONS 186)."""
+    tries = max(1, get_settings().inventory_tries)
+    for attempt in range(1, tries + 1):
+        try:
+            counted = count_system(
+                llm, cfg, parsed, pdf=data if parsed.scanned else None, document=name
+            )
+            break
+        except Exception:  # network / API / schema errors: the estimate works without the check
+            log.exception("counting what the system must contain failed (try %d)", attempt)
+    else:
         return
     if counted is None:
         return
