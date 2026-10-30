@@ -55,10 +55,25 @@ def _no_email() -> HTTPException:
 
 
 @router.post("/login", response_model=TokenResponse)
-def login(body: LoginRequest, db: DbSession) -> TokenResponse:
+def login(body: LoginRequest, db: DbSession, request: Request) -> TokenResponse:
+    ip = request.client.host if request.client else "unknown"  # Caddy's X-Forwarded-For
+    wait = auth.login_wait(db, body.email, ip)
+    if wait:
+        db.commit()
+        minutes = -(-wait // 60)
+        raise HTTPException(
+            status.HTTP_429_TOO_MANY_REQUESTS,
+            f"Too many wrong passwords. Try again in {minutes} minute{'s' * (minutes > 1)}, "
+            "or reset your password.",
+            headers={"Retry-After": str(wait)},
+        )
     user = auth.find_user(db, body.email)
     if user is None or not user.is_active or not verify_password(body.password, user.password_hash):
+        auth.record_login_failure(db, body.email, ip)
+        db.commit()
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid email or password")
+    auth.clear_login_failures(db, body.email)
+    db.commit()
     if user.email_verified_at is None:  # only after the password: says nothing to strangers
         raise HTTPException(status.HTTP_403_FORBIDDEN, NOT_VERIFIED)
     return token_for(user)

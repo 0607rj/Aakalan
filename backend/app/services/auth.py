@@ -3,7 +3,12 @@
 A code is 6 random digits, stored only as an HMAC (keyed with the JWT secret) of purpose, user
 and code. It works once, for `otp_minutes`, for `otp_max_attempts` tries; a new code replaces
 the old one, at most one per `otp_resend_seconds` and `otp_max_per_hour` an hour. A password
-reset or change raises the user's token version, which signs out every older token."""
+reset or change raises the user's token version, which signs out every older token.
+
+Sign-in is slowed down against guessing: after `login_max_failures` wrong passwords for one
+email (known or not), or `login_ip_max_failures` from one address, within
+`login_window_minutes`, sign-in waits until the oldest of them is out of the window. A right
+password or a password reset clears the email's count."""
 
 import hashlib
 import hmac
@@ -12,12 +17,12 @@ import secrets
 from datetime import UTC, datetime, timedelta
 from typing import Literal
 
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
 from app.core.security import hash_password
-from app.models import OneTimeCode, Organisation, Role, User
+from app.models import LoginFailure, OneTimeCode, Organisation, Role, User
 from app.models.base import utcnow
 from app.services.email import get_email_sender
 
@@ -57,6 +62,37 @@ def normalise_email(email: str) -> str:
 
 def find_user(db: Session, email: str) -> User | None:
     return db.scalars(select(User).where(func.lower(User.email) == normalise_email(email))).first()
+
+
+def login_wait(db: Session, email: str, ip: str) -> int:
+    """Seconds the caller must wait before another sign-in try (0 = none)."""
+    s = get_settings()
+    window = timedelta(minutes=s.login_window_minutes)
+    now = utcnow()
+    db.execute(delete(LoginFailure).where(LoginFailure.created_at < now - window))
+    wait = 0
+    for column, value, limit in (
+        (LoginFailure.email, normalise_email(email), s.login_max_failures),
+        (LoginFailure.ip, ip, s.login_ip_max_failures),
+    ):
+        times = db.scalars(
+            select(LoginFailure.created_at)
+            .where(column == value, LoginFailure.created_at >= now - window)
+            .order_by(LoginFailure.created_at.desc())
+            .limit(limit)
+        ).all()
+        if len(times) >= limit:
+            free_at = _aware(times[-1]) + window
+            wait = max(wait, int((free_at - now).total_seconds()) + 1)
+    return wait
+
+
+def record_login_failure(db: Session, email: str, ip: str) -> None:
+    db.add(LoginFailure(email=normalise_email(email), ip=ip))
+
+
+def clear_login_failures(db: Session, email: str) -> None:
+    db.execute(delete(LoginFailure).where(LoginFailure.email == normalise_email(email)))
 
 
 def check_password(password: str) -> None:
@@ -209,6 +245,7 @@ def reset_password(db: Session, email: str, code: str, new_password: str) -> Use
         raise AuthError(WRONG_CODE)
     set_password(user, new_password)
     user.email_verified_at = user.email_verified_at or utcnow()  # the code proved the address
+    clear_login_failures(db, email)
     return user
 
 

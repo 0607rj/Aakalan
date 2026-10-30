@@ -64,6 +64,17 @@ class OneTimeCode(IdTimestampMixin, Base):
     used_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
 
 
+class LoginFailure(IdTimestampMixin, Base):
+    """A wrong password at sign-in, by email (normalised, also for unknown addresses) and the
+    caller's address, so guessing is slowed down (services/auth.py). Not a tenant table: it
+    is read by email or address, never by organisation; rows older than the window go."""
+
+    __tablename__ = "login_failures"
+
+    email: Mapped[str] = mapped_column(String(320), index=True)
+    ip: Mapped[str] = mapped_column(String(64), index=True)
+
+
 class OrgSettings(IdTimestampMixin, Base):
     """Company pricing settings (margin, buffer, effort adjustments) — one row per org."""
 

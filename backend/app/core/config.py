@@ -36,6 +36,11 @@ class Settings(BaseSettings):
     otp_max_attempts: int = 5  # wrong tries before a code stops working
     otp_resend_seconds: int = 60  # wait before another code
     otp_max_per_hour: int = 5  # codes per user and purpose in an hour
+    # Wrong passwords at sign-in (services/auth.py): after this many for one email, or from one
+    # address, sign-in waits until the oldest falls out of the window (no lock-out for ever).
+    login_max_failures: int = 5
+    login_ip_max_failures: int = 30
+    login_window_minutes: int = 15
     password_min_length: int = 8
     smtp_host: str = ""
     smtp_port: int = 587
@@ -65,6 +70,9 @@ class Settings(BaseSettings):
     llm_web_search_tool: str = "web_search_20250305"
 
     upload_max_mb: int = 25
+    # Tries of the AI call that counts what the system contains (the independent check); a
+    # document left uncounted needs a person to confirm its price before export.
+    inventory_tries: int = 2
     document_max_chars: int = 2_500_000  # ~600k tokens; larger documents are refused, not cut
 
     @model_validator(mode="after")
