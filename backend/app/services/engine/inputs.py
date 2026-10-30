@@ -151,7 +151,8 @@ class Questionnaire(Strict):
     # private and small projects usually have none of these.
     governance_overheads: bool = True
     buyer_segment: Literal["government", "private", "small_business"] = "government"
-    non_prod_environments: int | None = Field(default=None, ge=0, le=5)  # None = parameter
+    # None = parameter; between two sizes' numbers near their edge (OPEN_QUESTIONS 187)
+    non_prod_environments: int | Decimal | None = Field(default=None, ge=0, le=5)
     # Third-party usage fees (SMS, email, maps, eKYC, AI features): in the quote, or paid by the
     # client directly to the providers.
     usage_fees_in_scope: bool = True

@@ -64,3 +64,28 @@ def test_helpdesk_seats_grow_with_the_users(
     assert smooth[3] == Decimal("1.5")
     assert smooth[4] == 2
     assert smooth[5] == 8  # flat above the last point
+
+
+def test_caps_and_spread_move_across_a_size_edge(
+    golden: Callable[[str], EstimateInput], reference: ReferenceData
+) -> None:
+    """v30 (OPEN_QUESTIONS 187): half way across the small-to-medium | medium edge the caps
+    by size and the range's spread sit between the two sizes'; v29 keeps its own size's."""
+
+    def at(params: str, size: str, blend: dict[str, str] | None) -> EstimateInput:
+        inp = answer(medium(golden, reference, params), "project_size", size)
+        return answer(inp, "size_blend", blend) if blend else inp
+
+    half = {"size": "medium", "share": "0.5"}
+    own, near = calculate(at("v30", "small_medium", None)), calculate(at("v30", "medium", None))
+    mid = calculate(at("v30", "small_medium", half))
+    assert own.totals and near.totals and mid.totals
+    low, high = sorted((own.totals.likely_paise, near.totals.likely_paise))
+    assert low < mid.totals.likely_paise < high
+    assert any(ln.trace.formula_id == "component_labour.v7" for ln in mid.lines)
+    spread = mid.calibration.model_spread
+    assert spread is not None and "small_medium and medium" in spread.name
+    assert spread.down == (Decimal("0.5") + Decimal("0.6")) / 2
+    old = calculate(at("v29", "small_medium", half))
+    assert not any(ln.trace.formula_id == "component_labour.v7" for ln in old.lines)
+    assert old.calibration.model_spread and "and" not in old.calibration.model_spread.name

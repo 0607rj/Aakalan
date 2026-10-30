@@ -446,6 +446,10 @@ class EffortCaps(Sourced):
     # (medium) complexity, so a ready design makes the design work smaller instead of handing
     # the freed days to discovery (which then cost more, at an analyst's rate).
     pre_build_cap_at_usual_complexity: bool = False
+    # v30+ (OPEN_QUESTIONS 187): near the edge of two project sizes (the questionnaire's
+    # size_blend), every share by size is (1 − share) × own + share × neighbour's, and the tests
+    # cap's effect is blended the same way (a size without a tests cap = no cap).
+    blend_across_size_edge: bool = False
 
     @model_validator(mode="after")
     def _base(self) -> "EffortCaps":
@@ -744,6 +748,8 @@ class Calibration(Sourced):
     model_spread: dict[str, ClaritySpread] = {}
     # v12+: the same by project size (used instead of the segment's when the size is known).
     model_spread_by_size: dict[str, ClaritySpread] = {}
+    # v30+ (OPEN_QUESTIONS 187): near a size edge, down and up between the two sizes' spreads.
+    model_spread_blend_across_size_edge: bool = False
     # v23+ (OPEN_QUESTIONS 160): "median" divides each draw by the triangle's median, so the
     # factor widens the range without lifting P50 (a lopsided triangle with its peak at 1 has
     # a median above 1); "mode" (before v23) leaves the draw as it is.

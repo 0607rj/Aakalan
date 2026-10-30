@@ -150,8 +150,10 @@ def _make_plan(ctx: PricingContext) -> EffortPlan:
     arch_cap = architecture_floor(ctx, caps, base) + caps.architecture_pd_per_hard_problem * hard
     tests = tested = ZERO
     tests_scale = ONE
+    near, edge = size_edge(ctx)
     tests_share = caps.tests_max_share_by_size.get(ctx.q.project_size or "")
-    if caps.tests_task is not None and tests_share is not None:
+    near_tests = caps.tests_max_share_by_size.get(near or "")
+    if caps.tests_task is not None and (tests_share is not None or near_tests is not None):
         # before AI savings: the cap sets the work, the team's AI tools then save on it
         unsaved = [
             (catalog, {k: pd + saved.get(k, ZERO) for k, pd in e.items()})
@@ -165,7 +167,11 @@ def _make_plan(ctx: PricingContext) -> EffortPlan:
             for task, pd in e.items()
             if task in caps.base_tasks and task is not caps.tests_task
         )
-        tests_scale = min(ONE, tests_share * tested / tests) if tests else ONE
+        tests_scale = between(
+            tests_scale_at(tests_share, tested, tests),
+            tests_scale_at(near_tests, tested, tests),
+            edge,
+        )
     return EffortPlan(
         project_reuse_ratio=ratio,
         review_scale=review_scale,
@@ -182,26 +188,81 @@ def _make_plan(ctx: PricingContext) -> EffortPlan:
     )
 
 
+def size_edge(ctx: PricingContext) -> tuple[str | None, Decimal]:
+    """(neighbouring size, its share) near the edge of two project sizes when the parameter
+    set blends there (v30+, OPEN_QUESTIONS 187); (None, 0) otherwise."""
+    caps, blend = ctx.p.effort_caps, ctx.q.size_blend
+    if caps is None or not caps.blend_across_size_edge or blend is None:
+        return None, ZERO
+    return blend.size, blend.share
+
+
+def between(own: Decimal, near: Decimal, share: Decimal) -> Decimal:
+    """(1 − share) × own + share × near: own when share is 0."""
+    return own if share == ZERO else (ONE - share) * own + share * near
+
+
+def tests_scale_at(share: Decimal | None, tested: Decimal, tests: Decimal) -> Decimal:
+    """min(1, share × tested / tests): 1 when the size has no tests cap or there are no tests."""
+    return min(ONE, share * tested / tests) if share is not None and tests else ONE
+
+
 def cap_shares(ctx: PricingContext, caps: EffortCaps) -> tuple[Decimal, Decimal]:
-    """(review, pre-build) cap shares: by project size when listed, else the flat shares."""
-    size = ctx.q.project_size
+    """(review, pre-build) cap shares: by project size when listed, else the flat shares; near
+    a size edge (v30+) between the two sizes' shares."""
+    size = ctx.q.project_size or ""
+    near, edge = size_edge(ctx)
+    review = caps.review_max_share_by_size
+    pre = caps.pre_build_max_share_by_size
     return (
-        caps.review_max_share_by_size.get(size or "", caps.review_max_share),
-        caps.pre_build_max_share_by_size.get(size or "", caps.pre_build_max_share),
+        between(
+            review.get(size, caps.review_max_share),
+            review.get(near or "", caps.review_max_share),
+            edge,
+        ),
+        between(
+            pre.get(size, caps.pre_build_max_share),
+            pre.get(near or "", caps.pre_build_max_share),
+            edge,
+        ),
     )
 
 
 def architecture_floor(ctx: PricingContext, caps: EffortCaps, base: Decimal) -> Decimal:
     """The architect's days before hard problems: max(architecture_base_pd, share[size] × build
-    base) when the project size is listed in architecture_max_share_by_size, else the base."""
-    share = caps.architecture_max_share_by_size.get(ctx.q.project_size or "")
-    if share is None:
-        return caps.architecture_base_pd
-    return max(caps.architecture_base_pd, share * base)
+    base) when the project size is listed in architecture_max_share_by_size, else the base;
+    near a size edge (v30+) between the two sizes' floors."""
+
+    def floor(size: str | None) -> Decimal:
+        share = caps.architecture_max_share_by_size.get(size or "")
+        if share is None:
+            return caps.architecture_base_pd
+        return max(caps.architecture_base_pd, share * base)
+
+    near, edge = size_edge(ctx)
+    return between(floor(ctx.q.project_size), floor(near), edge)
 
 
 def _cap_share(t: LineBuilder, caps: EffortCaps, which: str) -> Decimal:
-    """Record the cap share used (by project size when listed) on the line's trace."""
+    """Record the cap share used (by project size when listed) on the line's trace; near a
+    size edge (v30+) the share between the two sizes."""
+    near, edge = size_edge(t.ctx)
+    if near is not None:
+        t.driver("project_size")
+        t.driver("size_blend")
+        table: dict[str, Decimal] = getattr(caps, f"{which}_by_size")
+        shares: list[Decimal] = [
+            t.param("effort_caps", f"{which}_by_size", s)
+            if s in table
+            else t.param("effort_caps", which)
+            for s in (t.ctx.q.project_size or "", near)
+        ]
+        value: Decimal = t.step(
+            f"{which} between sizes",
+            f"(1 − {edge}) × {shares[0]} + {edge} × {shares[1]} ({near})",
+            between(shares[0], shares[1], edge),
+        )
+        return value
     size = t.ctx.q.project_size
     if size is not None and size in getattr(caps, f"{which}_by_size"):
         t.driver("project_size")
@@ -415,7 +476,19 @@ def _caps(
         t.param("effort_caps", "architecture_base_pd")
         t.param("effort_caps", "architecture_pd_per_hard_problem")
         size = t.ctx.q.project_size
-        if size is not None and size in caps.architecture_max_share_by_size:
+        near, edge = size_edge(t.ctx)
+        if near is not None:
+            t.driver("project_size")
+            t.driver("size_blend")
+            t.param("effort_caps", "architecture_max_share_by_size")
+            between_floor: Decimal = t.step(
+                "architect floor between sizes",
+                f"(1 − {edge}) × floor[{size}] + {edge} × floor[{near}], floor = max("
+                f"{caps.architecture_base_pd}, share × build {plan.base_pd:.2f} pd)",
+                architecture_floor(t.ctx, caps, plan.base_pd),
+            )
+            floor = f"{between_floor:.2f}"
+        elif size is not None and size in caps.architecture_max_share_by_size:
             t.driver("project_size")
             share = t.param("effort_caps", "architecture_max_share_by_size", size)
             floor = f"max({caps.architecture_base_pd}, {share} × build {plan.base_pd:.2f} pd)"
@@ -430,13 +503,27 @@ def _caps(
         )
     if caps.tests_task in tasks and plan.tests_scale < ONE:
         sized: str = t.driver("project_size")
-        share = t.param("effort_caps", "tests_max_share_by_size", sized)
-        t.param("effort_caps", "tests_task")
-        t.step(
-            f"cap {caps.tests_task.value}",
-            f"min(1, {share} × tested work {plan.tested_pd:.2f} pd / tests {plan.tests_pd:.2f} pd)",
-            plan.tests_scale,
-        )
+        near, edge = size_edge(t.ctx)
+        if near is not None:
+            t.driver("size_blend")
+            t.param("effort_caps", "tests_max_share_by_size")
+            t.param("effort_caps", "tests_task")
+            t.step(
+                f"cap {caps.tests_task.value} between sizes",
+                f"(1 − {edge}) × scale[{sized}] + {edge} × scale[{near}], scale = min(1,"
+                f" share × tested work {plan.tested_pd:.2f} pd / tests {plan.tests_pd:.2f} pd)"
+                " (1 without a cap)",
+                plan.tests_scale,
+            )
+        else:
+            share = t.param("effort_caps", "tests_max_share_by_size", sized)
+            t.param("effort_caps", "tests_task")
+            t.step(
+                f"cap {caps.tests_task.value}",
+                f"min(1, {share} × tested work {plan.tested_pd:.2f} pd"
+                f" / tests {plan.tests_pd:.2f} pd)",
+                plan.tests_scale,
+            )
 
 
 def _task_efforts(
@@ -492,7 +579,9 @@ def component_line(
     ci, catalog = effort.instance, effort.catalog
     stage = _stage(catalog)
     caps = ctx.p.effort_caps
-    if ci.size_mix is not None or (caps is not None and caps.pre_build_cap_at_usual_complexity):
+    if size_edge(ctx)[0] is not None:
+        formula_id = "component_labour.v7"
+    elif ci.size_mix is not None or (caps is not None and caps.pre_build_cap_at_usual_complexity):
         formula_id = "component_labour.v6"
     elif effort_plan(ctx) is not NO_PLAN:
         formula_id = "component_labour.v5"

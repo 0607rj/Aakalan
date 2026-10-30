@@ -91,3 +91,23 @@ def test_lean_delivery_and_launch_defaults_move_across_an_edge() -> None:
     upper = Decimal(blend["share"]) if other == "medium_large" else 1 - Decimal(blend["share"])
     assert Decimal(near.answers["hypercare_weeks"][0]) == 2 + 2 * upper
     assert Decimal(near.answers["training_sessions"][0]) == 2 + 2 * upper
+
+
+def test_load_testing_comes_in_with_the_users() -> None:
+    """OPEN_QUESTIONS 187: none up to 5,000 users, all of it from 25,000, in a line between;
+    the test servers sit between the two sizes' numbers near an edge."""
+    cfg = quick_config()
+
+    def load_test(users: int) -> dict[Size, Decimal] | str | None:
+        req = QuickRequest(name="x", features=["online_forms"], overrides={"users_total": users})
+        plan = plan_quick(cfg, req, {}, "")
+        block = next((c for c in plan.components if c.key == "performance_load_testing"), None)
+        return "none" if block is None else block.size_mix
+
+    assert load_test(5_000) == "none"
+    assert load_test(15_000) == {Size.S: Decimal("0.5")}
+    assert load_test(25_000) is None and load_test(40_000) is None  # all of it
+    fs = ["online_forms", "approval_workflow", "documents", "dashboards", "ai_chatbot"]
+    plan = plan_quick(cfg, QuickRequest(name="x", features=fs), {}, "")
+    assert plan.answers["size_blend"][0] == {"size": "medium", "share": "0.5"}
+    assert Decimal(plan.answers["non_prod_environments"][0]) == Decimal("1.5")

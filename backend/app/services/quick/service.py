@@ -845,6 +845,7 @@ def plan_quick(
             plan.answers[k] = (v, [feature_req[f.key]])
     if "ai_chatbot" not in feature_req:
         plan.answers["chatbot_queries_per_day"] = (0, [])
+    _ramp_blocks(cfg, plan, req, tier, set(component_level))
     overrides: dict[str, Any] = dict(req.overrides)
     if req.deadline_months is not None:
         overrides.setdefault("deadline_months", req.deadline_months)
@@ -1131,6 +1132,36 @@ def not_included(
             seen.add(o.label)
             unique.append(o)
     return unique
+
+
+def _ramp_blocks(
+    cfg: QuickConfig, plan: QuickPlan, req: QuickRequest, tier: SizeTier, asked: set[str]
+) -> None:
+    """Blocks that follow a number (e.g. load testing with the users, OPEN_QUESTIONS 187): the
+    block is priced at its ramp share of its size mix, left out at 0, added when an answer did
+    not add it; a block a feature or scope item asks for is priced in full."""
+    for question in cfg.questions.values():
+        by = question.answered_by_number
+        if not question.ramps or by is None:
+            continue
+        number = req.overrides.get(by, plan.answers.get(by, (None, []))[0])
+        if not isinstance(number, int | float | Decimal):
+            continue
+        for key, ramp in question.ramps.items():
+            if key in asked:
+                continue
+            share = ramp.share(float(number))
+            found = next((c for c in plan.components if c.key == key), None)
+            if share <= 0:
+                if found is not None:
+                    plan.components.remove(found)
+                continue
+            if found is None:
+                found = PlannedComponent(key, tier.base_size, Complexity.MEDIUM, [])
+                plan.components.append(found)
+            if share < 1:
+                mix = found.size_mix or {found.size: Decimal(1)}
+                found.size_mix = {s: w * share for s, w in mix.items()}
 
 
 def _standard_components(tier: SizeTier, options: dict[str, Any]) -> list[str]:
@@ -1967,6 +1998,7 @@ def summarise(
             emd_paise=emd_paise,
             emd_rules=cfg.reality_check,
             confirmed_at=estimate.check_confirmed_at,
+            ai_read=extraction is not None and extraction.reader in ("ai", "mixed"),
         )
     if cfg.size_check is not None and estimate.feasible:
         sized = _sized_features(cfg, cfg.size_check, estimate, project, extraction)

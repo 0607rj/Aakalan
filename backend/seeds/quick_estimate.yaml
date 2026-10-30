@@ -330,6 +330,8 @@ sizing:
   # below and 25% above each tier edge (e.g. 15 to 25 points around 20), so one feature more
   # never resizes every block at once (placeholder, the same share as the engine's size bands)
   tier_blend_share: 0.25
+  # non_prod_environments: medium and larger write out the parameter set's 2 (programme.
+  # non_prod_environments), so the test servers move from 1 to 2 across the edge (OPEN_QUESTIONS 187)
   tiers:
     - max_points: 4
       project_size: small
@@ -348,19 +350,19 @@ sizing:
       label: Medium
       base_size: M
       base_components: [discovery_requirement_study, solution_architecture, ui_ux_design, user_management_rbac, responsive_frontend, audit_trail_logging, security_hardening, notifications, functional_testing_uat_support, documentation_manuals, devops_cicd_setup]
-      answers: {training_sessions: 2, hypercare_weeks: 2}
+      answers: {training_sessions: 2, hypercare_weeks: 2, non_prod_environments: 2}
     - max_points: 36
       project_size: medium_large
       label: Medium to large
       base_size: M
       base_components: [discovery_requirement_study, solution_architecture, ui_ux_design, user_management_rbac, responsive_frontend, audit_trail_logging, security_hardening, notifications, integration_sms_email_gateway, functional_testing_uat_support, documentation_manuals, devops_cicd_setup]
-      answers: {training_sessions: 4, hypercare_weeks: 4}
+      answers: {training_sessions: 4, hypercare_weeks: 4, non_prod_environments: 2}
     - max_points: null
       project_size: large
       label: Large
       base_size: L
       base_components: [discovery_requirement_study, solution_architecture, ui_ux_design, user_management_rbac, responsive_frontend, audit_trail_logging, security_hardening, notifications, integration_sms_email_gateway, functional_testing_uat_support, documentation_manuals, devops_cicd_setup]
-      answers: {training_sessions: 4, hypercare_weeks: 4}
+      answers: {training_sessions: 4, hypercare_weeks: 4, non_prod_environments: 2}
 
 # The questions. `group: main` = one per screen, in this order (three: version, platforms, scale; with the
 # features and the deadline about eight screens); `detail` = the optional "a few more details" screen (skipped = the usual answer);
@@ -420,6 +422,13 @@ questions:
         - {users_total: 100000, peak_concurrent_users: 1000, documents_per_month: 5000, chatbot_queries_per_day: 5000}
         - {users_total: 1000000, peak_concurrent_users: 5000, documents_per_month: 30000, chatbot_queries_per_day: 20000}
         - {users_total: 5000000, peak_concurrent_users: 10000, documents_per_month: 100000, chatbot_queries_per_day: 50000}
+    # OPEN_QUESTIONS 187: load testing comes in with the users instead of switching on whole
+    # above 10,000: none up to 5,000 users, all of it from 25,000, on a straight line between
+    # (a feature that asks for load testing still gets all of it).
+    ramps:
+      performance_load_testing:
+        source: "placeholder, reasoned: the 10,000-user band edge where load testing was added whole, spread from half of it to the next band's top (2026-10-30)"
+        points: [[5000, 0], [25000, 1]]
     options:
       - {value: up_to_100, max_users: 100, label: Up to 100, hint: "A team or a small office", answers: {users_total: 100}}
       - {value: up_to_1k, max_users: 1000, label: "100 – 1,000", hint: "A company or a few branches", answers: {users_total: 1000}}

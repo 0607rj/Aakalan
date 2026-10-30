@@ -84,6 +84,32 @@ class NumberCurve(Frozen):
         }
 
 
+class BlockRamp(Frozen):
+    """A standard block that comes in gradually with a question's number (e.g. load testing
+    with the registered users, OPEN_QUESTIONS 187): the share of the block on a straight line
+    between (number, share) points, the first share below the first point and the last above
+    the last, so the block never switches on at one band's edge."""
+
+    source: str
+    points: list[tuple[int, Decimal]] = Field(min_length=2)
+
+    @model_validator(mode="after")
+    def _ordered(self) -> "BlockRamp":
+        xs = [x for x, _ in self.points]
+        if xs != sorted(set(xs)) or any(not 0 <= s <= 1 for _, s in self.points):
+            raise ValueError("ramp points need rising numbers and shares from 0 to 1")
+        return self
+
+    def share(self, n: float) -> Decimal:
+        x = Decimal(str(n))
+        if x <= self.points[0][0]:
+            return self.points[0][1]
+        for (x0, s0), (x1, s1) in pairwise(self.points):
+            if x <= x1:
+                return s0 + (s1 - s0) * (x - x0) / (x1 - x0)
+        return self.points[-1][1]
+
+
 class Topic(Frozen):
     """A part of the form (what to build, users, ...): asked in the order of `topics`."""
 
@@ -129,6 +155,8 @@ class Question(Frozen):
     # Numbers that follow `answered_by_number` (OPEN_QUESTIONS 182): each option's missing
     # numbers come from it at the option's own count, and a stated count sets them all.
     curve: NumberCurve | None = None
+    # Standard blocks whose share follows `answered_by_number` (OPEN_QUESTIONS 187).
+    ramps: dict[str, BlockRamp] = {}
 
     @model_validator(mode="after")
     def _default_exists(self) -> "Question":
@@ -143,6 +171,8 @@ class Question(Frozen):
                 raise ValueError("a curve needs answered_by_number and the same keys at each point")
             if by not in self.curve.points[0]:
                 raise ValueError(f"every curve point needs {by}")
+        if self.ramps and self.answered_by_number is None:
+            raise ValueError("a ramp needs answered_by_number")
         return self
 
     def answers_of(self, option: Option, number: float | None = None) -> dict[str, Any]:

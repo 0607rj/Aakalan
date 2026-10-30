@@ -71,6 +71,10 @@ FORMULAS: dict[str, str] = {
         "min(pm_fte[size_band] × programme_months × pd_per_month, pm_share × build_pd)"
         " × rate(pm)  (lean delivery)"
     ),
+    "component_labour.v7": (
+        "as component_labour.v6, with the effort caps by project size between the two sizes'"
+        " near a size edge: (1 − share) × own + share × neighbour's (OPEN_QUESTIONS 187)"
+    ),
     "programme.pm.v3": (
         "full − lean_share × (full − min(full, pm_share × build_pd)), full = pm_fte[size_band] ×"
         " programme_months × pd_per_month; lean_share between 0 and 1 near the edge of a lean"

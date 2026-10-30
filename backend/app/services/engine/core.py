@@ -317,6 +317,19 @@ def _model_spread(ctx: PricingContext) -> SpreadFactor | None:
     size = ctx.q.project_size
     if size is not None and size in cal.model_spread_by_size:
         s = cal.model_spread_by_size[size]
+        blend = ctx.q.size_blend
+        if (
+            cal.model_spread_blend_across_size_edge
+            and blend is not None
+            and blend.size in cal.model_spread_by_size
+        ):
+            # v30+ (OPEN_QUESTIONS 187): near a size edge, between the two sizes' spreads
+            n, w = cal.model_spread_by_size[blend.size], blend.share
+            return SpreadFactor(
+                name=f"model error ({size} and {blend.size} projects, back-tested)",
+                down=(1 - w) * s.down + w * n.down,
+                up=(1 - w) * s.up + w * n.up,
+            )
         return SpreadFactor(
             name=f"model error ({size} projects, back-tested)", down=s.down, up=s.up
         )
