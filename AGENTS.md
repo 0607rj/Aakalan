@@ -35,7 +35,9 @@ Estimates are saved as templates, and recorded outcomes calibrate future estimat
 - **Auth:** JWT (HS256) + argon2; roles `admin`, `estimator`, `finance`, `viewer`. Margin visible only to `finance`/`admin`.
   Sign-up creates a company with the person as admin; email verified and password reset by emailed
   6-digit codes (`services/auth.py`, hashed, expiring, limited tries); a reset or change raises the
-  user's `token_version` (`tv` in the JWT) so older tokens stop working. Bid results and the
+  user's `token_version` (`tv` in the JWT) so older tokens stop working. Wrong passwords
+  slow sign-in down per email and per address (`login_failures`, settings `login_*`,
+  429 with Retry-After; OPEN_QUESTIONS 188). Bid results and the
   calibration report are owner-only (`OWNER_EMAILS`, `OwnerUser`, `is_owner` on `/auth/me`).
   The owner's Admin page (`/admin`, `api/owner.py`, OPEN_QUESTIONS 172) is the one place that reads
   across organisations: every account and its estimates, disable, role, verify, delete, and "view as"
@@ -106,6 +108,8 @@ backend/
                           #   description_readings), so the same words give the same features
                           #   merge of several files (corrigenda override), pre-bid queries;
                           #   inventory.py: AI lists quoted items for the independent check
+                          #   (tried `inventory_tries` times; an AI-read document left uncounted
+                          #   needs a person's confirm before export, OPEN_QUESTIONS 186)
                           #   client_provided.py: "hosting / domain / SSL provided by the
                           #   department" (or by the client's own name) answers those questions
                           #   (code, cited); support_terms.py: support hours and stated support
@@ -190,6 +194,10 @@ backend/
                           #   pre-build cap counts work at the usual complexity (OPEN_QUESTIONS 183)
                           #   and lean delivery (PM, hypercare, handover), training sessions and
                           #   hypercare weeks move in a line across the edge (`size_blend`, 184)
+                          #   parameters v30+ (OPEN_QUESTIONS 187): near a size edge the caps by
+                          #   size (`effort_caps.blend_across_size_edge`) and the range's spread
+                          #   sit between the two sizes'; test servers 1 -> 2 in a line; load
+                          #   testing comes in with the users (scale question `ramps`)
                           #   parameters v23+ (OPEN_QUESTIONS 160): the shared model factor is
                           #   centred on its median (widens, no P50 lift) and is a range driver;
                           #   size-band values blend across band edges (size_band_blend_share)
