@@ -9263,6 +9263,11 @@
             "title": "On Upload",
             "default": "ask"
           },
+          "impact": {
+            "type": "string",
+            "title": "Impact",
+            "default": "high"
+          },
           "answered_by_number": {
             "anyOf": [
               {

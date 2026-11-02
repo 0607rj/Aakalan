@@ -587,6 +587,7 @@ questions:
     # first of which is the requirement study (SRS): milestones add it on any project size.
     label: How will the builder be paid?
     topic: contract
+    impact: low   # moves the price under 20% (at most 10%, OPEN_QUESTIONS 197, 199)
     group: detail
     # OPEN_QUESTIONS 197: on upload too, the document decides (a tender pays after milestones)
     on_upload: document
@@ -599,6 +600,7 @@ questions:
     # (parameter sets v19+); an older reading's "not priced: penalties" quotes count too
     label: Does the contract have penalties for late delivery or downtime?
     topic: contract
+    impact: low   # moves the price under 20% (at most 1%, OPEN_QUESTIONS 197, 199)
     # read from an uploaded tender only (OPEN_QUESTIONS 173): a typed project rarely has a
     # contract yet, and the reserve is small
     group: document
@@ -615,6 +617,7 @@ questions:
     # free from NIC only for a .gov.in / .nic.in address the document names (v19+)
     label: What web address will it use?
     topic: hosting
+    impact: low   # moves the price under 20% (at most 0.2%, OPEN_QUESTIONS 197, 199)
     group: document
     # OPEN_QUESTIONS 197: moves the price under 5%; on upload only shown when the document says
     on_upload: document
@@ -630,6 +633,7 @@ questions:
     # the client provides it. Most documents never mention it, which is not a gap.
     label: Which SSL certificate does it need?
     topic: hosting
+    impact: low   # moves the price under 20% (at most 1%, OPEN_QUESTIONS 197, 199)
     group: document
     # OPEN_QUESTIONS 197: moves the price under 5%; on upload only shown when the document says
     on_upload: document
@@ -644,6 +648,7 @@ questions:
   security_audit:
     label: Do you need an independent security check before launch?
     topic: hosting
+    impact: low   # moves the price under 20% (at most 12%, OPEN_QUESTIONS 197, 199)
     group: document   # not asked on the form; read from an uploaded document, else the usual answer
     default: "no"
     options:
@@ -652,6 +657,7 @@ questions:
   reporting:
     label: Do you want monthly progress reports and review meetings?
     topic: contract
+    impact: low   # moves the price under 20% (at most 19%, OPEN_QUESTIONS 197, 199)
     group: document   # not asked on the form; read from an uploaded document, else the usual answer
     default: "no"
     options:
@@ -660,6 +666,7 @@ questions:
   design:
     label: Do you already have a design for the screens?
     topic: build
+    impact: low   # moves the price under 20% (at most 3.1%, OPEN_QUESTIONS 197, 199)
     # not asked on the form (OPEN_QUESTIONS 173): it moved the price by under 1% on typical
     # projects; read from an uploaded document, else the usual answer
     group: document
@@ -690,6 +697,7 @@ questions:
   chatbot_volume:
     label: About how many questions will the chatbot answer each day?
     topic: users
+    impact: low   # moves the price under 20% (at most 3.5%, OPEN_QUESTIONS 197, 199)
     group: document   # not asked on the form; read from an uploaded document, else the usual answer
     on_upload: document   # on upload it is asked as a number (chatbot questions per day)
     default: by_users
@@ -703,6 +711,7 @@ questions:
   launch_help:
     label: How much help do your users need at launch?
     topic: support
+    impact: low   # moves the price under 20% (at most 3.4%, OPEN_QUESTIONS 197, 199)
     group: document   # not asked on the form; read from an uploaded document, else the usual answer
     # OPEN_QUESTIONS 197: moves the price under 5%; on upload only shown when the document says
     on_upload: document

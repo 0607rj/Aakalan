@@ -138,6 +138,10 @@ class Question(Frozen):
     # File upload: "document" = the document decides what is built (read from it, else the
     # default), never asked; "ask" = asked when the document does not say.
     on_upload: Literal["ask", "document"] = "ask"
+    # How much the answer moves the price (measured, OPEN_QUESTIONS 197): after an upload a
+    # "low" question the document does not answer is listed as assumed (collapsed), a "high"
+    # one is asked (OPEN_QUESTIONS 199).
+    impact: Literal["high", "low"] = "high"
     # Not asked when this number is known (e.g. users_total): the answer is the option whose
     # max_users covers it.
     answered_by_number: str | None = None

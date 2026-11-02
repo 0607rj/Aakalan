@@ -129,6 +129,36 @@ function Stories({
   );
 }
 
+/** A folded list of answers on a topic screen (nothing shown when it is empty). */
+function Folded({
+  title,
+  hint,
+  children,
+}: {
+  title: string;
+  hint: string;
+  children: React.ReactNode[];
+}) {
+  if (children.length === 0) return null;
+  return (
+    <details className="group rounded-xl border bg-card">
+      <summary className="flex cursor-pointer list-none flex-col gap-1 px-4 py-3">
+        <span className="font-semibold">
+          {title}
+          <span className="ml-2 text-sm font-normal text-primary group-open:hidden">
+            Show
+          </span>
+          <span className="ml-2 hidden text-sm font-normal text-primary group-open:inline">
+            Hide
+          </span>
+        </span>
+        <span className="text-sm text-muted-foreground">{hint}</span>
+      </summary>
+      <div className="flex flex-col gap-6 border-t px-4 py-4">{children}</div>
+    </details>
+  );
+}
+
 function toDisplay(fact: Fact, value: unknown): string {
   if (value === null || value === undefined) return ""; // not stated
   const n = typeof value === "number" ? value : Number(value);
@@ -605,12 +635,28 @@ export function ReviewForm({
     );
   }
 
-  /** A topic's screen: the answers that move the price most first, then the numbers, the
-   * other questions and (contract) the payment terms. */
+  /** A topic's screen in three parts (OPEN_QUESTIONS 199): "Please answer" (what the
+   * document does not say and moves the price a lot, a decision, or an answer with a pre-bid
+   * query), then the numbers, then two folded lists: what the document says (with its page)
+   * and what it does not say that moves the price little (the usual answer is priced). A weak
+   * document asks about as much as the manual form; a full tender only a few questions. */
   function topicScreen(key: string) {
     const shown = topicQuestions(key);
-    const first = shown.filter((q) => keyRank.has(q.key));
-    const others = shown.filter((q) => !keyRank.has(q.key));
+    const found = (q: Question) =>
+      extraction.choices[q.key] !== undefined ||
+      byNumber[q.key] !== undefined ||
+      prefill.answered.includes(q.key);
+    const queried = (q: Question) =>
+      (keyAnswers.find((k) => k.key === q.key)?.queries ?? []).length > 0;
+    const ask = shown.filter(
+      (q) =>
+        q.must_choose ||
+        queried(q) ||
+        unchosen([q], choices).length > 0 ||
+        (!found(q) && q.impact !== "low"),
+    );
+    const fromDocument = shown.filter((q) => !ask.includes(q) && found(q));
+    const assumedHere = shown.filter((q) => !ask.includes(q) && !found(q));
     const numbers = topicFacts(key);
     const staffKey = keyAnswers.find((k) => k.key === "staff");
     // pre-bid queries of a key answer a stated number replaced (e.g. the support years)
@@ -643,14 +689,33 @@ export function ReviewForm({
             />
           </div>
         ) : null}
-        {first.map(questionBlock)}
+        {ask.length > 0 ? (
+          <div className="flex flex-col gap-1">
+            <span className="eyebrow">Please answer</span>
+            <span className="text-sm text-muted-foreground">
+              The document does not say, and the answer changes the price.
+            </span>
+          </div>
+        ) : null}
+        {ask.map(questionBlock)}
         {numbers.length > 0 ? (
           <div className="grid gap-x-6 gap-y-5 border-y py-6 sm:grid-cols-2 lg:grid-cols-3">
             {numbers.map(factBox)}
           </div>
         ) : null}
         <Queries queries={orphanQueries} approximatePages={approx} />
-        {others.map(questionBlock)}
+        <Folded
+          title={`Found in your document (${fromDocument.length})`}
+          hint="Each answer shows its page. Open to check or change one."
+        >
+          {fromDocument.map(questionBlock)}
+        </Folded>
+        <Folded
+          title={`Not in the document, we assumed the usual answer (${assumedHere.length})`}
+          hint="These change the price little. Open to change one if you know better."
+        >
+          {assumedHere.map(questionBlock)}
+        </Folded>
         {key === "build" && leveled.length > 0 ? (
           <button
             type="button"

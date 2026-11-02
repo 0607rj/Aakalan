@@ -3382,6 +3382,11 @@ export interface components {
              * @default ask
              */
             on_upload: string;
+            /**
+             * Impact
+             * @default high
+             */
+            impact: string;
             /** Answered By Number */
             answered_by_number?: string | null;
             /** Only With Override */

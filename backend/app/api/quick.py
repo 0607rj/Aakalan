@@ -76,6 +76,7 @@ class QuestionOut(BaseModel):
     hide_when: dict[str, list[str | int]] = {}  # hidden when another answer is one of these
     default_by: dict[str, dict[str, str | int]] = {}  # default that follows another answer
     on_upload: str = "ask"  # document = on file upload, the document decides; never asked
+    impact: str = "high"  # low: after an upload, not asked when open, listed as assumed
     answered_by_number: str | None = None  # not asked when this number is known
     # asked only when this number is given (e.g. onsite_staff for the onsite period); the
     # price ignores the answer otherwise (OPEN_QUESTIONS 198)
@@ -267,6 +268,7 @@ def options(db: DbSession, user: CurrentUser, country: str = "india") -> QuickOp
                 default_by=q.default_by,
                 group=q.group,
                 on_upload=q.on_upload,
+                impact=q.impact,
                 answered_by_number=q.answered_by_number,
                 only_with_override=q.only_with_override,
                 must_choose=q.must_choose,
