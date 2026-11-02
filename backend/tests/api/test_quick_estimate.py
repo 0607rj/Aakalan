@@ -724,3 +724,17 @@ def test_users_price_smoothly(client: TestClient, admin_headers: H) -> None:
         overrides={"users_total": 15000, "peak_concurrent_users": 900},
     ).json()
     assert own["peak_online"] == 900
+
+
+def test_questions_say_when_they_apply(client: TestClient, admin_headers: H) -> None:
+    """The form asks a question only when it can change the price (OPEN_QUESTIONS 198): the
+    chatbot questions only with a chatbot, the helpdesk hours only with a helpdesk, the onsite
+    period only with a number of onsite staff, the server questions not for front end only."""
+    body = client.get("/quick-estimate/options", headers=admin_headers).json()
+    q = {x["key"]: x for x in body["questions"]}
+    assert q["chatbot_task"]["only_with_features"] == ["ai_chatbot"]
+    assert q["chatbot_volume"]["only_with_features"] == ["ai_chatbot"]
+    assert q["support_hours"]["hide_when"]["helpdesk_scope"] == ["no"]
+    assert q["onsite_period"]["only_with_override"] == "onsite_staff"
+    for key in ("old_data", "hosting", "availability", "disaster_site"):
+        assert q[key]["hide_when"]["build_part"] == ["frontend_only"]

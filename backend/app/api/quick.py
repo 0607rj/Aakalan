@@ -77,6 +77,9 @@ class QuestionOut(BaseModel):
     default_by: dict[str, dict[str, str | int]] = {}  # default that follows another answer
     on_upload: str = "ask"  # document = on file upload, the document decides; never asked
     answered_by_number: str | None = None  # not asked when this number is known
+    # asked only when this number is given (e.g. onsite_staff for the onsite period); the
+    # price ignores the answer otherwise (OPEN_QUESTIONS 198)
+    only_with_override: str | None = None
     must_choose: bool = False  # nothing pre-selected: the user must pick an answer
     # the numbers that follow answered_by_number, on a straight line between these points
     # (the form shows them as "we assume ..."; the API prices them the same way)
@@ -265,6 +268,7 @@ def options(db: DbSession, user: CurrentUser, country: str = "india") -> QuickOp
                 group=q.group,
                 on_upload=q.on_upload,
                 answered_by_number=q.answered_by_number,
+                only_with_override=q.only_with_override,
                 must_choose=q.must_choose,
                 curve=q.curve.points if q.curve else None,
             )

@@ -60,7 +60,8 @@ export const DOCUMENT_STEPS = ["Upload", "Check what we found", "Your cost"];
 /**
  * Questions that only matter given other answers or the chosen features (from the options
  * API): e.g. helpdesk hours only with a helpdesk team, hosting and fees only with support
- * after launch, the chatbot question only when an AI feature is chosen.
+ * after launch, the chatbot question only when an AI feature is chosen, the onsite period
+ * only when a number of onsite staff is given (`numbers`; OPEN_QUESTIONS 198).
  */
 export function relevantQuestions<
   T extends {
@@ -69,12 +70,14 @@ export function relevantQuestions<
     only_with_features?: string[];
     only_with_custom_types?: string[];
     hide_when?: Record<string, Choice[]>;
+    only_with_override?: string | null;
   },
 >(
   questions: T[],
   choices: Record<string, Choice>,
   features: string[],
   customTypes: string[],
+  numbers: Record<string, number> = {},
 ): T[] {
   const answer = (key: string) =>
     String(choices[key] ?? questions.find((q) => q.key === key)?.default);
@@ -83,6 +86,9 @@ export function relevantQuestions<
       values.map(String).includes(answer(key)),
     );
     if (hidden) return false;
+    if (q.only_with_override && numbers[q.only_with_override] === undefined) {
+      return false;
+    }
     const needFeatures = q.only_with_features ?? [];
     const needTypes = q.only_with_custom_types ?? [];
     if (needFeatures.length === 0 && needTypes.length === 0) return true;

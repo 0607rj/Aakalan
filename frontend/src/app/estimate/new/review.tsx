@@ -282,6 +282,7 @@ export function ReviewForm({
     choices,
     everything,
     customFeatures.map((c) => c.category),
+    overrides,
   );
   // Every question of a topic is shown (OPEN_QUESTIONS 177): the document's answer with its
   // page, else the usual answer to confirm; not when a stated number answers it, nor what the

@@ -9274,6 +9274,17 @@
             ],
             "title": "Answered By Number"
           },
+          "only_with_override": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Only With Override"
+          },
           "must_choose": {
             "type": "boolean",
             "title": "Must Choose",
