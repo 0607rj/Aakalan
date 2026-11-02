@@ -126,6 +126,10 @@ backend/
                           #   department" (or by the client's own name) answers those questions
                           #   (code, cited); support_terms.py: support hours and stated support
                           #   staff, with a pre-bid query on a contradiction (OPEN_QUESTIONS 157)
+                          #   coverage.py: requirement sentences ("shall", "must") no finding
+                          #   quotes, listed on the review screen as not priced yet; beside an
+                          #   AI reading the keyword reader adds features it missed
+                          #   (`found_by: keywords`; config `coverage`, OPEN_QUESTIONS 204)
                           #   stated_counts.py: "200 services" / "integration with 20 State
                           #   Systems" make that feature several modules, cited (config
                           #   `stated_counts`, OPEN_QUESTIONS 194)

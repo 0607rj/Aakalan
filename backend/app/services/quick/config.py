@@ -33,6 +33,10 @@ class Feature(Frozen):
     # offers (from a document), not only its own (services/extraction/tender.py)
     sized_by_features: bool = False
     has_screens: bool = True  # False: back-office work an app never shows (e.g. data import)
+    # a scope item that takes this feature's place when the reading cites only the same
+    # sentences for both (e.g. "sign in with Google" is social login, not staff single sign-on;
+    # OPEN_QUESTIONS 204)
+    yields_to: str | None = None
 
 
 LevelKey = Literal["basic", "standard", "advanced"]
@@ -645,6 +649,20 @@ class StatedCounts(Frozen):
     rules: list[StatedCountRule]
 
 
+class Coverage(Frozen):
+    """Every requirement sentence accounted for (OPEN_QUESTIONS 204): a sentence with one of
+    `modal_words` and none of `skip_words` that no finding of the reading quotes is listed on
+    the review screen as not priced yet."""
+
+    source: str
+    modal_words: list[str]
+    skip_words: list[str]  # the bidder's duties, procurement terms: not software to build
+    min_sentence_words: int = Field(ge=1)
+    # a quote covers a sentence when they share this many words in a row (or all of a shorter one)
+    shared_words: int = Field(ge=1)
+    max_listed: int = Field(ge=1)
+
+
 class ClientProvidedItem(Frozen):
     """Something the client may provide, and the answer that says so."""
 
@@ -802,6 +820,7 @@ class QuickConfig(Frozen):
     size_check: SizeCheck | None = None
     client_provided: ClientProvided | None = None
     stated_counts: StatedCounts | None = None  # OPEN_QUESTIONS 194
+    coverage: Coverage | None = None  # OPEN_QUESTIONS 204
     # catalog key -> plain words, for the standard blocks the form lets the user untick
     standard_blocks: dict[str, StandardBlock] = {}
     # the form's "Not mentioned: do you need these?" shortlist (feature keys, at most 8)

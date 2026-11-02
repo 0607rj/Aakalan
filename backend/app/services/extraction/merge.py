@@ -15,16 +15,21 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models import Document, Project
+from app.services.documents.parsing import Page, ParsedDocument
+from app.services.extraction.basic_reader import basic_read
 from app.services.extraction.client_provided import client_provides, find_client_provided
+from app.services.extraction.coverage import find_uncovered
 from app.services.extraction.staffing import apply_staffing
 from app.services.extraction.stated_counts import StatedCount, find_stated_counts
 from app.services.extraction.support_terms import find_support_hours, find_support_staff
 from app.services.extraction.tender import (
+    BASIC_READER_VERSION,
     FoundFeature,
     FoundValue,
     TenderExtraction,
     UnclearPoint,
     VerifiedEvidence,
+    verify_findings,
 )
 from app.services.quick.config import quick_config
 
@@ -65,6 +70,7 @@ def merge_extractions(
     merged.other_features, merged.not_priced, merged.payment_terms = [], [], None
     merged.scope, merged.scope_set_aside = [], []
     merged.staff_lines, merged.chatbot_buyer_systems, merged.staffing = [], None, None
+    merged.uncovered, merged.uncovered_more = [], 0
     scope: dict[str, Any] = {}
     set_aside: dict[str, Any] = {}
     others: dict[str, Any] = {}
@@ -162,7 +168,54 @@ def apply_code_checks(extraction: TenderExtraction, docs: list[Document]) -> Ten
     _support_terms(extraction, docs)
     apply_stated_counts(extraction, docs)
     apply_staffing(quick_config(), extraction, docs)  # staff lines and rules (OPEN_QUESTIONS 162)
+    _keyword_net(extraction, docs)
+    _coverage(extraction, docs)
     return extraction
+
+
+def _pages(doc: Document) -> list[tuple[int, str]]:
+    return [(int(p["page"]), str(p["text"])) for p in (doc.page_texts or [])]
+
+
+def _keyword_net(merged: TenderExtraction, docs: list[Document]) -> None:
+    """Beside an AI reading, the keyword reader (code, the same result every time) reads the
+    same pages; a listed feature it finds that the AI did not is added with `found_by`
+    "keywords", ticked as the keyword reader would tick it, so the review screen asks the
+    person to check it (OPEN_QUESTIONS 204). A corrigendum or pre-bid reply only changes what
+    the other documents ask for, so it adds nothing here."""
+    cfg = quick_config()
+    have = {f.key for f in merged.features}
+    for doc in docs:
+        pages = _pages(doc)
+        stored = getattr(doc, "extraction", None) or {}
+        if stored.get("reader") != "ai" or doc.kind in OVERRIDING_KINDS:
+            continue
+        if not pages:
+            continue
+        parsed = ParsedDocument(
+            kind="text", pages=[Page(n, t) for n, t in pages], approximate_pages=False
+        )
+        basic = verify_findings(
+            cfg,
+            parsed,
+            basic_read(cfg, parsed),
+            reader="basic",
+            version=BASIC_READER_VERSION,
+            document=doc.filename,
+        )
+        for f in basic.features:
+            if f.key not in have:
+                merged.features.append(f.model_copy(update={"found_by": "keywords"}))
+                have.add(f.key)
+
+
+def _coverage(merged: TenderExtraction, docs: list[Document]) -> None:
+    """Requirement sentences no finding quotes, listed for the review (OPEN_QUESTIONS 204)."""
+    cfg = quick_config().coverage
+    if cfg is None:
+        return
+    pages = [(doc.filename, _pages(doc)) for doc in docs]
+    merged.uncovered, merged.uncovered_more = find_uncovered(cfg, merged, pages)
 
 
 YES = "yes"

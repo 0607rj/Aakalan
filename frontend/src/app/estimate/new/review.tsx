@@ -159,6 +159,37 @@ function Folded({
   );
 }
 
+/** Requirement sentences no finding quotes (OPEN_QUESTIONS 204): shown so none is lost. */
+function Uncovered({
+  sentences,
+  more,
+}: {
+  sentences: TenderExtraction["uncovered"];
+  more: number;
+}) {
+  if (sentences.length === 0) return null;
+  return (
+    <Folded
+      title={`Not priced yet: ${sentences.length + more} requirement sentence${sentences.length + more === 1 ? "" : "s"} nothing above covers`}
+      hint="Each asks for something, and no feature or answer above quotes it. Most are covered by the standard blocks; if one is real extra work, add it as your own feature below."
+    >
+      {sentences.map((s, i) => (
+        <p key={i} className="text-sm">
+          <span className="font-mono text-xs text-muted-foreground">
+            {s.document ? `${s.document}, ` : ""}page {s.page}
+          </span>{" "}
+          {s.text}
+        </p>
+      ))}
+      {more > 0 ? (
+        <p className="text-sm text-muted-foreground">
+          … and {more} more in the document.
+        </p>
+      ) : null}
+    </Folded>
+  );
+}
+
 function toDisplay(fact: Fact, value: unknown): string {
   if (value === null || value === undefined) return ""; // not stated
   const n = typeof value === "number" ? value : Number(value);
@@ -423,6 +454,13 @@ export function ReviewForm({
         onTick={(k) => ticks.tick(k, changeChoice)}
         notIncluded={notIncluded}
       >
+        {found && found.found_by === "keywords" ? (
+          <span className="text-sm text-warning">
+            The AI did not list this; our keyword check found it in the
+            document. Check the page below and untick it if it is not part of
+            the work.
+          </span>
+        ) : null}
         {found && !found.suggested ? (
           <span className="text-sm text-warning">
             Mentioned only{" "}
@@ -822,17 +860,23 @@ export function ReviewForm({
                 </>
               }
               foundNote={
-                (extraction.not_priced ?? []).length > 0 ? (
-                  <div className="rounded-xl border border-dashed px-4 py-3 text-sm">
-                    <span className="font-medium">
-                      Asked for, but not priced by this estimate:
-                    </span>{" "}
-                    {(extraction.not_priced ?? [])
-                      .map((n) => n.label)
-                      .join(", ")}
-                    . Details on the last screen; price these separately.
-                  </div>
-                ) : null
+                <>
+                  {(extraction.not_priced ?? []).length > 0 ? (
+                    <div className="rounded-xl border border-dashed px-4 py-3 text-sm">
+                      <span className="font-medium">
+                        Asked for, but not priced by this estimate:
+                      </span>{" "}
+                      {(extraction.not_priced ?? [])
+                        .map((n) => n.label)
+                        .join(", ")}
+                      . Details on the last screen; price these separately.
+                    </div>
+                  ) : null}
+                  <Uncovered
+                    sentences={extraction.uncovered ?? []}
+                    more={extraction.uncovered_more ?? 0}
+                  />
+                </>
               }
               emptyHint={
                 extraction.reader === "ai"

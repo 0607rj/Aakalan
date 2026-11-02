@@ -2346,6 +2346,11 @@ export interface components {
              * @default []
              */
             covers: string[];
+            /**
+             * Found By
+             * @default reader
+             */
+            found_by: string;
         };
         /**
          * FoundInventory
@@ -4741,6 +4746,16 @@ export interface components {
             chatbot_buyer_systems?: components["schemas"]["FoundChatbotSystems"] | null;
             /** Staffing */
             staffing?: components["schemas"]["PricedStaff"][] | null;
+            /**
+             * Uncovered
+             * @default []
+             */
+            uncovered: components["schemas"]["UncoveredSentence"][];
+            /**
+             * Uncovered More
+             * @default 0
+             */
+            uncovered_more: number;
         };
         /** Timeline */
         Timeline: {
@@ -4933,6 +4948,21 @@ export interface components {
              * @default
              */
             answer: string;
+            /**
+             * Document
+             * @default
+             */
+            document: string;
+        };
+        /**
+         * UncoveredSentence
+         * @description A requirement sentence no finding of the reading quotes (OPEN_QUESTIONS 204).
+         */
+        UncoveredSentence: {
+            /** Page */
+            page: number;
+            /** Text */
+            text: string;
             /**
              * Document
              * @default

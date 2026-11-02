@@ -6784,6 +6784,11 @@
             "type": "array",
             "title": "Covers",
             "default": []
+          },
+          "found_by": {
+            "type": "string",
+            "title": "Found By",
+            "default": "reader"
           }
         },
         "type": "object",
@@ -12830,6 +12835,19 @@
               }
             ],
             "title": "Staffing"
+          },
+          "uncovered": {
+            "items": {
+              "$ref": "#/components/schemas/UncoveredSentence"
+            },
+            "type": "array",
+            "title": "Uncovered",
+            "default": []
+          },
+          "uncovered_more": {
+            "type": "integer",
+            "title": "Uncovered More",
+            "default": 0
           }
         },
         "type": "object",
@@ -13339,6 +13357,30 @@
         ],
         "title": "UnclearPoint",
         "description": "Stored form; quote is blank when it could not be found on the cited page."
+      },
+      "UncoveredSentence": {
+        "properties": {
+          "page": {
+            "type": "integer",
+            "title": "Page"
+          },
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "document": {
+            "type": "string",
+            "title": "Document",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "page",
+          "text"
+        ],
+        "title": "UncoveredSentence",
+        "description": "A requirement sentence no finding of the reading quotes (OPEN_QUESTIONS 204)."
       },
       "UserChange": {
         "properties": {

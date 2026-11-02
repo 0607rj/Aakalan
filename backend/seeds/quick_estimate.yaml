@@ -119,8 +119,9 @@ features:
     components: [integration_aadhaar_ekyc, integration_digilocker]
   - key: staff_login
     label: Log in with existing accounts
-    hint: Single sign-on with Google, Microsoft, the office directory or a government login (e.g. Parichay).
+    hint: "The organisation's own staff or officers sign in through its directory or single sign-on (Microsoft / Google Workspace, Active Directory, LDAP) or a government login (e.g. Parichay). Members of the public signing in with their personal Google or Microsoft account is the scope item social_login, not this feature."
     components: [integration_sso_identity]
+    yields_to: social_login
   - key: connect_existing
     hidden: true   # asked as its own question, not ticked
     label: Connect to existing systems (SAP, old software)
@@ -1575,6 +1576,17 @@ stated_counts:
       adjectives: [state, national, national/private, external, existing, departmental, third-party, third party, government, other, private, legacy, central]
       per_unit: 2
       level: standard
+
+# Every requirement sentence accounted for (OPEN_QUESTIONS 204): a sentence that asks for
+# something ("shall", "must", ...) and is quoted by no finding of the reading is listed on the
+# review screen as "not priced yet", so a requirement the reader skipped is never lost silently.
+coverage:
+  source: "placeholder, reasoned 2026-11-02 (OPEN_QUESTIONS 204): requirement words of SRS / RFP writing; skip words for the bidder's duties and bid terms; shared words so a quote of part of a sentence covers it"
+  modal_words: [shall, must, should, will be able to, is required to, are required to, should be able to]
+  skip_words: [bidder, bidders, tenderer, tenderers, contractor, vendor, consultant, supplier, service provider, system integrator, selected agency, successful agency, emd, earnest money, bank guarantee, performance security, bid security, penalty, liquidated damages, payment shall, invoice shall be raised, tender, bid shall, proposal shall, the agency shall, the firm shall, the company shall, jurisdiction, arbitration, force majeure, termination]
+  min_sentence_words: 5
+  shared_words: 6
+  max_listed: 40
 
 # Support hours and dedicated support staff a document states, read in code on the page text
 # (OPEN_QUESTIONS 157; RailTel e-Empanelment tender p.30: "Minimum 2 offsite support resources
