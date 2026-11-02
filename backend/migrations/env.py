@@ -38,6 +38,14 @@ def run_migrations_online() -> None:
     settings = get_settings()
     engine = make_engine(_url(), sqlite_vec_enabled=settings.sqlite_vec_enabled)
     with engine.connect() as connection:
+        sqlite = connection.dialect.name == "sqlite"
+        if sqlite:
+            # Batch mode drops and re-creates a table; with foreign keys on, that drop
+            # cascade-deletes every row pointing at it (2026-11-02 it emptied users and
+            # estimates). Off for the migration (a no-op inside a transaction, so set first),
+            # then checked after.
+            connection.exec_driver_sql("PRAGMA foreign_keys=OFF")
+            connection.commit()
         context.configure(
             connection=connection,
             target_metadata=target_metadata,
@@ -46,6 +54,11 @@ def run_migrations_online() -> None:
         )
         with context.begin_transaction():
             context.run_migrations()
+        if sqlite:
+            broken = connection.exec_driver_sql("PRAGMA foreign_key_check").fetchall()
+            connection.commit()
+            if broken:
+                raise RuntimeError(f"Migration left broken foreign keys: {broken[:5]}")
     engine.dispose()
 
 
