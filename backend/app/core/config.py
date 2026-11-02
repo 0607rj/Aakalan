@@ -68,6 +68,9 @@ class Settings(BaseSettings):
     # address you own. An account that already exists keeps its email and password.
     seed_user_email: str = "admin@example.com"
     seed_user_password: str = "admin123"
+    # Demo servers only (OPEN_QUESTIONS 201): true lets the seed create the first account with a
+    # weak SEED_USER_PASSWORD in production. Only that one account; sign-ups keep their rules.
+    seed_allow_weak_password: bool = False
     # The shared library of researched features (services/research/library.py); empty = the
     # file under seeds_dir. Tests point it at a temporary file.
     research_library_path: Path | None = None

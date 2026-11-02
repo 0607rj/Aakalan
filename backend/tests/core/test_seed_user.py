@@ -59,3 +59,14 @@ def test_production_refuses_the_example_password(session: Session, env: pytest.M
     get_settings.cache_clear()
     with pytest.raises(WeakSeedPasswordError):
         seed_demo_users(session, "admin123")
+
+
+def test_a_demo_server_may_allow_it_for_the_first_account_only(
+    session: Session, env: pytest.MonkeyPatch
+) -> None:
+    env.setenv("ENVIRONMENT", "production")
+    env.setenv("SEED_ALLOW_WEAK_PASSWORD", "true")
+    env.setenv("SEED_USER_EMAIL", "owner@mycompany.in")
+    get_settings.cache_clear()
+    seed_demo_users(session, "admin123")
+    assert emails(session) == ["owner@mycompany.in"]

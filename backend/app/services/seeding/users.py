@@ -33,7 +33,8 @@ def seed_demo_users(
     password. In production an account is never created with a weak SEED_USER_PASSWORD (the
     first account signs in to the server; with the example password anyone could). Once the
     organisation has its first account, changing SEED_USER_EMAIL adds no second one."""
-    production = get_settings().environment == "production"
+    settings = get_settings()
+    production = settings.environment == "production" and not settings.seed_allow_weak_password
     org = session.scalars(select(Organisation).where(Organisation.name == DEMO_ORG_NAME)).first()
     if org is None:
         org = Organisation(name=DEMO_ORG_NAME)
