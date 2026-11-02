@@ -303,7 +303,9 @@ def put_components(
 ) -> list[ComponentInstance]:
     """Replace the component mapping; saving it is the user's confirmation (rule 6)."""
     project = get_owned(db, Project, project_id, user.org_id)
-    keys = {c.key for c in catalog_for(db, user.org_id).components}
+    # only blocks the company can see: another company's shared block is never picked by key
+    # here (its name would label the line; OPEN_QUESTIONS 190)
+    keys = {c.key for c in catalog_for(db, user.org_id, shared=False).components}
     req_ids = {r.id for r in project.requirements}
     for c in body.components:
         if c.catalog_key not in keys:

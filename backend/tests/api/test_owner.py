@@ -153,3 +153,12 @@ def test_delete_one_of_several_keeps_the_company(
     assert project is not None and project.created_by is None
     listed = client.get("/quick-estimates", headers=login(client, staying_email)).json()
     assert [x["name"] for x in listed] == ["Made by the leaver"]
+
+
+def test_a_company_admin_cannot_publish_a_rate_card(client: TestClient, db: Session) -> None:
+    """Every sign-up is the admin of its own company; rate cards price every company, so only
+    the site owner publishes one (OPEN_QUESTIONS 190)."""
+    [admin] = _company(db)
+    headers = login(client, admin.email)
+    card = {"version": "v-not-allowed", "effective_date": "2026-01-01", "region": "india"}
+    assert client.post("/admin/rate-cards", json=card, headers=headers).status_code == 403

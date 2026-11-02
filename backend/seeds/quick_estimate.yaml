@@ -216,8 +216,10 @@ features:
       advanced: "Live tracking, routes and map layers"
   - key: notifications
     label: SMS, email and app notifications
-    hint: OTP login, reminders, booking confirmations and alerts by SMS, email or push.
-    components: [notifications, integration_sms_email_gateway]
+    hint: OTP login, reminders, booking confirmations and alerts by email, SMS or push.
+    # OPEN_QUESTIONS 196: email and in-app alerts are the notifications block; SMS needs a
+    # messaging service connection, added by the SMS / WhatsApp / OTP choices
+    components: [notifications]
     counts_for_size: false
   - key: search
     label: Search
@@ -343,7 +345,7 @@ sizing:
       project_size: small_medium
       label: Small to medium
       base_size: S
-      base_components: [discovery_requirement_study, ui_ux_design, user_management_rbac, responsive_frontend, security_hardening, notifications, functional_testing_uat_support, documentation_manuals, devops_cicd_setup]
+      base_components: [ui_ux_design, user_management_rbac, responsive_frontend, security_hardening, notifications, functional_testing_uat_support, documentation_manuals, devops_cicd_setup]
       answers: {training_sessions: 2, training_outstation_sessions: 0, hypercare_weeks: 2, non_prod_environments: 1}
     - max_points: 20
       project_size: medium
@@ -403,6 +405,28 @@ questions:
       - {value: app, label: Mobile app only, hint: "An app for Android and iPhone, with a simple web admin panel to manage it", add_features: {mobile_app: null}, answers: {}}
       # retired (OPEN_QUESTIONS 173): where people use it is known; kept so older estimates still price
       - {value: not_sure, label: Not sure, hint: "We price a website and show a wider range; the price of adding an app is shown with the estimate", unsure: true, retired: true, answers: {}}
+  build_part:
+    # parameters v31+ (OPEN_QUESTIONS 192): only the screens over the client's existing server
+    # side and APIs (a UI / front-end rebuild). Front end only hides the questions about servers,
+    # old data and the helpdesk (`hide_when` + `default_by` on each: their answer is then fixed)
+    label: What needs to be built?
+    topic: build
+    default: whole
+    options:
+      - {value: whole, label: The whole software, hint: "Screens, the server side and the database. Pick this if unsure", answers: {build_layers: full}}
+      - {value: frontend_only, label: Only the screens (front end), hint: "A new look and new screens over your existing server side and APIs, e.g. a UI redesign or an app rebuilt on the same backend", answers: {build_layers: frontend_only}, drop_components: [audit_trail_logging, integration_sms_email_gateway, performance_load_testing]}
+  builder:
+    # parameters v32+ (OPEN_QUESTIONS 195): who builds it. Every person's day rate × the
+    # builder's factor (parameters builder.rate_factor_by_builder); hosting and licences are not
+    # changed. A mid-size firm is the calibrated level (factor 1), so it is the default.
+    label: Who will build it?
+    topic: build
+    default: mid_firm
+    options:
+      - {value: freelancer, label: A freelancer, hint: "One or two people on their own. The lowest rates, best for small, simple software", answers: {builder_type: freelancer}}
+      - {value: small_firm, label: A small company, hint: "Under about 50 people", answers: {builder_type: small_firm}}
+      - {value: mid_firm, label: A mid-size company, hint: "About 50 to 1,000 people, the usual bidder on government tenders. Pick this if unsure", answers: {builder_type: mid_firm}}
+      - {value: large_firm, label: A large IT company, hint: "Over 1,000 people, e.g. a national IT services firm. The highest rates", answers: {builder_type: large_firm}}
   scale:
     label: How many people will use it?
     topic: users
@@ -458,6 +482,8 @@ questions:
     topic: build
     group: detail  # optional: skipped = the usual answer, which is priced
     default: "no"
+    hide_when: {build_part: [frontend_only]}  # the client's database stays where it is
+    default_by: {build_part: {frontend_only: "no"}}
     options:
       - {value: "no", label: "No", hint: "Starting fresh", answers: {}}
       - {value: little, label: "Yes, a little", hint: "One or two spreadsheets", add_features: {old_data: basic}, answers: {}}
@@ -483,6 +509,8 @@ questions:
     topic: hosting
     group: detail  # optional: skipped = the usual answer, which is priced
     default: aws
+    hide_when: {build_part: [frontend_only]}  # the screens run on the client's servers and in the app stores
+    default_by: {build_part: {frontend_only: existing}}
     options:
       - {value: aws, label: "Public cloud (Amazon, Microsoft or Google)", hint: "Rented servers in an Indian data centre; the monthly cloud bill is part of the cost", answers: {hosting_provider: aws, hosting_in_scope: true}}
       - {value: indian_cloud, label: Government-approved Indian cloud, hint: "A MeitY-empanelled cloud (e.g. for government data); the monthly bill is part of the cost", answers: {hosting_provider: indian_cloud, hosting_in_scope: true}}
@@ -509,7 +537,8 @@ questions:
     topic: support
     group: document   # not asked on the form; read from an uploaded document, else the usual answer
     default: "no"
-    hide_when: {support_years: [0]}
+    hide_when: {support_years: [0], build_part: [frontend_only]}
+    default_by: {build_part: {frontend_only: "no"}}
     options:
       - {value: "no", label: "No", hint: "The maintenance team handles support requests", answers: {helpdesk_in_scope: false}}
       - {value: "yes", label: "Yes", hint: "A separate helpdesk team answers users", answers: {helpdesk_in_scope: true}}
@@ -532,6 +561,8 @@ questions:
     # asked on the form since parameters v26 (OPEN_QUESTIONS 171): it decides one server or two
     group: detail
     default: normal
+    hide_when: {build_part: [frontend_only]}
+    default_by: {build_part: {frontend_only: normal}}
     options:
       # plain words (OPEN_QUESTIONS 173); servers follow from the answer and the load (row 171)
       - {value: basic, label: Not a problem, hint: "Short breaks are fine, e.g. an office tool or an information site (99% up)", answers: {uptime_sla: "99.0"}}
@@ -543,9 +574,26 @@ questions:
     topic: hosting
     group: document   # not asked on the form; read from an uploaded document, else the usual answer
     default: "no"
+    hide_when: {build_part: [frontend_only]}
+    default_by: {build_part: {frontend_only: "no"}}
     options:
       - {value: "no", label: "No", hint: "Backups are enough", answers: {disaster_recovery: false}}
       - {value: "yes", label: "Yes", hint: "A standby copy in another place, ready to take over (disaster recovery)", answers: {disaster_recovery: true}}
+  payment_terms:
+    # OPEN_QUESTIONS 196: how the builder is paid sets the working capital (the builder's cost of
+    # funding the work until paid). Private work usually pays part in advance on the invoice;
+    # a tender pays after milestones, months later. A document's own schedule wins, and a
+    # document read without one counts as a tender (prefill). Paid after signed-off stages, the
+    # first of which is the requirement study (SRS): milestones add it on any project size.
+    label: How will the builder be paid?
+    topic: contract
+    group: detail
+    # OPEN_QUESTIONS 197: on upload too, the document decides (a tender pays after milestones)
+    on_upload: document
+    default: advance
+    options:
+      - {value: advance, label: "Part in advance, the rest in stages", hint: "Usual for private work: about 30% at the start, 40% halfway, 30% on delivery, paid on the invoice", answers: {payment_schedule: [{at_build_fraction: 0, percent: 0.3}, {at_build_fraction: 0.5, percent: 0.4}, {at_build_fraction: 1, percent: 0.3}], payment_delay_months: 0}}
+      - {value: milestones, label: "After milestones, as in tenders", hint: "Paid after each stage is accepted, often months later. The builder funds the work meanwhile", answers: {}, extra_components: [discovery_requirement_study]}
   penalties:
     # a reserve for penalties is priced only when the contract has them, cited from the document
     # (parameter sets v19+); an older reading's "not priced: penalties" quotes count too
@@ -568,7 +616,11 @@ questions:
     label: What web address will it use?
     topic: hosting
     group: document
+    # OPEN_QUESTIONS 197: moves the price under 5%; on upload only shown when the document says
+    on_upload: document
     default: commercial
+    hide_when: {build_part: [frontend_only]}  # the client's existing address and certificate
+    default_by: {build_part: {frontend_only: client}}
     options:
       - {value: commercial, label: "A .in or .com address", hint: "Bought from a registrar every year", answers: {web_domain: commercial}}
       - {value: gov_in, label: "A .gov.in or .nic.in address", hint: "Free from NIC for government bodies", answers: {web_domain: gov_in}}
@@ -579,7 +631,11 @@ questions:
     label: Which SSL certificate does it need?
     topic: hosting
     group: document
+    # OPEN_QUESTIONS 197: moves the price under 5%; on upload only shown when the document says
+    on_upload: document
     default: free
+    hide_when: {build_part: [frontend_only]}  # the client's existing address and certificate
+    default_by: {build_part: {frontend_only: client}}
     silent_means_usual: true
     options:
       - {value: free, label: "A free certificate (Let's Encrypt)", hint: "Domain-validated, renewed automatically", answers: {ssl_type: dv_free}}
@@ -607,6 +663,8 @@ questions:
     # not asked on the form (OPEN_QUESTIONS 173): it moved the price by under 1% on typical
     # projects; read from an uploaded document, else the usual answer
     group: document
+    # OPEN_QUESTIONS 197: moves the price under 5%; on upload only shown when the document says
+    on_upload: document
     default: some
     options:
       - {value: ready, label: "Yes, the design is ready", hint: "Screens already designed (e.g. in Figma), or a brand guide to follow closely", component_complexity: {ui_ux_design: low}, answers: {}}
@@ -646,6 +704,8 @@ questions:
     label: How much help do your users need at launch?
     topic: support
     group: document   # not asked on the form; read from an uploaded document, else the usual answer
+    # OPEN_QUESTIONS 197: moves the price under 5%; on upload only shown when the document says
+    on_upload: document
     default: usual
     options:
       - {value: none, label: None, hint: "Users learn it themselves; normal support starts at launch", answers: {training_sessions: 0, training_outstation_sessions: 0, hypercare_weeks: 0}}
@@ -813,6 +873,12 @@ scope:
     label: Notifications
     feature: notifications
     items:
+      - key: sms
+        label: Messages by SMS
+        hint: "Reminders and alerts sent as text messages (each message is paid to the SMS provider)."
+        adds: {integration_sms_email_gateway: basic}
+        note: Priced as connecting an SMS service, plus the message fees.
+        keywords: [sms, text message, text messages]
       - key: whatsapp
         label: Messages on WhatsApp
         hint: "Alerts and replies sent on WhatsApp."
@@ -1366,7 +1432,7 @@ keywords:
     online_store: [online store, e-commerce, ecommerce, shopping cart, cart and checkout, product catalogue]
     crm: [crm, customer relationship, lead management, leads, sales pipeline]
     mobile_app: [mobile app, mobile application, android app, ios app, android, iphone app]
-    notifications: [sms, push notification, push notifications, email alerts, sms alerts, otp, reminders by sms]
+    notifications: [sms, push notification, push notifications, email alerts, sms alerts, reminders by sms]  # OTP is its own item (sign-in), OPEN_QUESTIONS 196
     maps: [maps, map view, gis, geo-tagging, geotagging, geolocation, location tracking, gps tracking, google maps, nearby search]
     search: [search functionality, advanced search, search facility, full-text search]
     marketplace: [multi-vendor, multi vendor, multivendor, marketplace, seller onboarding, seller dashboard, vendor payout, vendor payouts, seller payout, seller payouts, split payment, split payments, settlement to sellers]
@@ -1436,6 +1502,9 @@ keywords:
     # a named CMS only: "content management" alone is a feature every portal has, not a platform
     build_type:
       cms: [drupal, wordpress, joomla]
+    # parameters v31+ (OPEN_QUESTIONS 192): only the screens over an existing server side
+    build_part:
+      frontend_only: [front end only, frontend only, front-end only, only the front end, only the frontend, only the front-end, ui only, only the ui, only ui, ui redesign, redesign the ui, redesign the app, app redesign, existing backend, existing back end, existing back-end, existing apis, backend already exists, backend stays, no backend, no back end, no backend changes, backend unchanged, keep the existing backend]
     penalties:
       "yes": [liquidated damages, penalty clause, penalties for delay]
     web_domain:
@@ -1472,6 +1541,31 @@ client_provided:
   own_words: [cloud, data centre, data center, data centres, data centers, servers, server, infrastructure, premises]
   by_name: [provisioned by, hosted by, arranged by]
   not_client: [bidder, bidders, vendor, agency, contractor, service provider, system integrator, msp, csp, aws, amazon, azure, microsoft, google, gcp, oracle, ibm, meity]
+
+# Counts a document states for what is built (services/extraction/stated_counts.py,
+# OPEN_QUESTIONS 194): "200 services" (a table cell) or "API based integration with 20 State
+# Systems" make that feature ceil(count / per_unit) modules at `level`, citing the line; the
+# largest count stated wins, at most sizing.max_units. Strict on purpose: a count at the start
+# of a longer line is a table's item number, a count after a dot is a section number, and only
+# the listed words may stand between the number and the noun. The person checks every count on
+# the review form. per_unit follows the form's own level words: a standard "forms" module is
+# "several forms" (about 5), a standard connection is "one or two" systems (2).
+stated_counts:
+  source: "placeholder, reasoned 2026-11-02 (OPEN_QUESTIONS 194): per_unit from the level words of the form (several = about 5; one or two = 2); phrase lists from the 8 production-path tenders' text"
+  max_count: 2000
+  max_line_words_at_start: 3
+  rules:
+    - feature: online_forms
+      nouns: [services, e-services, forms]
+      adjectives: [more, citizen, online, public, government, application, service]
+      per_unit: 5
+      level: standard
+    - feature: connect_existing
+      after: [integration with, integrations with, integrate with, integrated with, interface with, interfaces with, interfacing with, connect with, connected with, connectivity with]
+      nouns: [systems, applications, apis, portals, databases]
+      adjectives: [state, national, national/private, external, existing, departmental, third-party, third party, government, other, private, legacy, central]
+      per_unit: 2
+      level: standard
 
 # Support hours and dedicated support staff a document states, read in code on the page text
 # (OPEN_QUESTIONS 157; RailTel e-Empanelment tender p.30: "Minimum 2 offsite support resources

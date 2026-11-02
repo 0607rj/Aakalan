@@ -40,7 +40,10 @@ def bearer(token: str) -> H:
     return {"Authorization": f"Bearer {token}"}
 
 
-def signup(client: TestClient, email: str, company: str, password: str = "long-enough-1") -> int:
+PW = "long-enough-1"
+
+
+def signup(client: TestClient, email: str, company: str, password: str = PW) -> int:
     body = {"full_name": "Asha", "company": company, "email": email, "password": password}
     return client.post("/auth/signup", json=body).status_code
 
@@ -50,14 +53,14 @@ def test_signup_verify_and_sign_in(client: TestClient, mail: Mailbox) -> None:
     login = {"email": "asha@newco.example", "password": "long-enough-1"}
     r = client.post("/auth/login", json=login)
     assert r.status_code == 403 and r.json()["detail"] == "Email not verified"
-    wrong = client.post("/auth/verify-email", json={"email": login["email"], "code": "000000"})
+    wrong = client.post("/auth/verify-email", json={**login, "code": "000000"})
     assert wrong.status_code == 400
     code = mail.code("asha@newco.example")
-    ok = client.post("/auth/verify-email", json={"email": login["email"], "code": code})
+    ok = client.post("/auth/verify-email", json={**login, "code": code})
     assert ok.status_code == 200
     me = client.get("/auth/me", headers=bearer(ok.json()["access_token"])).json()
     assert (me["org_name"], me["role"]) == ("Newco Systems", "admin")
-    again = client.post("/auth/verify-email", json={"email": login["email"], "code": code})
+    again = client.post("/auth/verify-email", json={**login, "code": code})
     assert again.status_code == 400  # a code works once
     assert client.post("/auth/login", json=login).status_code == 200
     # the new company sees none of the demo company's estimates
@@ -69,7 +72,9 @@ def test_signup_with_name_email_and_password_only(client: TestClient, mail: Mail
     body = {"full_name": "Ravi", "email": "ravi@solo.example", "password": "long-enough-1"}
     assert client.post("/auth/signup", json=body).status_code == 201
     code = mail.code("ravi@solo.example")
-    ok = client.post("/auth/verify-email", json={"email": "ravi@solo.example", "code": code})
+    ok = client.post(
+        "/auth/verify-email", json={"email": "ravi@solo.example", "code": code, "password": PW}
+    )
     me = client.get("/auth/me", headers=bearer(ok.json()["access_token"])).json()
     assert (me["full_name"], me["org_name"], me["role"]) == ("Ravi", "ravi@solo.example", "admin")
 
@@ -77,9 +82,12 @@ def test_signup_with_name_email_and_password_only(client: TestClient, mail: Mail
 def test_signup_refusals(client: TestClient, mail: Mailbox) -> None:
     assert signup(client, "taken@newco.example", "Taken Co") == 201
     code = mail.code("taken@newco.example")
-    client.post("/auth/verify-email", json={"email": "taken@newco.example", "code": code})
+    client.post(
+        "/auth/verify-email", json={"email": "taken@newco.example", "code": code, "password": PW}
+    )
     assert signup(client, "taken@newco.example", "Other Co") == 409  # verified account
-    assert signup(client, "someone@else.example", "taken co") == 409  # company name in use
+    # company names may repeat: a sign-up never learns which companies use Aakalan
+    assert signup(client, "someone@else.example", "taken co") == 201
     assert signup(client, "short@newco.example", "Short Co", password="short") == 422
     assert signup(client, "not-an-email", "Bad Co") == 422
     # not verified yet: signing up again sends a new code
@@ -92,7 +100,11 @@ def test_forgot_and_reset_password(client: TestClient, mail: Mailbox) -> None:
     assert signup(client, "reset@newco.example", "Reset Co") == 201
     v = client.post(
         "/auth/verify-email",
-        json={"email": "reset@newco.example", "code": mail.code("reset@newco.example")},
+        json={
+            "email": "reset@newco.example",
+            "code": mail.code("reset@newco.example"),
+            "password": PW,
+        },
     )
     old = v.json()["access_token"]
     unknown = client.post("/auth/password/forgot", json={"email": "nobody@x.example"})
@@ -114,14 +126,20 @@ def test_a_code_stops_after_too_many_tries(client: TestClient, mail: Mailbox) ->
     assert signup(client, "tries@newco.example", "Tries Co") == 201
     code = mail.code("tries@newco.example")
     for _ in range(get_settings().otp_max_attempts):
-        bad = client.post("/auth/verify-email", json={"email": "tries@newco.example", "code": "1"})
+        bad = client.post(
+            "/auth/verify-email", json={"email": "tries@newco.example", "code": "1", "password": PW}
+        )
         assert bad.status_code == 400
-    late = client.post("/auth/verify-email", json={"email": "tries@newco.example", "code": code})
+    late = client.post(
+        "/auth/verify-email", json={"email": "tries@newco.example", "code": code, "password": PW}
+    )
     assert late.status_code == 400
     resend = client.post("/auth/verify-email/resend", json={"email": "tries@newco.example"})
     assert resend.status_code == 200
     fresh = mail.code("tries@newco.example")
-    ok = client.post("/auth/verify-email", json={"email": "tries@newco.example", "code": fresh})
+    ok = client.post(
+        "/auth/verify-email", json={"email": "tries@newco.example", "code": fresh, "password": PW}
+    )
     assert ok.status_code == 200
 
 
@@ -136,7 +154,11 @@ def test_change_password(client: TestClient, mail: Mailbox) -> None:
     assert signup(client, "change@newco.example", "Change Co") == 201
     v = client.post(
         "/auth/verify-email",
-        json={"email": "change@newco.example", "code": mail.code("change@newco.example")},
+        json={
+            "email": "change@newco.example",
+            "code": mail.code("change@newco.example"),
+            "password": PW,
+        },
     )
     old = v.json()["access_token"]
     wrong = {"current_password": "nope", "new_password": "another-pass-2"}
@@ -146,3 +168,22 @@ def test_change_password(client: TestClient, mail: Mailbox) -> None:
     assert r.status_code == 200
     assert client.get("/auth/me", headers=bearer(old)).status_code == 401
     assert client.get("/auth/me", headers=bearer(r.json()["access_token"])).status_code == 200
+
+
+def test_signing_up_again_cannot_take_a_waiting_account(client: TestClient, mail: Mailbox) -> None:
+    """Someone signs up with another person's address and their own password: when the real
+    person enters the emailed code with their password, the account is not verified with the
+    other password, and it never can be by the code alone (OPEN_QUESTIONS 190)."""
+    assert signup(client, "victim@newco.example", "Victim Co", password="victim-pass-1") == 201
+    assert signup(client, "victim@newco.example", "Evil Co", password="attacker-pass") == 201
+    code = mail.code("victim@newco.example")
+    body = {"email": "victim@newco.example", "code": code, "password": "victim-pass-1"}
+    r = client.post("/auth/verify-email", json=body)
+    assert r.status_code == 400 and "password" in r.json()["detail"]
+    login = {"email": "victim@newco.example", "password": "attacker-pass"}
+    assert client.post("/auth/login", json=login).status_code == 403  # still not verified
+    # signing up again with their own password, the real person gets the account
+    assert signup(client, "victim@newco.example", "Victim Co", password="victim-pass-1") == 201
+    body["code"] = mail.code("victim@newco.example")
+    assert client.post("/auth/verify-email", json=body).status_code == 200
+    assert client.post("/auth/login", json=login).status_code == 401

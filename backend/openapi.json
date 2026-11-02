@@ -73,7 +73,7 @@
           "auth"
         ],
         "summary": "Signup",
-        "description": "Your own account (and private space); sign in after confirming the emailed code.",
+        "description": "Your own account (and private space); sign in after confirming the emailed code. A few\nsign-ups an hour from one address (settings `signup_ip_max_per_hour`).",
         "operationId": "signup_auth_signup_post",
         "requestBody": {
           "content": {
@@ -115,7 +115,7 @@
           "auth"
         ],
         "summary": "Verify Email",
-        "description": "Confirm the address with the emailed code; signs you in.",
+        "description": "Confirm the address with the emailed code and the sign-up's password; signs you in.",
         "operationId": "verify_email_auth_verify_email_post",
         "requestBody": {
           "content": {
@@ -1546,6 +1546,7 @@
           "admin"
         ],
         "summary": "Create Rate Card",
+        "description": "A new rate card for every company: the site owner only (a company admin is anyone who\nsigned up, so it must not change the rates other companies are priced with).",
         "operationId": "create_rate_card_admin_rate_cards_post",
         "requestBody": {
           "content": {
@@ -2843,6 +2844,7 @@
           "settings"
         ],
         "summary": "Read Settings",
+        "description": "The company's settings; the margin only for finance and admin.",
         "operationId": "read_settings_settings_get",
         "responses": {
           "200": {
@@ -3498,6 +3500,133 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/TokenResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/owner/shared-blocks": {
+      "get": {
+        "tags": [
+          "owner"
+        ],
+        "summary": "Shared Blocks",
+        "description": "The shared library, the blocks waiting for approval first.",
+        "operationId": "shared_blocks_owner_shared_blocks_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SharedBlockRow"
+                  },
+                  "type": "array",
+                  "title": "Response Shared Blocks Owner Shared Blocks Get"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
+    "/owner/shared-blocks/{block_id}/approve": {
+      "post": {
+        "tags": [
+          "owner"
+        ],
+        "summary": "Approve Block",
+        "description": "Let the block price other companies' features (under an anonymous key).",
+        "operationId": "approve_block_owner_shared_blocks__block_id__approve_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "block_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Block Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SharedBlockRow"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/owner/shared-blocks/{block_id}/retire": {
+      "post": {
+        "tags": [
+          "owner"
+        ],
+        "summary": "Retire Block",
+        "description": "Stop offering the block to anyone; estimates that used it keep their own copy.",
+        "operationId": "retire_block_owner_shared_blocks__block_id__retire_post",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "block_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Block Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SharedBlockRow"
                 }
               }
             }
@@ -11645,6 +11774,60 @@
         ],
         "title": "SecondOpinionState"
       },
+      "SharedBlockRow": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "section": {
+            "type": "string",
+            "title": "Section"
+          },
+          "method": {
+            "type": "string",
+            "title": "Method"
+          },
+          "status": {
+            "type": "string",
+            "title": "Status"
+          },
+          "days": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object",
+            "title": "Days"
+          },
+          "sources": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Sources"
+          },
+          "created_at": {
+            "type": "string",
+            "title": "Created At"
+          }
+        },
+        "type": "object",
+        "required": [
+          "id",
+          "name",
+          "section",
+          "method",
+          "status",
+          "days",
+          "sources",
+          "created_at"
+        ],
+        "title": "SharedBlockRow"
+      },
       "SignupRequest": {
         "properties": {
           "full_name": {
@@ -13318,12 +13501,19 @@
             "maxLength": 12,
             "minLength": 1,
             "title": "Code"
+          },
+          "password": {
+            "type": "string",
+            "maxLength": 128,
+            "minLength": 1,
+            "title": "Password"
           }
         },
         "type": "object",
         "required": [
           "email",
-          "code"
+          "code",
+          "password"
         ],
         "title": "VerifyEmailRequest"
       }

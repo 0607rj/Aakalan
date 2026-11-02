@@ -59,8 +59,8 @@ requirements:
     key: otp_codes
     offered: true
     affects_estimate_when_confirmed: true
-    pricing: already_included
-    explanation: The notifications feature already brings the SMS / email gateway.
+    pricing: adds_work
+    explanation: Connects an SMS / email service; notifications alone no longer bring it (OPEN_QUESTIONS 196).
   - id: JOB-3.9
     text: Candidates shall be able to sign in with Google.
     classification: explicit

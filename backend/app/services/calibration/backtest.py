@@ -369,7 +369,7 @@ def benchmark_request(
     """The benchmark scope as the app's form: features at the level matching the project's
     size class, the AI use of the award year, and the extras a government contract above
     small size includes (an independent security audit, formal reports and review meetings)
-    asked for explicitly."""
+    asked for explicitly; a government contract is paid after milestones."""
     m = b.model
     size = m.size or "medium"
     choices: dict[str, str | int] = {
@@ -379,6 +379,8 @@ def benchmark_request(
         "hosting": "aws" if m.hosting_included else "existing",
         "helpdesk_scope": "yes" if m.helpdesk_included else "no",
     }
+    if m.buyer == GOVERNMENT:  # pays after milestones, months later (OPEN_QUESTIONS 196)
+        choices["payment_terms"] = "milestones"
     if m.buyer == GOVERNMENT and size != "small":
         choices["security_audit"] = "yes"
         choices["reporting"] = "yes"

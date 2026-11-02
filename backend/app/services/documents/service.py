@@ -14,6 +14,7 @@ from app.core.config import get_settings
 from app.core.tenancy import get_owned, scoped
 from app.llm.client import LLMClient, LLMNotConfiguredError, LLMRefusedError, get_llm_client
 from app.models import Document, Project, User
+from app.services import limits
 from app.services.documents.parsing import (
     SCANNED_NEEDS_AI,
     DocumentError,
@@ -65,6 +66,15 @@ def upload_document(
     try:
         llm = get_llm_client()
     except LLMNotConfiguredError:
+        llm = None
+    if llm is not None and limits.ai_wait(db, user.org_id):
+        # today's AI readings are used up (settings ai_*_max_per_day): keywords pre-fill the form
+        if parsed.scanned:
+            raise HTTPException(
+                status.HTTP_429_TOO_MANY_REQUESTS,
+                "Your company has used today's AI readings, and a scanned PDF needs one. "
+                "Try again tomorrow, or upload a text PDF or the Word version.",
+            )
         llm = None
     if parsed.scanned and llm is None:
         raise HTTPException(status.HTTP_400_BAD_REQUEST, SCANNED_NEEDS_AI)
@@ -135,6 +145,7 @@ def upload_document(
     try:
         if llm is None:
             raise LLMNotConfiguredError("no AI key")
+        limits.record_ai(db, user.org_id)
         result = ai_read(llm, cfg, parsed, pdf=data if parsed.scanned else None)
     except LLMNotConfiguredError:
         # No AI key: the basic keyword reader still pre-fills the form, with citations.

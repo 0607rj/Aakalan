@@ -17,7 +17,7 @@ from app.models import (
     TaxonomyVersion,
 )
 from app.services.engine import reference as ref
-from app.services.research.library import shared_blocks
+from app.services.research.library import shared_blocks, shared_key
 from app.services.seeding.database import rate_card_model
 
 DEFAULT_REGION = "india"
@@ -94,7 +94,8 @@ def catalog_for(
     """The published catalog plus researched blocks (services/research): the organisation's
     active ones, then the shared library's (only while sharing is on), less any the
     organisation retired. `shared=False` for anything listed to a user: other companies'
-    blocks price and match features quietly, never shown by name (OPEN_QUESTIONS 185). The
+    blocks price and match features quietly, never shown by name (OPEN_QUESTIONS 185), under
+    an anonymous key (OPEN_QUESTIONS 190; the old key still prices estimates made before). The
     estimate's snapshot stores the merged list, so an estimate never changes when blocks are
     researched, shared or retired later."""
     catalog = get_catalog(db, version)
@@ -106,12 +107,15 @@ def catalog_for(
     others = shared_blocks(db) if shared else []
     keys = {c.key for c in catalog.components} | {r.key for r in rows if r.status == "retired"}
     extra: list[ref.CatalogComponent] = []
-    for key, spec in [
-        *((r.key, r.spec) for r in rows if r.status == "active"),
-        *((s.key, s.spec) for s in others),
-    ]:
-        if key not in keys and spec is not None:
-            extra.append(ref.CatalogComponent.model_validate(spec))
+    for r in rows:
+        if r.status == "active" and r.key not in keys and r.spec is not None:
+            extra.append(ref.CatalogComponent.model_validate(r.spec))
+            keys.add(r.key)
+    for s in others:
+        if s.key in keys:  # the company's own block (or one it retired) comes first
+            continue
+        for key in (shared_key(s.key), s.key):  # the anonymous key first: matching picks it
+            extra.append(ref.CatalogComponent.model_validate({**s.spec, "key": key}))
             keys.add(key)
     if not extra:
         return catalog

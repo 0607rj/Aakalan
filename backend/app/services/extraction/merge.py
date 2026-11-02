@@ -17,8 +17,10 @@ from sqlalchemy.orm import Session
 from app.models import Document, Project
 from app.services.extraction.client_provided import client_provides, find_client_provided
 from app.services.extraction.staffing import apply_staffing
+from app.services.extraction.stated_counts import StatedCount, find_stated_counts
 from app.services.extraction.support_terms import find_support_hours, find_support_staff
 from app.services.extraction.tender import (
+    FoundFeature,
     FoundValue,
     TenderExtraction,
     UnclearPoint,
@@ -158,6 +160,7 @@ def apply_code_checks(extraction: TenderExtraction, docs: list[Document]) -> Ten
     _answers_from_topics(extraction)
     _client_provided(extraction, docs)
     _support_terms(extraction, docs)
+    apply_stated_counts(extraction, docs)
     apply_staffing(quick_config(), extraction, docs)  # staff lines and rules (OPEN_QUESTIONS 162)
     return extraction
 
@@ -204,6 +207,42 @@ def _client_provided(merged: TenderExtraction, docs: list[Document]) -> None:
             continue
         option = cfg.questions[key].option(value)
         merged.choices[key] = FoundValue(value=value, label=option.label, evidence=[evidence])
+
+
+def apply_stated_counts(
+    merged: TenderExtraction, docs: list[Document] | list[tuple[str, list[tuple[int, str]]]]
+) -> None:
+    """Counts the documents state for what is built ("200 services", "integration with 20 State
+    Systems") make that feature several modules at the rule's level, citing the line
+    (services/extraction/stated_counts.py, OPEN_QUESTIONS 194). A count only raises the
+    modules the reading found, never lowers them. `docs`: documents, or (file name, pages)."""
+    cfg = quick_config()
+    rules = cfg.stated_counts
+    if rules is None:
+        return
+    found: dict[str, StatedCount] = {}
+    for doc in docs:
+        if isinstance(doc, tuple):
+            filename, pages = doc
+        else:
+            filename = doc.filename
+            pages = [(int(p["page"]), str(p["text"])) for p in (doc.page_texts or [])]
+        for key, hit in find_stated_counts(rules, pages, filename, cfg.sizing.max_units).items():
+            if key not in found or hit.count > found[key].count:
+                found[key] = hit
+    features = {f.key: f for f in merged.features}
+    for key, hit in found.items():
+        feature = features.get(key)
+        if feature is None:
+            feature = FoundFeature(key=key, label=cfg.feature(key).label, evidence=[])
+            merged.features.append(feature)
+        if hit.units <= feature.story_units:
+            continue
+        feature.story_units = hit.units
+        feature.story_level = hit.level  # type: ignore[assignment]
+        feature.suggested = True
+        if hit.evidence not in feature.evidence:
+            feature.evidence.append(hit.evidence)
 
 
 def _support_terms(merged: TenderExtraction, docs: list[Document]) -> None:

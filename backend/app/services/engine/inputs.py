@@ -138,6 +138,9 @@ class Questionnaire(Strict):
     pbg_percent: Decimal = Field(ge=0, le=1)
     pbg_validity_months: Decimal | None = Field(ge=0)
     payment_schedule: list[PaymentMilestone]
+    # Months between a milestone and the money arriving (OPEN_QUESTIONS 196); None = the
+    # parameter set's commercial.payment_delay_months (a government department's usual delay).
+    payment_delay_months: Decimal | None = Field(default=None, ge=0)
     margin_percent: Decimal = Field(ge=0, le=1)
     contingency_percent: Decimal | None = Field(ge=0, le=1)
     gst_percent: Decimal | None = Field(ge=0, le=1)
@@ -164,6 +167,11 @@ class Questionnaire(Strict):
     # (parameter sets v19+): custom work on a CMS (Drupal, WordPress) or on a framework that
     # generates the admin screens; only the screen and record-keeping work is smaller.
     build_type: Literal["custom", "framework", "cms", "ready_product"] = "custom"
+    # Which parts are built (parameter sets v31+, OPEN_QUESTIONS 192): the whole system, or only
+    # the screens over the client's existing server side and APIs (layers.task_factor_by_layers).
+    build_layers: Literal["full", "frontend_only"] = "full"
+    # Who builds it (v32+, OPEN_QUESTIONS 195): every person's day rate × that builder's factor.
+    builder_type: Literal["freelancer", "small_firm", "mid_firm", "large_firm"] = "mid_firm"
     # A standby site in another place for disasters (recovery time / data-loss limits). High
     # uptime alone does not ask for one (parameter sets v17+).
     disaster_recovery: bool = False

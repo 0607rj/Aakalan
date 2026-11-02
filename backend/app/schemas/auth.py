@@ -42,6 +42,7 @@ class EmailRequest(BaseModel):
 class VerifyEmailRequest(BaseModel):
     email: str = Field(min_length=3, max_length=320)
     code: str = Field(min_length=1, max_length=12)
+    password: str = Field(min_length=1, max_length=128)  # the one the sign-up set
 
 
 class ResetPasswordRequest(BaseModel):

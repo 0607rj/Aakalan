@@ -2176,3 +2176,132 @@ projects:
       - grievances
       - billing
       custom_features: []
+  # --- CAG audit reports (researched 2026-11-02, OPEN_QUESTIONS 193): the cost of the software as
+  # the auditor states it, read in the full report text. Most are older or bundled: kept for
+  # reference with their rule; two small Delhi Police builds are used.
+  - id: cag-delhi-police-himmat-plus
+    title: Himmat Plus women-safety SOS app (Delhi Police)
+    buyer: Delhi Police (Government of NCT of Delhi)
+    award_year: 2018
+    value_minor: 185000000
+    value_includes_tax: null
+    value_note: "CAG Report No. 15 of 2020, Digital Initiatives of Delhi Police: development Rs 18.5 lakh (2018); upkeep Rs 2.77 lakh a year plus taxes (not in this value)"
+    source_url: https://cag.gov.in/webroot/uploads/download_audit_report/2020/9.%20Digital%20Initiatives%20of%20Delhi%20Police-05f911198e45a25.81448827.pdf
+    confidence: medium
+    use: true
+    model:
+      buyer: government
+      size: small
+      size_reason: one citizen SOS app with a control-room view; scope from the audit text
+      scale: medium
+      om_years: 0
+      deadline_months: null
+      features:
+      - mobile_app
+      - maps
+      - notifications
+      - dashboards
+      custom_features: []
+  - id: cag-delhi-police-mv-theft-efir
+    title: Motor-vehicle theft e-FIR web and mobile app, six modules (Delhi Police)
+    buyer: Delhi Police (Government of NCT of Delhi)
+    award_year: 2016
+    value_minor: 109300000
+    value_includes_tax: null
+    value_note: "CAG Report No. 15 of 2020: six modules bought separately from one vendor in 2015-16 at Rs 1.98 + 4 x 1.99 + 0.99 lakh = Rs 10.93 lakh (the audit calls the split improper)"
+    source_url: https://cag.gov.in/webroot/uploads/download_audit_report/2020/9.%20Digital%20Initiatives%20of%20Delhi%20Police-05f911198e45a25.81448827.pdf
+    confidence: medium
+    use: true
+    model:
+      buyer: government
+      size: small
+      size_reason: online theft report (e-FIR) on the web and an app, six modules; scope from the audit text
+      scale: medium
+      om_years: 0
+      deadline_months: null
+      features:
+      - online_forms
+      - documents
+      - mobile_app
+      - search
+      - staff_login
+      - notifications
+      custom_features: []
+  - id: cag-delhi-police-himmat
+    title: Himmat women-safety SOS app, first version (Delhi Police)
+    buyer: Delhi Police (Government of NCT of Delhi)
+    award_year: 2015
+    value_minor: 450000000
+    value_includes_tax: null
+    value_note: "CAG Report No. 15 of 2020: development Rs 45 lakh (2014-15, single-source vendor); upkeep Rs 4.5 lakh a year"
+    source_url: https://cag.gov.in/webroot/uploads/download_audit_report/2020/9.%20Digital%20Initiatives%20of%20Delhi%20Police-05f911198e45a25.81448827.pdf
+    confidence: medium
+    use: false
+    exclude_rule: unreliable_price
+    reason: 2014-15 single-source price, too old; its 2018 successor (Himmat Plus) is used instead
+    model: {buyer: government, scale: medium, om_years: 0, deadline_months: null, features: [mobile_app, maps, notifications, dashboards], custom_features: []}
+  - id: cag-fame-india-didm-portal
+    title: FAME-India incentive claims portal, phase I (Ministry of Heavy Industries)
+    buyer: Department of Heavy Industry
+    award_year: 2015
+    value_minor: 177800000
+    value_includes_tax: null
+    value_note: "CAG Report No. 10 of 2026: Rs 17.78 lakh incurred on development (2015); phase II with DBT Bharat integration Rs 5.13 lakh a year"
+    source_url: https://images.assettype.com/downtoearth/2026-08-18/jdyic4ms/CAG_Report_no__10_of_2026_English_06a7d48d05c4f65_94316820.pdf
+    confidence: low
+    use: false
+    exclude_rule: unreliable_price
+    reason: no scope beyond the title in the audit text, and 2015
+    model: {buyer: government, scale: small, om_years: 0, deadline_months: null, features: [online_forms, approval_workflow, dashboards], custom_features: []}
+  - id: cag-odisha-e-registration
+    title: e-DhaRani e-registration software, 8 modules, 177 offices (Odisha)
+    buyer: Revenue and Disaster Management Department, Government of Odisha
+    award_year: 2010
+    value_minor: 2470000000
+    value_includes_tax: null
+    value_note: "CAG Revenue Sector report, year ended March 2014: software development Rs 2.47 crore inside a Rs 28 crore build-own-operate-transfer project (agreement December 2009)"
+    source_url: https://cag.gov.in/uploads/icisa_it_reports/edf42cdbe092c815d77e6003cd687823.pdf
+    confidence: medium
+    use: false
+    exclude_rule: unreliable_price
+    reason: 2009-10 price, too old
+    model: {buyer: government, scale: medium, om_years: 0, deadline_months: null, features: [online_forms, approval_workflow, documents, payments, dashboards, staff_login], custom_features: []}
+  - id: cag-uttarakhand-ifms
+    title: Integrated Financial Management System, 25 modules (Uttarakhand)
+    buyer: Finance Department, Government of Uttarakhand
+    award_year: 2015
+    value_minor: 1516860000
+    value_includes_tax: null
+    value_note: "CAG Report No. 1 of 2024: Techno Brain selected June 2015 at Rs 1,51,68,600, terminated August 2018; residual work by Indus Web at Rs 1,12,92,000 (2019); DPR cost Rs 1,150.17 lakh"
+    source_url: https://cag.gov.in/uploads/download_audit_report/2022/Report-No.-1-of-2024_PA-on-IFMS-GoUK_English-066cdaba92bce60.44266467.pdf
+    confidence: medium
+    use: false
+    exclude_rule: unfinished
+    reason: the first contract was terminated part-way and a second vendor finished it; what was paid in all is not stated
+    model: {buyer: government, scale: medium, om_years: 0, deadline_months: null, features: [approval_workflow, dashboards, payments, staff_login, connect_existing, billing], custom_features: []}
+  - id: cag-mp-ifmis
+    title: Integrated Financial Management Information System, 16 modules (Madhya Pradesh)
+    buyer: Finance Department, Government of Madhya Pradesh
+    award_year: 2010
+    value_minor: 26640000000
+    value_includes_tax: null
+    value_note: "CAG Report No. 5 of 2024: TCS contract July 2010 Rs 120.17 crore (capital 56.92 + running 63.25); application development Rs 26.64 crore of the capital cost; 8 of 16 modules live by February 2022"
+    source_url: https://cag.gov.in/uploads/icisa_it_reports/MP-0695f432f596750-88681169.pdf
+    confidence: medium
+    use: false
+    exclude_rule: unreliable_price
+    reason: 2010 price, too old, and only half the modules delivered
+    model: {buyer: government, scale: large, om_years: 0, deadline_months: null, features: [approval_workflow, dashboards, payments, staff_login, connect_existing, billing], custom_features: []}
+  - id: cag-tn-ifhrms
+    title: IFHRMS treasury, HR, payroll and pension system, 14 modules (Tamil Nadu)
+    buyer: Finance Department, Government of Tamil Nadu
+    award_year: 2015
+    value_minor: 86770000000
+    value_includes_tax: false
+    value_note: "CAG Report No. 3 of 2023: Wipro contract May 2015 Rs 288.91 crore; application development line Rs 86.77 crore (30%; data centres 62.93, infrastructure 57.03, connectivity 21.88, helpdesk staff 23.27, taxes 30.73 shown separately); built on Oracle E-Business Suite; go-live four years late"
+    source_url: https://cag.gov.in/uploads/download_audit_report/2022/Report-No.-3-of-2023,-Govt.-of-Tamil-Nadu-06a2fa112503b10.60998020.pdf
+    confidence: high
+    use: false
+    exclude_rule: subscription
+    reason: an implementation of a licensed ERP product (Oracle E-Business Suite), not a custom build; configuration and custom work are not split
+    model: {buyer: government, scale: large, om_years: 0, deadline_months: null, features: [approval_workflow, dashboards, payments, staff_login, connect_existing, billing, grievances], custom_features: []}

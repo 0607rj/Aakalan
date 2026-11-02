@@ -44,6 +44,9 @@ class Option(Frozen):
     hint: str = ""
     answers: dict[str, Any]
     extra_components: list[str] = []  # standard building blocks this answer adds
+    # standard building blocks this answer leaves out, even when another answer adds them
+    # (e.g. front end only: no audit log or load testing of the client's servers)
+    drop_components: list[str] = []
     max_users: int | None = None  # scale question only; None = open-ended
     # Features this answer adds, at a level (None = the default level), e.g. a mobile app.
     add_features: dict[str, LevelKey | None] = {}
@@ -616,6 +619,28 @@ class AlwaysIncluded(Frozen):
     items: list[IncludedItem]
 
 
+class StatedCountRule(Frozen):
+    """A count the document states for a feature: NUMBER [allowed words] NOUN, after one of
+    `after` when given (e.g. "integration with 20 State Systems")."""
+
+    feature: str
+    nouns: list[str] = Field(min_length=1)
+    adjectives: list[str] = []  # at most two of these between the number and the noun
+    after: list[str] = []  # one must come just before the number (empty: none needed)
+    per_unit: int = Field(ge=1)  # how many of them one module at `level` covers
+    level: LevelKey
+
+
+class StatedCounts(Frozen):
+    """Counts a document states make a feature several modules (OPEN_QUESTIONS 194)."""
+
+    source: str
+    max_count: int = Field(ge=1)
+    # a line starting with the number counts only when it is this short (a table cell)
+    max_line_words_at_start: int = Field(ge=1)
+    rules: list[StatedCountRule]
+
+
 class ClientProvidedItem(Frozen):
     """Something the client may provide, and the answer that says so."""
 
@@ -772,6 +797,7 @@ class QuickConfig(Frozen):
     independent_check: IndependentCheck | None = None
     size_check: SizeCheck | None = None
     client_provided: ClientProvided | None = None
+    stated_counts: StatedCounts | None = None  # OPEN_QUESTIONS 194
     # catalog key -> plain words, for the standard blocks the form lets the user untick
     standard_blocks: dict[str, StandardBlock] = {}
     # the form's "Not mentioned: do you need these?" shortlist (feature keys, at most 8)

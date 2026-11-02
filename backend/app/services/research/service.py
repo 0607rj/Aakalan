@@ -24,6 +24,7 @@ from app.core.config import get_settings
 from app.core.tenancy import scoped
 from app.llm.client import LLMNotConfiguredError, LLMRefusedError, get_llm_client, load_prompt
 from app.models import ResearchedComponent, User
+from app.services import limits
 from app.services.engine import reference as ref
 from app.services.engine.reference import BaselineEra, Size
 from app.services.estimates.reference_store import catalog_for
@@ -580,6 +581,10 @@ def resolve_features(
         ):  # a retired block stays retired: the generic block prices the feature
             todo.append(i)
     todo = todo[: research.max_per_estimate]
+    if todo and limits.ai_wait(db, user.org_id):
+        return keys  # today's AI calls are used up: the generic block of its type prices it
+    for _ in todo:
+        limits.record_ai(db, user.org_id)
     standard = standard_blocks(cfg)
     with ThreadPoolExecutor(max_workers=research.concurrency) as pool:
         found = list(pool.map(lambda i: search(cfg, features[i][0], catalog, standard), todo))

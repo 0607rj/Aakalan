@@ -31,6 +31,7 @@ import {
   RobotIcon,
   RocketIcon,
   ShieldCheckIcon,
+  StackIcon,
   StorefrontIcon,
   UsersThreeIcon,
   WrenchIcon,
@@ -198,6 +199,8 @@ export function TypeIcon({ kind }: { kind: string }) {
 const QUESTION_ICONS: Record<string, IconType> = {
   version: RocketIcon,
   platforms: DevicesIcon,
+  build_part: StackIcon,
+  builder: BuildingsIcon,
   scale: UsersThreeIcon,
   integrations: PlugsConnectedIcon,
   old_data: DatabaseIcon,

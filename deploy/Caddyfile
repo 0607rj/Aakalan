@@ -1,8 +1,22 @@
 # Aakalan behind Caddy on an Ubuntu server (docs/DEPLOY.md): /api/* goes to the API (the prefix
 # is stripped), everything else to the website. Replace ":80" with the domain name
-# (akalan.panscience.ai) once its DNS points here, and Caddy gets an HTTPS certificate itself.
+# (akalan.panscience.ai) once its DNS points here, and Caddy gets an HTTPS certificate itself
+# (then the Strict-Transport-Security line below takes effect; browsers ignore it over HTTP).
 :80 {
 	encode gzip
+	# No upload is ever larger than the app accepts (UPLOAD_MAX_MB, 25 MB, plus the form).
+	request_body {
+		max_size 30MB
+	}
+	header {
+		X-Content-Type-Options nosniff
+		X-Frame-Options DENY
+		Referrer-Policy strict-origin-when-cross-origin
+		Permissions-Policy "camera=(), microphone=(), geolocation=()"
+		Strict-Transport-Security "max-age=31536000"
+		Content-Security-Policy "frame-ancestors 'none'; base-uri 'self'; object-src 'none'; form-action 'self'"
+		-Server
+	}
 	handle_path /api/* {
 		reverse_proxy 127.0.0.1:8000
 	}

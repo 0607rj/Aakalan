@@ -21,7 +21,7 @@ from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session
 
 from app.core.config import get_settings
-from app.core.security import hash_password
+from app.core.security import hash_password, verify_password
 from app.models import LoginFailure, OneTimeCode, Organisation, Role, User
 from app.models.base import utcnow
 from app.services.email import get_email_sender
@@ -54,6 +54,9 @@ class TooSoonError(AuthError):
 
 
 WRONG_CODE = "That code is wrong or has expired. Ask for a new one."
+WRONG_CODE_OR_PASSWORD = (
+    "That password is not the one this sign-up used. Sign up again with your password, or reset it."
+)
 
 
 def normalise_email(email: str) -> str:
@@ -152,7 +155,7 @@ def send_code(db: Session, user: User, purpose: Purpose) -> None:
     get_email_sender().send(
         user.email,
         SUBJECTS[purpose],
-        f"Hello {user.full_name or 'there'},\n\n"
+        "Hello,\n\n"  # never the typed name: anyone can sign up with any address
         f"Your code to {ACTIONS[purpose]} is {code}.\n"
         f"It works for {s.otp_minutes} minutes.\n\n"
         "If you did not ask for it, you can ignore this email.\n\nAakalan",
@@ -200,15 +203,7 @@ def sign_up(
         raise AuthError(
             "An account with this email already exists. Sign in, or reset your password.", 409
         )
-    taken = db.scalars(
-        select(Organisation).where(func.lower(Organisation.name) == company.lower())
-    ).first()
-    if taken is not None and (user is None or taken.id != user.org_id):
-        raise AuthError(
-            "A company with this name is already registered. Ask its admin to add you, or use "
-            "a different name.",
-            409,
-        )
+    # Company names are not unique: a sign-up never learns which companies use Aakalan.
     if user is None:
         org = Organisation(name=company)
         db.add(org)
@@ -222,7 +217,7 @@ def sign_up(
         )
         db.add(user)
         db.flush()
-    else:  # not verified yet: whoever proves the address with the code owns these details
+    else:  # not verified yet: the newest details, kept only by the one who has the code
         user.full_name = full_name
         user.password_hash = hash_password(password)
         user.organisation.name = company
@@ -230,9 +225,18 @@ def sign_up(
     return user
 
 
-def verify_email(db: Session, email: str, code: str) -> User:
+def verify_email(db: Session, email: str, code: str, password: str) -> User:
+    """The code proves the address; the password must be the one the latest sign-up set.
+    Otherwise someone who signed up again with this address (and their own password) would
+    own the account once the real person entered the code (OPEN_QUESTIONS 190). A wrong
+    password counts as a wrong try of the code."""
     user = find_user(db, email)
-    if user is None or not user.is_active or not use_code(db, user, "verify_email", code):
+    if user is None or not user.is_active:
+        raise AuthError(WRONG_CODE)
+    if not verify_password(password, user.password_hash):
+        use_code(db, user, "verify_email", "")  # counts a try, never matches
+        raise AuthError(WRONG_CODE_OR_PASSWORD)
+    if not use_code(db, user, "verify_email", code):
         raise AuthError(WRONG_CODE)
     user.email_verified_at = user.email_verified_at or utcnow()
     return user

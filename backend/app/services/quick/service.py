@@ -74,6 +74,7 @@ from app.services.quick.reality import (
     reality_check,
 )
 from app.services.quick.size_check import SizeCheckOut, SizedFeature, size_check
+from app.services.research.library import SHARED_PREFIX
 from app.services.research.service import PREFIX as RESEARCH_PREFIX
 from app.services.research.service import resolve_features
 from app.services.settings import (
@@ -509,9 +510,23 @@ def _default(cfg: QuickConfig, req: QuickRequest, key: str) -> str | int:
     return question.default
 
 
+def _forced(cfg: QuickConfig, req: QuickRequest, key: str) -> str | int | None:
+    """The answer of a question another answer hides and sets (both `hide_when` and
+    `default_by` name that answer, e.g. front end only hides the hosting question and sets
+    "servers you already have"): a hidden answer is never asked, so an earlier one is dropped."""
+    question = cfg.questions[key]
+    for other, hiding in question.hide_when.items():
+        answer = str(req.choices.get(other, cfg.questions[other].default))
+        by_value = question.default_by.get(other, {})
+        if answer in map(str, hiding) and answer in by_value:
+            return by_value[answer]
+    return None
+
+
 def _choice(cfg: QuickConfig, req: QuickRequest, key: str) -> Any:
     question = cfg.questions[key]
-    value = req.choices.get(key, _default(cfg, req, key))
+    forced = _forced(cfg, req, key)
+    value = forced if forced is not None else req.choices.get(key, _default(cfg, req, key))
     try:
         return question.option(value)
     except ValueError as exc:
@@ -1170,7 +1185,8 @@ def _standard_components(tier: SizeTier, options: dict[str, Any]) -> list[str]:
     keys = [*tier.base_components]
     for option in options.values():
         keys += option.extra_components
-    return list(dict.fromkeys(keys))
+    dropped = {k for option in options.values() for k in option.drop_components}
+    return [k for k in dict.fromkeys(keys) if k not in dropped]
 
 
 SIZE_RANK = {Size.S: 0, Size.M: 1, Size.L: 2}
@@ -2246,7 +2262,9 @@ def researched_features(estimate: Estimate) -> list[ResearchedFeature]:
         web = any(e.get("url") for e in evidence)
         out.append(
             ResearchedFeature(
-                name=labels[c["key"]] or c["name"],
+                # a shared block's own name is another company's text (OPEN_QUESTIONS 190)
+                name=labels[c["key"]]
+                or ("Researched feature" if c["key"].startswith(SHARED_PREFIX) else c["name"]),
                 method="web" if web else "analysis",
                 section=c.get("section"),
                 summary=c.get("source", ""),

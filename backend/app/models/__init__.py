@@ -2,7 +2,15 @@
 
 from app.models.base import Base
 from app.models.contact import ContactMessage
-from app.models.org import LoginFailure, OneTimeCode, Organisation, OrgSettings, Role, User
+from app.models.org import (
+    LoginFailure,
+    OneTimeCode,
+    Organisation,
+    OrgSettings,
+    RateEvent,
+    Role,
+    User,
+)
 from app.models.project import (
     Assumption,
     ComponentInstance,
@@ -45,6 +53,7 @@ __all__ = [
     "Project",
     "QuestionnaireAnswer",
     "RateCard",
+    "RateEvent",
     "RateItem",
     "Requirement",
     "ResearchedComponent",

@@ -49,7 +49,8 @@ export interface paths {
         put?: never;
         /**
          * Signup
-         * @description Your own account (and private space); sign in after confirming the emailed code.
+         * @description Your own account (and private space); sign in after confirming the emailed code. A few
+         *     sign-ups an hour from one address (settings `signup_ip_max_per_hour`).
          */
         post: operations["signup_auth_signup_post"];
         delete?: never;
@@ -69,7 +70,7 @@ export interface paths {
         put?: never;
         /**
          * Verify Email
-         * @description Confirm the address with the emailed code; signs you in.
+         * @description Confirm the address with the emailed code and the sign-up's password; signs you in.
          */
         post: operations["verify_email_auth_verify_email_post"];
         delete?: never;
@@ -473,7 +474,11 @@ export interface paths {
         /** List Rate Cards */
         get: operations["list_rate_cards_admin_rate_cards_get"];
         put?: never;
-        /** Create Rate Card */
+        /**
+         * Create Rate Card
+         * @description A new rate card for every company: the site owner only (a company admin is anyone who
+         *     signed up, so it must not change the rates other companies are priced with).
+         */
         post: operations["create_rate_card_admin_rate_cards_post"];
         delete?: never;
         options?: never;
@@ -944,7 +949,10 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Read Settings */
+        /**
+         * Read Settings
+         * @description The company's settings; the margin only for finance and admin.
+         */
         get: operations["read_settings_settings_get"];
         /**
          * Update Settings
@@ -1168,6 +1176,66 @@ export interface paths {
          *     token names the owner (`act`); anything but reading is refused (api/deps.py).
          */
         post: operations["view_as_owner_users__user_id__view_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/owner/shared-blocks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Shared Blocks
+         * @description The shared library, the blocks waiting for approval first.
+         */
+        get: operations["shared_blocks_owner_shared_blocks_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/owner/shared-blocks/{block_id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Approve Block
+         * @description Let the block price other companies' features (under an anonymous key).
+         */
+        post: operations["approve_block_owner_shared_blocks__block_id__approve_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/owner/shared-blocks/{block_id}/retire": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Retire Block
+         * @description Stop offering the block to anyone; estimates that used it keep their own copy.
+         */
+        post: operations["retire_block_owner_shared_blocks__block_id__retire_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -4249,6 +4317,27 @@ export interface components {
             ai_available: boolean;
             opinion: components["schemas"]["SecondOpinionOut"] | null;
         };
+        /** SharedBlockRow */
+        SharedBlockRow: {
+            /** Id */
+            id: string;
+            /** Name */
+            name: string;
+            /** Section */
+            section: string;
+            /** Method */
+            method: string;
+            /** Status */
+            status: string;
+            /** Days */
+            days: {
+                [key: string]: string;
+            };
+            /** Sources */
+            sources: string[];
+            /** Created At */
+            created_at: string;
+        };
         /** SignupRequest */
         SignupRequest: {
             /** Full Name */
@@ -4910,6 +4999,8 @@ export interface components {
             email: string;
             /** Code */
             code: string;
+            /** Password */
+            password: string;
         };
     };
     responses: never;
@@ -7270,6 +7361,88 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["TokenResponse"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    shared_blocks_owner_shared_blocks_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SharedBlockRow"][];
+                };
+            };
+        };
+    };
+    approve_block_owner_shared_blocks__block_id__approve_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                block_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SharedBlockRow"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    retire_block_owner_shared_blocks__block_id__retire_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                block_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SharedBlockRow"];
                 };
             };
             /** @description Validation Error */

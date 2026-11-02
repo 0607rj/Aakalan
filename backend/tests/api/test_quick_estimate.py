@@ -23,7 +23,7 @@ def test_options_are_plain_language(client: TestClient, admin_headers: H) -> Non
     assert scale["default"] == "up_to_10k" and len(scale["options"]) == 11
     assert scale["options"][-1]["unsure"]  # every key question can be answered "Not sure"
     mains = [q["key"] for q in body["questions"] if q["group"] == "main"]
-    assert mains[:3] == ["version", "platforms", "scale"]
+    assert mains[:5] == ["version", "platforms", "build_part", "builder", "scale"]
     assert "ai_use" not in {q["key"] for q in body["questions"]}  # a company setting
     ticks = {f["key"] for f in body["features"] if not f["hidden"]}
     assert not ticks & {"mobile_app", "connect_existing", "old_data"}  # asked as questions
@@ -218,8 +218,11 @@ def test_traditional_vs_ai_era_price(client: TestClient, admin_headers: H) -> No
 
 def test_client_paid_costs_listed_separately(client: TestClient, admin_headers: H) -> None:
     features = ["online_forms", "payments", "notifications"]
-    theirs = quick(client, admin_headers, features=features, choices={"hosting": "existing"}).json()
-    ours = quick(client, admin_headers, features=features).json()  # public cloud, in the cost
+    sms = ["sms"]  # SMS is its own choice (OPEN_QUESTIONS 196)
+    theirs = quick(
+        client, admin_headers, features=features, scope=sms, choices={"hosting": "existing"}
+    ).json()
+    ours = quick(client, admin_headers, features=features, scope=sms).json()  # cloud, in the cost
     paid = {c["key"]: c for c in theirs["client_pays"]}
     assert paid["hosting"]["first_year_paise"] > 0
     assert paid["hosting"]["total_paise"] >= paid["hosting"]["first_year_paise"]
@@ -295,6 +298,7 @@ def test_cost_items_explain_the_whole_price(client: TestClient, admin_headers: H
         client,
         admin_headers,
         features=["online_forms", "payments", "maps", "notifications", "ai_chatbot"],
+        scope=["sms"],
         choices={"platforms": "web_mobile", "scale": "up_to_1l"},
     ).json()
     items = {i["key"]: i for i in s["cost_items"]}
@@ -326,7 +330,8 @@ def test_small_add_on_does_not_resize_the_project(client: TestClient, admin_head
     eight = ["documents", "dashboards", "ai_chatbot", "payments", "billing", "bookings"]
     eight += ["mobile_app", "maps"]
     base = quick(client, admin_headers, features=eight).json()
-    more = quick(client, admin_headers, features=[*eight, "notifications"]).json()
+    # notifications by SMS: the SMS connection is new work (OPEN_QUESTIONS 196)
+    more = quick(client, admin_headers, features=[*eight, "notifications"], scope=["sms"]).json()
     assert base["project_size"] == more["project_size"] and base["size_points"] == 16
     assert base["planned_paise"] < more["planned_paise"] < base["planned_paise"] * 1.15
 
@@ -364,7 +369,10 @@ def test_launch_extras_can_be_switched_on_or_off(client: TestClient, admin_heade
 def test_questions_hide_when_support_is_off(client: TestClient, admin_headers: H) -> None:
     opts = client.get("/quick-estimate/options", headers=admin_headers).json()
     q = {x["key"]: x for x in opts["questions"]}
-    assert q["helpdesk_scope"]["hide_when"] == {"support_years": [0]}
+    assert q["helpdesk_scope"]["hide_when"] == {
+        "support_years": [0],
+        "build_part": ["frontend_only"],
+    }
     assert 0 in [o["value"] for o in q["support_years"]["options"]]
 
 

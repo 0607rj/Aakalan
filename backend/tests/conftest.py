@@ -13,6 +13,12 @@ os.environ["ENVIRONMENT"] = "test"
 os.environ["ANTHROPIC_API_KEY"] = ""  # never call a real LLM from tests (overrides .env)
 os.environ["LLM_PROVIDER"] = "anthropic"
 os.environ["OWNER_EMAILS"] = '["admin@aakalan.local"]'
+# the abuse limits are off for the suite (one test client signs up and reads a lot);
+# tests/api/test_limits.py switches each one on
+for _limit in ("SIGNUP_IP", "CONTACT_IP"):
+    os.environ[f"{_limit}_MAX_PER_HOUR"] = "0"
+for _limit in ("AI_ORG", "AI_SITE"):
+    os.environ[f"{_limit}_MAX_PER_DAY"] = "0"
 os.environ["DATA_DIR"] = str(_TMP_DATA)
 os.environ["DATABASE_URL"] = f"sqlite:///{(_TMP_DATA / 'test.db').as_posix()}"
 # researched features are shared through a library file: never write the real one

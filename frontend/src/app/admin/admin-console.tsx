@@ -31,6 +31,7 @@ import {
   type OwnerUserChange,
   type OwnerUserRow,
   type QuickSummary,
+  type SharedBlockRow,
   type Role,
 } from "@/lib/api/client";
 import { formatApprox, formatDate } from "@/lib/format";
@@ -478,6 +479,129 @@ function People() {
   );
 }
 
+const BLOCK_STATUS: Record<
+  string,
+  { label: string; tone: "tape" | "warning" | "muted" }
+> = {
+  pending: { label: "Waiting", tone: "warning" },
+  active: { label: "Shared", tone: "tape" },
+  retired: { label: "Retired", tone: "muted" },
+};
+
+/** One shared feature: its name, days by size and sources; approve or retire it. */
+function SharedBlock({
+  row,
+  onChanged,
+}: {
+  row: SharedBlockRow;
+  onChanged: (next: SharedBlockRow) => void;
+}) {
+  const [busy, setBusy] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const status = BLOCK_STATUS[row.status] ?? BLOCK_STATUS.retired;
+  async function act(call: (id: string) => Promise<SharedBlockRow>) {
+    setBusy(true);
+    setError(null);
+    try {
+      onChanged(await call(row.id));
+    } catch (err) {
+      setError(errorText(err));
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <li className="slab flex flex-col gap-3 p-4 sm:p-5">
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="font-medium">{row.name}</span>
+        <Tag tone={status.tone}>{status.label}</Tag>
+        <span className="text-xs text-muted-foreground">
+          {row.section} · {row.method === "web" ? "web sources" : "AI analysis"}{" "}
+          · {formatDate(row.created_at)}
+        </span>
+      </div>
+      <p className="font-mono text-xs text-muted-foreground">
+        {Object.entries(row.days)
+          .map(([size, days]) => `${size} ${days} days`)
+          .join(" · ")}
+      </p>
+      {row.sources.length ? (
+        <ul className="flex flex-col gap-1 text-xs text-muted-foreground">
+          {row.sources.map((src) => (
+            <li key={src} className="truncate">
+              {src}
+            </li>
+          ))}
+        </ul>
+      ) : null}
+      <div className="flex flex-wrap gap-2">
+        {row.status !== "active" ? (
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => act(api.ownerApproveBlock)}
+            className="rounded-lg bg-primary px-3 py-1.5 text-sm font-medium text-primary-foreground disabled:opacity-60"
+          >
+            Share with everyone
+          </button>
+        ) : null}
+        {row.status !== "retired" ? (
+          <button
+            type="button"
+            disabled={busy}
+            onClick={() => act(api.ownerRetireBlock)}
+            className="rounded-lg border px-3 py-1.5 text-sm disabled:opacity-60"
+          >
+            {row.status === "pending" ? "Keep private" : "Retire"}
+          </button>
+        ) : null}
+      </div>
+      {error ? <ErrorNotice message={error} /> : null}
+    </li>
+  );
+}
+
+/** Features one company researched, waiting before they price anyone else's: the name is that
+ * company's own text, so check it says nothing about a client or tender before sharing. */
+function SharedFeatures() {
+  const loader = React.useCallback(() => api.ownerSharedBlocks(), []);
+  const { state, setData } = useLoad(loader);
+  if (state.kind === "loading") return <Loading />;
+  if (state.kind === "error") return <ErrorNotice message={state.message} />;
+  const rows = state.data;
+  const waiting = rows.filter((r) => r.status === "pending").length;
+  return (
+    <section className="flex flex-col gap-4">
+      <div>
+        <h2 className="text-xl font-semibold">Shared features</h2>
+        <p className="text-sm text-muted-foreground">
+          {waiting ? `${waiting} waiting. ` : "Nothing waiting. "}A feature one
+          company researched prices other companies&apos; features only after
+          you share it. Its name is that company&apos;s own words: keep it
+          private if it names a client, a department or a tender.
+        </p>
+      </div>
+      {rows.length === 0 ? (
+        <p className="rounded-xl border border-dashed px-5 py-8 text-center text-sm text-muted-foreground">
+          No researched features yet.
+        </p>
+      ) : (
+        <ul className="flex flex-col gap-3">
+          {rows.map((row) => (
+            <SharedBlock
+              key={row.id}
+              row={row}
+              onChanged={(next) =>
+                setData(rows.map((r) => (r.id === next.id ? next : r)))
+              }
+            />
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
 /** The site owner's console: everyone on Aakalan, what they have made, and account actions. */
 export function AdminConsole() {
   const user = useCurrentUser();
@@ -503,6 +627,7 @@ export function AdminConsole() {
       </AppHero>
       <Overview />
       <People />
+      <SharedFeatures />
     </div>
   );
 }

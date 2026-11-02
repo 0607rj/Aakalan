@@ -395,10 +395,29 @@ def _raw_efforts(
     if _uses_licence(t.ctx, catalog) and catalog.licence is not None:
         t.driver("licensing")
         lic = catalog.licence.effort_factor
+    m_layer = layer_multipliers(t)
     return {
-        task: base * ci.quantity * share * m_cx * m_nfr * lic
+        task: base * ci.quantity * share * m_cx * m_nfr * lic * m_layer.get(task, ONE)
         for task, share in catalog.task_mix.items()
     }
+
+
+def layer_multipliers(t: LineBuilder) -> dict[TaskType, Decimal]:
+    """M_layer(task) for the parts that are built (parameter sets v31+, OPEN_QUESTIONS 192):
+
+      M_layer(task) = layers.task_factor_by_layers[build_layers][task], 1 when not listed
+
+    The whole system (or a set without layer factors): {} (every task 1)."""
+    layers = t.ctx.p.layers
+    if layers is None:
+        return {}
+    built: str = t.driver("build_layers")
+    if built not in layers.task_factor_by_layers:
+        return {}
+    factors: dict[TaskType, Decimal] = t.param("layers", "task_factor_by_layers", built)
+    for task, factor in factors.items():
+        t.step(f"M_layer {task.value}", f"{built}: {task.value} × {factor}", factor)
+    return dict(factors)
 
 
 def _work(
@@ -575,11 +594,14 @@ def component_line(
     saving was applied (formula component_labour.v3); with a parameter set that prices reuse
     (v19+), the formula is component_labour.v4; with review and tests following the reuse or
     effort caps (v20+), component_labour.v5; v29+ (pre-build cap at the usual complexity)
-    or a block priced between sizes, v6."""
+    or a block priced between sizes, v6; v31+ front end only (M_layer per task), v8."""
     ci, catalog = effort.instance, effort.catalog
     stage = _stage(catalog)
     caps = ctx.p.effort_caps
-    if size_edge(ctx)[0] is not None:
+    layers = ctx.p.layers
+    if layers is not None and ctx.q.build_layers in layers.task_factor_by_layers:
+        formula_id = "component_labour.v8"
+    elif size_edge(ctx)[0] is not None:
         formula_id = "component_labour.v7"
     elif ci.size_mix is not None or (caps is not None and caps.pre_build_cap_at_usual_complexity):
         formula_id = "component_labour.v6"

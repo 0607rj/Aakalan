@@ -14,11 +14,20 @@ from sqlalchemy.orm import InstrumentedAttribute, Session
 from app.api.auth import user_out
 from app.api.deps import DbSession, OwnerUser, is_owner
 from app.core.security import create_access_token
-from app.models import Document, Estimate, Organisation, Project, Role, User
+from app.models import (
+    Document,
+    Estimate,
+    Organisation,
+    Project,
+    Role,
+    SharedResearchedComponent,
+    User,
+)
 from app.models.base import Base, utcnow
 from app.schemas.auth import TokenResponse
 from app.services.quick.config import quick_config
 from app.services.quick.service import QuickSummary, summarise
+from app.services.research import library
 
 router = APIRouter(prefix="/owner", tags=["owner"])
 
@@ -223,3 +232,70 @@ def delete_user(user_id: str, db: DbSession, owner: OwnerUser) -> Response:
     for name in files:
         Path(name).unlink(missing_ok=True)
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+# --- the shared research library: blocks wait for the owner before other companies use them --
+
+
+class SharedBlockRow(BaseModel):
+    id: str
+    name: str  # the words it was researched under: one company's text
+    section: str
+    method: str  # web / analysis
+    status: str  # pending / active / retired
+    days: dict[str, str]  # person-days by size S / M / L (Decimal strings)
+    sources: list[str]  # page addresses or catalog blocks the hours come from
+    created_at: str
+
+
+def _block_row(row: SharedResearchedComponent) -> SharedBlockRow:
+    effort = row.spec.get("base_effort_pd") or {}
+    sources = [
+        str(s.get("url") or (f"{s['block']} ({s.get('level', '')})" if s.get("block") else ""))
+        for s in row.sources
+    ]
+    return SharedBlockRow(
+        id=row.id,
+        name=row.name,
+        section=row.section,
+        method=row.method,
+        status=row.status,
+        days={str(k): str(v) for k, v in effort.items()},
+        sources=[s for s in sources if s],
+        created_at=row.created_at.isoformat(),
+    )
+
+
+@router.get("/shared-blocks", response_model=list[SharedBlockRow])
+def shared_blocks(db: DbSession, _owner: OwnerUser) -> list[SharedBlockRow]:
+    """The shared library, the blocks waiting for approval first."""
+    rows = db.scalars(
+        select(SharedResearchedComponent).order_by(SharedResearchedComponent.created_at.desc())
+    ).all()
+    order = {"pending": 0, "active": 1, "retired": 2}
+    return [_block_row(r) for r in sorted(rows, key=lambda r: order.get(r.status, 3))]
+
+
+def _shared(db: Session, block_id: str) -> SharedResearchedComponent:
+    row = db.get(SharedResearchedComponent, block_id)
+    if row is None:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, "Not found")
+    return row
+
+
+@router.post("/shared-blocks/{block_id}/approve", response_model=SharedBlockRow)
+def approve_block(block_id: str, db: DbSession, _owner: OwnerUser) -> SharedBlockRow:
+    """Let the block price other companies' features (under an anonymous key)."""
+    row = _shared(db, block_id)
+    library.approve(row)
+    db.commit()
+    return _block_row(row)
+
+
+@router.post("/shared-blocks/{block_id}/retire", response_model=SharedBlockRow)
+def retire_block(block_id: str, db: DbSession, _owner: OwnerUser) -> SharedBlockRow:
+    """Stop offering the block to anyone; estimates that used it keep their own copy."""
+    row = _shared(db, block_id)
+    library.retire(row)
+    db.commit()
+    return _block_row(row)

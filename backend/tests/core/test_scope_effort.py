@@ -123,8 +123,8 @@ def test_reports_and_alerts_reuse_the_blocks_already_there() -> None:
     """Pending-file reports need the reports block and step alerts the notifications and SMS
     blocks: nothing is added when the dashboards and notifications features bring them."""
     features = ["approval_workflow", "dashboards", "notifications"]
-    base = plan(features)
-    both = plan(features, ["workflow_reports", "workflow_alerts"])
+    base = plan(features, ["sms"])  # notifications by SMS (OPEN_QUESTIONS 196)
+    both = plan(features, ["sms", "workflow_reports", "workflow_alerts"])
     assert blocks(both) == blocks(base)
     assert effort(both) == effort(base)
     alone = plan(["approval_workflow"], ["workflow_reports", "workflow_alerts"])

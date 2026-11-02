@@ -7,7 +7,7 @@ from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
 from sqlalchemy import select
 
-from app.api.deps import AdminUser, DbSession, EditorUser
+from app.api.deps import DbSession, EditorUser, OwnerUser
 from app.models import ParameterSet, RateCard
 from app.services.engine import reference as ref
 from app.services.estimates.reference_store import get_catalog
@@ -56,7 +56,9 @@ def get_rate_card(version: str, db: DbSession, _user: EditorUser) -> ref.RateCar
 
 
 @router.post("/rate-cards", response_model=ref.RateCard, status_code=status.HTTP_201_CREATED)
-def create_rate_card(body: ref.RateCard, db: DbSession, _user: AdminUser) -> ref.RateCard:
+def create_rate_card(body: ref.RateCard, db: DbSession, _user: OwnerUser) -> ref.RateCard:
+    """A new rate card for every company: the site owner only (a company admin is anyone who
+    signed up, so it must not change the rates other companies are priced with)."""
     if db.scalars(select(RateCard).where(RateCard.version == body.version)).first():
         raise HTTPException(status.HTTP_409_CONFLICT, "Version exists; versions are immutable")
     row = add_rate_card(db, body)

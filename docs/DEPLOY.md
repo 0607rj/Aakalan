@@ -57,7 +57,11 @@ bash deploy/update.sh
 Replace `SERVER_IP` with the server's public IP. Then open `http://SERVER_IP` and log in as
 `admin@gmail.com` with `SEED_USER_PASSWORD`. In production, sign-up codes need the SMTP settings.
 The owner (`OWNER_EMAILS`) can see every account, so give that account a strong password: the seed
-sets it only when the account is first created; change it later under Account → Change password.
+sets it only when the account is first created (and refuses to create it with the example
+`admin123` or a short one in production); change it later under Account → Change password.
+Put an address you own in `OWNER_EMAILS`, not `admin@gmail.com`: whoever holds a mailbox can
+reset its password. Researched features one company shares wait on the Admin page ("Shared
+features") until the owner shares them with everyone (OPEN_QUESTIONS 190).
 
 ## Updating
 

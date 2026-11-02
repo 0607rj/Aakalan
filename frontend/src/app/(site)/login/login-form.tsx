@@ -51,6 +51,7 @@ export function LoginForm() {
     return (
       <VerifyEmailStep
         email={email}
+        password={password}
         onSignedIn={signedIn}
         onBack={() => setVerifying(false)}
       />

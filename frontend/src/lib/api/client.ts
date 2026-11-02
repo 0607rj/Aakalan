@@ -87,6 +87,7 @@ export type CalibrationReport = Schemas["CalibrationReport"];
 export type OwnerOverview = Schemas["Overview"];
 export type OwnerUserRow = Schemas["OwnerUserRow"];
 export type OwnerUserChange = Schemas["UserChange"];
+export type SharedBlockRow = Schemas["SharedBlockRow"];
 export type Country = Schemas["CountryOut"];
 export type Template = Schemas["TemplateOut"];
 export type CompanySettings = Schemas["CompanySettings-Output"];
@@ -213,10 +214,10 @@ export const api = {
       body: JSON.stringify(body),
       auth: false,
     }),
-  verifyEmail: (email: string, code: string) =>
+  verifyEmail: (email: string, code: string, password: string) =>
     request<TokenResponse>("/auth/verify-email", {
       method: "POST",
-      body: JSON.stringify({ email, code }),
+      body: JSON.stringify({ email, code, password }),
       auth: false,
     }),
   resendCode: (email: string) =>
@@ -381,6 +382,11 @@ export const api = {
     send<OwnerUserRow>("PATCH", `/owner/users/${userId}`, body),
   ownerDeleteUser: (userId: string) =>
     send<void>("DELETE", `/owner/users/${userId}`),
+  ownerSharedBlocks: () => request<SharedBlockRow[]>("/owner/shared-blocks"),
+  ownerApproveBlock: (id: string) =>
+    send<SharedBlockRow>("POST", `/owner/shared-blocks/${id}/approve`),
+  ownerRetireBlock: (id: string) =>
+    send<SharedBlockRow>("POST", `/owner/shared-blocks/${id}/retire`),
   ownerViewAs: (userId: string) =>
     send<TokenResponse>("POST", `/owner/users/${userId}/view`),
 

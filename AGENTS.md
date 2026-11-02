@@ -43,10 +43,15 @@ Estimates are saved as templates, and recorded outcomes calibrate future estimat
   6-digit codes (`services/auth.py`, hashed, expiring, limited tries); a reset or change raises the
   user's `token_version` (`tv` in the JWT) so older tokens stop working. Wrong passwords
   slow sign-in down per email and per address (`login_failures`, settings `login_*`,
-  429 with Retry-After; OPEN_QUESTIONS 188). Bid results and the
+  429 with Retry-After; OPEN_QUESTIONS 188). Verifying an email needs the code and the
+  sign-up's password; company names are not unique. Sign-ups and contact messages per
+  address an hour, and AI calls per company a day, are limited (`services/limits.py`, table
+  `rate_events`, settings `*_max_per_*`, 0 = off; OPEN_QUESTIONS 190). Rate cards are
+  published by the owner only. Bid results and the
   calibration report are owner-only (`OWNER_EMAILS`, `OwnerUser`, `is_owner` on `/auth/me`).
   The owner's Admin page (`/admin`, `api/owner.py`, OPEN_QUESTIONS 172) is the one place that reads
-  across organisations: every account and its estimates, disable, role, verify, delete, and "view as"
+  across organisations: every account and its estimates, the shared features waiting for approval
+  (OPEN_QUESTIONS 190), disable, role, verify, delete, and "view as"
   (a read-only token naming the owner, `act`; `viewed_by_owner` on `/auth/me`). Email through
   `services/email.py` (SMTP, or the server log in development; tests use `set_email_sender`).
 - **Ops:** no Docker. One Ubuntu server: systemd services (API, Huey worker, Next.js standalone)
@@ -101,7 +106,8 @@ backend/
                           #   per org (ResearchedComponent, auto-approved) and reused; config
                           #   `research:` in quick_estimate.yaml; nothing searched without a key;
                           #   the form lists the company's own by section ("Researched before");
-                          #   library.py shares every block with all companies (no tenant data):
+                          #   library.py offers every block to all companies (no tenant data),
+                          #   live only once the owner approves it, under an anonymous key:
                           #   table shared_researched_components + seeds/research/library.yaml;
                           #   a shared block prices a matching typed feature but is never listed
                           #   or named to another company (`catalog_for(shared=False)` for lists,
@@ -120,6 +126,9 @@ backend/
                           #   department" (or by the client's own name) answers those questions
                           #   (code, cited); support_terms.py: support hours and stated support
                           #   staff, with a pre-bid query on a contradiction (OPEN_QUESTIONS 157)
+                          #   stated_counts.py: "200 services" / "integration with 20 State
+                          #   Systems" make that feature several modules, cited (config
+                          #   `stated_counts`, OPEN_QUESTIONS 194)
                           #   staffing.py: the reading's staff lines (prompt v9) priced by rule:
                           #   price table wins, call-off as written, shifts only for a committed
                           #   team, months from the line, helpdesk only when asked for, chatbot
@@ -207,6 +216,17 @@ backend/
                           #   parameters v23+ (OPEN_QUESTIONS 160): the shared model factor is
                           #   centred on its median (widens, no P50 lift) and is a range driver;
                           #   size-band values blend across band edges (size_band_blend_share)
+                          #   parameters v31+ (OPEN_QUESTIONS 192): front end only (question
+                          #   `build_part`, questionnaire `build_layers`): every task × its
+                          #   `layers.task_factor_by_layers` factor (formula component_labour.v8);
+                          #   the answer hides and fixes the server questions (hide_when +
+                          #   default_by = forced) and drops blocks (option `drop_components`)
+                          #   parameters v32+ (OPEN_QUESTIONS 195): who builds it (question
+                          #   `builder`, questionnaire `builder_type`): every person's day rate
+                          #   × `builder.rate_factor_by_builder` (role_rate.v2); mid-size firm = 1
+                          #   only what is needed (196): firewall above 10,000 users, SMS its own
+                          #   choice, question `payment_terms` (advance = no delay, working_capital
+                          #   .v3; milestones = tender, adds the requirement study)
                           #   catalog v7+: a tech-stack `section` per component (core, web,
                           #   mobile, ecommerce, ai_ml, security, ...) and a `url` per source
   migrations/             # Alembic
@@ -215,7 +235,8 @@ backend/
                           #   fixtures/readings/: saved tender readings (production-path back-test),
                           #   fixtures/review_form/: what the review form sent for them (parity)
                           #   fixtures/readings_v9/: the same readings + staff lines entered by
-                          #   hand (no AI re-read), the back-test's default (OPEN_QUESTIONS 162)
+                          #   hand (no AI re-read, OPEN_QUESTIONS 162); readings_v10/: + the
+                          #   stated counts read in code, the back-test's default (194)
 frontend/                 # Next.js app (src/app, src/components, src/lib); see frontend/AGENTS.md
 data/                     # gitignored: app.db, huey.db, uploads/, reports/, models/
 ```
@@ -239,7 +260,7 @@ Run from the repo root. `make <target>` and `python scripts/tasks.py <target>` a
 | Regenerate OpenAPI JSON + TS types | `make openapi` |
 | Regenerate golden expectations (intentional engine change only) | `make golden` |
 | New migration after model change | `make migration m="describe change"` |
-| Back-test against real projects. First the **production path** (headline): the 8 tenders with a saved reading in `backend/tests/fixtures/readings_v9/` (stand-in model readings + staff lines entered by hand; `--readings` picks another folder), priced through the review form's pre-fill as an upload is (OPEN_QUESTIONS 161). Then the **legacy path, not the production path** (the benchmark file's hand-mapped scope), with and without AI tools (contracts up to `pre_ai_until` judged without): error, bias (ours / published), P10-P90 coverage and band hits by size and client type, in one run / fit the smooth size curve (factor by feature points) | `cd backend && uv run python -m app.cli backtest --country india [--as-of YYYY-MM-DD] [--layers] [--calibrate]` |
+| Back-test against real projects. First the **production path** (headline): the 8 tenders with a saved reading in `backend/tests/fixtures/readings_v10/` (stand-in model readings + staff lines entered by hand; `--readings` picks another folder), priced through the review form's pre-fill as an upload is (OPEN_QUESTIONS 161). Then the **legacy path, not the production path** (the benchmark file's hand-mapped scope), with and without AI tools (contracts up to `pre_ai_until` judged without): error, bias (ours / published), P10-P90 coverage and band hits by size and client type, in one run / fit the smooth size curve (factor by feature points) | `cd backend && uv run python -m app.cli backtest --country india [--as-of YYYY-MM-DD] [--layers] [--calibrate]` |
 | Benchmark tender readings (round 3): `reading:` blocks and `onsite_staff` in `backend/seeds/benchmarks/india.yaml`; a project left out names its `exclude_rule` (rules at the top of each benchmark file, OPEN_QUESTIONS 155); the reading files and scripts in `data/benchmark_readings/` (not committed) | see OPEN_QUESTIONS 153, 155; PBD control log 156 |
 | The catalog as one plain table to read (a view only, never priced from): `docs/CATALOG.md` + `data/catalog.xlsx`; run again after a catalog change | `cd backend && uv run python -m app.cli catalog-table [--version v7]` |
 | Check the email (SMTP) settings: send one test email | `cd backend && uv run python -m app.cli test-email you@example.com` |

@@ -7,9 +7,10 @@ from pydantic import BaseModel
 from sqlalchemy.orm import Session
 
 from app.api.deps import CurrentUser, DbSession, EditorUser
+from app.core.config import get_settings
 from app.core.tenancy import get_owned
 from app.models import Document, Project
-from app.services.documents.service import upload_document
+from app.services.documents.service import BYTES_PER_MB, upload_document
 from app.services.extraction.merge import (
     ProjectExtraction,
     project_extraction,
@@ -70,7 +71,8 @@ def upload(
     """Upload the RFP (starts a draft project) or add an annexure / corrigendum / pre-bid reply
     to an existing one via `project_id` + `kind`. Sync on purpose: parsing and the AI call run
     in the threadpool, not the event loop."""
-    data = file.file.read()
+    # never more than the limit into memory (upload_document refuses anything over it)
+    data = file.file.read(get_settings().upload_max_mb * BYTES_PER_MB + 1)
     doc = upload_document(
         db, user, file.filename or "document", data, project_id=project_id, kind=kind
     )

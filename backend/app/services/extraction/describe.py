@@ -18,6 +18,7 @@ from app.core.config import get_settings
 from app.core.tenancy import scoped
 from app.llm.client import LLMClient, LLMNotConfiguredError, LLMRefusedError, get_llm_client
 from app.models import DescriptionReading
+from app.services import limits
 from app.services.documents.parsing import Page, ParsedDocument
 from app.services.extraction.basic_reader import basic_read
 from app.services.extraction.tender import (
@@ -138,6 +139,7 @@ def _remembered(
     kept = db.scalars(query).first()
     if kept is not None:
         return ExtractionOutput.model_validate(kept.output)
+    limits.spend_ai(db, org_id)  # LimitError past today's AI readings
     output = ai_read(llm, cfg, parsed).output
     db.add(DescriptionReading(org_id=org_id, output=output.model_dump(mode="json"), **key))
     try:
@@ -172,6 +174,9 @@ def suggest_features(
             reader, version = "ai", PROMPT_VERSION
         except LLMRefusedError:
             raw = None
+        except limits.LimitError:
+            raw = None
+            note = "Today's AI readings are used up, so we matched keywords instead."
         except Exception:  # network / API errors: fall back to the keyword reader
             log.exception("description reading failed")
             raw = None

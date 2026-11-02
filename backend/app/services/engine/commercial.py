@@ -175,7 +175,12 @@ def working_capital_factor(t: LineBuilder, delivery_months: Decimal) -> Decimal:
     piecewise-linear segments, so the factor moves continuously with the delivery duration.
     """
     schedule = t.driver("payment_schedule")
-    delay: Decimal = t.param("commercial", "payment_delay_months")
+    own_delay: Decimal | None = t.ctx.q.payment_delay_months
+    if own_delay is not None:  # the contract's own delay (formula v3, OPEN_QUESTIONS 196)
+        delay: Decimal = t.driver("payment_delay_months")
+        t.formula_id = "commercial.working_capital.v3"
+    else:
+        delay = t.param("commercial", "payment_delay_months")
     coc: Decimal = t.param("commercial", "cost_of_capital")
     payments = [
         (m.at_build_fraction * delivery_months + m.offset_months + delay, m.percent)

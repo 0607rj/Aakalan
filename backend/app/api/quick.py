@@ -8,6 +8,7 @@ from app.api.deps import CurrentUser, DbSession, EditorUser, can_see_margin
 from app.core.tenancy import get_owned, scoped
 from app.llm.client import LLMNotConfiguredError, LLMRefusedError
 from app.models import Estimate, Project, ResearchedComponent
+from app.services import limits
 from app.services.extraction.describe import Suggestion, suggest_features
 from app.services.quick import second_opinion
 from app.services.quick.config import quick_config
@@ -370,6 +371,16 @@ def ask_second_opinion(estimate_id: str, db: DbSession, user: EditorUser) -> Sec
     if cfg.reality_check is None:
         raise HTTPException(status.HTTP_409_CONFLICT, "Second opinions are switched off.")
     plain = summarise(estimate, project, cfg, margin_visible=False)
+    if ai_available():
+        try:
+            limits.spend_ai(db, user.org_id)
+        except limits.LimitError as exc:
+            db.commit()
+            raise HTTPException(
+                status.HTTP_429_TOO_MANY_REQUESTS,
+                exc.message,
+                headers={"Retry-After": str(exc.seconds)},
+            ) from exc
     try:
         opinion = second_opinion.ask(db, user, cfg, estimate, plain)
     except LLMNotConfiguredError as exc:
@@ -421,7 +432,7 @@ class DescribeIn(BaseModel):
 
 
 @router.post("/quick-estimate/suggest", response_model=Suggestion)
-def suggest(body: DescribeIn, db: DbSession, user: CurrentUser) -> Suggestion:
+def suggest(body: DescribeIn, db: DbSession, user: EditorUser) -> Suggestion:
     """Features (and answers) suggested from the user's own description; nothing is priced,
     the user ticks and confirms them on the form. The AI's reading is kept for the company, so
     the same words give the same features every time (OPEN_QUESTIONS 181)."""
@@ -429,11 +440,18 @@ def suggest(body: DescribeIn, db: DbSession, user: CurrentUser) -> Suggestion:
 
 
 @router.post("/quick-estimate/draft-stories", response_model=DraftOut)
-def draft(body: DraftIn, _user: CurrentUser) -> DraftOut:
+def draft(body: DraftIn, db: DbSession, user: EditorUser) -> DraftOut:
     """User stories for the ticked features, drafted by the AI for the user to edit and confirm
     (a project without a document). Nothing is saved or priced; the confirmed stories feed the
     story-size check only."""
     rules = quick_config().size_check
     if rules is None:
         return DraftOut(available=False, note="The story-size check is switched off.")
+    if ai_available():
+        try:
+            limits.spend_ai(db, user.org_id)
+        except limits.LimitError as exc:
+            db.commit()
+            return DraftOut(available=False, note=exc.message)
+        db.commit()
     return draft_stories(rules, body)

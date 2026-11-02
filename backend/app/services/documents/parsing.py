@@ -7,13 +7,18 @@ Scanned PDFs (no text layer) are marked `scanned`; the AI reader reads them as P
 
 import io
 import re
+import zipfile
 from dataclasses import dataclass
+
+from app.core.config import get_settings
 
 DOCX_CHARS_PER_PAGE = 3000  # roughly one printed A4 page of tender text
 MIN_TEXT_CHARS_PER_PAGE = 20  # below this a PDF page is treated as having no text layer
 PDF_MAGIC = b"%PDF"
 ZIP_MAGIC = b"PK\x03\x04"
 
+
+_TOO_MANY_PAGES = "This document has too many pages. Upload the main requirement document."
 
 SCANNED_NEEDS_AI = (
     "This PDF looks scanned (no selectable text). Scanned documents can be read once an AI key "
@@ -63,10 +68,14 @@ def _parse_pdf(data: bytes) -> ParsedDocument:
 
     try:
         with pdfplumber.open(io.BytesIO(data)) as pdf:
+            if len(pdf.pages) > get_settings().upload_max_pages:
+                raise DocumentError(_TOO_MANY_PAGES)
             pages = [
                 Page(number=i, text=_clean(page.extract_text() or ""))
                 for i, page in enumerate(pdf.pages, start=1)
             ]
+    except DocumentError:
+        raise
     except Exception as exc:
         raise DocumentError("This PDF could not be opened. Is it password-protected?") from exc
     if not pages:
@@ -77,9 +86,21 @@ def _parse_pdf(data: bytes) -> ParsedDocument:
     return ParsedDocument(kind="pdf", pages=pages, approximate_pages=False)
 
 
+def _unpacked_bytes(data: bytes) -> int:
+    """What the Word file's parts add up to once unzipped (as each part's header says; a part
+    is never read past its stated size)."""
+    try:
+        with zipfile.ZipFile(io.BytesIO(data)) as z:
+            return sum(i.file_size for i in z.infolist())
+    except zipfile.BadZipFile as exc:
+        raise DocumentError("This Word file could not be opened.") from exc
+
+
 def _parse_docx(data: bytes) -> ParsedDocument:
     import docx
 
+    if _unpacked_bytes(data) > get_settings().docx_max_unpacked_mb * 1024 * 1024:
+        raise DocumentError("This Word file is too large once opened. Please upload a PDF.")
     try:
         document = docx.Document(io.BytesIO(data))
     except Exception as exc:

@@ -9,8 +9,14 @@ The table `shared_researched_components` is the live copy every request reads; t
 is kept in the repository and seeded into new installs. Estimates snapshot the blocks they use,
 so a later addition never changes an estimate. `research.share` in quick_estimate.yaml turns
 sharing off: then nothing new is shared and no organisation reads the shared blocks, so each
-one is priced by its own research only (OPEN_QUESTIONS 185)."""
+one is priced by its own research only (OPEN_QUESTIONS 185).
 
+A newly shared block waits for the site owner (`pending`): only an approved (`active`) block
+prices other companies' features, and only then is it written to the file. Another company
+sees it under an anonymous key (`shared_key`), never the words it was researched under
+(OPEN_QUESTIONS 190)."""
+
+import hashlib
 import logging
 import threading
 from datetime import UTC, date, datetime
@@ -36,6 +42,13 @@ HEADER = """\
 # the row is retired. Estimates that used a block keep their own snapshot either way.
 """
 _LOCK = threading.Lock()
+SHARED_PREFIX = "researched_shared_"  # the anonymous keys other companies see
+
+
+def shared_key(key: str) -> str:
+    """The key another company prices a shared block under: a hash, so it carries none of the
+    words of the name it was researched under."""
+    return SHARED_PREFIX + hashlib.sha256(key.encode()).hexdigest()[:16]
 
 
 class LibraryEntry(BaseModel):
@@ -94,8 +107,45 @@ def _append(entry: LibraryEntry) -> None:
         log.warning("research library %s not written: %s", path, exc)
 
 
+def _remove(key: str) -> None:
+    path = get_settings().resolved_research_library
+    try:
+        with _LOCK:
+            entries = read_library(path)
+            kept = [e for e in entries if e.key != key]
+            if len(kept) != len(entries):
+                _write(path, kept)
+    except OSError as exc:
+        log.warning("research library %s not written: %s", path, exc)
+
+
+def approve(row: SharedResearchedComponent) -> None:
+    """The owner lets a shared block price other companies' features; the file gets it too."""
+    row.status = "active"
+    _append(
+        LibraryEntry(
+            key=row.key,
+            name=row.name,
+            section=row.section,
+            base_type=row.base_type,
+            method=row.method,
+            added=datetime.now(UTC).date(),
+            spec=row.spec,
+            sources=row.sources,
+        )
+    )
+
+
+def retire(row: SharedResearchedComponent) -> None:
+    """No longer offered to anyone (estimates that used it keep their snapshot); off the file."""
+    row.status = "retired"
+    _remove(row.key)
+
+
 def share(db: Session, row: ResearchedComponent, method: str) -> None:
-    """Share an active researched block (once per key): the table now, the file alongside."""
+    """Offer an active researched block to every company (once per key). It waits for the
+    owner's approval (`approve`) before it prices anyone else's features or reaches the file:
+    its name is one company's own text."""
     if row.status != "active" or row.spec is None:
         return
     if db.scalars(
@@ -112,21 +162,10 @@ def share(db: Session, row: ResearchedComponent, method: str) -> None:
             method=method,
             spec=row.spec,
             sources=sources,
+            status="pending",
         )
     )
     db.flush()
-    _append(
-        LibraryEntry(
-            key=row.key,
-            name=row.name,
-            section=row.section,
-            base_type=row.base_type,
-            method=method,
-            added=datetime.now(UTC).date(),
-            spec=row.spec,
-            sources=sources,
-        )
-    )
 
 
 def sharing_on() -> bool:
@@ -138,7 +177,7 @@ def sharing_on() -> bool:
 
 
 def shared_blocks(db: Session) -> list[SharedResearchedComponent]:
-    """The active shared blocks, or none while sharing is off."""
+    """The approved shared blocks, or none while sharing is off."""
     if not sharing_on():
         return []
     return list(

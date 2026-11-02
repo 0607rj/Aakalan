@@ -409,6 +409,37 @@ class Reuse(Sourced):
         return self
 
 
+class Layers(Sourced):
+    """v31+ (OPEN_QUESTIONS 192): which parts of the system are built (questionnaire
+    build_layers). Front end only: the client's server side, database and APIs exist, so each
+    task type of every block is multiplied by its factor (a task not listed keeps 1)."""
+
+    task_factor_by_layers: dict[str, dict[TaskType, Decimal]]
+
+    @model_validator(mode="after")
+    def _factors(self) -> "Layers":
+        for factors in self.task_factor_by_layers.values():
+            if any(not Decimal(0) <= f <= Decimal(1) for f in factors.values()):
+                raise ValueError("layer factors must be in [0, 1]")
+        return self
+
+
+class Builder(Sourced):
+    """v32+ (OPEN_QUESTIONS 195): who builds it (questionnaire builder_type). Every person's
+    day rate is multiplied by the builder's factor (formula role_rate.v2); a mid-size firm is 1,
+    the level the hours were calibrated at."""
+
+    rate_factor_by_builder: dict[str, Decimal]
+
+    @model_validator(mode="after")
+    def _factors(self) -> "Builder":
+        if any(f <= 0 for f in self.rate_factor_by_builder.values()):
+            raise ValueError("builder rate factors must be above 0")
+        if self.rate_factor_by_builder.get("mid_firm") != Decimal(1):
+            raise ValueError("a mid-size firm is the calibrated level: factor 1")
+        return self
+
+
 class EffortCaps(Sourced):
     """v20+: ceilings on work that tends to grow out of proportion with the build, applied to
     the summed component effort before pricing (each cap scales its tasks down, never up):
@@ -886,6 +917,8 @@ class ParameterSet(Frozen):
     ai_productivity: AiProductivity
     reuse: Reuse | None = None  # None (older sets): every build priced as written from scratch
     effort_caps: EffortCaps | None = None  # None (older sets): no ceilings
+    layers: Layers | None = None  # None (older sets): every build is the whole system
+    builder: Builder | None = None  # None (older sets): every rate as on the rate card
     task_roles: TaskRoles
     timeline: Timeline
     programme: Programme

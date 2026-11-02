@@ -5,7 +5,7 @@ from datetime import UTC, datetime
 from fastapi import APIRouter
 from pydantic import BaseModel
 
-from app.api.deps import CurrentUser, DbSession, FinanceUser
+from app.api.deps import CurrentUser, DbSession, FinanceUser, can_see_margin
 from app.services.estimates.reference_store import get_rate_card
 from app.services.quick.config import quick_config
 from app.services.settings import (
@@ -20,7 +20,11 @@ router = APIRouter(tags=["settings"])
 
 @router.get("/settings", response_model=CompanySettings)
 def read_settings(db: DbSession, user: CurrentUser) -> CompanySettings:
-    return company_settings(db, user.org_id)
+    """The company's settings; the margin only for finance and admin."""
+    settings = company_settings(db, user.org_id)
+    if not can_see_margin(user):
+        settings = settings.model_copy(update={"margin_percent": None})
+    return settings
 
 
 @router.put("/settings", response_model=CompanySettings)

@@ -54,6 +54,7 @@ export function SignupForm({ initialEmail = "" }: { initialEmail?: string }) {
     return (
       <VerifyEmailStep
         email={sentTo}
+        password={password}
         onSignedIn={(r) => {
           setToken(r.access_token);
           router.replace("/projects");

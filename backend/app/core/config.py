@@ -42,6 +42,13 @@ class Settings(BaseSettings):
     login_ip_max_failures: int = 30
     login_window_minutes: int = 15
     password_min_length: int = 8
+    # Limits against abuse (services/limits.py); 0 = off. Sign-ups and contact messages per
+    # caller address an hour; AI calls (a document read, "find features", drafted stories, a
+    # second opinion, one researched feature) per company and for the whole site a day.
+    signup_ip_max_per_hour: int = 10
+    contact_ip_max_per_hour: int = 5
+    ai_org_max_per_day: int = 100
+    ai_site_max_per_day: int = 1000
     smtp_host: str = ""
     smtp_port: int = 587
     smtp_username: str = ""
@@ -70,6 +77,10 @@ class Settings(BaseSettings):
     llm_web_search_tool: str = "web_search_20250305"
 
     upload_max_mb: int = 25
+    # A file that unpacks far beyond its size (a "zip bomb") or has a huge number of pages is
+    # refused before it is read (services/documents/parsing.py).
+    upload_max_pages: int = 3000
+    docx_max_unpacked_mb: int = 200
     # Tries of the AI call that counts what the system contains (the independent check); a
     # document left uncounted needs a person to confirm its price before export.
     inventory_tries: int = 2
@@ -77,7 +88,9 @@ class Settings(BaseSettings):
 
     @model_validator(mode="after")
     def _no_dev_secret_in_production(self) -> "Settings":
-        if self.environment == "production" and self.jwt_secret.startswith("dev-only"):
+        if self.environment == "production" and self.jwt_secret.startswith(
+            ("dev-only", "change-me")
+        ):
             raise ValueError("JWT_SECRET must be set in production")
         return self
 

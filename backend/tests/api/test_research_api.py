@@ -204,27 +204,41 @@ def other_company(client: TestClient, db: Session, email: str) -> H:
 def test_research_is_shared_with_every_company(
     client: TestClient, admin_headers: H, db: Session, fakes: list[str]
 ) -> None:
-    """Researched once by one company, the feature joins the shared library (table and file):
-    another company that types it is priced by it with no AI call of its own, but never sees
-    it listed or named, since its name shows what the first company bids on (OPEN_QUESTIONS
-    185)."""
+    """Researched once by one company, the feature waits for the site owner; once shared (table
+    and file) another company that types it is priced by it with no AI call of its own, under
+    an anonymous key, and never sees it listed or named, since its name shows what the first
+    company bids on (OPEN_QUESTIONS 185, 190)."""
     ai(fakes, [], [{"block": "push_notifications", "level": "standard", "why": "alerts"}])
     name = "Parcel locker pickup slots"
     first = estimate(client, admin_headers, name)
     [found] = first["researched"]
     key = trace_key(client, admin_headers, first, name)
     assert key.startswith("researched_") and found["section"] == "mobile"
-    library = read_library(get_settings().resolved_research_library)
-    [entry] = [e for e in library if e.key == key]
+    path = get_settings().resolved_research_library
+    assert all(e.key != key for e in read_library(path))  # not shared before the owner says so
+    [waiting] = [
+        b
+        for b in client.get("/owner/shared-blocks", headers=admin_headers).json()
+        if b["name"] == name
+    ]
+    assert waiting["status"] == "pending"
+    them = other_company(client, db, "research@other.local")
+    assert client.get("/owner/shared-blocks", headers=them).status_code == 403
+    r = client.post(f"/owner/shared-blocks/{waiting['id']}/approve", headers=admin_headers)
+    assert r.status_code == 200 and r.json()["status"] == "active"
+    [entry] = [e for e in read_library(path) if e.key == key]
     assert entry.name == name and entry.method == "analysis" and entry.spec["key"] == key
 
-    them = other_company(client, db, "research@other.local")
     asked = len(fakes)
     typed = "Pickup slots for parcel locker"
     theirs = estimate(client, them, typed)
     assert len(fakes) == asked  # priced from the library: no search
-    assert trace_key(client, them, theirs, typed) == key
+    assert trace_key(client, them, theirs, typed) == library.shared_key(key)  # no words in it
     assert [r["name"] for r in theirs["researched"]] == [typed]  # their words, not the block's
+    research = client.post(
+        "/research-blocks", json={"name": "parcel locker", "category": "module"}, headers=them
+    ).json()
+    assert research["catalog_key"] == library.shared_key(key)
     options = client.get("/quick-estimate/options", headers=them).json()
     assert all(r["catalog_key"] != key for r in options["researched"])  # never listed
     catalog = client.get("/catalog", headers=them).json()["components"]
@@ -232,6 +246,9 @@ def test_research_is_shared_with_every_company(
     assert client.get("/research-blocks", headers=them).json() == []
     mine = client.get("/quick-estimate/options", headers=admin_headers).json()
     assert [r["name"] for r in mine["researched"] if r["catalog_key"] == key] == [name]
+    r = client.post(f"/owner/shared-blocks/{waiting['id']}/retire", headers=admin_headers)
+    assert r.json()["status"] == "retired"
+    assert all(e.key != key for e in read_library(path))  # off the file again
     retire_all(client, admin_headers)
 
 

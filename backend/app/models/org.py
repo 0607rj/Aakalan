@@ -20,7 +20,9 @@ class Role(enum.StrEnum):
 class Organisation(IdTimestampMixin, Base):
     __tablename__ = "organisations"
 
-    name: Mapped[str] = mapped_column(String(200), unique=True)
+    # Not unique: two companies may share a name, and a sign-up never learns that another
+    # company of that name uses Aakalan (OPEN_QUESTIONS 190).
+    name: Mapped[str] = mapped_column(String(200))
     users: Mapped[list["User"]] = relationship(back_populates="organisation")
 
 
@@ -73,6 +75,17 @@ class LoginFailure(IdTimestampMixin, Base):
 
     email: Mapped[str] = mapped_column(String(320), index=True)
     ip: Mapped[str] = mapped_column(String(64), index=True)
+
+
+class RateEvent(IdTimestampMixin, Base):
+    """One counted action for a limit (services/limits.py): a sign-up or contact message by the
+    caller's address, an AI call by organisation. Not a tenant table: read by kind and key;
+    rows older than the limit's window go."""
+
+    __tablename__ = "rate_events"
+
+    kind: Mapped[str] = mapped_column(String(20), index=True)
+    key: Mapped[str] = mapped_column(String(320), index=True)
 
 
 class OrgSettings(IdTimestampMixin, Base):

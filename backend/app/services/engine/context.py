@@ -124,6 +124,9 @@ class PricingContext:
             "ssl_type": bool(self.p.maintenance.ssl_rate_key_by_type),
             "ai_passthrough_percent": False,  # default: all passed through, as before
             "size_blend": False,  # set by the quick form near a size edge; never a note
+            "build_layers": False,  # default: the whole system, as before the answer existed
+            "builder_type": False,  # default: a mid-size firm (factor 1), as before
+            "payment_delay_months": False,  # default: the parameter set's delay, as before
         }.get(key, True)
 
     def assumptions(self) -> list[AssumptionOut]:
@@ -289,6 +292,8 @@ class LineBuilder:
         """Rate amount in the estimate currency (the rate card's currency). An item priced in
         another currency is converted: amount × forex[item→card] × (1 + forex_buffer)."""
         item = self.rate(key)
+        if item.kind.value == "role" and self.ctx.p.builder is not None:
+            return self.role_rate(item.key, item.amount)
         currency = self.ctx.inp.rate_card.currency
         if item.currency == currency:
             return item.amount
@@ -300,6 +305,19 @@ class LineBuilder:
             f"{item.amount} {item.currency} × {fx} × (1 + {buffer})",
             item.amount * fx * (ONE + buffer),
         )
+
+    def role_rate(self, key: str, amount: Decimal) -> Decimal:
+        """A person's day rate for who builds it (parameter sets v32+, formula role_rate.v2,
+        OPEN_QUESTIONS 195):
+
+          rate = rate card amount × builder.rate_factor_by_builder[builder_type]
+
+        A mid-size firm is 1: the hours are calibrated on tenders such firms bid."""
+        builder: str = self.driver("builder_type")
+        factor: Decimal = self.param("builder", "rate_factor_by_builder", builder)
+        if factor == ONE:
+            return amount
+        return self.step(f"{key} for {builder}", f"{amount} × {factor}", amount * factor)
 
     def calibration(self, dial: str) -> Decimal:
         """A calibration dial (effort_multiplier / run_multiplier); 1 when the set has none."""

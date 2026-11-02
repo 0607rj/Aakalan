@@ -57,7 +57,8 @@ def test_ruled_out_and_later_items_are_set_aside_not_offered() -> None:
     )
     offered = {s.key: s.status for s in ex.scope}
     aside = {s.key: s.status for s in ex.scope_set_aside}
-    assert offered == {"two_step_sign_in": "explicit"}
+    # the SMS line also offers SMS messages (OPEN_QUESTIONS 196)
+    assert offered == {"two_step_sign_in": "explicit", "sms": "inferred"}
     # the SMS line finds the notifications feature, so its WhatsApp item applies: ruled out
     assert aside == {"public_api": "future", "whatsapp": "excluded"}
     assert all(s.evidence and s.evidence[0].page == 1 for s in ex.scope + ex.scope_set_aside)

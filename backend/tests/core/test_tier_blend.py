@@ -35,7 +35,7 @@ def test_blocks_of_the_next_size_come_in_part() -> None:
     mixes = {c.key: c.size_mix for c in plan.components}
     assert plan.size_points == 4 and plan.project_size == "small"
     assert mixes["ui_ux_design"] is None  # S in both sizes: priced in full
-    assert mixes["discovery_requirement_study"] == {Size.S: Decimal("0.5")}  # small_medium's
+    assert mixes["security_hardening"] == {Size.S: Decimal("0.5")}  # small_medium's
     assert mixes["integration_payment_gateway"] is None  # a feature's own block: in full
 
 

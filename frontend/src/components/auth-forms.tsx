@@ -307,13 +307,15 @@ export function CodeField({
   );
 }
 
-/** Confirm the email address with its code; signs in on success. */
+/** Confirm the email address with its code (and the password just typed); signs in on success. */
 export function VerifyEmailStep({
   email,
+  password,
   onSignedIn,
   onBack,
 }: {
   email: string;
+  password: string;
   onSignedIn: (response: TokenResponse) => void;
   onBack?: () => void;
 }) {
@@ -326,7 +328,7 @@ export function VerifyEmailStep({
     setBusy(true);
     setError(null);
     try {
-      onSignedIn(await api.verifyEmail(email, code));
+      onSignedIn(await api.verifyEmail(email, code, password));
     } catch (err) {
       setError(failure(err));
       setBusy(false);

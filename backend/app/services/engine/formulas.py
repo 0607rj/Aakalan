@@ -3,6 +3,16 @@ shows the expression. Change a formula -> bump its version suffix so old traces 
 
 FORMULAS: dict[str, str] = {
     # components (brief 7.1)
+    "role_rate.v2": (
+        "rate_role = rate card amount × builder.rate_factor_by_builder[builder_type] (v32+,"
+        " OPEN_QUESTIONS 195): a freelancer, small, mid-size (1) or large firm; recorded as a step"
+        " on every line that prices a person's days"
+    ),
+    "component_labour.v8": (
+        "as component_labour.v7 (v6 away from a size edge), with each task × M_layer(task) ="
+        " layers.task_factor_by_layers[build_layers][task] (1 when not listed): only the screens"
+        " are built over the client's existing server side and APIs (v31+, OPEN_QUESTIONS 192)"
+    ),
     "component_labour.v6": (
         "as component_labour.v5, with base_effort_pd = Σ_s base_effort_pd[s] × size_mix[s] for a"
         " standard block priced between two project sizes, and (v29+) the pre-build cap's total"
@@ -238,6 +248,11 @@ FORMULAS: dict[str, str] = {
     "commercial.working_capital.v2": (
         "build_base × ∫ max(0, cost_share(τ) − receipts_share(τ)) dτ"
         " × cost_of_capital / months_per_year"
+    ),
+    "commercial.working_capital.v3": (
+        "as commercial.working_capital.v2, with the payment delay the contract's own"
+        " (questionnaire payment_delay_months, e.g. 0 when a private client pays on the invoice)"
+        " instead of commercial.payment_delay_months (OPEN_QUESTIONS 196)"
     ),
     "commercial.pbg.v1": (
         "pbg_percent × (base_total + contingency) × pbg_commission × validity_months"

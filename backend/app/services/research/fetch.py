@@ -1,10 +1,17 @@
 """Opening a source page to check a figure: public http(s) pages only (never private, loopback
 or link-local addresses, so a URL from the AI cannot reach internal systems), a few redirects,
 a time and size limit, and the visible text of the HTML. Nothing from the tender is sent: only
-a GET of the public URL."""
+a GET of the public URL.
 
+The host is checked before the request and the address actually connected to is checked
+again, so a name that resolves to a public address first and a private one next (DNS
+rebinding) is still refused. Only the usual web ports; the whole fetch, not each read, has
+the time limit."""
+
+import http.client
 import ipaddress
 import socket
+import time
 import urllib.error
 import urllib.request
 from collections.abc import Callable
@@ -13,6 +20,8 @@ from urllib.parse import urljoin, urlparse
 
 MAX_REDIRECTS = 3
 USER_AGENT = "Aakalan-source-check/1.0"
+WEB_PORTS = frozenset({80, 443, 8080, 8443})
+CHUNK = 64 * 1024
 
 
 class FetchError(RuntimeError):
@@ -25,6 +34,8 @@ def _public_host(url: str) -> None:
         raise FetchError(f"not a web address: {url}")
     if "." not in parts.hostname:
         raise FetchError(f"not a public host: {parts.hostname}")
+    if parts.port is not None and parts.port not in WEB_PORTS:
+        raise FetchError(f"not a web port: {parts.port}")
     try:
         infos = socket.getaddrinfo(parts.hostname, parts.port or None, proto=socket.IPPROTO_TCP)
     except OSError as exc:
@@ -35,12 +46,56 @@ def _public_host(url: str) -> None:
             raise FetchError(f"not a public address: {parts.hostname}")
 
 
+def _check_peer(sock: socket.socket | None) -> None:
+    """The address the connection really went to must be public (DNS rebinding)."""
+    if sock is None:
+        raise FetchError("no connection")
+    if not ipaddress.ip_address(sock.getpeername()[0]).is_global:
+        sock.close()
+        raise FetchError("not a public address")
+
+
+class _PublicHTTP(http.client.HTTPConnection):
+    def connect(self) -> None:
+        super().connect()
+        _check_peer(self.sock)
+
+
+class _PublicHTTPS(http.client.HTTPSConnection):
+    def connect(self) -> None:
+        super().connect()  # TCP, then TLS on the same socket
+        _check_peer(self.sock)
+
+
+class _HTTPHandler(urllib.request.HTTPHandler):
+    def http_open(self, req: urllib.request.Request) -> http.client.HTTPResponse:
+        return self.do_open(_PublicHTTP, req)
+
+
+class _HTTPSHandler(urllib.request.HTTPSHandler):
+    def https_open(self, req: urllib.request.Request) -> http.client.HTTPResponse:
+        return self.do_open(_PublicHTTPS, req)
+
+
 class _NoRedirect(urllib.request.HTTPRedirectHandler):
     def redirect_request(self, *args: object, **kwargs: object) -> None:
         return None  # redirects are followed by hand, each target checked first
 
 
-_OPENER = urllib.request.build_opener(_NoRedirect)
+_OPENER = urllib.request.build_opener(_HTTPHandler, _HTTPSHandler, _NoRedirect)
+
+
+def _read(response: http.client.HTTPResponse, max_bytes: int, deadline: float) -> bytes:
+    """At most max_bytes + 1, stopping when the whole fetch's time is up (a slow page)."""
+    body = bytearray()
+    while len(body) <= max_bytes:
+        if time.monotonic() > deadline:
+            raise FetchError("page too slow")
+        chunk = response.read(min(CHUNK, max_bytes + 1 - len(body)))
+        if not chunk:
+            break
+        body += chunk
+    return bytes(body)
 
 
 class _Text(HTMLParser):
@@ -72,12 +127,13 @@ def html_text(html: str) -> str:
 
 def fetch_text(url: str, timeout: int, max_bytes: int) -> str:
     """The page's visible text."""
+    deadline = time.monotonic() + timeout
     for _ in range(MAX_REDIRECTS + 1):
         _public_host(url)
         request = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})
         try:
             with _OPENER.open(request, timeout=timeout) as response:
-                body = response.read(max_bytes + 1)
+                body = _read(response, max_bytes, deadline)
                 charset = response.headers.get_content_charset() or "utf-8"
                 kind = response.headers.get_content_type()
         except urllib.error.HTTPError as exc:

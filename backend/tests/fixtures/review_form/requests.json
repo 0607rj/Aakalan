@@ -192,6 +192,9 @@
    "choices": {
     "version": "full",
     "platforms": "web",
+    "build_part": "whole",
+    "builder": "mid_firm",
+    "payment_terms": "milestones",
     "scale": "up_to_10k",
     "integrations": "many",
     "old_data": "no",
@@ -385,6 +388,9 @@
    "choices": {
     "version": "full",
     "platforms": "web_mobile",
+    "build_part": "whole",
+    "builder": "mid_firm",
+    "payment_terms": "milestones",
     "scale": "up_to_5k",
     "integrations": "many",
     "old_data": "no",
@@ -571,6 +577,9 @@
    "choices": {
     "version": "full",
     "platforms": "web_mobile",
+    "build_part": "whole",
+    "builder": "mid_firm",
+    "payment_terms": "milestones",
     "scale": "up_to_10k",
     "integrations": "many",
     "old_data": "little",
@@ -745,6 +754,9 @@
    "choices": {
     "version": "full",
     "platforms": "web_mobile",
+    "build_part": "whole",
+    "builder": "mid_firm",
+    "payment_terms": "milestones",
     "scale": "up_to_10k",
     "integrations": "many",
     "old_data": "no",
@@ -1011,6 +1023,9 @@
    "choices": {
     "version": "full",
     "platforms": "web",
+    "build_part": "whole",
+    "builder": "mid_firm",
+    "payment_terms": "milestones",
     "scale": "up_to_10k",
     "integrations": "many",
     "old_data": "no",
@@ -1277,6 +1292,9 @@
    "choices": {
     "version": "full",
     "platforms": "web",
+    "build_part": "whole",
+    "builder": "mid_firm",
+    "payment_terms": "milestones",
     "scale": "up_to_10k",
     "integrations": "one_two",
     "old_data": "little",
@@ -1607,6 +1625,9 @@
    "choices": {
     "version": "full",
     "platforms": "web",
+    "build_part": "whole",
+    "builder": "mid_firm",
+    "payment_terms": "milestones",
     "scale": "up_to_10k",
     "integrations": "many",
     "old_data": "no",
@@ -1812,6 +1833,9 @@
    "choices": {
     "version": "full",
     "platforms": "web_mobile",
+    "build_part": "whole",
+    "builder": "mid_firm",
+    "payment_terms": "milestones",
     "scale": "up_to_10k",
     "integrations": "many",
     "old_data": "little",

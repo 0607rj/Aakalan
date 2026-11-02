@@ -17,7 +17,7 @@ from app.schemas.auth import (
     UserOut,
     VerifyEmailRequest,
 )
-from app.services import auth
+from app.services import auth, limits
 from app.services.email import EmailNotConfiguredError
 
 router = APIRouter(prefix="/auth", tags=["auth"])
@@ -48,6 +48,10 @@ def _refused(db: DbSession, exc: auth.AuthError) -> HTTPException:
     return HTTPException(exc.status, exc.message)
 
 
+def _caller(request: Request) -> str:
+    return request.client.host if request.client else "unknown"  # Caddy's X-Forwarded-For
+
+
 def _no_email() -> HTTPException:
     return HTTPException(
         status.HTTP_503_SERVICE_UNAVAILABLE, "We could not send the email. Please try again later."
@@ -56,7 +60,7 @@ def _no_email() -> HTTPException:
 
 @router.post("/login", response_model=TokenResponse)
 def login(body: LoginRequest, db: DbSession, request: Request) -> TokenResponse:
-    ip = request.client.host if request.client else "unknown"  # Caddy's X-Forwarded-For
+    ip = _caller(request)
     wait = auth.login_wait(db, body.email, ip)
     if wait:
         db.commit()
@@ -80,8 +84,18 @@ def login(body: LoginRequest, db: DbSession, request: Request) -> TokenResponse:
 
 
 @router.post("/signup", response_model=CodeSent, status_code=status.HTTP_201_CREATED)
-def signup(body: SignupRequest, db: DbSession) -> CodeSent:
-    """Your own account (and private space); sign in after confirming the emailed code."""
+def signup(body: SignupRequest, db: DbSession, request: Request) -> CodeSent:
+    """Your own account (and private space); sign in after confirming the emailed code. A few
+    sign-ups an hour from one address (settings `signup_ip_max_per_hour`)."""
+    try:
+        limits.spend_signup(db, _caller(request))
+    except limits.LimitError as exc:
+        db.commit()
+        raise HTTPException(
+            status.HTTP_429_TOO_MANY_REQUESTS,
+            exc.message,
+            headers={"Retry-After": str(exc.seconds)},
+        ) from exc
     try:
         user = auth.sign_up(db, body.full_name, body.email, body.password, body.company)
     except auth.AuthError as exc:
@@ -96,9 +110,9 @@ def signup(body: SignupRequest, db: DbSession) -> CodeSent:
 
 @router.post("/verify-email", response_model=TokenResponse)
 def verify_email(body: VerifyEmailRequest, db: DbSession) -> TokenResponse:
-    """Confirm the address with the emailed code; signs you in."""
+    """Confirm the address with the emailed code and the sign-up's password; signs you in."""
     try:
-        user = auth.verify_email(db, body.email, body.code)
+        user = auth.verify_email(db, body.email, body.code, body.password)
     except auth.AuthError as exc:
         raise _refused(db, exc) from exc
     db.commit()
