@@ -18,8 +18,8 @@ make install          # or: python scripts/tasks.py install
 make dev              # migrates, seeds demo users, runs API :8000, web :3000 and the worker
 ```
 
-Sign in at http://localhost:3000 as `admin@gmail.com` with the password from
-`SEED_USER_PASSWORD` (default `admin123`; local development only). This single user can do everything; role-based
+Sign in at http://localhost:3000 as `SEED_USER_EMAIL` (default `admin@example.com`) with the
+password from `SEED_USER_PASSWORD` (default `admin123`; local development only). This single user can do everything; role-based
 access (admin / estimator / finance / viewer) exists in the backend but is switched off for now.
 API docs: http://localhost:8000/docs.
 

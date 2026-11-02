@@ -63,6 +63,10 @@ class Settings(BaseSettings):
     cors_origins: list[str] = ["http://localhost:3000", "http://127.0.0.1:3000"]
 
     seeds_dir: Path = BACKEND_DIR / "seeds"
+    # The first account `make seed` creates (SEED_USER_EMAIL). The default is a reserved domain
+    # nobody receives mail at, so no one can reset its password by email; on a server put an
+    # address you own. An account that already exists keeps its email and password.
+    seed_user_email: str = "admin@example.com"
     seed_user_password: str = "admin123"
     # The shared library of researched features (services/research/library.py); empty = the
     # file under seeds_dir. Tests point it at a temporary file.

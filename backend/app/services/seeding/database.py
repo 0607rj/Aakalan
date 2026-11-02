@@ -9,6 +9,7 @@ from datetime import UTC, datetime
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core.config import get_settings
 from app.models import (
     CatalogComponent,
     ComponentInstance,
@@ -25,7 +26,6 @@ from app.models import (
 from app.services.engine import reference as ref
 from app.services.seeding.golden import golden_input
 from app.services.seeding.reference import ReferenceData
-from app.services.seeding.users import DEMO_EMAIL
 
 
 def seed_reference(session: Session, data: ReferenceData) -> list[str]:
@@ -166,7 +166,7 @@ def seed_demo_project(session: Session, org: Organisation, data: ReferenceData) 
     if exists is not None:
         return None
     user = session.scalars(
-        select(User).where(User.org_id == org.id, User.email == DEMO_EMAIL)
+        select(User).where(User.org_id == org.id, User.email == get_settings().seed_user_email)
     ).first()
     user_id = user.id if user else None
     now = datetime.now(UTC)

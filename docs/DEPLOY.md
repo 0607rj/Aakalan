@@ -41,9 +41,10 @@ sed -i "s/^ENVIRONMENT=.*/ENVIRONMENT=production/" .env
 sed -i "s/^JWT_SECRET=.*/JWT_SECRET=$(openssl rand -hex 32)/" .env
 sed -i 's|^CORS_ORIGINS=.*|CORS_ORIGINS=["http://SERVER_IP"]|' .env
 sed -i 's|^NEXT_PUBLIC_API_URL=.*|NEXT_PUBLIC_API_URL=http://SERVER_IP/api|' .env
-nano .env   # SEED_USER_PASSWORD (admin@gmail.com's password: make it strong), ANTHROPIC_API_KEY,
-            # SMTP_*, OWNER_EMAILS (the site owner's sign-in email: it sees the Admin page with
-            # every user and their estimates, and the results report)
+nano .env   # SEED_USER_EMAIL (an address you own) and SEED_USER_PASSWORD (strong): the first
+            # account; ANTHROPIC_API_KEY, SMTP_*, OWNER_EMAILS (the site owner's sign-in email,
+            # usually the same address: it sees the Admin page with every user and their
+            # estimates, and the results report)
 
 # 4. Services and Caddy
 sudo cp deploy/aakalan-*.service /etc/systemd/system/
@@ -55,12 +56,15 @@ bash deploy/update.sh
 ```
 
 Replace `SERVER_IP` with the server's public IP. Then open `http://SERVER_IP` and log in as
-`admin@gmail.com` with `SEED_USER_PASSWORD`. In production, sign-up codes need the SMTP settings.
+`SEED_USER_EMAIL` with `SEED_USER_PASSWORD`. In production, sign-up codes need the SMTP settings.
 The owner (`OWNER_EMAILS`) can see every account, so give that account a strong password: the seed
 sets it only when the account is first created (and refuses to create it with the example
 `admin123` or a short one in production); change it later under Account → Change password.
-Put an address you own in `OWNER_EMAILS`, not `admin@gmail.com`: whoever holds a mailbox can
-reset its password. Researched features one company shares wait on the Admin page ("Shared
+Use an address you own for `SEED_USER_EMAIL` and `OWNER_EMAILS`, never a made-up public one
+such as `admin@gmail.com`: whoever holds a mailbox can reset its password. The repository is
+public, so the example password `admin123` is known to everyone: a server whose first account
+was made with it must change that password at once. Changing `SEED_USER_EMAIL` later adds no
+second account; change the existing account's sign-in instead. Researched features one company shares wait on the Admin page ("Shared
 features") until the owner shares them with everyone (OPEN_QUESTIONS 190).
 
 ## Updating
