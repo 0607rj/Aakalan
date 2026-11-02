@@ -45,6 +45,36 @@ _LOCK = threading.Lock()
 SHARED_PREFIX = "researched_shared_"  # the anonymous keys other companies see
 
 
+def public_sources(sources: list[Any]) -> list[Any]:
+    """The sources another company may see: the public pages as they are, and for an AI analysis
+    only which catalog blocks at which level (the AI's `why` is written from one company's own
+    words, so it stays with that company; OPEN_QUESTIONS 202)."""
+    out: list[Any] = []
+    for s in sources:
+        if isinstance(s, dict) and s.get("kind") == "part":
+            out.append({k: v for k, v in s.items() if k != "why"})
+        else:
+            out.append(s)
+    return out
+
+
+def public_spec(spec: dict[str, Any], sources: list[Any]) -> dict[str, Any]:
+    """The catalog block another company may see: the same name, section, hours and sources,
+    with no description and, for an AI analysis, a citation that names only the catalog blocks
+    (both are the AI's words about one company's feature). Hours and task shares are unchanged,
+    so a cleaned block prices exactly as before."""
+    parts = [s for s in sources if isinstance(s, dict) and s.get("kind") == "part"]
+    evidence = []
+    for e in spec.get("evidence") or []:
+        citation = str(e.get("citation", ""))
+        if parts and citation.startswith("AI analysis"):
+            head = citation.split(":", 1)[0]
+            blocks = "; ".join(f"{p.get('block')} {p.get('level')}" for p in parts)
+            e = {**e, "citation": f"{head}: {blocks}"}
+        evidence.append(e)
+    return {**spec, "description": "", "evidence": evidence}
+
+
 def shared_key(key: str) -> str:
     """The key another company prices a shared block under: a hash, so it carries none of the
     words of the name it was researched under."""
@@ -130,8 +160,8 @@ def approve(row: SharedResearchedComponent) -> None:
             base_type=row.base_type,
             method=row.method,
             added=datetime.now(UTC).date(),
-            spec=row.spec,
-            sources=row.sources,
+            spec=public_spec(row.spec, public_sources(row.sources)),
+            sources=public_sources(row.sources),
         )
     )
 
@@ -152,7 +182,7 @@ def share(db: Session, row: ResearchedComponent, method: str) -> None:
         select(SharedResearchedComponent).where(SharedResearchedComponent.key == row.key)
     ).first():
         return
-    sources = [s for s in row.sources if s.get("kind") == "part" or s.get("ok")]
+    sources = public_sources([s for s in row.sources if s.get("kind") == "part" or s.get("ok")])
     db.add(
         SharedResearchedComponent(
             key=row.key,
@@ -160,7 +190,7 @@ def share(db: Session, row: ResearchedComponent, method: str) -> None:
             section=row.section,
             base_type=row.base_type,
             method=method,
-            spec=row.spec,
+            spec=public_spec(row.spec, sources),
             sources=sources,
             status="pending",
         )
@@ -203,8 +233,8 @@ def seed_library(db: Session, path: Path) -> int:
                 section=e.section,
                 base_type=e.base_type,
                 method=e.method,
-                spec=e.spec,
-                sources=e.sources,
+                spec=public_spec(e.spec, public_sources(e.sources)),
+                sources=public_sources(e.sources),
             )
         )
         known.add(e.key)

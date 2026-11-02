@@ -19,8 +19,7 @@ blocks:
     name: Multi-clinic and staff management
     category: custom
     bucket: build.module_development
-    description: Lets an organisation run several clinics from one system, with each clinic's locations,
-      settings and staff managed centrally and staff assigned to clinics with their schedules.
+    description: ''
     task_mix:
       crud: '0.55'
       tests: '0.2'
@@ -43,11 +42,8 @@ blocks:
     confidence: low
     evidence:
     - id: researched_clinic_management_multi_staff.1
-      citation: 'AI analysis 2026-10-22: master_data_management standard (Admin screens to manage clinics,
-        branches, departments, locations and staff roles or designations as masters.); booking_appointments
-        basic (Staff working hours, shifts and clinic-wise availability resemble slot and resource calendars.);
-        dashboard_mis_reports basic (Clinic-wise and staff-wise summary views and reports for the organisation
-        owner.)'
+      citation: 'AI analysis 2026-10-22: master_data_management standard; booking_appointments basic;
+        dashboard_mis_reports basic'
       source_type: expert_judgement
       published: null
       url: null
@@ -60,16 +56,12 @@ blocks:
   - kind: part
     block: master_data_management
     level: standard
-    why: Admin screens to manage clinics, branches, departments, locations and staff roles or designations
-      as masters.
   - kind: part
     block: booking_appointments
     level: basic
-    why: Staff working hours, shifts and clinic-wise availability resemble slot and resource calendars.
   - kind: part
     block: dashboard_mis_reports
     level: basic
-    why: Clinic-wise and staff-wise summary views and reports for the organisation owner.
 - key: researched_note_patient_visit
   name: Patient visit notes
   section: business
@@ -83,8 +75,7 @@ blocks:
     name: Patient visit notes
     category: custom
     bucket: build.module_development
-    description: Lets clinicians record, save and look back at clinical notes for each patient visit or
-      consultation, linked to the patient's record.
+    description: ''
     task_mix:
       crud: '0.55'
       tests: '0.2'
@@ -145,8 +136,7 @@ blocks:
     name: Appointment status tracking and history
     category: custom
     bucket: build.module_development
-    description: Lets users and staff see the current status of an appointment (requested, confirmed,
-      rescheduled, cancelled, completed) and view a timeline of past status changes.
+    description: ''
     task_mix:
       crud: '0.55'
       tests: '0.2'
@@ -169,9 +159,7 @@ blocks:
     confidence: low
     evidence:
     - id: researched_appointment_history_statu_tracking.1
-      citation: 'AI analysis 2026-10-22: booking_appointments basic (Needs appointment status states and
-        transitions on existing bookings, without building the full slot and calendar engine.); dashboard_mis_reports
-        basic (A status timeline and history list view for users and staff, with simple filtering.)'
+      citation: 'AI analysis 2026-10-22: booking_appointments basic; dashboard_mis_reports basic'
       source_type: expert_judgement
       published: null
       url: null
@@ -184,12 +172,9 @@ blocks:
   - kind: part
     block: booking_appointments
     level: basic
-    why: Needs appointment status states and transitions on existing bookings, without building the full
-      slot and calendar engine.
   - kind: part
     block: dashboard_mis_reports
     level: basic
-    why: A status timeline and history list view for users and staff, with simple filtering.
 - key: researched_face_matching_passport_photo
   name: Passport photo face matching
   section: ai_ml
@@ -205,8 +190,7 @@ blocks:
     name: Passport photo face matching
     category: custom
     bucket: build.ai_ml
-    description: Compares a user's live or uploaded photo against the photo on their passport to confirm
-      they are the same person, with a review path for uncertain matches.
+    description: ''
     task_mix:
       ai_engineering: '0.5'
       crud: '0.2'
@@ -227,12 +211,8 @@ blocks:
     confidence: low
     evidence:
     - id: researched_face_matching_passport_photo.1
-      citation: 'AI analysis 2026-10-22: ai_image_recognition advanced (Face detection and comparison
-        with a hosted or trained model, including match score thresholds.); ai_document_extraction basic
-        (Locating and extracting the photo region from the scanned passport page.); mobile_camera_scanning
-        basic (Capturing the live selfie and passport photo and sending them to the server.); ai_evaluation_set
-        basic (Accuracy checks of match and false-accept rates on a sample set of faces.); pii_masking
-        basic (Face images and passport data are sensitive and need protecting in logs and stored copies.)'
+      citation: 'AI analysis 2026-10-22: ai_image_recognition advanced; ai_document_extraction basic;
+        mobile_camera_scanning basic; ai_evaluation_set basic; pii_masking basic'
       source_type: expert_judgement
       published: null
       url: null
@@ -245,176 +225,18 @@ blocks:
   - kind: part
     block: ai_image_recognition
     level: advanced
-    why: Face detection and comparison with a hosted or trained model, including match score thresholds.
   - kind: part
     block: ai_document_extraction
     level: basic
-    why: Locating and extracting the photo region from the scanned passport page.
   - kind: part
     block: mobile_camera_scanning
     level: basic
-    why: Capturing the live selfie and passport photo and sending them to the server.
   - kind: part
     block: ai_evaluation_set
     level: basic
-    why: Accuracy checks of match and false-accept rates on a sample set of faces.
   - kind: part
     block: pii_masking
     level: basic
-    why: Face images and passport data are sensitive and need protecting in logs and stored copies.
-- key: researched_control_grati_registration
-  name: Gratis registration control
-  section: business
-  base_type: module
-  method: analysis
-  added: '2026-10-22'
-  spec:
-    source: 'AI analysis (no published hours found): Coupons, discounts and promotions (basic), Master
-      data management (basic), Online registration / empanelment application (basic); hours are those
-      blocks'' own catalog hours (S / L = one size smaller / larger); low confidence'
-    key: researched_control_grati_registration
-    name: Gratis registration control
-    category: custom
-    bucket: build.module_development
-    description: Lets an admin control free (gratis) registrations, for example by setting who qualifies,
-      how many free registrations are allowed and when they apply, so that registration fees are waived
-      only for eligible applicants.
-    task_mix:
-      crud: '0.55'
-      tests: '0.2'
-      ui_design: '0.05'
-      documentation: '0.05'
-      review_uat: '0.15'
-    base_effort_pd:
-      S: '21.6'
-      M: '21.6'
-      L: '54.9'
-    applicable_drivers:
-    - languages
-    - accessibility
-    - concurrency
-    tags: []
-    licence: null
-    section: business
-    source_era: unknown
-    era_reason: Composed from catalog blocks; AI use behind their hours is not established
-    confidence: low
-    evidence:
-    - id: researched_control_grati_registration.1
-      citation: 'AI analysis 2026-10-22: coupons_promotions basic (Waiving a fee for eligible registrants
-        works like a discount rule with validity dates and usage limits.); master_data_management basic
-        (Admin screens are needed to maintain the eligibility categories and gratis quotas.); registration_empanelment
-        basic (The gratis check has to be applied inside the existing registration flow and show status
-        to the applicant.)'
-      source_type: expert_judgement
-      published: null
-      url: null
-      era: unknown
-      era_basis: not_established
-      ai_workflow: null
-      sample_size: null
-      quality: low
-  sources:
-  - kind: part
-    block: coupons_promotions
-    level: basic
-    why: Waiving a fee for eligible registrants works like a discount rule with validity dates and usage
-      limits.
-  - kind: part
-    block: master_data_management
-    level: basic
-    why: Admin screens are needed to maintain the eligibility categories and gratis quotas.
-  - kind: part
-    block: registration_empanelment
-    level: basic
-    why: The gratis check has to be applied inside the existing registration flow and show status to the
-      applicant.
-- key: researched_booking_entry_exhibition_passe_space
-  name: Exhibition space booking and entry passes
-  section: business
-  base_type: module
-  method: web
-  added: '2026-10-22'
-  spec:
-    source: '150 / 185 / 300 team hours (lowest / median / highest checked figure) x 0.9 / 8 h per day;
-      low confidence; web research: Appinventiv Interactive seat map; CISIN (Cyber Infrastructure) Booking
-      Flow'
-    key: researched_booking_entry_exhibition_passe_space
-    name: Exhibition space booking and entry passes
-    category: custom
-    bucket: build.module_development
-    description: Lets exhibitors pick and reserve booth or exhibition space online, and issues entry passes
-      or tickets to visitors.
-    task_mix:
-      crud: '0.55'
-      tests: '0.2'
-      ui_design: '0.05'
-      documentation: '0.05'
-      review_uat: '0.15'
-    base_effort_pd:
-      S: '16.9'
-      M: '20.8'
-      L: '33.8'
-    applicable_drivers:
-    - languages
-    - accessibility
-    - concurrency
-    tags: []
-    licence: null
-    section: business
-    source_era: unknown
-    era_reason: Web sources; none states whether AI coding tools were used
-    confidence: low
-    evidence:
-    - id: researched_booking_entry_exhibition_passe_space.1
-      citation: 'Appinventiv, ''Cost to Build An App Like Ticketmaster: A Complete Guide'': Interactive
-        seat map: "Take an interactive seat map – that’s complex stuff, probably 150-300 hours of work."
-        (web research, checked on the page 2026-10-22)'
-      source_type: vendor_estimate
-      published: null
-      url: https://appinventiv.com/blog/cost-to-build-an-app-like-ticketmaster/
-      era: unknown
-      era_basis: not_established
-      ai_workflow: null
-      sample_size: null
-      quality: low
-    - id: researched_booking_entry_exhibition_passe_space.2
-      citation: 'CISIN (Cyber Infrastructure), ''Event Ticket Booking App Development Cost & Estimation
-        Guide'': Booking Flow: "Booking Flow  | Seat Selection, Cart Management, Ticket Quantity  | 150
-        - 220" (web research, checked on the page 2026-10-22)'
-      source_type: vendor_estimate
-      published: null
-      url: https://www.cisin.com/coffee-break/estimatation-for-event-ticket-booking-app-development.html
-      era: unknown
-      era_basis: not_established
-      ai_workflow: null
-      sample_size: null
-      quality: low
-  sources:
-  - url: https://appinventiv.com/blog/cost-to-build-an-app-like-ticketmaster/
-    publisher: Appinventiv
-    title: 'Cost to Build An App Like Ticketmaster: A Complete Guide'
-    year: null
-    label: Interactive seat map
-    quote: Take an interactive seat map – that’s complex stuff, probably 150-300 hours of work.
-    hours:
-    - '150'
-    - '300'
-    scope: unclear
-    ok: true
-    reason: ''
-  - url: https://www.cisin.com/coffee-break/estimatation-for-event-ticket-booking-app-development.html
-    publisher: CISIN (Cyber Infrastructure)
-    title: Event Ticket Booking App Development Cost & Estimation Guide
-    year: null
-    label: Booking Flow
-    quote: Booking Flow  | Seat Selection, Cart Management, Ticket Quantity  | 150 - 220
-    hours:
-    - '150'
-    - '220'
-    scope: unclear
-    ok: true
-    reason: ''
 - key: researched_payment_receipt_reconciliation
   name: Payment reconciliation and receipts
   section: business
@@ -429,8 +251,7 @@ blocks:
     name: Payment reconciliation and receipts
     category: custom
     bucket: build.module_development
-    description: Matches payments received through the gateway or bank against orders or invoices, flags
-      mismatches, and issues receipts to payers.
+    description: ''
     task_mix:
       crud: '0.6'
       analysis: '0.1'
@@ -450,10 +271,8 @@ blocks:
     confidence: low
     evidence:
     - id: researched_payment_receipt_reconciliation.1
-      citation: 'AI analysis 2026-10-22: integration_payment_gateway standard (Needs settlement and transaction
-        data from the gateway or bank to match against records.); billing_invoicing standard (Receipts
-        and matching against invoices or dues resemble invoicing and receipt generation.); dashboard_mis_reports
-        standard (Reconciliation reports showing matched, unmatched and pending payments with exports.)'
+      citation: 'AI analysis 2026-10-22: integration_payment_gateway standard; billing_invoicing standard;
+        dashboard_mis_reports standard'
       source_type: expert_judgement
       published: null
       url: null
@@ -466,15 +285,12 @@ blocks:
   - kind: part
     block: integration_payment_gateway
     level: standard
-    why: Needs settlement and transaction data from the gateway or bank to match against records.
   - kind: part
     block: billing_invoicing
     level: standard
-    why: Receipts and matching against invoices or dues resemble invoicing and receipt generation.
   - kind: part
     block: dashboard_mis_reports
     level: standard
-    why: Reconciliation reports showing matched, unmatched and pending payments with exports.
 - key: researched_audit_cms_control_trail_version
   name: CMS audit trail and version control
   section: core
@@ -488,8 +304,7 @@ blocks:
     name: CMS audit trail and version control
     category: custom
     bucket: build.module_development
-    description: A CMS feature that records who changed which content and when, and keeps earlier versions
-      of content so editors can compare them and restore them.
+    description: ''
     task_mix:
       crud: '0.55'
       tests: '0.2'
@@ -549,8 +364,7 @@ blocks:
     name: Registered user information API
     category: custom
     bucket: build.integrations
-    description: An API that returns the stored profile details (such as name, contact info and settings)
-      of a registered user to the app or to other systems.
+    description: ''
     task_mix:
       integration: '0.6'
       analysis: '0.05'
@@ -658,8 +472,7 @@ blocks:
     name: Multichannel and national portal integration
     category: custom
     bucket: build.integrations
-    description: Connects the system to several outside channels and national government portals so that
-      data and requests flow between them and the application.
+    description: ''
     task_mix:
       integration: '0.6'
       analysis: '0.05'
@@ -681,12 +494,8 @@ blocks:
     confidence: low
     evidence:
     - id: researched_integration_multichannel_national_portal.1
-      citation: 'AI analysis 2026-10-22: integration_erp_legacy standard (API or ETL data exchange with
-        external national portals and departmental systems is the core of the feature.); integration_sso_identity
-        basic (National portals usually need shared login or identity federation for users arriving from
-        other channels.); master_data_management basic (Code lists and channel mappings must be kept in
-        step between the portals and this system.); dashboard_mis_reports basic (Officials need to see
-        the volume and status of requests arriving through each channel.)'
+      citation: 'AI analysis 2026-10-22: integration_erp_legacy standard; integration_sso_identity basic;
+        master_data_management basic; dashboard_mis_reports basic'
       source_type: expert_judgement
       published: null
       url: null
@@ -699,21 +508,15 @@ blocks:
   - kind: part
     block: integration_erp_legacy
     level: standard
-    why: API or ETL data exchange with external national portals and departmental systems is the core
-      of the feature.
   - kind: part
     block: integration_sso_identity
     level: basic
-    why: National portals usually need shared login or identity federation for users arriving from other
-      channels.
   - kind: part
     block: master_data_management
     level: basic
-    why: Code lists and channel mappings must be kept in step between the portals and this system.
   - kind: part
     block: dashboard_mis_reports
     level: basic
-    why: Officials need to see the volume and status of requests arriving through each channel.
 - key: researched_identity_match_passport_photo_verification
   name: Passport identity verification with photo match
   section: integrations
@@ -727,8 +530,7 @@ blocks:
     name: Passport identity verification with photo match
     category: custom
     bucket: build.ai_ml
-    description: Lets a user scan a passport or other photo ID and take a selfie, then checks that the
-      face matches the document photo, usually through a third-party KYC provider's SDK.
+    description: ''
     task_mix:
       ai_engineering: '0.5'
       crud: '0.2'
@@ -787,8 +589,7 @@ blocks:
     name: Multi-channel web application devices
     category: custom
     bucket: build.integrations
-    description: A web application that works across multiple devices and channels (desktop, tablet, phone
-      browsers), with a consistent responsive experience and installable PWA behaviour where needed.
+    description: ''
     task_mix:
       integration: '0.6'
       analysis: '0.05'
@@ -810,10 +611,8 @@ blocks:
     confidence: low
     evidence:
     - id: researched_application_channel_device_multi_web.1
-      citation: 'AI analysis 2026-10-22: seo_setup basic (Public pages reached through different channels
-        need basic meta tags and sitemap for discoverability.); accessibility_gigw_compliance basic (Consistent
-        usability across devices calls for basic accessibility conformance checks.); performance_load_testing
-        basic (Performance across devices and network conditions needs basic load and speed testing.)'
+      citation: 'AI analysis 2026-10-22: seo_setup basic; accessibility_gigw_compliance basic; performance_load_testing
+        basic'
       source_type: expert_judgement
       published: null
       url: null
@@ -826,15 +625,12 @@ blocks:
   - kind: part
     block: seo_setup
     level: basic
-    why: Public pages reached through different channels need basic meta tags and sitemap for discoverability.
   - kind: part
     block: accessibility_gigw_compliance
     level: basic
-    why: Consistent usability across devices calls for basic accessibility conformance checks.
   - kind: part
     block: performance_load_testing
     level: basic
-    why: Performance across devices and network conditions needs basic load and speed testing.
 - key: researched_feedback_form
   name: Feedback form
   section: web
@@ -848,8 +644,7 @@ blocks:
     name: Feedback form
     category: custom
     bucket: build.module_development
-    description: A form on a website or app where users submit feedback, comments or survey answers, which
-      are saved and can be reviewed.
+    description: ''
     task_mix:
       crud: '0.55'
       tests: '0.2'
@@ -898,75 +693,6 @@ blocks:
     scope: unclear
     ok: true
     reason: ''
-- key: researched_application_device_grassroot_multichannel
-  name: Multichannel grassroots device application
-  section: mobile
-  base_type: integration
-  method: analysis
-  added: '2026-10-22'
-  spec:
-    source: 'AI analysis (no published hours found): Mobile app works offline and syncs later (standard),
-      Multilingual framework (i18n) (standard), Push notifications (app and browser) (basic), Dashboards
-      and MIS reports (basic); hours are those blocks'' own catalog hours (S / L = one size smaller /
-      larger); low confidence'
-    key: researched_application_device_grassroot_multichannel
-    name: Multichannel grassroots device application
-    category: custom
-    bucket: build.integrations
-    description: A multichannel application for grassroots field users that works on mobile devices and
-      the web, so data can be captured in the field and used across channels.
-    task_mix:
-      integration: '0.6'
-      analysis: '0.05'
-      tests: '0.2'
-      documentation: '0.05'
-      review_uat: '0.1'
-    base_effort_pd:
-      S: '19.7'
-      M: '30.8'
-      L: '67.6'
-    applicable_drivers:
-    - security_level
-    tags:
-    - integration
-    licence: null
-    section: mobile
-    source_era: unknown
-    era_reason: Composed from catalog blocks; AI use behind their hours is not established
-    confidence: low
-    evidence:
-    - id: researched_application_device_grassroot_multichannel.1
-      citation: 'AI analysis 2026-10-22: mobile_offline_sync standard (Grassroots users often have poor
-        connectivity, so data must be stored on the device and synced later.); multilingual_i18n standard
-        (Grassroots users need the app in local languages.); push_notifications basic (Field users need
-        alerts and reminders on their devices.); dashboard_mis_reports basic (Collected field data needs
-        simple reporting for supervisors.)'
-      source_type: expert_judgement
-      published: null
-      url: null
-      era: unknown
-      era_basis: not_established
-      ai_workflow: null
-      sample_size: null
-      quality: low
-  sources:
-  - kind: part
-    block: mobile_offline_sync
-    level: standard
-    why: Grassroots users often have poor connectivity, so data must be stored on the device and synced
-      later.
-  - kind: part
-    block: multilingual_i18n
-    level: standard
-    why: Grassroots users need the app in local languages.
-  - kind: part
-    block: push_notifications
-    level: basic
-    why: Field users need alerts and reminders on their devices.
-  - kind: part
-    block: dashboard_mis_reports
-    level: basic
-    why: Collected field data needs simple reporting for supervisors.
 - key: researched_cms_content_publishing_timed
   name: Timed content publishing in CMS
   section: web
@@ -980,8 +706,7 @@ blocks:
     name: Timed content publishing in CMS
     category: custom
     bucket: build.module_development
-    description: Lets CMS editors schedule pages, notices or articles to go live and expire automatically
-      at set dates and times, with a scheduled status and automatic publish/unpublish.
+    description: ''
     task_mix:
       crud: '0.55'
       tests: '0.2'
@@ -1004,8 +729,7 @@ blocks:
     confidence: low
     evidence:
     - id: researched_cms_content_publishing_timed.1
-      citation: 'AI analysis 2026-10-22: cms_public_website basic (Adds publish and expiry date fields
-        and a scheduled job to the existing CMS content model and editor screens.)'
+      citation: 'AI analysis 2026-10-22: cms_public_website basic'
       source_type: expert_judgement
       published: null
       url: null
@@ -1018,176 +742,6 @@ blocks:
   - kind: part
     block: cms_public_website
     level: basic
-    why: Adds publish and expiry date fields and a scheduled job to the existing CMS content model and
-      editor screens.
-- key: researched_login_mission_portal
-  name: Mission login portal
-  section: core
-  base_type: module
-  method: web
-  added: '2026-10-22'
-  spec:
-    source: '16 / 60 / 100 team hours (lowest / median / highest checked figure) x 0.9 / 8 h per day;
-      low confidence; web research: Zuplo Authentication flows (signup, login, password reset); Abbacus
-      Technologies Login'
-    key: researched_login_mission_portal
-    name: Mission login portal
-    category: custom
-    bucket: build.module_development
-    description: A login portal where users sign in to their accounts with credentials, including related
-      flows such as sign-up and password reset.
-    task_mix:
-      crud: '0.55'
-      tests: '0.2'
-      ui_design: '0.05'
-      documentation: '0.05'
-      review_uat: '0.15'
-    base_effort_pd:
-      S: '1.8'
-      M: '6.8'
-      L: '11.3'
-    applicable_drivers:
-    - languages
-    - accessibility
-    - concurrency
-    tags: []
-    licence: null
-    section: core
-    source_era: unknown
-    era_reason: Web sources; none states whether AI coding tools were used
-    confidence: low
-    evidence:
-    - id: researched_login_mission_portal.1
-      citation: 'Zuplo, ''Developer Portal Cost Breakdown: Build vs Buy in 2026 - Zuplo'': Authentication
-        flows (signup, login, password reset): "Authentication flows (signup, login, password reset):
-        60–100 hours" (web research, checked on the page 2026-10-22)'
-      source_type: vendor_estimate
-      published: 2026
-      url: https://zuplo.com/learning-center/developer-portal-cost-build-vs-buy-analysis
-      era: unknown
-      era_basis: not_established
-      ai_workflow: null
-      sample_size: null
-      quality: low
-    - id: researched_login_mission_portal.2
-      citation: 'Abbacus Technologies, ''How Long Does Web Application Development Take?'': Login: "Login:
-        16 hours" (web research, checked on the page 2026-10-22)'
-      source_type: vendor_estimate
-      published: null
-      url: https://www.abbacustechnologies.com/how-long-does-web-application-development-take-3/
-      era: unknown
-      era_basis: not_established
-      ai_workflow: null
-      sample_size: null
-      quality: low
-  sources:
-  - url: https://zuplo.com/learning-center/developer-portal-cost-build-vs-buy-analysis
-    publisher: Zuplo
-    title: 'Developer Portal Cost Breakdown: Build vs Buy in 2026 - Zuplo'
-    year: 2026
-    label: Authentication flows (signup, login, password reset)
-    quote: 'Authentication flows (signup, login, password reset): 60–100 hours'
-    hours:
-    - '60'
-    - '100'
-    scope: unclear
-    ok: true
-    reason: ''
-  - url: https://www.abbacustechnologies.com/how-long-does-web-application-development-take-3/
-    publisher: Abbacus Technologies
-    title: How Long Does Web Application Development Take?
-    year: null
-    label: Login
-    quote: 'Login: 16 hours'
-    hours:
-    - '16'
-    scope: unclear
-    ok: true
-    reason: ''
-- key: researched_country_interactive_learning_profile
-  name: Interactive country profiles and e-learning
-  section: web
-  base_type: module
-  method: web
-  added: '2026-10-22'
-  spec:
-    source: '42 / 50 / 100 team hours (lowest / median / highest checked figure) x 0.9 / 8 h per day;
-      low confidence; web research: Cleveroad Courses screen; Abbacus Technologies Basic quiz'
-    key: researched_country_interactive_learning_profile
-    name: Interactive country profiles and e-learning
-    category: custom
-    bucket: build.module_development
-    description: A web section with interactive, filterable profile pages for each country, plus an e-learning
-      area with courses and quizzes.
-    task_mix:
-      crud: '0.55'
-      tests: '0.2'
-      ui_design: '0.05'
-      documentation: '0.05'
-      review_uat: '0.15'
-    base_effort_pd:
-      S: '4.7'
-      M: '5.6'
-      L: '11.3'
-    applicable_drivers:
-    - languages
-    - accessibility
-    - concurrency
-    tags: []
-    licence: null
-    section: web
-    source_era: unknown
-    era_reason: Web sources; none states whether AI coding tools were used
-    confidence: low
-    evidence:
-    - id: researched_country_interactive_learning_profile.1
-      citation: 'Cleveroad, ''E Learning App Development: Features and Cost'': Courses screen: "| Courses
-        screen  | 42 hours  | $2,100  |" (web research, checked on the page 2026-10-22)'
-      source_type: vendor_estimate
-      published: 2026
-      url: https://www.cleveroad.com/blog/e-learning-application-development/
-      era: unknown
-      era_basis: not_established
-      ai_workflow: null
-      sample_size: null
-      quality: low
-    - id: researched_country_interactive_learning_profile.2
-      citation: 'Abbacus Technologies, ''How to Develop a Custom Learning Management System (LMS) with
-        Quiz Functionality'': Basic quiz: "Complexity of quiz logic: Basic quiz (50-100 hours) vs. adaptive
-        + proctored quiz (300-500 hours)." (web research, checked on the page 2026-10-22)'
-      source_type: vendor_estimate
-      published: null
-      url: https://www.abbacustechnologies.com/how-to-develop-a-custom-learning-management-system-lms-with-quiz-functionality/
-      era: unknown
-      era_basis: not_established
-      ai_workflow: null
-      sample_size: null
-      quality: low
-  sources:
-  - url: https://www.cleveroad.com/blog/e-learning-application-development/
-    publisher: Cleveroad
-    title: 'E Learning App Development: Features and Cost'
-    year: 2026
-    label: Courses screen
-    quote: '| Courses screen  | 42 hours  | $2,100  |'
-    hours:
-    - '42'
-    scope: unclear
-    ok: true
-    reason: ''
-  - url: https://www.abbacustechnologies.com/how-to-develop-a-custom-learning-management-system-lms-with-quiz-functionality/
-    publisher: Abbacus Technologies
-    title: How to Develop a Custom Learning Management System (LMS) with Quiz Functionality
-    year: null
-    label: Basic quiz
-    quote: 'Complexity of quiz logic: Basic quiz (50-100 hours) vs. adaptive + proctored quiz (300-500
-      hours).'
-    hours:
-    - '50'
-    - '100'
-    scope: unclear
-    ok: true
-    reason: ''
 - key: researched_integration_media_multimedia_social
   name: Multimedia and social media integration
   section: integrations
@@ -1202,9 +756,7 @@ blocks:
     name: Multimedia and social media integration
     category: custom
     bucket: build.integrations
-    description: Lets an app share, upload and play multimedia content (photos, video, audio) and connect
-      to social media platforms, for example through account linking, posting to social networks and media
-      sharing.
+    description: ''
     task_mix:
       integration: '0.6'
       analysis: '0.05'
@@ -1336,8 +888,7 @@ blocks:
     name: Auto-archiving of content
     category: custom
     bucket: build.module_development
-    description: Automatically moves old or expired content into an archive based on age or status rules,
-      keeping it retrievable but out of active listings.
+    description: ''
     task_mix:
       crud: '0.55'
       tests: '0.2'
@@ -1360,9 +911,7 @@ blocks:
     confidence: low
     evidence:
     - id: researched_archiving_auto_content.1
-      citation: 'AI analysis 2026-10-22: document_management basic (Archived content needs an archive
-        state, secure storage and retrieval of older items.); master_data_management basic (Admins need
-        a simple screen to set archive rules such as age limits per content category.)'
+      citation: 'AI analysis 2026-10-22: document_management basic; master_data_management basic'
       source_type: expert_judgement
       published: null
       url: null
@@ -1375,11 +924,9 @@ blocks:
   - kind: part
     block: document_management
     level: basic
-    why: Archived content needs an archive state, secure storage and retrieval of older items.
   - kind: part
     block: master_data_management
     level: basic
-    why: Admins need a simple screen to set archive rules such as age limits per content category.
 - key: researched_change_logging_server
   name: Change and server logging
   section: core
@@ -1393,8 +940,7 @@ blocks:
     name: Change and server logging
     category: custom
     bucket: build.module_development
-    description: Records who changed what and when (change or audit log) and server events, with a way
-      to view and search the logs.
+    description: ''
     task_mix:
       crud: '0.55'
       tests: '0.2'
@@ -1454,8 +1000,7 @@ blocks:
     name: Patient duplicate check and lookup
     category: custom
     bucket: build.module_development
-    description: Searches existing patient records by name, phone, date of birth or ID to find a patient
-      quickly and warns staff about likely duplicate records before a new one is created.
+    description: ''
     task_mix:
       crud: '0.55'
       tests: '0.2'
@@ -1478,11 +1023,8 @@ blocks:
     confidence: low
     evidence:
     - id: researched_check_duplicate_lookup_patient.1
-      citation: 'AI analysis 2026-10-22: search_module standard (Patient lookup needs fast search across
-        several fields with fuzzy matching on names and phone numbers.); master_data_management basic
-        (Duplicate flagging and merge screens for patient records resemble an admin screen for managing
-        master records.); pii_masking basic (Patient identifiers shown in search results and possible-match
-        lists should be partly masked for staff without full access.)'
+      citation: 'AI analysis 2026-10-22: search_module standard; master_data_management basic; pii_masking
+        basic'
       source_type: expert_judgement
       published: null
       url: null
@@ -1495,18 +1037,12 @@ blocks:
   - kind: part
     block: search_module
     level: standard
-    why: Patient lookup needs fast search across several fields with fuzzy matching on names and phone
-      numbers.
   - kind: part
     block: master_data_management
     level: basic
-    why: Duplicate flagging and merge screens for patient records resemble an admin screen for managing
-      master records.
   - kind: part
     block: pii_masking
     level: basic
-    why: Patient identifiers shown in search results and possible-match lists should be partly masked
-      for staff without full access.
 - key: researched_clinic_data_separation_wise
   name: Clinic-wise data separation
   section: core
@@ -1520,8 +1056,7 @@ blocks:
     name: Clinic-wise data separation
     category: custom
     bucket: build.module_development
-    description: Keeps each clinic's records, users and settings separate so staff at one clinic see only
-      their own clinic's data (multi-clinic or multi-tenant data isolation).
+    description: ''
     task_mix:
       crud: '0.55'
       tests: '0.2'
@@ -1584,8 +1119,7 @@ blocks:
     name: Mobile-based data entry for field devices
     category: custom
     bucket: build.integrations
-    description: A mobile app that lets field staff enter data on their phones or tablets, including in
-      low-connectivity areas, and sends it to the central system.
+    description: ''
     task_mix:
       integration: '0.6'
       analysis: '0.05'
@@ -1607,12 +1141,8 @@ blocks:
     confidence: low
     evidence:
     - id: researched_based_data_device_entry_field_mobile.1
-      citation: 'AI analysis 2026-10-22: mobile_offline_sync standard (Field devices often lose connectivity,
-        so entries are stored on the phone and synced later with conflict handling.); mobile_camera_scanning
-        basic (Field data entry usually includes taking photos and scanning QR codes or barcodes to attach
-        to records.); registration_empanelment basic (Structured multi-step data entry forms with validation
-        and submission status resemble the form-building work.); master_data_management basic (Forms need
-        dropdown values and lookups, such as locations and categories, managed by an admin.)'
+      citation: 'AI analysis 2026-10-22: mobile_offline_sync standard; mobile_camera_scanning basic; registration_empanelment
+        basic; master_data_management basic'
       source_type: expert_judgement
       published: null
       url: null
@@ -1625,22 +1155,15 @@ blocks:
   - kind: part
     block: mobile_offline_sync
     level: standard
-    why: Field devices often lose connectivity, so entries are stored on the phone and synced later with
-      conflict handling.
   - kind: part
     block: mobile_camera_scanning
     level: basic
-    why: Field data entry usually includes taking photos and scanning QR codes or barcodes to attach to
-      records.
   - kind: part
     block: registration_empanelment
     level: basic
-    why: Structured multi-step data entry forms with validation and submission status resemble the form-building
-      work.
   - kind: part
     block: master_data_management
     level: basic
-    why: Forms need dropdown values and lookups, such as locations and categories, managed by an admin.
 - key: researched_form_mis_printing_report
   name: E-form MIS reports and printing
   section: business
@@ -1654,8 +1177,7 @@ blocks:
     name: E-form MIS reports and printing
     category: custom
     bucket: build.module_development
-    description: Provides MIS reports on submitted e-forms with filters, summaries and exports, plus printable
-      versions of individual forms and reports.
+    description: ''
     task_mix:
       crud: '0.6'
       analysis: '0.1'
@@ -1675,9 +1197,7 @@ blocks:
     confidence: low
     evidence:
     - id: researched_form_mis_printing_report.1
-      citation: 'AI analysis 2026-10-22: dashboard_mis_reports standard (Core of the feature: standard
-        MIS reports on e-form data with filters and PDF/Excel exports.); document_management basic (Printable
-        form output (PDF generation) and retrieval of generated documents.)'
+      citation: 'AI analysis 2026-10-22: dashboard_mis_reports standard; document_management basic'
       source_type: expert_judgement
       published: null
       url: null
@@ -1690,606 +1210,9 @@ blocks:
   - kind: part
     block: dashboard_mis_reports
     level: standard
-    why: 'Core of the feature: standard MIS reports on e-form data with filters and PDF/Excel exports.'
   - kind: part
     block: document_management
     level: basic
-    why: Printable form output (PDF generation) and retrieval of generated documents.
-- key: researched_categorie_check_delegate_grati_registration
-  name: Delegate registration categories and gratis check
-  section: business
-  base_type: module
-  method: analysis
-  added: '2026-10-22'
-  spec:
-    source: 'AI analysis (no published hours found): Online registration / empanelment application (standard),
-      Master data management (basic), Approval workflow engine (basic); hours are those blocks'' own catalog
-      hours (S / L = one size smaller / larger); low confidence'
-    key: researched_categorie_check_delegate_grati_registration
-    name: Delegate registration categories and gratis check
-    category: custom
-    bucket: build.module_development
-    description: Lets delegates register under different categories (e.g. paid, student, speaker, guest)
-      and checks whether they qualify for free (gratis) entry, so fees are waived or applied accordingly.
-    task_mix:
-      crud: '0.55'
-      tests: '0.2'
-      ui_design: '0.05'
-      documentation: '0.05'
-      review_uat: '0.15'
-    base_effort_pd:
-      S: '34.9'
-      M: '57.4'
-      L: '137.3'
-    applicable_drivers:
-    - languages
-    - accessibility
-    - concurrency
-    tags: []
-    licence: null
-    section: business
-    source_era: unknown
-    era_reason: Composed from catalog blocks; AI use behind their hours is not established
-    confidence: low
-    evidence:
-    - id: researched_categorie_check_delegate_grati_registration.1
-      citation: 'AI analysis 2026-10-22: registration_empanelment standard (Multi-step delegate registration
-        form with category selection, document upload for eligibility proof, validation and status tracking.);
-        master_data_management basic (Admin-managed delegate categories, fee amounts and gratis eligibility
-        rules.); workflow_engine basic (Gratis eligibility claims need a simple approve/reject step by
-        an organiser.)'
-      source_type: expert_judgement
-      published: null
-      url: null
-      era: unknown
-      era_basis: not_established
-      ai_workflow: null
-      sample_size: null
-      quality: low
-  sources:
-  - kind: part
-    block: registration_empanelment
-    level: standard
-    why: Multi-step delegate registration form with category selection, document upload for eligibility
-      proof, validation and status tracking.
-  - kind: part
-    block: master_data_management
-    level: basic
-    why: Admin-managed delegate categories, fee amounts and gratis eligibility rules.
-  - kind: part
-    block: workflow_engine
-    level: basic
-    why: Gratis eligibility claims need a simple approve/reject step by an organiser.
-- key: researched_confirmation_generation_letter_partnership
-  name: Partnership confirmation letter generation
-  section: business
-  base_type: module
-  method: analysis
-  added: '2026-10-23'
-  spec:
-    source: 'AI analysis (no published hours found): Document management (basic), Master data management
-      (basic); hours are those blocks'' own catalog hours (S / L = one size smaller / larger); low confidence'
-    key: researched_confirmation_generation_letter_partnership
-    name: Partnership confirmation letter generation
-    category: custom
-    bucket: build.module_development
-    description: Generates a partnership confirmation letter (e.g. as a PDF from a template filled with
-      partner details) once a partnership is approved, and stores it for download or sharing.
-    task_mix:
-      crud: '0.55'
-      tests: '0.2'
-      ui_design: '0.05'
-      documentation: '0.05'
-      review_uat: '0.15'
-    base_effort_pd:
-      S: '13.5'
-      M: '13.5'
-      L: '41.6'
-    applicable_drivers:
-    - languages
-    - accessibility
-    - concurrency
-    tags: []
-    licence: null
-    section: business
-    source_era: unknown
-    era_reason: Composed from catalog blocks; AI use behind their hours is not established
-    confidence: low
-    evidence:
-    - id: researched_confirmation_generation_letter_partnership.1
-      citation: 'AI analysis 2026-10-23: document_management basic (The generated letter must be stored,
-        retrieved and downloaded securely, with simple versioning.); master_data_management basic (Letter
-        templates and fixed fields such as signatory and letterhead need simple admin screens.)'
-      source_type: expert_judgement
-      published: null
-      url: null
-      era: unknown
-      era_basis: not_established
-      ai_workflow: null
-      sample_size: null
-      quality: low
-  sources:
-  - kind: part
-    block: document_management
-    level: basic
-    why: The generated letter must be stored, retrieved and downloaded securely, with simple versioning.
-  - kind: part
-    block: master_data_management
-    level: basic
-    why: Letter templates and fixed fields such as signatory and letterhead need simple admin screens.
-- key: researched_bank_credential
-  name: Credential bank
-  section: security
-  base_type: module
-  method: analysis
-  added: '2026-10-23'
-  spec:
-    source: 'AI analysis (no published hours found): Keys and secrets management (Vault / KMS) (standard),
-      Privacy: consent, account deletion and data download (DPDP Act / GDPR) (basic), Masking personal
-      data (PII) (basic); hours are those blocks'' own catalog hours (S / L = one size smaller / larger);
-      low confidence'
-    key: researched_bank_credential
-    name: Credential bank
-    category: custom
-    bucket: build.module_development
-    description: A secure store where users or administrators keep credentials such as passwords, API
-      keys or certificates, with controlled access, sharing and rotation.
-    task_mix:
-      crud: '0.55'
-      tests: '0.2'
-      ui_design: '0.05'
-      documentation: '0.05'
-      review_uat: '0.15'
-    base_effort_pd:
-      S: '7.2'
-      M: '8.1'
-      L: '11.7'
-    applicable_drivers:
-    - languages
-    - accessibility
-    - concurrency
-    tags: []
-    licence: null
-    section: security
-    source_era: unknown
-    era_reason: Composed from catalog blocks; AI use behind their hours is not established
-    confidence: low
-    evidence:
-    - id: researched_bank_credential.1
-      citation: 'AI analysis 2026-10-23: secrets_management standard (Core of the feature is storing credentials
-        encrypted in a vault with rotation and access rules.); privacy_consent_dpdp basic (Users may need
-        to download or delete their stored credential data.); pii_masking basic (Credential values must
-        be masked on screens, logs and exports.)'
-      source_type: expert_judgement
-      published: null
-      url: null
-      era: unknown
-      era_basis: not_established
-      ai_workflow: null
-      sample_size: null
-      quality: low
-  sources:
-  - kind: part
-    block: secrets_management
-    level: standard
-    why: Core of the feature is storing credentials encrypted in a vault with rotation and access rules.
-  - kind: part
-    block: privacy_consent_dpdp
-    level: basic
-    why: Users may need to download or delete their stored credential data.
-  - kind: part
-    block: pii_masking
-    level: basic
-    why: Credential values must be masked on screens, logs and exports.
-- key: researched_against_bid_checklist_examination
-  name: Bid examination against checklist
-  section: government
-  base_type: module
-  method: analysis
-  added: '2026-10-23'
-  spec:
-    source: 'AI analysis (no published hours found): Approval workflow engine (standard), Master data
-      management (basic), Document management (basic), Dashboards and MIS reports (basic); hours are those
-      blocks'' own catalog hours (S / L = one size smaller / larger); low confidence'
-    key: researched_against_bid_checklist_examination
-    name: Bid examination against checklist
-    category: custom
-    bucket: build.module_development
-    description: Officials examine each submitted bid against a tender checklist, mark each criterion
-      as met or not met with remarks, and the system records the outcome to decide whether the bid qualifies.
-    task_mix:
-      crud: '0.55'
-      tests: '0.2'
-      ui_design: '0.05'
-      documentation: '0.05'
-      review_uat: '0.15'
-    base_effort_pd:
-      S: '37.2'
-      M: '65.3'
-      L: '174.4'
-    applicable_drivers:
-    - languages
-    - accessibility
-    - concurrency
-    tags: []
-    licence: null
-    section: government
-    source_era: unknown
-    era_reason: Composed from catalog blocks; AI use behind their hours is not established
-    confidence: low
-    evidence:
-    - id: researched_against_bid_checklist_examination.1
-      citation: 'AI analysis 2026-10-23: workflow_engine standard (Bids move through multi-step scrutiny
-        and approval with decisions and escalation on each evaluation stage.); master_data_management
-        basic (Checklist templates and criteria must be set up and maintained by admins.); document_management
-        basic (Examiners open and review the documents attached to each bid against the checklist.); dashboard_mis_reports
-        basic (Summary of bids examined, qualified and rejected, with exportable evaluation sheets.)'
-      source_type: expert_judgement
-      published: null
-      url: null
-      era: unknown
-      era_basis: not_established
-      ai_workflow: null
-      sample_size: null
-      quality: low
-  sources:
-  - kind: part
-    block: workflow_engine
-    level: standard
-    why: Bids move through multi-step scrutiny and approval with decisions and escalation on each evaluation
-      stage.
-  - kind: part
-    block: master_data_management
-    level: basic
-    why: Checklist templates and criteria must be set up and maintained by admins.
-  - kind: part
-    block: document_management
-    level: basic
-    why: Examiners open and review the documents attached to each bid against the checklist.
-  - kind: part
-    block: dashboard_mis_reports
-    level: basic
-    why: Summary of bids examined, qualified and rejected, with exportable evaluation sheets.
-- key: researched_bid_monitoring_template
-  name: Bid monitoring template
-  section: business
-  base_type: module
-  method: analysis
-  added: '2026-10-23'
-  spec:
-    source: 'AI analysis (no published hours found): Approval workflow engine (basic), Customer management
-      (CRM) (basic), Dashboards and MIS reports (standard), Document management (basic), Master data management
-      (basic); hours are those blocks'' own catalog hours (S / L = one size smaller / larger); low confidence'
-    key: researched_bid_monitoring_template
-    name: Bid monitoring template
-    category: custom
-    bucket: build.module_development
-    description: A reusable template for tracking bids/tenders through their lifecycle, with deadlines,
-      status stages, assigned owners, and summary views for monitoring progress.
-    task_mix:
-      crud: '0.55'
-      tests: '0.2'
-      ui_design: '0.05'
-      documentation: '0.05'
-      review_uat: '0.15'
-    base_effort_pd:
-      S: '54.1'
-      M: '67.6'
-      L: '187.8'
-    applicable_drivers:
-    - languages
-    - accessibility
-    - concurrency
-    tags: []
-    licence: null
-    section: business
-    source_era: unknown
-    era_reason: Composed from catalog blocks; AI use behind their hours is not established
-    confidence: low
-    evidence:
-    - id: researched_bid_monitoring_template.1
-      citation: 'AI analysis 2026-10-23: workflow_engine basic (Bids move through defined stages (identified,
-        preparing, submitted, won/lost) with owners and deadline escalation.); crm_module basic (Tracking
-        bids as pipeline records with contacts, follow-ups and activity history is similar to lead tracking.);
-        dashboard_mis_reports standard (Monitoring needs status dashboards, deadline views and exportable
-        bid reports.); document_management basic (Bid documents and tender files need to be attached and
-        stored against each bid.); master_data_management basic (A template needs configurable stages,
-        bid categories and departments.)'
-      source_type: expert_judgement
-      published: null
-      url: null
-      era: unknown
-      era_basis: not_established
-      ai_workflow: null
-      sample_size: null
-      quality: low
-  sources:
-  - kind: part
-    block: workflow_engine
-    level: basic
-    why: Bids move through defined stages (identified, preparing, submitted, won/lost) with owners and
-      deadline escalation.
-  - kind: part
-    block: crm_module
-    level: basic
-    why: Tracking bids as pipeline records with contacts, follow-ups and activity history is similar to
-      lead tracking.
-  - kind: part
-    block: dashboard_mis_reports
-    level: standard
-    why: Monitoring needs status dashboards, deadline views and exportable bid reports.
-  - kind: part
-    block: document_management
-    level: basic
-    why: Bid documents and tender files need to be attached and stored against each bid.
-  - kind: part
-    block: master_data_management
-    level: basic
-    why: A template needs configurable stages, bid categories and departments.
-- key: researched_tender_tracker
-  name: Tender tracker
-  section: business
-  base_type: integration
-  method: analysis
-  added: '2026-10-23'
-  spec:
-    source: 'AI analysis (no published hours found): Approval workflow engine (basic), Document management
-      (standard), Dashboards and MIS reports (basic), Master data management (basic), Search (basic);
-      hours are those blocks'' own catalog hours (S / L = one size smaller / larger); low confidence'
-    key: researched_tender_tracker
-    name: Tender tracker
-    category: custom
-    bucket: build.integrations
-    description: A tool to record tenders, track their stages and deadlines, keep related documents, and
-      show status to the team.
-    task_mix:
-      integration: '0.6'
-      analysis: '0.05'
-      tests: '0.2'
-      documentation: '0.05'
-      review_uat: '0.1'
-    base_effort_pd:
-      S: '40.6'
-      M: '59.7'
-      L: '157.6'
-    applicable_drivers:
-    - security_level
-    tags:
-    - integration
-    licence: null
-    section: business
-    source_era: unknown
-    era_reason: Composed from catalog blocks; AI use behind their hours is not established
-    confidence: low
-    evidence:
-    - id: researched_tender_tracker.1
-      citation: 'AI analysis 2026-10-23: workflow_engine basic (Tenders move through stages such as identified,
-        bid preparation, submitted and awarded, with simple approvals.); document_management standard
-        (Tender documents, addenda and bid submissions need upload, versioning and retrieval.); dashboard_mis_reports
-        basic (A status view and reports on tenders by stage, value and closing date.); master_data_management
-        basic (Admin-managed lists such as tender categories, departments and stages.); search_module
-        basic (Users need to find tenders by keyword, status, and date.)'
-      source_type: expert_judgement
-      published: null
-      url: null
-      era: unknown
-      era_basis: not_established
-      ai_workflow: null
-      sample_size: null
-      quality: low
-  sources:
-  - kind: part
-    block: workflow_engine
-    level: basic
-    why: Tenders move through stages such as identified, bid preparation, submitted and awarded, with
-      simple approvals.
-  - kind: part
-    block: document_management
-    level: standard
-    why: Tender documents, addenda and bid submissions need upload, versioning and retrieval.
-  - kind: part
-    block: dashboard_mis_reports
-    level: basic
-    why: A status view and reports on tenders by stage, value and closing date.
-  - kind: part
-    block: master_data_management
-    level: basic
-    why: Admin-managed lists such as tender categories, departments and stages.
-  - kind: part
-    block: search_module
-    level: basic
-    why: Users need to find tenders by keyword, status, and date.
-- key: researched_bod_data_report
-  name: BOD data report
-  section: business
-  base_type: report
-  method: analysis
-  added: '2026-10-23'
-  spec:
-    source: 'AI analysis (no published hours found): Dashboards and MIS reports (basic); hours are those
-      blocks'' own catalog hours (S / L = one size smaller / larger); low confidence'
-    key: researched_bod_data_report
-    name: BOD data report
-    category: custom
-    bucket: build.module_development
-    description: A report on BOD data (most likely board of directors information, though the name is
-      ambiguous) that presents the data in a standard report view with filtering and export.
-    task_mix:
-      crud: '0.6'
-      analysis: '0.1'
-      tests: '0.15'
-      review_uat: '0.15'
-    base_effort_pd:
-      S: '6.8'
-      M: '6.8'
-      L: '20.3'
-    applicable_drivers:
-    - languages
-    tags: []
-    licence: null
-    section: business
-    source_era: unknown
-    era_reason: Composed from catalog blocks; AI use behind their hours is not established
-    confidence: low
-    evidence:
-    - id: researched_bod_data_report.1
-      citation: 'AI analysis 2026-10-23: dashboard_mis_reports basic (A single standard report with filters
-        and export fits the basic level of the reports block.)'
-      source_type: expert_judgement
-      published: null
-      url: null
-      era: unknown
-      era_basis: not_established
-      ai_workflow: null
-      sample_size: null
-      quality: low
-  sources:
-  - kind: part
-    block: dashboard_mis_reports
-    level: basic
-    why: A single standard report with filters and export fits the basic level of the reports block.
-- key: researched_engagement_partner_project
-  name: Partner project engagement
-  section: business
-  base_type: module
-  method: analysis
-  added: '2026-10-23'
-  spec:
-    source: 'AI analysis (no published hours found): Online registration / empanelment application (standard),
-      Approval workflow engine (standard), Customer management (CRM) (basic), Dashboards and MIS reports
-      (basic), Document management (basic); hours are those blocks'' own catalog hours (S / L = one size
-      smaller / larger); low confidence'
-    key: researched_engagement_partner_project
-    name: Partner project engagement
-    category: custom
-    bucket: build.module_development
-    description: Lets partner organisations be onboarded and engaged on projects, with their applications,
-      assignments to projects, progress tracking and communication handled in the system.
-    task_mix:
-      crud: '0.55'
-      tests: '0.2'
-      ui_design: '0.05'
-      documentation: '0.05'
-      review_uat: '0.15'
-    base_effort_pd:
-      S: '63.1'
-      M: '113.7'
-      L: '290.3'
-    applicable_drivers:
-    - languages
-    - accessibility
-    - concurrency
-    tags: []
-    licence: null
-    section: business
-    source_era: unknown
-    era_reason: Composed from catalog blocks; AI use behind their hours is not established
-    confidence: low
-    evidence:
-    - id: researched_engagement_partner_project.1
-      citation: 'AI analysis 2026-10-23: registration_empanelment standard (Partners apply or are onboarded
-        through a multi-step form with document upload and status tracking.); workflow_engine standard
-        (Partner approval and project assignment need multi-level approvals with defined stages.); crm_module
-        basic (Partner contacts, follow-ups and engagement history need to be tracked.); dashboard_mis_reports
-        basic (Project and partner engagement status needs simple dashboards and reports.); document_management
-        basic (Agreements and project documents shared with partners need secure storage.)'
-      source_type: expert_judgement
-      published: null
-      url: null
-      era: unknown
-      era_basis: not_established
-      ai_workflow: null
-      sample_size: null
-      quality: low
-  sources:
-  - kind: part
-    block: registration_empanelment
-    level: standard
-    why: Partners apply or are onboarded through a multi-step form with document upload and status tracking.
-  - kind: part
-    block: workflow_engine
-    level: standard
-    why: Partner approval and project assignment need multi-level approvals with defined stages.
-  - kind: part
-    block: crm_module
-    level: basic
-    why: Partner contacts, follow-ups and engagement history need to be tracked.
-  - kind: part
-    block: dashboard_mis_reports
-    level: basic
-    why: Project and partner engagement status needs simple dashboards and reports.
-  - kind: part
-    block: document_management
-    level: basic
-    why: Agreements and project documents shared with partners need secure storage.
-- key: researched_agreement_expiry_partner_renewal_tracking
-  name: Partner agreement renewal and expiry tracking
-  section: business
-  base_type: module
-  method: analysis
-  added: '2026-10-23'
-  spec:
-    source: 'AI analysis (no published hours found): Document management (standard), Approval workflow
-      engine (basic), Dashboards and MIS reports (basic), Customer management (CRM) (basic); hours are
-      those blocks'' own catalog hours (S / L = one size smaller / larger); low confidence'
-    key: researched_agreement_expiry_partner_renewal_tracking
-    name: Partner agreement renewal and expiry tracking
-    category: custom
-    bucket: build.module_development
-    description: Tracks the term and expiry dates of partner agreements, sends reminders ahead of expiry,
-      and lets staff renew them through an approval step with the renewed contract documents stored.
-    task_mix:
-      crud: '0.55'
-      tests: '0.2'
-      ui_design: '0.05'
-      documentation: '0.05'
-      review_uat: '0.15'
-    base_effort_pd:
-      S: '49.6'
-      M: '68.7'
-      L: '183.4'
-    applicable_drivers:
-    - languages
-    - accessibility
-    - concurrency
-    tags: []
-    licence: null
-    section: business
-    source_era: unknown
-    era_reason: Composed from catalog blocks; AI use behind their hours is not established
-    confidence: low
-    evidence:
-    - id: researched_agreement_expiry_partner_renewal_tracking.1
-      citation: 'AI analysis 2026-10-23: document_management standard (Agreement files need storage, versioning
-        and metadata such as start and end dates for each renewal.); workflow_engine basic (Renewal requests
-        need a simple approval step before the agreement term is extended.); dashboard_mis_reports basic
-        (A list and report of agreements expiring soon or already expired, with export.); crm_module basic
-        (Partner records with follow-ups and a history of renewals and contract activity.)'
-      source_type: expert_judgement
-      published: null
-      url: null
-      era: unknown
-      era_basis: not_established
-      ai_workflow: null
-      sample_size: null
-      quality: low
-  sources:
-  - kind: part
-    block: document_management
-    level: standard
-    why: Agreement files need storage, versioning and metadata such as start and end dates for each renewal.
-  - kind: part
-    block: workflow_engine
-    level: basic
-    why: Renewal requests need a simple approval step before the agreement term is extended.
-  - kind: part
-    block: dashboard_mis_reports
-    level: basic
-    why: A list and report of agreements expiring soon or already expired, with export.
-  - kind: part
-    block: crm_module
-    level: basic
-    why: Partner records with follow-ups and a history of renewals and contract activity.
 - key: researched_base_chatbot_internal_knowledge_multiple_repository
   name: Chatbot internal repository and multiple knowledge bases
   section: ai_ml
@@ -2303,8 +1226,7 @@ blocks:
     name: Chatbot internal repository and multiple knowledge bases
     category: custom
     bucket: build.module_development
-    description: A chatbot that answers from a company's internal document repository, using one or more
-      indexed knowledge bases. It uses a vector database, embeddings and a retrieval pipeline.
+    description: ''
     task_mix:
       crud: '0.55'
       tests: '0.2'
@@ -2365,8 +1287,7 @@ blocks:
     name: Chatbot website widget and human escalation
     category: custom
     bucket: build.module_development
-    description: A chat widget on a website where a chatbot answers visitors' questions and passes the
-      conversation to a human agent when it can't help.
+    description: ''
     task_mix:
       crud: '0.55'
       tests: '0.2'
@@ -2437,92 +1358,6 @@ blocks:
     scope: unclear
     ok: true
     reason: ''
-- key: researched_000_document_page_referencing
-  name: Document referencing for 25,000 pages
-  section: ai_ml
-  base_type: module
-  method: web
-  added: '2026-10-23'
-  spec:
-    source: '24 / 40 / 60 team hours (lowest / median / highest checked figure) x 0.9 / 8 h per day; low
-      confidence; web research: Stratagem Systems RAG pipeline development (small-scale, 1K-10K documents);
-      Huzaifa Tahir Citation and source linking'
-    key: researched_000_document_page_referencing
-    name: Document referencing for 25,000 pages
-    category: custom
-    bucket: build.module_development
-    description: Lets users ask questions across a library of about 25,000 pages of documents and get
-      answers that cite the source document and page.
-    task_mix:
-      crud: '0.55'
-      tests: '0.2'
-      ui_design: '0.05'
-      documentation: '0.05'
-      review_uat: '0.15'
-    base_effort_pd:
-      S: '2.7'
-      M: '4.5'
-      L: '6.8'
-    applicable_drivers:
-    - languages
-    - accessibility
-    - concurrency
-    tags: []
-    licence: null
-    section: ai_ml
-    source_era: unknown
-    era_reason: Web sources; none states whether AI coding tools were used
-    confidence: low
-    evidence:
-    - id: researched_000_document_page_referencing.1
-      citation: 'Stratagem Systems, ''RAG Implementation Cost 2026: Real Pricing + Free Calculator'':
-        RAG pipeline development (small-scale, 1K-10K documents): "RAG pipeline development: 40-60 hours
-        ($4,000-$7,200)" (web research, checked on the page 2026-10-23)'
-      source_type: vendor_estimate
-      published: 2026
-      url: https://www.stratagem-systems.com/blog/rag-implementation-cost-roi-analysis
-      era: unknown
-      era_basis: not_established
-      ai_workflow: null
-      sample_size: null
-      quality: low
-    - id: researched_000_document_page_referencing.2
-      citation: 'Huzaifa Tahir, ''RAG Development Cost: Complete Pricing Guide for Retrieval Systems in
-        2025–2026, Huzaifa Tahir'': Citation and source linking: "Citation and source linking | 3–5 days
-        | $2,500 – $6,000" (web research, checked on the page 2026-10-23)'
-      source_type: vendor_estimate
-      published: 2025
-      url: https://huzaifatahir.com/blog/rag-development-cost
-      era: unknown
-      era_basis: not_established
-      ai_workflow: null
-      sample_size: null
-      quality: low
-  sources:
-  - url: https://www.stratagem-systems.com/blog/rag-implementation-cost-roi-analysis
-    publisher: Stratagem Systems
-    title: 'RAG Implementation Cost 2026: Real Pricing + Free Calculator'
-    year: 2026
-    label: RAG pipeline development (small-scale, 1K-10K documents)
-    quote: 'RAG pipeline development: 40-60 hours ($4,000-$7,200)'
-    hours:
-    - '40'
-    - '60'
-    scope: dev-only
-    ok: true
-    reason: ''
-  - url: https://huzaifatahir.com/blog/rag-development-cost
-    publisher: Huzaifa Tahir
-    title: 'RAG Development Cost: Complete Pricing Guide for Retrieval Systems in 2025–2026, Huzaifa Tahir'
-    year: 2025
-    label: Citation and source linking
-    quote: Citation and source linking | 3–5 days | $2,500 – $6,000
-    hours:
-    - '24'
-    - '40'
-    scope: dev-only
-    ok: true
-    reason: ''
 - key: researched_assign_member_onboarding_team
   name: Assign team members to onboarding
   section: business
@@ -2537,8 +1372,7 @@ blocks:
     name: Assign team members to onboarding
     category: custom
     bucket: build.module_development
-    description: Lets an admin or manager assign team members to a customer or employee onboarding process,
-      so each person knows which onboarding tasks they own.
+    description: ''
     task_mix:
       crud: '0.55'
       tests: '0.2'
@@ -2561,10 +1395,7 @@ blocks:
     confidence: low
     evidence:
     - id: researched_assign_member_onboarding_team.1
-      citation: 'AI analysis 2026-10-27: workflow_engine basic (Assigning owners to onboarding steps and
-        tracking their status resembles a simple task-assignment workflow.); crm_module basic (Linking
-        team members to an onboarding record with activity history is similar to assigning owners to contacts
-        or leads.)'
+      citation: 'AI analysis 2026-10-27: workflow_engine basic; crm_module basic'
       source_type: expert_judgement
       published: null
       url: null
@@ -2577,13 +1408,9 @@ blocks:
   - kind: part
     block: workflow_engine
     level: basic
-    why: Assigning owners to onboarding steps and tracking their status resembles a simple task-assignment
-      workflow.
   - kind: part
     block: crm_module
     level: basic
-    why: Linking team members to an onboarding record with activity history is similar to assigning owners
-      to contacts or leads.
 - key: researched_document_internal_repository_staff
   name: Internal document repository for staff
   section: business
@@ -2598,8 +1425,7 @@ blocks:
     name: Internal document repository for staff
     category: custom
     bucket: build.module_development
-    description: A secure internal repository where staff can upload, organise, version, find
-      and retrieve company documents according to their access rights.
+    description: ''
     task_mix:
       crud: '0.55'
       tests: '0.2'
@@ -2622,11 +1448,8 @@ blocks:
     confidence: low
     evidence:
     - id: researched_document_internal_repository_staff.1
-      citation: 'AI analysis 2026-10-27: document_management standard (Core need is upload, versioning,
-        metadata and secure storage and retrieval of documents.); search_module basic (Staff need to find
-        documents by name, metadata or category.); master_data_management basic (Admin-managed document
-        categories, departments and types used as metadata.); integration_sso_identity basic (Internal
-        staff would typically sign in through the organisation''s existing identity (LDAP/SSO).)'
+      citation: 'AI analysis 2026-10-27: document_management standard; search_module basic; master_data_management
+        basic; integration_sso_identity basic'
       source_type: expert_judgement
       published: null
       url: null
@@ -2639,16 +1462,12 @@ blocks:
   - kind: part
     block: document_management
     level: standard
-    why: Core need is upload, versioning, metadata and secure storage and retrieval of documents.
   - kind: part
     block: search_module
     level: basic
-    why: Staff need to find documents by name, metadata or category.
   - kind: part
     block: master_data_management
     level: basic
-    why: Admin-managed document categories, departments and types used as metadata.
   - kind: part
     block: integration_sso_identity
     level: basic
-    why: Internal staff would typically sign in through the organisation's existing identity (LDAP/SSO).

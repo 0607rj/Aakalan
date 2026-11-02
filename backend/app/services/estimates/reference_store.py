@@ -17,7 +17,12 @@ from app.models import (
     TaxonomyVersion,
 )
 from app.services.engine import reference as ref
-from app.services.research.library import shared_blocks, shared_key
+from app.services.research.library import (
+    public_sources,
+    public_spec,
+    shared_blocks,
+    shared_key,
+)
 from app.services.seeding.database import rate_card_model
 
 DEFAULT_REGION = "india"
@@ -114,8 +119,9 @@ def catalog_for(
     for s in others:
         if s.key in keys:  # the company's own block (or one it retired) comes first
             continue
+        spec = public_spec(s.spec, public_sources(s.sources))  # rows shared before the clean-up
         for key in (shared_key(s.key), s.key):  # the anonymous key first: matching picks it
-            extra.append(ref.CatalogComponent.model_validate({**s.spec, "key": key}))
+            extra.append(ref.CatalogComponent.model_validate({**spec, "key": key}))
             keys.add(key)
     if not extra:
         return catalog
