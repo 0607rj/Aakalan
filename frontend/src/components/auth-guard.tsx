@@ -10,6 +10,7 @@ import {
   getToken,
   type CurrentUser,
 } from "@/lib/api/client";
+import { Loading } from "@/components/status";
 
 const CurrentUserContext = React.createContext<CurrentUser | null>(null);
 
@@ -65,8 +66,8 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
 
   if (state.kind === "loading") {
     return (
-      <div className="flex flex-1 items-center justify-center text-sm text-muted-foreground">
-        Checking session…
+      <div className="flex flex-1 items-center justify-center">
+        <Loading>Checking your session…</Loading>
       </div>
     );
   }
