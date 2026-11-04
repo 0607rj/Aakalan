@@ -1,0 +1,247 @@
+{
+  "project_name": "School Management System",
+  "summary": "The requirement document describes one system for four schools with about 6,000 students, covering online admissions, fee collection, attendance, marks and report cards, homework and timetables. Parents get an Android and iPhone app and SMS in Hindi and English, and principals see dashboards across the schools. Old student records are moved from the existing fees program and the vendor supports the system for three years.",
+  "project_domain": "School management",
+  "features": [
+    {
+      "key": "online_forms",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.1", "quote": "Parents shall apply for admission online, filling the student's details and uploading the birth certificate and photo."}
+      ],
+      "stories": [
+        "As a parent, I can apply for admission online by filling the student's details",
+        "As a parent, I can upload the birth certificate and photo with the application"
+      ],
+      "covers": [],
+      "mentions": 1,
+      "suggested": true
+    },
+    {
+      "key": "approval_workflow",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.2", "quote": "Admission applications shall be checked by the admission office and approved by the principal."}
+      ],
+      "stories": [
+        "As an admission office member, I can check an admission application",
+        "As a principal, I can approve an admission application"
+      ],
+      "covers": [],
+      "mentions": 1,
+      "suggested": true
+    },
+    {
+      "key": "payments",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.3", "quote": "Parents shall pay school fees online by UPI, card or net banking, and download receipts."}
+      ],
+      "stories": [
+        "As a parent, I can pay school fees online by UPI, card or net banking",
+        "As a parent, I can download fee receipts"
+      ],
+      "covers": [],
+      "mentions": 1,
+      "suggested": true
+    },
+    {
+      "key": "mobile_app",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.9", "quote": "Parents shall use an Android and iPhone app to see attendance, homework, fees and report cards, and get notices."}
+      ],
+      "stories": [
+        "As a parent, I can see attendance in the app",
+        "As a parent, I can see homework in the app",
+        "As a parent, I can see fees in the app",
+        "As a parent, I can see report cards in the app"
+      ],
+      "covers": ["notifications"],
+      "mentions": 1,
+      "suggested": true
+    },
+    {
+      "key": "notifications",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.10", "quote": "Notices and circulars shall be sent to parents of a class or the whole school by app notification and SMS."},
+        {"page": 2, "clause_ref": "3.5", "quote": "parents of absent students shall get an SMS the same morning."}
+      ],
+      "stories": [
+        "As an office staff member, I can send a notice or circular to the parents of a class or the whole school by app notification and SMS",
+        "As a parent of an absent student, I get an SMS the same morning"
+      ],
+      "covers": [],
+      "mentions": 2,
+      "suggested": true
+    },
+    {
+      "key": "dashboards",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.11", "quote": "Principals shall see dashboards of attendance, fee collection and exam results across the four schools."}
+      ],
+      "stories": [
+        "As a principal, I can see a dashboard of attendance across the four schools",
+        "As a principal, I can see a dashboard of fee collection across the four schools",
+        "As a principal, I can see a dashboard of exam results across the four schools"
+      ],
+      "covers": [],
+      "mentions": 1,
+      "suggested": true
+    },
+    {
+      "key": "old_data",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.12", "quote": "Student records of the last three years shall be moved from the existing fees program."}
+      ],
+      "stories": [
+        "As an office staff member, I can see the last three years of student records moved from the existing fees program"
+      ],
+      "covers": [],
+      "mentions": 1,
+      "suggested": true
+    },
+    {
+      "key": "languages",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.13", "quote": "The parent app and SMS shall be available in Hindi and English."}
+      ],
+      "stories": [
+        "As a parent, I can use the app and receive SMS in Hindi or English"
+      ],
+      "covers": [],
+      "mentions": 1,
+      "suggested": true
+    }
+  ],
+  "other_features": [
+    {
+      "name": "Fee structures, concessions and dues",
+      "description": "The accounts office sets fee structures per class, applies concessions and late fines, and sees pending dues.",
+      "category": "module",
+      "size": "M",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.4", "quote": "The accounts office shall set fee structures per class, apply concessions and late fines, and see pending dues."}
+      ],
+      "part_of": "",
+      "stories": [
+        "As an accounts office member, I can set fee structures per class",
+        "As an accounts office member, I can apply concessions and late fines",
+        "As an accounts office member, I can see pending dues"
+      ]
+    },
+    {
+      "name": "Daily class attendance",
+      "description": "Teachers mark daily attendance class-wise.",
+      "category": "module",
+      "size": "M",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.5", "quote": "Teachers shall mark daily attendance class-wise;"}
+      ],
+      "part_of": "",
+      "stories": [
+        "As a teacher, I can mark daily attendance class-wise"
+      ]
+    },
+    {
+      "name": "Exam marks and report cards",
+      "description": "Teachers enter marks for each exam and the system produces CBSE-format report cards as PDF.",
+      "category": "module",
+      "size": "M",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.6", "quote": "Teachers shall enter marks for each exam; the system shall produce CBSE-format report cards as PDF."}
+      ],
+      "part_of": "",
+      "stories": [
+        "As a teacher, I can enter marks for each exam",
+        "As an office staff member, I can produce CBSE-format report cards as PDF"
+      ]
+    },
+    {
+      "name": "Homework and assignments",
+      "description": "Teachers post homework and assignments with files and students submit their work online.",
+      "category": "module",
+      "size": "M",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.7", "quote": "Teachers shall post homework and assignments with files; students shall submit their work online."}
+      ],
+      "part_of": "",
+      "stories": [
+        "As a teacher, I can post homework and assignments with files",
+        "As a student, I can submit my work online"
+      ]
+    },
+    {
+      "name": "Class and teacher timetables",
+      "description": "The office prepares the class timetable and teachers' timetables.",
+      "category": "module",
+      "size": "S",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.8", "quote": "The office shall prepare the class timetable and teachers' timetables."}
+      ],
+      "part_of": "",
+      "stories": [
+        "As an office staff member, I can prepare the class timetable",
+        "As an office staff member, I can prepare teachers' timetables"
+      ]
+    }
+  ],
+  "choices": [
+    {
+      "question": "platforms",
+      "value": "web_mobile",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.9", "quote": "Parents shall use an Android and iPhone app to see attendance, homework, fees and report cards, and get notices."}
+      ]
+    },
+    {
+      "question": "old_data",
+      "value": "lot",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.12", "quote": "Student records of the last three years shall be moved from the existing fees program."}
+      ]
+    }
+  ],
+  "numbers": [
+    {
+      "field": "users_total",
+      "value": 6000,
+      "evidence": [
+        {"page": 1, "clause_ref": "1.1", "quote": "Vidya Bharati Trust runs four CBSE schools in Indore with about 6,000 students from nursery to class 12."}
+      ]
+    },
+    {
+      "field": "languages",
+      "value": 2,
+      "evidence": [
+        {"page": 2, "clause_ref": "3.13", "quote": "The parent app and SMS shall be available in Hindi and English."}
+      ]
+    },
+    {
+      "field": "om_years",
+      "value": 3,
+      "evidence": [
+        {"page": 3, "clause_ref": "5.1", "quote": "The vendor shall support the system for three years after go-live."}
+      ]
+    }
+  ],
+  "unclear_points": [],
+  "not_priced": [],
+  "payment_terms": null,
+  "scope": [
+    {
+      "key": "sms",
+      "status": "explicit",
+      "note": "",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.10", "quote": "Notices and circulars shall be sent to parents of a class or the whole school by app notification and SMS."}
+      ]
+    },
+    {
+      "key": "push",
+      "status": "explicit",
+      "note": "",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.10", "quote": "Notices and circulars shall be sent to parents of a class or the whole school by app notification and SMS."}
+      ]
+    }
+  ],
+  "staff_lines": [],
+  "chatbot_buyer_systems": null
+}

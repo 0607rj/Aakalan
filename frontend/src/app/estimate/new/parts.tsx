@@ -3,6 +3,9 @@
 import * as React from "react";
 
 import {
+  BankIcon,
+  BarbellIcon,
+  BedIcon,
   BuildingOfficeIcon,
   BuildingsIcon,
   CalculatorIcon,
@@ -15,11 +18,16 @@ import {
   CloudIcon,
   DatabaseIcon,
   DevicesIcon,
+  FactoryIcon,
+  ForkKnifeIcon,
   GavelIcon,
   GlobeIcon,
+  GraduationCapIcon,
   HandCoinsIcon,
   HandshakeIcon,
   HeadsetIcon,
+  HospitalIcon,
+  HouseLineIcon,
   LifebuoyIcon,
   LockKeyIcon,
   PaintBrushIcon,
@@ -30,10 +38,13 @@ import {
   QuestionIcon,
   RobotIcon,
   RocketIcon,
+  RocketLaunchIcon,
   ShieldCheckIcon,
   StackIcon,
   StorefrontIcon,
+  TruckIcon,
   UsersThreeIcon,
+  WalletIcon,
   WrenchIcon,
 } from "@phosphor-icons/react/dist/ssr";
 
@@ -43,7 +54,9 @@ import { Label } from "@/components/ui/label";
 import {
   api,
   type Evidence,
+  type Prerequisite,
   type QuestionImpact,
+  type QuickOptions,
   type QuickQuestion,
   type QuickRequest,
   type QuickSchedule,
@@ -193,6 +206,20 @@ const TYPE_ICONS: Record<string, IconType> = {
   booking: CalendarCheckIcon,
   ai: RobotIcon,
   other: PlusCircleIcon,
+  // the manual form's industries (OPEN_QUESTIONS 212)
+  school: GraduationCapIcon,
+  clinic: HospitalIcon,
+  fitness: BarbellIcon,
+  shop: StorefrontIcon,
+  restaurant: ForkKnifeIcon,
+  property: HouseLineIcon,
+  transport: TruckIcon,
+  government: BankIcon,
+  hotel: BedIcon,
+  saas: RocketLaunchIcon,
+  factory: FactoryIcon,
+  edtech: ChalkboardTeacherIcon,
+  fintech: WalletIcon,
 };
 
 /** The icon for a kind of software (its tile is drawn by the card, which shows the choice). */
@@ -535,40 +562,66 @@ export function StandardBlocks({
     };
   }, [key]);
   if (blocks.length === 0) return null;
-  const kept = blocks.filter((b) => !removed.includes(b.key)).length;
+  // nothing to decide here (OPEN_QUESTIONS 211): one line of what every estimate includes; the
+  // full list on request, where only a block a client may not need can be removed
+  const fixed = blocks.filter((b) => b.fixed);
+  const gone = blocks.filter((b) => removed.includes(b.key));
   return (
-    <section className="flex flex-col gap-3">
-      <SectionHeading
-        title="Included by default"
-        count={kept}
-        aside="untick if not needed"
-      />
-      <p className="text-sm text-muted-foreground">
-        A project of this size usually needs these. Untick any you do not need:
-        it is left out of the price, and the quote says so.
+    <section className="flex flex-col gap-2 rounded-xl border bg-card px-4 py-3 text-sm">
+      <p className="flex items-start gap-2">
+        <Mark on />
+        <span>
+          <span className="font-medium">Every estimate already includes: </span>
+          {fixed.map((b) => b.label.toLowerCase()).join(", ")}
+          {blocks.length > fixed.length
+            ? ", and the usual extras for this size"
+            : ""}
+          .
+        </span>
       </p>
-      <div className="grid gap-2 sm:grid-cols-2">
-        {blocks.map((b) => (
-          <label
-            key={b.key}
-            className="flex cursor-pointer items-start gap-3 rounded-lg p-2 hover:bg-panel-2 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring"
-          >
-            <input
-              type="checkbox"
-              checked={!removed.includes(b.key)}
-              onChange={() => onToggle(b.key)}
-              className="sr-only"
-            />
-            <Mark on={!removed.includes(b.key)} />
-            <span className="flex flex-col gap-0.5">
-              <span>{b.label}</span>
-              {b.hint ? (
-                <span className="text-sm text-muted-foreground">{b.hint}</span>
-              ) : null}
-            </span>
-          </label>
-        ))}
-      </div>
+      {gone.length > 0 ? (
+        <p className="text-muted-foreground">
+          Left out by you: {gone.map((b) => b.label).join(", ")}.
+        </p>
+      ) : null}
+      <details className="group">
+        <summary className="cursor-pointer text-muted-foreground underline-offset-4 hover:underline">
+          See all
+        </summary>
+        <ul className="mt-2 flex flex-col gap-2">
+          {blocks.map((b) => {
+            const out = removed.includes(b.key);
+            return (
+              <li
+                key={b.key}
+                className="flex flex-wrap items-start justify-between gap-x-3 gap-y-1"
+              >
+                <span
+                  className={out ? "text-muted-foreground line-through" : ""}
+                >
+                  <span className="font-medium">{b.label}</span>
+                  {b.hint ? (
+                    <span className="text-muted-foreground"> — {b.hint}</span>
+                  ) : null}
+                </span>
+                {b.fixed ? (
+                  <span className="text-xs text-muted-foreground">
+                    always needed
+                  </span>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => onToggle(b.key)}
+                    className="text-xs text-primary underline-offset-4 hover:underline"
+                  >
+                    {out ? "Add back" : "Remove from the price"}
+                  </button>
+                )}
+              </li>
+            );
+          })}
+        </ul>
+      </details>
     </section>
   );
 }
@@ -661,6 +714,42 @@ export function QuestionHeading({
   );
 }
 
+/** A note shown above a question's options, by question key (e.g. "ready-made products are
+ * common for this kind of software" above "How will it be built?", OPEN_QUESTIONS 209). */
+export const QuestionNotes = React.createContext<
+  Partial<Record<string, React.ReactNode>>
+>({});
+
+/** Ready products are common for this kind of software: the AI's sentence, and what to watch. */
+export function ReadyMadeNote({ note }: { note: string }) {
+  return (
+    <div className="mb-3 flex flex-col gap-1 rounded-xl border border-tape/30 bg-tape-soft/40 px-4 py-3 text-sm">
+      <span className="font-semibold">
+        Ready-made software is common for this kind of project
+      </span>
+      <span>{note}</span>
+      <span className="text-muted-foreground">
+        Compare the prices below. A ready product is cheapest and fastest when
+        your needs are standard; you work the product&apos;s way, and each
+        feature of your own is still priced as extra work, so many of them can
+        cost more than building. Suggested by the AI: check that a product
+        really fits before choosing it.
+      </span>
+    </div>
+  );
+}
+
+/** The AI read the kind of software and found no common ready product (OPEN_QUESTIONS 210). */
+export function NoReadyMadeNote() {
+  return (
+    <p className="mb-3 rounded-xl border border-dashed px-4 py-3 text-sm text-muted-foreground">
+      No common ready product was found for this kind of software, so it is
+      usually made to order. The price for an existing product assumes one
+      exists that fits: check before choosing it.
+    </p>
+  );
+}
+
 export function QuestionGroup({
   question,
   value,
@@ -684,6 +773,7 @@ export function QuestionGroup({
   const prices = new Map(
     (impact?.options ?? []).map((o) => [String(o.value), o.likely_paise]),
   );
+  const note = React.useContext(QuestionNotes)[question.key];
   return (
     <fieldset className="flex flex-col gap-3">
       <legend className={cn("font-wide mb-3 text-lg", hideLegend && "sr-only")}>
@@ -695,6 +785,7 @@ export function QuestionGroup({
           </span>
         ) : null}
       </legend>
+      {note}
       <div
         className={cn(
           "overflow-hidden rounded-xl border bg-card",
@@ -983,6 +1074,133 @@ export function Calculating({ labels }: { labels: string[] }) {
         <div className="h-full w-1/3 animate-[measure_1.4s_cubic-bezier(0.65,0,0.35,1)_infinite] rounded-full bg-primary/80" />
       </div>
       <p className="text-lg font-medium">Working out your cost…</p>
+    </div>
+  );
+}
+
+/** How a feature is priced, in client words (OPEN_QUESTIONS 205). Wording only. */
+const COVERAGE = {
+  catalog: { text: "In our price list", tone: "bg-tape-soft text-foreground" },
+  partial: {
+    text: "Adds work to a feature",
+    tone: "bg-primary/10 text-primary",
+  },
+  custom: {
+    text: "Custom: priced from a general size estimate, less certain",
+    tone: "bg-warning/10 text-warning",
+  },
+  optional: {
+    text: "Optional: not in the price unless ticked",
+    tone: "bg-muted text-muted-foreground",
+  },
+} as const;
+
+export type CoverageKind = keyof typeof COVERAGE;
+
+export function CoverageTag({ kind }: { kind: CoverageKind }) {
+  const c = COVERAGE[kind];
+  return (
+    <span
+      className={cn(
+        "inline-block w-fit rounded px-1.5 py-0.5 text-xs font-medium",
+        c.tone,
+      )}
+    >
+      {c.text}
+    </span>
+  );
+}
+
+/** Industry, type and roles: shown only, never priced (OPEN_QUESTIONS 205). */
+export function ProjectContextLine({
+  domain,
+  projectType,
+  roles,
+}: {
+  domain?: string;
+  projectType?: string;
+  roles?: string[];
+}) {
+  const parts: [string, string][] = [];
+  if (domain) parts.push(["Industry", domain]);
+  if (projectType) parts.push(["Type", projectType]);
+  if (roles && roles.length > 0) parts.push(["Users", roles.join(", ")]);
+  if (parts.length === 0) return null;
+  return (
+    <dl className="flex flex-wrap gap-x-6 gap-y-1 text-sm">
+      {parts.map(([label, value]) => (
+        <div key={label} className="flex gap-1.5">
+          <dt className="text-muted-foreground">{label}:</dt>
+          <dd className="font-medium">{value}</dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+/**
+ * Features that usually need one not ticked, and add-ons asked for whose feature is not
+ * ticked (the same rules as the backend's `quick/context.py`). A warning only: nothing is added.
+ */
+export function missingPrerequisites(
+  options: QuickOptions,
+  features: string[],
+  askedScope: string[] = [],
+  answered: Record<string, Choice> = {},
+): Prerequisite[] {
+  const chosen = new Set(features);
+  const label = (k: string) =>
+    options.features.find((f) => f.key === k)?.label ?? k;
+  const out = new Map<string, Prerequisite>();
+  for (const rule of options.prerequisites ?? []) {
+    // a browser-only build the document or user chose: no mobile warning (OPEN_QUESTIONS 206)
+    const skip = Object.entries(rule.not_when_answered ?? {}).some(
+      ([q, values]) => q in answered && values.includes(String(answered[q])),
+    );
+    if (skip) continue;
+    if (chosen.has(rule.feature) && !rule.needs_any.some((k) => chosen.has(k)))
+      out.set(rule.feature, {
+        key: rule.feature,
+        label: label(rule.feature),
+        needs: rule.needs_any.map(label),
+        why: rule.why,
+      });
+  }
+  for (const group of options.scope ?? []) {
+    if (!group.feature || chosen.has(group.feature)) continue;
+    for (const item of group.items) {
+      if (askedScope.includes(item.key) && !out.has(item.key)) {
+        const feature = label(group.feature);
+        out.set(item.key, {
+          key: item.key,
+          label: item.label,
+          needs: [feature],
+          why: `Asked for, but it adds to ${feature}, which is not ticked, so it is not in the price.`,
+        });
+      }
+    }
+  }
+  return [...out.values()];
+}
+
+export function PrerequisiteWarnings({ items }: { items: Prerequisite[] }) {
+  if (items.length === 0) return null;
+  return (
+    <div className="flex flex-col gap-2 rounded-xl border border-warning/40 bg-warning/5 px-4 py-3 text-sm">
+      <span className="font-medium">
+        Check: these usually need something not ticked
+      </span>
+      <ul className="flex flex-col gap-1">
+        {items.map((p) => (
+          <li key={p.key}>
+            <span className="font-medium">{p.label}.</span>{" "}
+            <span className="text-muted-foreground">
+              {p.why} Tick {p.needs.join(" or ")} if it is needed; nothing was
+              added for you.
+            </span>
+          </li>
+        ))}
+      </ul>
     </div>
   );
 }

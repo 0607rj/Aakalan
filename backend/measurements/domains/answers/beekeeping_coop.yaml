@@ -1,0 +1,26 @@
+domain_words: [bee, honey, apicultur, co-operative, cooperative, agricultur]
+features:
+  - online_forms     # 3.1 member registration
+  - maps             # 3.3 apiaries on a map
+  - scanning         # 3.5 QR codes with the tablet camera
+  - offline_app      # 3.6 entries saved offline on the tablet
+  - notifications    # 3.10 SMS when weighed / paid
+  - languages        # 3.11 Marathi, Kannada, English
+  - online_store     # 3.12 shop with cart
+  - payments         # 3.12 online payment
+  - dashboards       # 3.13
+tolerated: [inventory, billing, search, documents]
+not_features:
+  - mobile_app       # 3.7 not required: browser on tablets
+  - ai_images        # 4.1 later phase
+scope:
+  - [sms]
+custom:
+  - {what: Apiary and hive records, match_any: [apiar, hive]}
+  - {what: Honey collection, weighing and grading, match_any: [intake, weigh, grading, collection]}
+  - {what: Batch traceability, match_any: [trace]}
+  - {what: Member payments in bulk, match_any: [member payment, payout]}
+optional:
+  - {what: Bee disease recognition, match_any: [disease]}
+prerequisites: []   # 3.7: the document chose a browser on tablets: no mobile warning (206)
+choices: {platforms: web}

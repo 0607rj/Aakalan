@@ -371,6 +371,7 @@ def review_prefill(cfg: QuickConfig, extraction: TenderExtraction, country: str)
             if f.story_units > 1 and f.key in everything
         },
         custom_features=custom,
+        project_domain=extraction.project_domain,  # shown only, never priced (205)
         # a tender pays after milestones, months later (OPEN_QUESTIONS 196), unless the
         # document's own schedule says otherwise (payment_schedule)
         choices={**choices, **by_number, "payment_terms": "milestones"},

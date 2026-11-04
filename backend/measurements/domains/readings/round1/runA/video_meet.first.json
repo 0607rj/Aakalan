@@ -1,0 +1,38 @@
+{
+ "project_name": "Video Meeting Platform",
+ "summary": "The requirement document asks for a video meeting service for small companies and coaching institutes, used from a browser or phone apps and sold as monthly plans. It covers scheduling, live video for up to 100 people, screen sharing, chat, host controls, recording, captions, plan payments and usage reports, with one year of support.",
+ "project_domain": "Video meetings",
+ "features": [
+  {"key": "mobile_app", "evidence": [{"page": 2, "clause_ref": "3.2", "quote": "Participants shall join from a link in the browser without installing anything, or from the Android and iOS apps."}], "stories": ["As a participant, I can join a meeting from the Android or iOS app"], "covers": []},
+  {"key": "chat", "evidence": [{"page": 2, "clause_ref": "3.5", "quote": "Participants shall chat with everyone or privately during the meeting."}], "stories": ["As a participant, I can chat with everyone or privately during the meeting"], "covers": []},
+  {"key": "ai_voice", "evidence": [{"page": 2, "clause_ref": "3.8", "quote": "The system shall show live captions in English while people speak."}], "stories": ["As a participant, I can see live English captions while people speak"], "covers": []},
+  {"key": "payments", "evidence": [{"page": 2, "clause_ref": "3.9", "quote": "Companies shall buy a monthly or yearly plan and pay by card or UPI; plans renew automatically."}], "stories": ["As a company administrator, I can buy a monthly or yearly plan and pay by card or UPI"], "covers": []},
+  {"key": "dashboards", "evidence": [{"page": 2, "clause_ref": "3.10", "quote": "Company administrators shall add and remove their staff and see usage reports: meetings held, minutes used and recordings stored."}], "stories": ["As a company administrator, I can see usage reports of meetings held, minutes used and recordings stored"], "covers": []},
+  {"key": "staff_login", "evidence": [{"page": 2, "clause_ref": "3.11", "quote": "Employees of companies on the business plan shall sign in with their company's Google Workspace or Microsoft account."}], "stories": ["As an employee of a business-plan company, I can sign in with my company's Google Workspace or Microsoft account"], "covers": []}
+ ],
+ "other_features": [
+  {"name": "Meeting scheduling and invitations", "description": "Hosts schedule meetings with date, time and agenda and invite people by email with a calendar invite.", "category": "module", "size": "M", "part_of": "", "stories": ["As a host, I can schedule a meeting with a date, time and agenda", "As a host, I can invite people by email so that invitees get a calendar invite"], "evidence": [{"page": 2, "clause_ref": "3.1", "quote": "Hosts shall schedule a meeting with a date, time and agenda and invite people by email; invitees get a calendar invite."}]},
+  {"name": "Live video and audio meetings", "description": "Live video and audio for up to 100 participants with a gallery view and the active speaker shown large.", "category": "module", "size": "L", "part_of": "", "stories": ["As a participant, I can join a live video and audio meeting of up to 100 people", "As a participant, I can see a gallery view with the active speaker shown large"], "evidence": [{"page": 2, "clause_ref": "3.3", "quote": "Meetings shall carry live video and audio for up to 100 participants, with a gallery view and the active speaker shown large."}]},
+  {"name": "Screen sharing", "description": "Participants share their screen during a meeting.", "category": "module", "size": "S", "part_of": "", "stories": ["As a participant, I can share my screen"], "evidence": [{"page": 2, "clause_ref": "3.4", "quote": "Participants shall share their screen."}]},
+  {"name": "Host meeting controls", "description": "Hosts use a waiting room, mute or remove participants and lock the meeting.", "category": "module", "size": "M", "part_of": "", "stories": ["As a host, I can use a waiting room", "As a host, I can mute or remove participants", "As a host, I can lock the meeting"], "evidence": [{"page": 2, "clause_ref": "3.6", "quote": "Hosts shall use a waiting room, mute or remove participants, and lock the meeting."}]},
+  {"name": "Meeting recording and sharing", "description": "Hosts record a meeting; recordings are stored in the cloud for 30 days and shared by link.", "category": "module", "size": "M", "part_of": "", "stories": ["As a host, I can record a meeting", "As a host, I can share a recording by link within 30 days"], "evidence": [{"page": 2, "clause_ref": "3.7", "quote": "Hosts shall record a meeting; recordings shall be stored in the cloud for 30 days and shared by link."}]}
+ ],
+ "choices": [
+  {"question": "platforms", "value": "web_mobile", "evidence": [{"page": 2, "clause_ref": "3.2", "quote": "Participants shall join from a link in the browser without installing anything, or from the Android and iOS apps."}]}
+ ],
+ "numbers": [
+  {"field": "om_years", "value": 1, "evidence": [{"page": 3, "clause_ref": "5.1", "quote": "The vendor shall support the product for one year after launch."}]}
+ ],
+ "unclear_points": [],
+ "not_priced": [
+  {"topic": "realtime_media", "note": "The product itself is live video calls between users.", "evidence": [{"page": 2, "clause_ref": "3.3", "quote": "Meetings shall carry live video and audio for up to 100 participants, with a gallery view and the active speaker shown large."}]},
+  {"topic": "multi_tenancy", "note": "Many client companies, each with its own administrators and staff, use one service.", "evidence": [{"page": 2, "clause_ref": "3.10", "quote": "Company administrators shall add and remove their staff and see usage reports: meetings held, minutes used and recordings stored."}]}
+ ],
+ "payment_terms": null,
+ "scope": [
+  {"key": "subscriptions", "status": "explicit", "note": "", "evidence": [{"page": 2, "clause_ref": "3.9", "quote": "Companies shall buy a monthly or yearly plan and pay by card or UPI; plans renew automatically."}]},
+  {"key": "enterprise_sso", "status": "explicit", "note": "", "evidence": [{"page": 2, "clause_ref": "3.11", "quote": "Employees of companies on the business plan shall sign in with their company's Google Workspace or Microsoft account."}]}
+ ],
+ "staff_lines": [],
+ "chatbot_buyer_systems": null
+}

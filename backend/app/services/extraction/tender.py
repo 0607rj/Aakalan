@@ -18,8 +18,8 @@ from app.llm.client import LLMClient, LLMResult, load_prompt
 from app.services.documents.parsing import ParsedDocument, normalise
 from app.services.quick.config import LevelKey, QuickConfig
 
-PROMPT_FILE = "extract_tender_v9.md"
-PROMPT_VERSION = "extract_tender_v9"
+PROMPT_FILE = "extract_tender_v10.md"
+PROMPT_VERSION = "extract_tender_v10"  # v10: project_domain (OPEN_QUESTIONS 205)
 SIZES = frozenset({"S", "M", "L"})
 BASIC_READER_VERSION = "basic_reader_v1"
 PAGE_TOLERANCE = 1  # a quote may straddle into the neighbouring page
@@ -75,6 +75,25 @@ class OtherFeatureFinding(BaseModel):
     # such parts are already priced there, so they are not priced again
     part_of: str = ""
     stories: list[str] = []  # as for features; their count sets the size
+
+
+class IndustrySuggestionFinding(BaseModel):
+    """NOT in the document: a module software of this kind usually has (OPEN_QUESTIONS 207).
+    Either `feature` (a listed feature key) or `name` (a module none of the keys covers)."""
+
+    feature: str = ""
+    name: str = ""
+    category: str = ""  # a custom type key, for `name` only
+    size: str = ""  # S / M / L, for `name` only
+    why: str  # one sentence: why software like this usually has it
+
+
+class ReadyMadeFinding(BaseModel):
+    """Is software of this kind usually bought ready-made and customised (OPEN_QUESTIONS 209)?
+    Words only, about the kind of software; never a price."""
+
+    common: bool
+    note: str = ""  # one sentence, e.g. "School software is widely sold as ready products"
 
 
 class ChoiceFinding(BaseModel):
@@ -191,6 +210,8 @@ class ChatbotSystemsFinding(BaseModel):
 class ExtractionOutput(BaseModel):
     project_name: str
     summary: str
+    # the industry or field the software is for, shown only, never priced (OPEN_QUESTIONS 205)
+    project_domain: str = ""
     features: list[FeatureFinding]
     other_features: list[OtherFeatureFinding]
     choices: list[ChoiceFinding]
@@ -201,6 +222,8 @@ class ExtractionOutput(BaseModel):
     scope: list[ScopeFinding] = []
     staff_lines: list[StaffLineFinding] = []
     chatbot_buyer_systems: ChatbotSystemsFinding | None = None
+    industry_suggestions: list[IndustrySuggestionFinding] = []
+    ready_made: ReadyMadeFinding | None = None
 
 
 # --- verified result stored on the Document -------------------------------------------------
@@ -364,11 +387,36 @@ class UncoveredSentence(BaseModel):
     document: str = ""
 
 
+class IndustrySuggestion(BaseModel):
+    """Usually needed for this kind of software, not asked for (OPEN_QUESTIONS 207): checked in
+    code, offered unticked, priced by the engine only when the user adds it."""
+
+    feature: str = ""  # a listed feature key; "" = a new module (name, category, size)
+    label: str
+    why: str
+    category: str = ""
+    size: str = ""
+    # the catalog block that prices a new module (an industry's list, OPEN_QUESTIONS 213);
+    # never set from the AI's reading
+    catalog_key: str = ""
+
+
+class ReadyMade(BaseModel):
+    """Ready-made products are common for this kind of software (OPEN_QUESTIONS 209): shown
+    beside the "How will it be built?" prices, never an answer or a price."""
+
+    note: str
+
+
 class TenderExtraction(BaseModel):
     reader: str  # "ai" | "basic"
     prompt_version: str
     project_name: str
     summary: str
+    # shown only, never priced (OPEN_QUESTIONS 205): the industry the AI read ("" before v10
+    # and from the keyword reader), and the roles in the user stories, found in code
+    project_domain: str = ""
+    user_roles: list[str] = []
     features: list[FoundFeature]
     other_features: list[FoundOtherFeature] = []
     choices: dict[str, FoundValue]
@@ -389,6 +437,11 @@ class TenderExtraction(BaseModel):
     # `uncovered_more` beyond the listed ones
     uncovered: list[UncoveredSentence] = []
     uncovered_more: int = 0
+    # not in the document, usual for its industry: offered only (OPEN_QUESTIONS 207); `asked`:
+    # the AI was asked for them (an empty list then means none, not "not asked")
+    industry_suggestions: list[IndustrySuggestion] = []
+    industry_suggestions_asked: bool = False
+    ready_made: ReadyMade | None = None  # set only when the AI says they are common
 
 
 def _fence(doc: ParsedDocument) -> str:
@@ -430,6 +483,10 @@ def build_prompt(cfg: QuickConfig) -> str:
         .replace("{choices}", choices)
         .replace("{not_priced}", not_priced)
         .replace("{included}", included_list(cfg))
+        .replace(
+            "{max_suggestions}",
+            str(cfg.industry_suggestions.max_items if cfg.industry_suggestions else 0),
+        )
     )
 
 
@@ -608,12 +665,20 @@ def gap_check(
     )
 
 
+TENDER_ASK = "Read the tender above and return your findings."
+
+
 def ai_read(
-    llm: LLMClient, cfg: QuickConfig, doc: ParsedDocument, pdf: bytes | None = None
+    llm: LLMClient,
+    cfg: QuickConfig,
+    doc: ParsedDocument,
+    pdf: bytes | None = None,
+    ask: str = TENDER_ASK,
 ) -> LLMResult[ExtractionOutput]:
     """Ask the LLM for findings; the document is fenced as data (rule 7). Scanned PDFs are sent
     as the PDF itself (the model reads the page images, including Hindi). A second pass then
-    asks only for what the first one missed (scanned PDFs too, OPEN_QUESTIONS 203)."""
+    asks only for what the first one missed (scanned PDFs too, OPEN_QUESTIONS 203). `ask`: the
+    line after the text (a typed description has its own, OPEN_QUESTIONS 210)."""
     if doc.scanned and pdf is not None:
         scanned = llm.extract_pdf(
             system=build_prompt(cfg),
@@ -627,7 +692,7 @@ def ai_read(
         return gap_check(llm, cfg, doc, scanned, pdf=pdf)
     first = llm.extract(
         system=build_prompt(cfg),
-        user=_fence(doc) + "\n\nRead the tender above and return your findings.",
+        user=_fence(doc) + "\n\n" + ask,
         schema=ExtractionOutput,
     )
     return gap_check(llm, cfg, doc, first)
@@ -757,6 +822,8 @@ def verify_findings(
     _size_by_stories(cfg, features, others)
 
     choices: dict[str, FoundValue] = {}
+    adding_quotes: set[str] = set()  # quotes of answers that add a feature (OPEN_QUESTIONS 206)
+    answer_adds: set[str] = set()  # the features those answers add
     for c in raw.choices:
         question = cfg.questions.get(c.question)
         ev = _verify(doc, c.evidence, document)
@@ -769,6 +836,9 @@ def verify_findings(
             dropped += 1
             continue
         choices[c.question] = FoundValue(value=option.value, label=option.label, evidence=ev)
+        if option.add_features:  # e.g. integrations "one or two": connect_existing is priced
+            adding_quotes.update(_quote_key(e.quote) for e in ev)
+            answer_adds.update(option.add_features)
 
     numbers: dict[str, FoundValue] = {}
     for n in raw.numbers:
@@ -823,7 +893,7 @@ def verify_findings(
         )
     for key in scope:  # asked for in one place, ruled out for a part elsewhere: still offered
         set_aside.pop(key, None)
-    _drop_repeats(cfg, features, others, scope)
+    _drop_repeats(cfg, features, others, scope, adding_quotes)
     staff_lines, staff_dropped = _staff_lines(doc, raw.staff_lines, document)
     dropped += staff_dropped
     systems = None
@@ -840,6 +910,7 @@ def verify_findings(
         prompt_version=version,
         project_name=raw.project_name.strip()[:300] or "New estimate",
         summary=raw.summary.strip(),
+        project_domain=" ".join(raw.project_domain.split())[:80],
         features=list(features.values()),
         other_features=list(others.values()),
         choices=choices,
@@ -852,7 +923,75 @@ def verify_findings(
         scope_set_aside=list(set_aside.values()),
         staff_lines=staff_lines,
         chatbot_buyer_systems=systems,
+        industry_suggestions_asked=reader == "ai",
+        ready_made=_ready_made(raw.ready_made),
+        industry_suggestions=industry_suggestions(
+            cfg, raw.industry_suggestions, {*features, *answer_adds}, [*others.values()]
+        ),
     )
+
+
+def _ready_made(raw: ReadyMadeFinding | None) -> ReadyMade | None:
+    """Kept only when the AI says ready products are common and gives its sentence."""
+    note = " ".join(raw.note.split())[:200] if raw else ""
+    return ReadyMade(note=note) if raw and raw.common and note else None
+
+
+def _words(text: str) -> str:
+    return " " + re.sub(r"[^a-z0-9]+", " ", text.lower()).strip() + " "
+
+
+def industry_suggestions(
+    cfg: QuickConfig,
+    raw: list[IndustrySuggestionFinding],
+    have: set[str],
+    others: list["FoundOtherFeature"],
+    ruled_out: set[str] | None = None,
+) -> list[IndustrySuggestion]:
+    """The AI's "usually needed" list, checked in code (OPEN_QUESTIONS 207): a listed feature
+    that exists (one a question adds, like the mobile app, too), is not found or added by an
+    answer (`have`), not ruled out and not in `never`; a new module whose name is not a listed
+    feature, an extra already found, an always-included item, nor has a `never_words` word.
+    Each once, at most `max_items`."""
+    rules = cfg.industry_suggestions
+    if rules is None:
+        return []
+    by_key = {f.key: f for f in cfg.features}
+    taken = {_words(f.label) for f in cfg.features} | {_words(o.name) for o in others}
+    taken |= {_words(i.label) for i in (cfg.always_included.items if cfg.always_included else [])}
+    basic = [_words(w) for w in rules.never_words]
+    blocked = have | set(rules.never) | (ruled_out or set())
+    default_type = next(iter(cfg.custom_feature_types), "")
+    out: list[IndustrySuggestion] = []
+    seen: set[str] = set()
+    for s in raw:
+        if len(out) >= rules.max_items:
+            break
+        why = " ".join(s.why.split())[:200]
+        key = s.feature.strip()
+        if not why:
+            continue
+        if key:
+            feature = by_key.get(key)
+            if feature is None or key in blocked or key in seen:
+                continue
+            seen.add(key)
+            out.append(IndustrySuggestion(feature=key, label=feature.label, why=why))
+            continue
+        name = " ".join(s.name.split())[:80]
+        norm = _words(name)
+        if len(name) < 3 or norm in taken or norm in seen or any(w in norm for w in basic):
+            continue
+        seen.add(norm)
+        out.append(
+            IndustrySuggestion(
+                label=name,
+                why=why,
+                category=s.category if s.category in cfg.custom_feature_types else default_type,
+                size=s.size if s.size in ("S", "M", "L") else "M",
+            )
+        )
+    return out
 
 
 def _quote_key(quote: str) -> str:
@@ -864,13 +1003,15 @@ def _drop_repeats(
     features: dict[str, FoundFeature],
     others: dict[str, FoundOtherFeature],
     scope: dict[str, FoundScope],
+    answer_quotes: set[str] | None = None,
 ) -> None:
     """One sentence of the document is priced once. A feature whose every quote is the evidence
     of the scope item it yields to (`yields_to`) is that scope item, and is dropped. A scope
     item whose every quote is the evidence of a listed feature it does not belong to repeats
-    that feature; an extra whose every quote is the evidence of a feature or a scope item
-    repeats it. Both are dropped. A scope item of the feature it quotes stays: it adds to
-    that feature."""
+    that feature; an extra whose every quote is the evidence of a feature, a scope item or an
+    answer that adds a feature (`answer_quotes`: e.g. integrations "one or two" adds
+    connect_existing, OPEN_QUESTIONS 206) repeats it. Both are dropped. A scope item of the
+    feature it quotes stays: it adds to that feature."""
     owner = {i.key: g.feature for g in cfg.scope for i in g.items}
     yields = {f.key: f.yields_to for f in cfg.features if f.yields_to}
     for key, f in list(features.items()):  # e.g. "sign in with Google": social login only
@@ -895,6 +1036,7 @@ def _drop_repeats(
         if repeats(item.evidence, elsewhere):
             del scope[key]
     scoped = {_quote_key(e.quote) for item in scope.values() for e in item.evidence}
+    scoped |= answer_quotes or set()
     for name, extra in list(others.items()):
         if repeats(extra.evidence, lambda q: q in by_feature or q in scoped):
             del others[name]

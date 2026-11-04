@@ -1,0 +1,28 @@
+# Answer file: hidden from the readers. Keys are the catalog's (seeds/quick_estimate.yaml).
+domain_words: [manufactur, maintenance, plant, factory, automotive, industrial]
+features:
+  - mobile_app         # 3.5 Android technician app
+  - scanning           # 3.2 QR codes on machines
+  - offline_app        # 3.6 weak Wi-Fi
+  - inventory          # 3.7 spare parts stock
+  - approval_workflow  # 3.8 purchase requests above 25,000
+  - connect_existing   # 1.3, 3.8 SAP
+  - ai_forecast        # 3.10 failure prediction
+  - notifications      # 3.11
+  - dashboards         # 3.12
+  - old_data           # 3.13
+tolerated: [documents, search, maps]
+not_features:
+  - payments
+  - online_store
+scope:
+  - [sms, push]
+custom:
+  - {what: Machine (asset) records, match_any: [machine record, asset, equipment, machine register]}
+  - {what: Work orders, match_any: [work order]}
+  - {what: Preventive maintenance, match_any: [preventive]}
+  - {what: Sensor readings and alerts, match_any: [sensor, iot, telemetry]}
+optional:
+  - {what: Production planning / quality, match_any: [production planning, quality inspection]}
+prerequisites: []
+choices: {}

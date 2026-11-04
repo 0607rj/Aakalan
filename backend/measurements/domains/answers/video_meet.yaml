@@ -1,0 +1,24 @@
+domain_words: [video, meeting, conferenc, communication, collaboration]
+features:
+  - mobile_app       # 3.2 Android and iOS apps
+  - chat             # 3.5 chat in meeting
+  - payments         # 3.9 plans paid by card or UPI
+  - dashboards       # 3.10 usage reports
+  - staff_login      # 3.11 Google Workspace / Microsoft sign-in
+  - ai_voice         # 3.8 live captions (speech-to-text)
+tolerated: [notifications, bookings, documents, search]
+not_features:
+  - ai_chatbot
+  - ai_agent         # 4.4 AI summary not required
+scope:
+  - [subscriptions]                  # 3.9 auto-renewing plans
+custom:
+  - {what: Live video and audio meetings, match_any: [live video, video and audio, video call, conferenc, webrtc]}
+  - {what: Meeting recording, match_any: [record]}
+  - {what: Screen sharing, match_any: [screen shar], or_story_of: Live video and audio meetings}
+  - {what: Host controls / waiting room, match_any: [waiting room, host, mute]}
+optional:
+  - {what: Webinars and live streaming, match_any: [webinar, stream, youtube]}
+  - {what: AI meeting summary, match_any: [summary]}
+prerequisites: []
+choices: {platforms: web_mobile}

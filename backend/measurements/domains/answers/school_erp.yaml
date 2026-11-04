@@ -1,0 +1,27 @@
+# Answer file: hidden from the readers. Keys are the catalog's (seeds/quick_estimate.yaml).
+domain_words: [school, education, k-12, student]
+features:
+  - online_forms       # 3.1 admission form with uploads
+  - approval_workflow  # 3.2 office check, principal approval
+  - payments           # 3.3 fees online
+  - notifications      # 3.5, 3.10 SMS and app notices
+  - mobile_app         # 3.9 Android and iPhone parent app
+  - dashboards         # 3.11
+  - old_data           # 3.12 three years from the fees program
+  - languages          # 3.13 Hindi and English
+tolerated: [billing, documents, bookings, search, public_website]
+not_features:
+  - maps               # 4.1 bus tracking next year
+scope:
+  - [sms]
+custom:
+  - {what: Attendance, match_any: [attendance]}
+  - {what: Exams and report cards, match_any: [report card, exam, marks]}
+  - {what: Homework and assignments, match_any: [homework, assignment]}
+  - {what: Timetable, match_any: [timetable]}
+optional:
+  - {what: Bus tracking, match_any: [bus, transport]}
+  - {what: Online classes, match_any: [online class, live class]}
+  - {what: Payroll, match_any: [payroll]}
+prerequisites: []
+choices: {platforms: web_mobile}

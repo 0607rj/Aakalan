@@ -1,0 +1,691 @@
+{
+ "hospital_hms": {
+  "A": {
+   "domain": "Hospital care",
+   "domain_ok": true,
+   "project_type": "Software for your staff",
+   "user_roles": [
+    "Patient",
+    "Front-desk staff member",
+    "Doctor",
+    "Pharmacist",
+    "Administrator",
+    "User",
+    "Nurse",
+    "Lab technician"
+   ],
+   "features_ticked": [
+    "billing",
+    "bookings",
+    "dashboards",
+    "documents",
+    "inventory",
+    "languages",
+    "notifications",
+    "old_data",
+    "payments",
+    "staff_login"
+   ],
+   "recall": 1.0,
+   "precision": 1.0,
+   "missed": [],
+   "wrong": [],
+   "unexpected": [],
+   "scope_found": [
+    "audit_log",
+    "sms"
+   ],
+   "scope_missed": [
+    [
+     "booking_payment"
+    ]
+   ],
+   "custom_items": [
+    "Electronic medical records",
+    "Lab test orders and results",
+    "Ward and bed management"
+   ],
+   "custom_found": {
+    "Electronic medical record": true,
+    "Ward and bed management": true,
+    "Lab orders and results": true
+   },
+   "custom_duplicates": {},
+   "optional_priced": [],
+   "not_priced": [
+    "data_rules",
+    "realtime_media"
+   ],
+   "warnings": [],
+   "warnings_ok": true,
+   "keywords_added": [],
+   "uncovered": 1,
+   "p50_lakh": 40.05
+  },
+  "B": {
+   "domain": "Hospital care",
+   "domain_ok": true,
+   "project_type": "Software for your staff",
+   "user_roles": [
+    "Patient",
+    "Doctor or staff member",
+    "Pharmacist",
+    "Administrator",
+    "Hospital",
+    "User",
+    "Doctor",
+    "Nurse"
+   ],
+   "features_ticked": [
+    "billing",
+    "bookings",
+    "dashboards",
+    "documents",
+    "inventory",
+    "languages",
+    "notifications",
+    "old_data",
+    "payments",
+    "staff_login"
+   ],
+   "recall": 1.0,
+   "precision": 1.0,
+   "missed": [],
+   "wrong": [],
+   "unexpected": [],
+   "scope_found": [
+    "audit_log",
+    "sms"
+   ],
+   "scope_missed": [
+    [
+     "booking_payment"
+    ]
+   ],
+   "custom_items": [
+    "Electronic medical records",
+    "Lab test orders and results",
+    "Ward and bed management"
+   ],
+   "custom_found": {
+    "Electronic medical record": true,
+    "Ward and bed management": true,
+    "Lab orders and results": true
+   },
+   "custom_duplicates": {},
+   "optional_priced": [],
+   "not_priced": [
+    "data_rules"
+   ],
+   "warnings": [],
+   "warnings_ok": true,
+   "keywords_added": [],
+   "uncovered": 1,
+   "p50_lakh": 38.24
+  },
+  "same_features": true,
+  "same_scope": true,
+  "custom_count": [
+   3,
+   3
+  ],
+  "p50_gap_pct": 4.5
+ },
+ "logistics_fleet": {
+  "A": {
+   "domain": "Freight logistics",
+   "domain_ok": true,
+   "project_type": "Software for your staff, with a mobile app",
+   "user_roles": [
+    "Dispatcher",
+    "Customer",
+    "Driver",
+    "Fleet manager"
+   ],
+   "features_ticked": [
+    "approval_workflow",
+    "billing",
+    "connect_existing",
+    "dashboards",
+    "inventory",
+    "maps",
+    "mobile_app",
+    "notifications",
+    "offline_app",
+    "scanning"
+   ],
+   "recall": 1.0,
+   "precision": 0.9,
+   "missed": [],
+   "wrong": [],
+   "unexpected": [
+    "inventory"
+   ],
+   "scope_found": [
+    "sms"
+   ],
+   "scope_missed": [],
+   "custom_items": [
+    "Fuel and service tracking",
+    "GPS tracker integration",
+    "Proof of delivery capture",
+    "Route order suggestion",
+    "Trip planning and dispatch"
+   ],
+   "custom_found": {
+    "Trip planning and dispatch": true,
+    "Route optimisation": true,
+    "Fuel and maintenance tracking": true,
+    "Proof of delivery": true
+   },
+   "custom_duplicates": {
+    "Trip planning and dispatch": [
+     "Trip planning and dispatch",
+     "Route order suggestion"
+    ]
+   },
+   "optional_priced": [],
+   "not_priced": [],
+   "warnings": [],
+   "warnings_ok": true,
+   "keywords_added": [
+    "inventory"
+   ],
+   "uncovered": 1,
+   "p50_lakh": 61.42
+  },
+  "B": {
+   "domain": "Freight logistics",
+   "domain_ok": true,
+   "project_type": "Software for your staff, with a mobile app",
+   "user_roles": [
+    "Dispatcher",
+    "Customer",
+    "Driver",
+    "Fleet manager",
+    "Accounts user"
+   ],
+   "features_ticked": [
+    "approval_workflow",
+    "billing",
+    "connect_existing",
+    "dashboards",
+    "inventory",
+    "maps",
+    "mobile_app",
+    "notifications",
+    "offline_app",
+    "scanning"
+   ],
+   "recall": 1.0,
+   "precision": 0.9,
+   "missed": [],
+   "wrong": [],
+   "unexpected": [
+    "inventory"
+   ],
+   "scope_found": [
+    "sms"
+   ],
+   "scope_missed": [],
+   "custom_items": [
+    "Fuel, repair and service tracking",
+    "GPS tracker data feed",
+    "Route order suggestion",
+    "Trip planning and dispatch"
+   ],
+   "custom_found": {
+    "Trip planning and dispatch": true,
+    "Route optimisation": true,
+    "Fuel and maintenance tracking": true,
+    "Proof of delivery": false
+   },
+   "custom_duplicates": {
+    "Trip planning and dispatch": [
+     "Trip planning and dispatch",
+     "Route order suggestion"
+    ]
+   },
+   "optional_priced": [],
+   "not_priced": [],
+   "warnings": [],
+   "warnings_ok": true,
+   "keywords_added": [
+    "inventory"
+   ],
+   "uncovered": 1,
+   "p50_lakh": 56.23
+  },
+  "same_features": true,
+  "same_scope": true,
+  "custom_count": [
+   5,
+   4
+  ],
+  "p50_gap_pct": 8.5
+ },
+ "fintech_lending": {
+  "A": {
+   "domain": "Digital lending",
+   "domain_ok": true,
+   "project_type": "A website or portal for the public, with a mobile app",
+   "user_roles": [
+    "Applicant",
+    "Credit analyst",
+    "Credit manager",
+    "Second credit manager",
+    "Borrower",
+    "Employee",
+    "Manager",
+    "System"
+   ],
+   "features_ticked": [
+    "aadhaar_digilocker",
+    "ai_documents",
+    "approval_workflow",
+    "dashboards",
+    "documents",
+    "mobile_app",
+    "notifications",
+    "online_forms",
+    "payments",
+    "staff_login"
+   ],
+   "recall": 0.909,
+   "precision": 1.0,
+   "missed": [
+    "connect_existing"
+   ],
+   "wrong": [],
+   "unexpected": [],
+   "scope_found": [
+    "audit_log",
+    "documents_esign",
+    "otp_codes",
+    "sms"
+   ],
+   "scope_missed": [
+    [
+     "forms_ekyc"
+    ],
+    [
+     "forms_digilocker"
+    ],
+    [
+     "security_scans",
+     "compliance"
+    ]
+   ],
+   "custom_items": [
+    "Credit bureau score fetch",
+    "Rules-based application scoring",
+    "e-NACH EMI mandate"
+   ],
+   "custom_found": {
+    "Credit rules engine / scoring": true,
+    "e-NACH mandate for EMIs": true
+   },
+   "custom_duplicates": {
+    "Credit rules engine / scoring": [
+     "Credit bureau score fetch",
+     "Rules-based application scoring"
+    ]
+   },
+   "optional_priced": [],
+   "not_priced": [
+    "data_rules"
+   ],
+   "warnings": [],
+   "warnings_ok": true,
+   "keywords_added": [],
+   "uncovered": 0,
+   "p50_lakh": 55.17
+  },
+  "B": {
+   "domain": "Digital lending",
+   "domain_ok": true,
+   "project_type": "A website or portal for the public, with a mobile app",
+   "user_roles": [
+    "Applicant",
+    "Credit analyst",
+    "Credit manager",
+    "Second manager",
+    "Borrower",
+    "Employee",
+    "Manager"
+   ],
+   "features_ticked": [
+    "aadhaar_digilocker",
+    "ai_documents",
+    "approval_workflow",
+    "dashboards",
+    "documents",
+    "mobile_app",
+    "notifications",
+    "online_forms",
+    "payments",
+    "staff_login"
+   ],
+   "recall": 0.909,
+   "precision": 1.0,
+   "missed": [
+    "connect_existing"
+   ],
+   "wrong": [],
+   "unexpected": [],
+   "scope_found": [
+    "audit_log",
+    "documents_esign",
+    "otp_codes",
+    "sms",
+    "workflow_audit"
+   ],
+   "scope_missed": [
+    [
+     "forms_ekyc"
+    ],
+    [
+     "forms_digilocker"
+    ],
+    [
+     "security_scans",
+     "compliance"
+    ]
+   ],
+   "custom_items": [
+    "Credit bureau score fetch",
+    "Credit scoring rules engine",
+    "e-NACH EMI mandate"
+   ],
+   "custom_found": {
+    "Credit rules engine / scoring": true,
+    "e-NACH mandate for EMIs": true
+   },
+   "custom_duplicates": {
+    "Credit rules engine / scoring": [
+     "Credit bureau score fetch",
+     "Credit scoring rules engine"
+    ]
+   },
+   "optional_priced": [],
+   "not_priced": [
+    "data_rules"
+   ],
+   "warnings": [],
+   "warnings_ok": true,
+   "keywords_added": [],
+   "uncovered": 0,
+   "p50_lakh": 55.17
+  },
+  "same_features": true,
+  "same_scope": false,
+  "custom_count": [
+   3,
+   3
+  ],
+  "p50_gap_pct": 0.0
+ },
+ "video_meet": {
+  "A": {
+   "domain": "Video meetings",
+   "domain_ok": true,
+   "project_type": "A website or portal for the public, with a mobile app",
+   "user_roles": [
+    "Participant",
+    "Company administrator",
+    "Employee of a business-plan company",
+    "Invitee",
+    "Host"
+   ],
+   "features_ticked": [
+    "ai_voice",
+    "chat",
+    "dashboards",
+    "mobile_app",
+    "notifications",
+    "payments",
+    "staff_login"
+   ],
+   "recall": 1.0,
+   "precision": 1.0,
+   "missed": [],
+   "wrong": [],
+   "unexpected": [],
+   "scope_found": [
+    "subscriptions"
+   ],
+   "scope_missed": [],
+   "custom_items": [
+    "Host meeting controls",
+    "Live video and audio meetings",
+    "Meeting recording and sharing",
+    "Meeting scheduling and invitations",
+    "Screen sharing"
+   ],
+   "custom_found": {
+    "Live video and audio meetings": true,
+    "Meeting recording": true,
+    "Screen sharing": true,
+    "Host controls / waiting room": true
+   },
+   "custom_duplicates": {
+    "Live video and audio meetings": [
+     "Meeting scheduling and invitations",
+     "Live video and audio meetings",
+     "Screen sharing",
+     "Host meeting controls",
+     "Meeting recording and sharing"
+    ]
+   },
+   "optional_priced": [],
+   "not_priced": [
+    "multi_tenancy",
+    "realtime_media"
+   ],
+   "warnings": [],
+   "warnings_ok": true,
+   "keywords_added": [],
+   "uncovered": 4,
+   "p50_lakh": 36.28
+  },
+  "B": {
+   "domain": "Video meetings",
+   "domain_ok": true,
+   "project_type": "A website or portal for the public, with a mobile app",
+   "user_roles": [
+    "Invitee",
+    "Participant",
+    "Company administrator",
+    "Employee on the business plan",
+    "Host"
+   ],
+   "features_ticked": [
+    "ai_voice",
+    "chat",
+    "dashboards",
+    "mobile_app",
+    "notifications",
+    "payments",
+    "staff_login"
+   ],
+   "recall": 1.0,
+   "precision": 1.0,
+   "missed": [],
+   "wrong": [],
+   "unexpected": [],
+   "scope_found": [
+    "subscriptions"
+   ],
+   "scope_missed": [],
+   "custom_items": [
+    "Host meeting controls",
+    "Live video and audio meetings",
+    "Meeting recording and cloud storage"
+   ],
+   "custom_found": {
+    "Live video and audio meetings": true,
+    "Meeting recording": true,
+    "Screen sharing": true,
+    "Host controls / waiting room": true
+   },
+   "custom_duplicates": {
+    "Live video and audio meetings": [
+     "Live video and audio meetings",
+     "Host meeting controls",
+     "Meeting recording and cloud storage"
+    ]
+   },
+   "optional_priced": [],
+   "not_priced": [
+    "realtime_media"
+   ],
+   "warnings": [],
+   "warnings_ok": true,
+   "keywords_added": [],
+   "uncovered": 5,
+   "p50_lakh": 24.96
+  },
+  "same_features": true,
+  "same_scope": true,
+  "custom_count": [
+   5,
+   3
+  ],
+  "p50_gap_pct": 31.2
+ },
+ "beekeeping_coop": {
+  "A": {
+   "domain": "Beekeeping co-operative",
+   "domain_ok": true,
+   "project_type": "A booking or service app",
+   "user_roles": [
+    "Beekeeper",
+    "Head office manager",
+    "Member",
+    "User",
+    "Customer",
+    "Manager",
+    "Quality tester",
+    "Accounts team"
+   ],
+   "features_ticked": [
+    "dashboards",
+    "languages",
+    "maps",
+    "notifications",
+    "offline_app",
+    "online_forms",
+    "online_store",
+    "payments",
+    "scanning"
+   ],
+   "recall": 1.0,
+   "precision": 1.0,
+   "missed": [],
+   "wrong": [],
+   "unexpected": [],
+   "scope_found": [
+    "sms"
+   ],
+   "scope_missed": [],
+   "custom_items": [
+    "Apiary and hive records",
+    "Batch quality testing and traceability",
+    "Honey intake, grading and labels",
+    "Member payment calculation and bulk payout"
+   ],
+   "custom_found": {
+    "Apiary and hive records": true,
+    "Honey collection": true,
+    "Batch traceability": true,
+    "Member payments in bulk": true
+   },
+   "custom_duplicates": {
+    "Honey collection": [
+     "Honey intake, grading and labels",
+     "Member payment calculation and bulk payout"
+    ]
+   },
+   "optional_priced": [],
+   "not_priced": [],
+   "warnings": [
+    "offline_app",
+    "scanning"
+   ],
+   "warnings_ok": true,
+   "keywords_added": [],
+   "uncovered": 0,
+   "p50_lakh": 36.33
+  },
+  "B": {
+   "domain": "Beekeeping co-operative",
+   "domain_ok": true,
+   "project_type": "A booking or service app",
+   "user_roles": [
+    "Beekeeper",
+    "Head office manager",
+    "Member",
+    "User",
+    "Member of the public",
+    "Shopper",
+    "Manager",
+    "Quality tester"
+   ],
+   "features_ticked": [
+    "dashboards",
+    "languages",
+    "maps",
+    "notifications",
+    "offline_app",
+    "online_forms",
+    "online_store",
+    "payments",
+    "scanning"
+   ],
+   "recall": 1.0,
+   "precision": 1.0,
+   "missed": [],
+   "wrong": [],
+   "unexpected": [],
+   "scope_found": [
+    "sms"
+   ],
+   "scope_missed": [],
+   "custom_items": [
+    "Apiary and hive records",
+    "Honey weighing, grading and drum labels",
+    "Lab results and batch traceability",
+    "Member payment calculation and bulk payout"
+   ],
+   "custom_found": {
+    "Apiary and hive records": true,
+    "Honey collection": true,
+    "Batch traceability": true,
+    "Member payments in bulk": true
+   },
+   "custom_duplicates": {
+    "Honey collection": [
+     "Honey weighing, grading and drum labels",
+     "Member payment calculation and bulk payout"
+    ]
+   },
+   "optional_priced": [],
+   "not_priced": [],
+   "warnings": [
+    "offline_app",
+    "scanning"
+   ],
+   "warnings_ok": true,
+   "keywords_added": [],
+   "uncovered": 0,
+   "p50_lakh": 36.33
+  },
+  "same_features": true,
+  "same_scope": true,
+  "custom_count": [
+   4,
+   4
+  ],
+  "p50_gap_pct": 0.0
+ }
+}

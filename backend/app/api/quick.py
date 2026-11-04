@@ -10,8 +10,9 @@ from app.llm.client import LLMNotConfiguredError, LLMRefusedError
 from app.models import Estimate, Project, ResearchedComponent
 from app.services import limits
 from app.services.extraction.describe import Suggestion, suggest_features
+from app.services.extraction.tender import IndustrySuggestion
 from app.services.quick import second_opinion
-from app.services.quick.config import quick_config
+from app.services.quick.config import PrerequisiteRule, QuickConfig, quick_config
 from app.services.quick.prefill import form_country, form_questions
 from app.services.quick.second_opinion import SecondOpinionOut
 from app.services.quick.service import (
@@ -22,6 +23,7 @@ from app.services.quick.service import (
     QuickSchedule,
     QuickSummary,
     StoriesOut,
+    SuggestionPrice,
     confirm_check,
     create_quick_estimate,
     estimate_stories,
@@ -31,6 +33,7 @@ from app.services.quick.service import (
     quick_schedule,
     save_stories,
     standard_blocks,
+    suggestion_prices,
     summarise,
     summary_for,
 )
@@ -109,6 +112,26 @@ class ProjectTypeOut(BaseModel):
     suggested: list[str]  # ticked to start with
 
 
+class IndustryOut(BaseModel):
+    """The manual form's "What is it for?" (OPEN_QUESTIONS 212): its usual features, offered
+    unticked and priced like the AI's suggestions."""
+
+    key: str
+    label: str
+    tag: str
+    hint: str
+    project_type: str
+    suggestions: list[IndustrySuggestion]
+    # the labels of the suggestions ticked when the industry is picked (its main features)
+    ticked: list[str]
+
+
+class FeatureGroupOut(BaseModel):
+    key: str
+    label: str
+    features: list[str]
+
+
 class CustomTypeOut(BaseModel):
     key: str
     label: str
@@ -153,6 +176,8 @@ class QuickOptions(BaseModel):
     country: str
     countries: list[CountryOut]
     project_types: list[ProjectTypeOut]
+    industries: list[IndustryOut] = []  # the manual form's first screen (212)
+    feature_groups: list[FeatureGroupOut] = []  # browse all, by purpose (212)
     features: list[FeatureOut]
     default_level: str
     topics: list[TopicOut]  # the form's parts, in the order asked
@@ -162,6 +187,42 @@ class QuickOptions(BaseModel):
     researched: list[ResearchedOut] = []  # the company's researched features, by section
     # "Not mentioned: do you need these?": features often needed (at most 8), in order
     commonly_needed: list[str] = []
+    # a feature that usually needs another one: a warning on the form, never priced
+    # (OPEN_QUESTIONS 205); add-ons warn through their group's `feature`
+    prerequisites: list[PrerequisiteRule] = []
+
+
+def industry_options(cfg: QuickConfig) -> list[IndustryOut]:
+    """Each industry's features as suggestions: a listed feature with its own label, a module
+    the list lacks with its name, type and size (priced as the user's own feature)."""
+    if cfg.industries is None:
+        return []
+    return [
+        IndustryOut(
+            key=ind.key,
+            label=ind.label,
+            tag=ind.tag,
+            hint=ind.hint,
+            project_type=ind.project_type,
+            ticked=[
+                cfg.feature(i.feature).label if i.feature else i.name
+                for i in ind.features
+                if i.ticked
+            ],
+            suggestions=[
+                IndustrySuggestion(
+                    feature=i.feature,
+                    label=cfg.feature(i.feature).label if i.feature else i.name,
+                    why=i.why,
+                    category="" if i.feature else i.category,
+                    size="" if i.feature else i.size,
+                    catalog_key="" if i.feature else i.block,
+                )
+                for i in ind.features
+            ],
+        )
+        for ind in cfg.industries.items
+    ]
 
 
 def researched_options(db: DbSession, org_id: str, types: set[str]) -> list[ResearchedOut]:
@@ -241,6 +302,8 @@ def options(db: DbSession, user: CurrentUser, country: str = "india") -> QuickOp
             for g in cfg.scope
         ],
         project_types=[ProjectTypeOut(**t.model_dump()) for t in cfg.project_types],
+        industries=industry_options(cfg),
+        feature_groups=[FeatureGroupOut(**g.model_dump()) for g in cfg.feature_groups],
         topics=[TopicOut(**t.model_dump()) for t in cfg.topics],
         questions=[
             QuestionOut(
@@ -281,6 +344,7 @@ def options(db: DbSession, user: CurrentUser, country: str = "india") -> QuickOp
         ],
         researched=researched_options(db, user.org_id, set(cfg.custom_feature_types)),
         commonly_needed=cfg.commonly_needed,
+        prerequisites=cfg.project_context.prerequisites if cfg.project_context else [],
     )
 
 
@@ -404,6 +468,21 @@ def impact(body: QuickRequest, db: DbSession, user: CurrentUser) -> list[Questio
     return question_impact(db, user, quick_config(), body)
 
 
+class SuggestionPricesIn(BaseModel):
+    request: QuickRequest
+    # an industry's list (up to 12) and the AI's additions (up to 10, OPEN_QUESTIONS 212)
+    suggestions: list[IndustrySuggestion] = Field(max_length=22)
+
+
+@router.post("/quick-estimate/suggestion-prices", response_model=list[SuggestionPrice])
+def suggestion_price_list(
+    body: SuggestionPricesIn, db: DbSession, user: CurrentUser
+) -> list[SuggestionPrice]:
+    """What each "usually needed" suggestion adds to the most likely total if added alone
+    (OPEN_QUESTIONS 207); priced by the engine, nothing is saved."""
+    return suggestion_prices(db, user, quick_config(), body.request, body.suggestions)
+
+
 @router.post("/quick-estimate/schedule", response_model=QuickSchedule)
 def build_time(body: QuickRequest, db: DbSession, user: CurrentUser) -> QuickSchedule:
     """The usual and the fastest time to build this form's project, for the deadline question
@@ -415,6 +494,7 @@ class StandardBlockOut(BaseModel):
     key: str  # catalog block key (QuickRequest.not_included kind "standard")
     label: str
     hint: str
+    fixed: bool = False  # always part of the build: shown, cannot be unticked (211)
 
 
 @router.post("/quick-estimate/standard-blocks", response_model=list[StandardBlockOut])
@@ -427,7 +507,10 @@ def standard(body: QuickRequest, _user: CurrentUser) -> list[StandardBlockOut]:
         block = cfg.standard_blocks.get(key)
         out.append(
             StandardBlockOut(
-                key=key, label=block.label if block else key, hint=block.hint if block else ""
+                key=key,
+                label=block.label if block else key,
+                hint=block.hint if block else "",
+                fixed=block.fixed if block else False,
             )
         )
     return out

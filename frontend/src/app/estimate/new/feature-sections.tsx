@@ -3,7 +3,12 @@
 import * as React from "react";
 import { CaretRightIcon } from "@phosphor-icons/react/dist/ssr";
 
-import type { NotIncluded, QuickOptions, QuickRequest } from "@/lib/api/client";
+import type {
+  IndustrySuggestion,
+  NotIncluded,
+  QuickOptions,
+  QuickRequest,
+} from "@/lib/api/client";
 import { cn } from "@/lib/utils";
 
 import {
@@ -11,12 +16,14 @@ import {
   type CustomItem,
   ResearchedFeatures,
 } from "./custom-features";
+import { IndustrySuggestions } from "./industry-suggestions";
 import {
   type Choice,
   FeatureCard,
   SectionHeading,
   StandardBlocks,
 } from "./parts";
+import type { Level } from "./steps";
 
 /**
  * Ticking, unticking and "Not included" for features, the same on the manual form and the
@@ -154,9 +161,34 @@ export function FeatureChoice({
   );
 }
 
+/** Browse all, in groups by what the features are for (OPEN_QUESTIONS 212); the rest under
+ * "More". Without groups: one list with no heading. */
+function byPurpose(
+  options: QuickOptions,
+  keys: string[],
+): { key: string; label: string; features: string[] }[] {
+  const groups = options.feature_groups ?? [];
+  if (groups.length === 0) return [{ key: "all", label: "", features: keys }];
+  const grouped = new Set(groups.flatMap((g) => g.features));
+  return [
+    ...groups.map((g) => ({
+      key: g.key,
+      label: g.label,
+      features: g.features.filter((k) => keys.includes(k)),
+    })),
+    {
+      key: "more",
+      label: "More",
+      features: keys.filter((k) => !grouped.has(k)),
+    },
+  ].filter((g) => g.features.length > 0);
+}
+
 /** Not found by us and not added by the user: from neither the description nor the document. */
 const isOwn = (i: CustomItem) =>
-  i.fromDescription === undefined && i.foundIndex === null;
+  i.fromDescription === undefined &&
+  i.foundIndex === null &&
+  i.suggested === undefined;
 
 /**
  * The features screen, the same for a description and a document: found (with where each came
@@ -179,6 +211,14 @@ export function FeatureSections({
   customItems,
   onCustomItems,
   approximatePages = false,
+  suggestions = [],
+  domain = "",
+  forDocument = false,
+  suggestionsAsked = false,
+  onTick,
+  fromIndustry = false,
+  levels,
+  onLevel,
 }: {
   options: QuickOptions;
   foundTitle: string;
@@ -201,6 +241,19 @@ export function FeatureSections({
   customItems: CustomItem[];
   onCustomItems: React.Dispatch<React.SetStateAction<CustomItem[]>>;
   approximatePages?: boolean;
+  /** "Usually needed for this kind of software" (OPEN_QUESTIONS 207); replaces the fixed short
+   * list when there are any. */
+  suggestions?: IndustrySuggestion[];
+  domain?: string;
+  forDocument?: boolean;
+  /** The AI was asked for suggestions: none means none (the fixed list is not shown). */
+  suggestionsAsked?: boolean;
+  onTick?: (key: string) => void;
+  /** The suggestions are the picked industry's list, not the AI's (OPEN_QUESTIONS 212). */
+  fromIndustry?: boolean;
+  /** Levels of the features, and a change of one, for a level on each ticked suggestion. */
+  levels?: Record<string, Level>;
+  onLevel?: (key: string, level: Level) => void;
 }) {
   // "Browse all features" starts closed
   const [showAll, setShowAll] = React.useState(false);
@@ -208,12 +261,18 @@ export function FeatureSections({
     const i = kindFeatures.indexOf(key);
     return i < 0 ? Number.MAX_SAFE_INTEGER : i;
   };
-  const shortlist = (options.commonly_needed ?? [])
+  const suggested = onTick ? suggestions : [];
+  const suggestedKeys = suggested.map((s) => s.feature).filter(Boolean);
+  const fixedList = suggested.length === 0 && !(onTick && suggestionsAsked);
+  const shortlist = (fixedList ? (options.commonly_needed ?? []) : [])
     .filter((k) => !foundKeys.includes(k))
     .sort((a, b) => rank(a) - rank(b));
   const browse = options.features.filter(
     (f) =>
-      !f.hidden && !foundKeys.includes(f.key) && !shortlist.includes(f.key),
+      !f.hidden &&
+      !foundKeys.includes(f.key) &&
+      !shortlist.includes(f.key) &&
+      !suggestedKeys.includes(f.key),
   );
   const browseTicked = browse.filter((f) => isTicked(f.key)).length;
 
@@ -236,6 +295,24 @@ export function FeatureSections({
         removed={removedBlocks}
         onToggle={onToggleBlock}
       />
+
+      {onTick && suggested.length > 0 ? (
+        <IndustrySuggestions
+          options={options}
+          suggestions={suggested}
+          domain={domain}
+          forDocument={forDocument}
+          body={blocksBody}
+          hiddenKeys={foundKeys}
+          isTicked={isTicked}
+          onTick={onTick}
+          customItems={customItems}
+          onCustomItems={onCustomItems}
+          fromIndustry={fromIndustry}
+          levels={levels}
+          onLevel={onLevel}
+        />
+      ) : null}
 
       {shortlist.length > 0 ? (
         <section className="flex flex-col gap-3">
@@ -281,11 +358,19 @@ export function FeatureSections({
         </button>
         {showAll ? (
           <>
-            <div className="grid gap-3 sm:grid-cols-2">
-              {browse.map((f) => (
-                <React.Fragment key={f.key}>{card(f.key)}</React.Fragment>
-              ))}
-            </div>
+            {byPurpose(
+              options,
+              browse.map((f) => f.key),
+            ).map((g) => (
+              <div key={g.key} className="flex flex-col gap-2">
+                {g.label ? <h3 className="eyebrow pt-2">{g.label}</h3> : null}
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {g.features.map((key) => (
+                    <React.Fragment key={key}>{card(key)}</React.Fragment>
+                  ))}
+                </div>
+              </div>
+            ))}
             <ResearchedFeatures
               researched={options.researched ?? []}
               items={customItems}

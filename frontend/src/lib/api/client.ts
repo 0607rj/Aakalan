@@ -45,9 +45,13 @@ export type ScenarioResult = Schemas["ScenarioResult"];
 export type ScenariosOut = Schemas["ScenariosOut"];
 export type GroupTotal = Schemas["GroupTotal"];
 export type QuickOptions = Schemas["QuickOptions"];
+export type Prerequisite = Schemas["Prerequisite"];
 export type QuickQuestion = Schemas["QuestionOut"];
 export type QuickRequest = Schemas["QuickRequest-Input"];
 export type Suggestion = Schemas["Suggestion"];
+export type IndustrySuggestion = Schemas["IndustrySuggestion"];
+export type Industry = Schemas["IndustryOut"];
+export type SuggestionPrice = Schemas["SuggestionPrice"];
 export type DraftIn = Schemas["DraftIn"];
 export type DraftOut = Schemas["DraftOut"];
 export type ContactIn = Schemas["ContactIn"];
@@ -319,6 +323,16 @@ export const api = {
   saveStories: (estimateId: string, stories: Record<string, string[]>) =>
     send<EstimateStories>("PUT", `/estimates/${estimateId}/stories`, {
       stories,
+    }),
+  suggestionPrices: (
+    body: QuickRequest,
+    suggestions: IndustrySuggestion[],
+    signal?: AbortSignal,
+  ) =>
+    request<SuggestionPrice[]>("/quick-estimate/suggestion-prices", {
+      method: "POST",
+      body: JSON.stringify({ request: body, suggestions }),
+      signal,
     }),
   standardBlocks: (body: QuickRequest, signal?: AbortSignal) =>
     request<StandardBlock[]>("/quick-estimate/standard-blocks", {

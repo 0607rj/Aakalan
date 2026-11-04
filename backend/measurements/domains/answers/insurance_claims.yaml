@@ -1,0 +1,28 @@
+# Answer file: hidden from the readers. Keys are the catalog's (seeds/quick_estimate.yaml).
+domain_words: [insurance, claim]
+features:
+  - online_forms       # 3.1 claim reporting form
+  - documents          # 3.1 uploads
+  - ai_documents       # 3.3 licence and estimate read automatically
+  - ai_images          # 3.4 damage photos
+  - connect_existing   # 3.2 policy administration system, 3.9 bank file system
+  - approval_workflow  # 3.7
+  - notifications      # 3.10 SMS and email
+  - grievances         # 3.11 complaints
+  - staff_login        # 2.2 Azure AD
+  - dashboards         # 3.13
+  - maps               # 3.5 surveyors' claims on a map
+tolerated: [search, ai_text_sorting, ai_forecast]
+not_features:
+  - payments           # 3.9 no payment gateway
+  - ai_chatbot         # 4.1 later phase
+scope:
+  - [audit_log, workflow_audit, documents_audit]   # 3.12
+  - [sms]
+custom:
+  - {what: Surveyor assignment and survey reports, match_any: [survey]}
+  - {what: Fraud rules, match_any: [fraud]}
+optional:
+  - {what: Policyholder chatbot, match_any: [chatbot]}
+prerequisites: []
+choices: {platforms: web, security_audit: "yes"}   # 4.2 VAPT by a CERT-In auditor

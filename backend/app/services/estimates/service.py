@@ -2,6 +2,7 @@
 persist the immutable result, re-price at current rates and run scenarios."""
 
 import secrets
+from collections.abc import Sequence
 from datetime import date
 from typing import Any
 
@@ -9,7 +10,7 @@ from fastapi import HTTPException, status
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from app.models import Assumption, CostLine, Estimate, Project, User
+from app.models import Assumption, ComponentInstance, CostLine, Estimate, Project, User
 from app.services.engine.core import calculate
 from app.services.engine.inputs import (
     AnswerIn,
@@ -72,6 +73,7 @@ def build_input(
     reqs = [r for r in project.requirements if r.status in PRICED_STATUSES]
     priced_ids = {r.id for r in reqs}
     catalog = catalog_for(db, project.org_id, catalog_version)
+    streams = random_streams(project.components)
     return EstimateInput(
         project=ProjectInfo(
             name=project.name, buyer_type=project.buyer_type, domain=project.domain
@@ -100,6 +102,7 @@ def build_input(
                 requirement_ids=[x for x in c.requirement_ids if x in priced_ids],
                 hard_problem=bool(c.driver_values.get("hard_problem", False)),
                 size_mix=c.driver_values.get("size_mix"),  # OPEN_QUESTIONS 183
+                random_stream=streams[c.id],
             )
             for c in project.components
         ],
@@ -123,6 +126,20 @@ def build_input(
         ),
         monte_carlo_runs=monte_carlo_runs,
     )
+
+
+def random_streams(components: Sequence[ComponentInstance]) -> dict[str, str]:
+    """Each component's Monte Carlo stream name from what it is, not its random database id
+    (OPEN_QUESTIONS 206): catalog key, label, size and complexity, numbered when several alike,
+    in the project's order. The same request in another project gets the same names, so the
+    same seed gives the same range."""
+    seen: dict[str, int] = {}
+    out: dict[str, str] = {}
+    for c in components:
+        what = f"{c.catalog_key}|{c.label or ''}|{c.size}|{c.complexity}|{c.quantity}"
+        seen[what] = seen.get(what, 0) + 1
+        out[c.id] = f"{what}#{seen[what]}"
+    return out
 
 
 def _settings_for(db: Session, project: Project) -> CompanySettings:

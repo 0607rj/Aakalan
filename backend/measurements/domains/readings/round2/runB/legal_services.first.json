@@ -1,0 +1,206 @@
+{
+  "project_name": "Legal Services Platform (NyayMitra)",
+  "summary": "The requirement document describes a web platform where people and small businesses find and book verified lawyers, and where lawyers manage their cases, hearing dates, time and invoices. The operations team verifies lawyers and sees reports. The platform must work in English, Hindi and Tamil and be supported for one year after launch.",
+  "project_domain": "Legal services",
+  "features": [
+    {
+      "key": "marketplace",
+      "evidence": [
+        {"page": 1, "clause_ref": "1.2", "quote": "The first release covers the marketplace and the lawyers' practice tools on the web."},
+        {"page": 2, "clause_ref": "3.1", "quote": "Lawyers shall join the platform, list their practice areas, courts, languages and fees, and upload their Bar Council certificate."},
+        {"page": 2, "clause_ref": "3.2", "quote": "The operations team shall verify each lawyer's certificate before the profile goes live."}
+      ],
+      "stories": [
+        "As a lawyer, I can join the platform and list my practice areas, courts, languages and fees",
+        "As a lawyer, I can upload my Bar Council certificate",
+        "As an operations team member, I can verify a lawyer's certificate before the profile goes live"
+      ],
+      "covers": [],
+      "mentions": 3,
+      "suggested": true
+    },
+    {
+      "key": "search",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.3", "quote": "Clients shall search lawyers by city, practice area, court and language, and read ratings and reviews."}
+      ],
+      "stories": [
+        "As a client, I can search lawyers by city, practice area, court and language"
+      ],
+      "covers": [],
+      "mentions": 1,
+      "suggested": true
+    },
+    {
+      "key": "bookings",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.4", "quote": "Clients shall book a consultation slot with a lawyer."}
+      ],
+      "stories": [
+        "As a client, I can book a consultation slot with a lawyer"
+      ],
+      "covers": [],
+      "mentions": 1,
+      "suggested": true
+    },
+    {
+      "key": "chat",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.5", "quote": "Clients and lawyers shall message each other on the platform and share documents."}
+      ],
+      "stories": [
+        "As a client or lawyer, I can message the other party on the platform",
+        "As a client or lawyer, I can share documents with the other party"
+      ],
+      "covers": [],
+      "mentions": 1,
+      "suggested": true
+    },
+    {
+      "key": "notifications",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.7", "quote": "lawyers and clients shall get an SMS a day before each hearing."}
+      ],
+      "stories": [
+        "As a lawyer or client, I get an SMS a day before each hearing"
+      ],
+      "covers": [],
+      "mentions": 1,
+      "suggested": true
+    },
+    {
+      "key": "billing",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.8", "quote": "Lawyers shall record time spent on each case and raise invoices with GST to their clients."},
+        {"page": 2, "clause_ref": "3.9", "quote": "charges lawyers a monthly listing fee by invoice."}
+      ],
+      "stories": [
+        "As a lawyer, I can raise invoices with GST to my clients",
+        "As an operations team member, I can invoice lawyers a monthly listing fee"
+      ],
+      "covers": [],
+      "mentions": 2,
+      "suggested": true
+    },
+    {
+      "key": "languages",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.10", "quote": "The platform shall be available in English, Hindi and Tamil."}
+      ],
+      "stories": [
+        "As a user, I can use the platform in English, Hindi or Tamil"
+      ],
+      "covers": [],
+      "mentions": 1,
+      "suggested": true
+    },
+    {
+      "key": "dashboards",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.11", "quote": "The operations team shall see reports of lawyers joined, consultations booked and reviews."}
+      ],
+      "stories": [
+        "As an operations team member, I can see a report of lawyers joined",
+        "As an operations team member, I can see a report of consultations booked",
+        "As an operations team member, I can see a report of reviews"
+      ],
+      "covers": [],
+      "mentions": 1,
+      "suggested": true
+    }
+  ],
+  "other_features": [
+    {
+      "name": "Lawyer case files",
+      "description": "Lawyers keep case files with the parties, court, case number, documents and notes.",
+      "category": "module",
+      "size": "M",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.6", "quote": "Lawyers shall keep case files with parties, court, case number, documents and notes."}
+      ],
+      "part_of": "",
+      "stories": [
+        "As a lawyer, I can keep a case file with parties, court, case number, documents and notes"
+      ]
+    },
+    {
+      "name": "Hearing date diary",
+      "description": "Lawyers keep a diary of the hearing dates of their cases.",
+      "category": "module",
+      "size": "S",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.7", "quote": "Lawyers shall keep a diary of hearing dates;"}
+      ],
+      "part_of": "",
+      "stories": [
+        "As a lawyer, I can keep a diary of hearing dates"
+      ]
+    },
+    {
+      "name": "Case time tracking",
+      "description": "Lawyers record the time they spend on each case.",
+      "category": "module",
+      "size": "S",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.8", "quote": "Lawyers shall record time spent on each case"}
+      ],
+      "part_of": "",
+      "stories": [
+        "As a lawyer, I can record time spent on each case"
+      ]
+    },
+    {
+      "name": "Lawyer ratings and reviews",
+      "description": "Clients can read ratings and reviews of lawyers.",
+      "category": "module",
+      "size": "S",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.3", "quote": "and read ratings and reviews."}
+      ],
+      "part_of": "",
+      "stories": [
+        "As a client, I can read ratings and reviews of a lawyer"
+      ]
+    }
+  ],
+  "choices": [
+    {
+      "question": "platforms",
+      "value": "web",
+      "evidence": [
+        {"page": 1, "clause_ref": "1.2", "quote": "The first release covers the marketplace and the lawyers' practice tools on the web."}
+      ]
+    }
+  ],
+  "numbers": [
+    {
+      "field": "languages",
+      "value": 3,
+      "evidence": [
+        {"page": 2, "clause_ref": "3.10", "quote": "The platform shall be available in English, Hindi and Tamil."}
+      ]
+    },
+    {
+      "field": "om_years",
+      "value": 1,
+      "evidence": [
+        {"page": 3, "clause_ref": "5.1", "quote": "The vendor shall support the platform for one year after launch."}
+      ]
+    }
+  ],
+  "unclear_points": [],
+  "not_priced": [],
+  "payment_terms": null,
+  "scope": [
+    {
+      "key": "sms",
+      "status": "explicit",
+      "note": "",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.7", "quote": "lawyers and clients shall get an SMS a day before each hearing."}
+      ]
+    }
+  ],
+  "staff_lines": [],
+  "chatbot_buyer_systems": null
+}

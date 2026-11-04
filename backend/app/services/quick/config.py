@@ -512,6 +512,45 @@ class PaymentPoints(Frozen):
     after_go_live: PaymentPoint
 
 
+class IndustryItem(Frozen):
+    """A feature software for an industry usually has: a listed one (`feature`) or a module the
+    list lacks (`name`, priced as the user's own feature of `category` and `size`)."""
+
+    feature: str = ""
+    name: str = ""
+    category: str = ""
+    size: Literal["S", "M", "L"] = "M"
+    why: str
+    # a module's own catalog block (catalog v8+, OPEN_QUESTIONS 213): priced from its
+    # published hours instead of the generic block of its type
+    block: str = ""
+    ticked: bool = False  # ticked when the industry is picked (its main features)
+
+
+class Industry(Frozen):
+    """The manual form's "What is it for?" (OPEN_QUESTIONS 212): its usual features."""
+
+    key: str
+    label: str
+    tag: str = ""  # the sector's short name (EdTech), shown on the tile
+    hint: str = ""
+    project_type: str
+    features: list[IndustryItem] = Field(max_length=12)
+
+
+class Industries(Frozen):
+    source: str
+    items: list[Industry]
+
+
+class FeatureGroup(Frozen):
+    """Browse all features, grouped by what they are for (words only, OPEN_QUESTIONS 212)."""
+
+    key: str
+    label: str
+    features: list[str]
+
+
 class ProjectType(Frozen):
     """A kind of software: which features to show first and to tick to start with."""
 
@@ -617,6 +656,9 @@ class StandardBlock(Frozen):
 
     label: str
     hint: str = ""
+    # every working software has it (screens, sign-in, testing ...): shown as always part of
+    # the build and cannot be unticked (OPEN_QUESTIONS 211)
+    fixed: bool = False
 
 
 class AlwaysIncluded(Frozen):
@@ -661,6 +703,36 @@ class Coverage(Frozen):
     # a quote covers a sentence when they share this many words in a row (or all of a shorter one)
     shared_words: int = Field(ge=1)
     max_listed: int = Field(ge=1)
+    # a short description has no modal words: every part of it asks for something; the parts
+    # are split at punctuation and these words, and listed when this long and unquoted (210)
+    description_split_words: list[str] = []
+    description_min_words: int = Field(default=1, ge=1)
+    # with the industry's words: a part made only of these names the software, asks nothing
+    description_generic_words: list[str] = []
+
+
+class PrerequisiteRule(Frozen):
+    """A feature that usually needs another one whose building blocks it does not bring
+    (OPEN_QUESTIONS 205): a warning only, never added to the price."""
+
+    feature: str
+    needs_any: list[str] = Field(min_length=1)
+    why: str
+    # no warning when one of these questions was answered (by the document or the user, not
+    # left at its default) with one of these values, e.g. a browser-only build (206)
+    not_when_answered: dict[str, list[str]] = {}
+
+
+class ProjectContextRules(Frozen):
+    """What the review and results pages say about the project (OPEN_QUESTIONS 205): shown
+    only, never priced. The type is the project type whose feature list shares most with the
+    ticked features; the roles are read from the user stories ("As a <role>, I can ...")."""
+
+    source: str
+    max_roles: int = Field(ge=1)
+    other_type: str  # no project type shares a feature
+    mobile_app_note: str  # added to the type when the mobile app is ticked
+    prerequisites: list[PrerequisiteRule] = []
 
 
 class ClientProvidedItem(Frozen):
@@ -772,6 +844,18 @@ class BacktestNote(Frozen):
     text: str
 
 
+class IndustrySuggestionRules(Frozen):
+    """What the AI may suggest as "usually needed" for the industry (OPEN_QUESTIONS 207): the
+    suggestions are only offered, never ticked, and priced by the engine like any feature."""
+
+    max_items: int = Field(ge=0, le=15)
+    # listed features every project already has or that are too basic to suggest
+    never: list[str] = []
+    # words in a suggested module's name that mark it as basic (a login, a profile page)
+    never_words: list[str] = []
+    source: str = ""
+
+
 class QuickConfig(Frozen):
     version: str
     source: str
@@ -821,10 +905,16 @@ class QuickConfig(Frozen):
     client_provided: ClientProvided | None = None
     stated_counts: StatedCounts | None = None  # OPEN_QUESTIONS 194
     coverage: Coverage | None = None  # OPEN_QUESTIONS 204
+    project_context: ProjectContextRules | None = None  # OPEN_QUESTIONS 205
     # catalog key -> plain words, for the standard blocks the form lets the user untick
     standard_blocks: dict[str, StandardBlock] = {}
+    # modules software of this kind usually has that the words never mention (OPEN_QUESTIONS
+    # 207): named by the AI reader, checked in code, offered unticked
+    industry_suggestions: IndustrySuggestionRules | None = None
     # the form's "Not mentioned: do you need these?" shortlist (feature keys, at most 8)
     commonly_needed: list[str] = Field(default=[], max_length=8)
+    industries: Industries | None = None  # the manual form's first screen (212)
+    feature_groups: list[FeatureGroup] = []  # browse all, by purpose (212)
     cms_built_in: CmsBuiltIn | None = None  # what a CMS already has (OPEN_QUESTIONS 154)
 
     @model_validator(mode="after")
@@ -842,6 +932,38 @@ class QuickConfig(Frozen):
         unknown = {k: q.topic for k, q in self.questions.items() if q.topic not in keys}
         if unknown:
             raise ValueError(f"questions with an unknown topic: {unknown}")
+        return self
+
+    @model_validator(mode="after")
+    def _industry_suggestions(self) -> "QuickConfig":
+        rules = self.industry_suggestions
+        unknown = set(rules.never if rules else []) - {f.key for f in self.features}
+        if unknown:
+            raise ValueError(f"industry_suggestions.never: unknown features {sorted(unknown)}")
+        return self
+
+    @model_validator(mode="after")
+    def _industries(self) -> "QuickConfig":
+        """Every industry names a known kind of software, known features and custom types."""
+        features = {f.key for f in self.features}
+        kinds = {t.key for t in self.project_types}
+        for ind in self.industries.items if self.industries else []:
+            if ind.project_type not in kinds:
+                raise ValueError(f"industry {ind.key}: unknown project_type {ind.project_type!r}")
+            labels = [i.feature or i.name for i in ind.features]
+            if len(labels) != len(set(labels)):
+                raise ValueError(f"industry {ind.key}: a feature is listed twice")
+            for item in ind.features:
+                if item.feature and item.feature not in features:
+                    raise ValueError(f"industry {ind.key}: unknown feature {item.feature!r}")
+                if not item.feature and (
+                    not item.name or item.category not in self.custom_feature_types
+                ):
+                    raise ValueError(f"industry {ind.key}: a module needs a name and a type")
+        for group in self.feature_groups:
+            unknown = set(group.features) - features
+            if unknown:
+                raise ValueError(f"feature_groups {group.key}: unknown {sorted(unknown)}")
         return self
 
     @model_validator(mode="after")

@@ -84,6 +84,75 @@ def _covered(w: list[str], runs: Grams, short: Grams, shared: int) -> bool:
     )
 
 
+def unmatched_parts(
+    cfg: Coverage, extraction: TenderExtraction, text: str, more: list[str]
+) -> list[str]:
+    """A typed description has no "shall": every part asks for something (OPEN_QUESTIONS
+    210). Its parts, split at punctuation and `description_split_words`, of at least
+    `description_min_words` words, that nothing in the reading accounts for, in order, each
+    once, at most `max_listed`. A feature's or extra's quote accounts for one part only: of the
+    parts it covers, the one sharing most words with the feature's name (a quote running over
+    two asks, "pay fees online and see their child's attendance", is one finding, not two).
+    Other quotes (answers, add-ons, numbers) and `more` (e.g. the clauses that rule a feature
+    out) account for every part they cover. A part whose words are only generic ones
+    (`description_generic_words`) and the industry's ("A school system") names the software and
+    is not listed."""
+    if not cfg.description_split_words:
+        return []
+    joiners = "|".join(r"\s+".join(map(re.escape, w.split())) for w in cfg.description_split_words)
+    pieces = re.split(rf"[.;,!?:\n]|\b(?:{joiners})\b", text, flags=re.IGNORECASE)
+    parts = [(" ".join(p.split()), words(p)) for p in pieces]
+    parts = [(p, w) for p, w in parts if len(w) >= cfg.description_min_words]
+    sizes = range(1, cfg.shared_words + 1)
+    dump = extraction.model_dump(mode="json")
+    found = {"features", "other_features"}
+    plain = [*_quotes({k: v for k, v in dump.items() if k not in found}), *more]
+    runs, short = _grams(plain, sizes, cfg.shared_words)
+    done = {i for i, (_, w) in enumerate(parts) if _covered(w, runs, short, cfg.shared_words)}
+    named = [(f.label, f.evidence) for f in extraction.features]
+    named += [(f"{o.name} {o.description}", o.evidence) for o in extraction.other_features]
+    m = cfg.description_min_words
+    for name, evidence in named:
+        label = {_stem(x) for x in words(name)}
+        for ev in evidence:
+            q = words(ev.quote)
+            q_runs = {tuple(q[i : i + m]) for i in range(len(q) - m + 1)}
+            # a part the quote shares `m` words in a row with (or all of a shorter quote)
+            touched = [
+                i
+                for i, (_, w) in enumerate(parts)
+                if any(tuple(w[j : j + m]) in q_runs for j in range(len(w) - m + 1))
+                or (len(q) < m and _covered(w, *_grams([ev.quote], sizes, cfg.shared_words), m))
+            ]
+            if touched:  # the part most like the feature's name, then one not yet claimed
+                done.add(
+                    max(
+                        touched,
+                        key=lambda i: (
+                            len(label & set(map(_stem, parts[i][1]))),
+                            i not in done,
+                            -i,
+                        ),
+                    )
+                )
+    generic = {_stem(x) for g in cfg.description_generic_words for x in words(g)}
+    generic |= {_stem(x) for x in words(extraction.project_domain)}
+    out: list[str] = []
+    seen: set[str] = set()
+    for i, (part, w) in enumerate(parts):
+        key = " ".join(w)
+        if i in done or key in seen or {_stem(x) for x in w} <= generic:
+            continue
+        seen.add(key)
+        out.append(part[:200])
+    return out[: cfg.max_listed]
+
+
+def _stem(word: str) -> str:
+    """A word without a plural "s" ("meetings" and "meeting" match)."""
+    return word[:-1] if len(word) > 3 and word.endswith("s") else word
+
+
 def find_uncovered(
     cfg: Coverage, extraction: TenderExtraction, docs: list[tuple[str, list[tuple[int, str]]]]
 ) -> tuple[list[UncoveredSentence], int]:

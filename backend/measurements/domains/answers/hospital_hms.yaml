@@ -1,0 +1,30 @@
+# Answer file: hidden from the readers. Keys are the catalog's (seeds/quick_estimate.yaml).
+domain_words: [hospital, health, healthcare, medical]
+features:            # must be found and ticked
+  - bookings         # 3.1 OPD appointments
+  - payments         # 3.3 consultation fee online
+  - staff_login      # 2.2 Microsoft / Active Directory sign-in
+  - inventory        # 3.7 pharmacy stock, low-stock alert
+  - billing          # 3.8 bills with GST, receipts
+  - documents        # 3.9 patients upload old reports
+  - dashboards       # 3.10
+  - old_data         # 3.11 five years from Excel
+  - languages        # 3.12 English and Hindi
+tolerated: [notifications, search, online_forms, accessibility]   # neither required nor wrong
+not_features:        # ruled out by the document
+  - mobile_app       # 4.2
+  - connect_existing # 4.3 lab analysers not in this phase; TPA out of scope
+  - chat             # 4.1 video consultation is phase 2
+scope:               # add-ons the document asks for (any one of the listed keys counts)
+  - [booking_reminders, sms]      # 3.2 SMS reminder a day before
+  - {any: [booking_payment], or_feature: payments}   # 3.3: payments brings the same gateway
+  - [audit_log, documents_audit]  # 5.2 access logged
+custom:              # not in the catalog: a custom item should name it
+  - {what: Electronic medical record, match_any: [medical record, emr, diagnosis, prescription, clinical]}
+  - {what: Ward and bed management, match_any: [bed, ward, admission, admit]}
+  - {what: Lab orders and results, match_any: [lab, laborator, pathology, test result]}
+optional:            # later phases / exclusions: must not be priced
+  - {what: Telemedicine, match_any: [video, telemedicine, teleconsult]}
+  - {what: Lab analyser connection, match_any: [analyser, analyzer]}
+prerequisites: []    # no warning expected
+choices: {platforms: web}

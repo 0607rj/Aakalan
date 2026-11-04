@@ -1,0 +1,264 @@
+{
+  "project_name": "Plant Maintenance System",
+  "summary": "The requirement document describes a maintenance system for two auto-component plants with 320 machines. It replaces paper breakdown slips and Excel history with machine records, work orders, preventive schedules, a technician Android app, spare-parts stock, sensor alerts, failure prediction and dashboards, connected to SAP for purchasing. Support is needed for two years after go-live.",
+  "project_domain": "Plant maintenance",
+  "features": [
+    {
+      "key": "scanning",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.2", "quote": "Operators shall raise a breakdown request by scanning the QR code on the machine with a phone."}
+      ],
+      "stories": [
+        "As an operator, I can raise a breakdown request by scanning the QR code on a machine"
+      ],
+      "covers": [],
+      "mentions": 2,
+      "suggested": true
+    },
+    {
+      "key": "mobile_app",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.5", "quote": "Technicians shall use an Android app to see and update their work orders, take photos and follow checklists."}
+      ],
+      "stories": [
+        "As a technician, I can see and update my work orders in the app",
+        "As a technician, I can take photos in the app",
+        "As a technician, I can follow checklists in the app"
+      ],
+      "covers": ["scanning"],
+      "mentions": 1,
+      "suggested": true
+    },
+    {
+      "key": "offline_app",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.6", "quote": "The technician app shall work inside the plant where Wi-Fi is weak and send updates when back in range."}
+      ],
+      "stories": [
+        "As a technician, I can keep using the app where Wi-Fi is weak and have my updates sent when I am back in range"
+      ],
+      "covers": [],
+      "mentions": 1,
+      "suggested": true
+    },
+    {
+      "key": "inventory",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.7", "quote": "The stores team shall keep stock of spare parts with bin locations and minimum levels, and issue spares against work orders."}
+      ],
+      "stories": [
+        "As a stores team member, I can keep stock of spare parts with bin locations and minimum levels",
+        "As a stores team member, I can issue spares against a work order"
+      ],
+      "covers": [],
+      "mentions": 1,
+      "suggested": true
+    },
+    {
+      "key": "approval_workflow",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.8", "quote": "go to the plant head for approval, and approved requests shall be sent to SAP."}
+      ],
+      "stories": [
+        "As a plant head, I can approve a spare part purchase request that needs my approval"
+      ],
+      "covers": [],
+      "mentions": 1,
+      "suggested": true
+    },
+    {
+      "key": "connect_existing",
+      "evidence": [
+        {"page": 1, "clause_ref": "1.3", "quote": "SAP is used for purchasing and accounts and stays the system of record for purchase orders."},
+        {"page": 2, "clause_ref": "3.8", "quote": "go to the plant head for approval, and approved requests shall be sent to SAP."}
+      ],
+      "stories": [
+        "As a plant head, I can have approved purchase requests sent to SAP"
+      ],
+      "covers": [],
+      "mentions": 2,
+      "suggested": true
+    },
+    {
+      "key": "ai_forecast",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.10", "quote": "The system shall predict likely failures of the compressors from the sensor readings and past breakdowns."}
+      ],
+      "stories": [
+        "As a supervisor, I can see the likely failures of compressors predicted from sensor readings and past breakdowns"
+      ],
+      "covers": [],
+      "mentions": 1,
+      "suggested": true
+    },
+    {
+      "key": "notifications",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.11", "quote": "Supervisors shall get an app notification and SMS for every breakdown on a critical machine."}
+      ],
+      "stories": [
+        "As a supervisor, I get an app notification and SMS for every breakdown on a critical machine"
+      ],
+      "covers": [],
+      "mentions": 1,
+      "suggested": true
+    },
+    {
+      "key": "dashboards",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.12", "quote": "The plant head shall see dashboards of downtime, mean time between failures, mean time to repair and maintenance cost per machine."}
+      ],
+      "stories": [
+        "As a plant head, I can see a dashboard of downtime",
+        "As a plant head, I can see a dashboard of mean time between failures",
+        "As a plant head, I can see a dashboard of mean time to repair",
+        "As a plant head, I can see a dashboard of maintenance cost per machine"
+      ],
+      "covers": [],
+      "mentions": 1,
+      "suggested": true
+    },
+    {
+      "key": "old_data",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.13", "quote": "Maintenance history of the last two years shall be moved from the existing Excel sheets."}
+      ],
+      "stories": [
+        "As a maintenance supervisor, I can see the last two years of maintenance history moved from the Excel sheets"
+      ],
+      "covers": [],
+      "mentions": 1,
+      "suggested": true
+    }
+  ],
+  "other_features": [
+    {
+      "name": "Machine records register",
+      "description": "Every machine has a record with its make, model, location, manuals and maintenance history.",
+      "category": "module",
+      "size": "M",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.1", "quote": "Every machine shall have a record with its make, model, location, manuals and maintenance history."}
+      ],
+      "part_of": "",
+      "stories": [
+        "As a maintenance user, I can keep a record of each machine with its make, model, location, manuals and maintenance history"
+      ]
+    },
+    {
+      "name": "Maintenance work orders",
+      "description": "Supervisors create and assign work orders and technicians close them with the work done, time spent and spares used.",
+      "category": "module",
+      "size": "M",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.3", "quote": "Supervisors shall create work orders, assign technicians and set priorities; technicians shall close work orders with the work done, time spent and spares used."}
+      ],
+      "part_of": "",
+      "stories": [
+        "As a supervisor, I can create a work order",
+        "As a supervisor, I can assign technicians to a work order",
+        "As a supervisor, I can set the priority of a work order",
+        "As a technician, I can close a work order with the work done, time spent and spares used"
+      ]
+    },
+    {
+      "name": "Preventive maintenance scheduling",
+      "description": "The system creates preventive maintenance work orders on a schedule, by calendar or by running hours.",
+      "category": "module",
+      "size": "M",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.4", "quote": "The system shall create preventive maintenance work orders on schedule, by calendar or by running hours."}
+      ],
+      "part_of": "",
+      "stories": [
+        "As a supervisor, I can have preventive maintenance work orders created on a schedule by calendar or by running hours"
+      ]
+    },
+    {
+      "name": "Sensor readings and limit alerts",
+      "description": "Store the temperature and vibration readings sensors send every minute and alert supervisors when a reading crosses its limit.",
+      "category": "integration",
+      "size": "L",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.9", "quote": "Sensors on the compressors and presses send temperature and vibration readings every minute; the system shall store these readings and alert supervisors when a reading crosses its limit."}
+      ],
+      "part_of": "",
+      "stories": [
+        "As a supervisor, I can see the stored temperature and vibration readings of a machine",
+        "As a supervisor, I am alerted when a reading crosses its limit"
+      ]
+    }
+  ],
+  "choices": [
+    {
+      "question": "platforms",
+      "value": "web_mobile",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.5", "quote": "Technicians shall use an Android app to see and update their work orders, take photos and follow checklists."}
+      ]
+    },
+    {
+      "question": "integrations",
+      "value": "one_two",
+      "evidence": [
+        {"page": 1, "clause_ref": "1.3", "quote": "SAP is used for purchasing and accounts and stays the system of record for purchase orders."}
+      ]
+    },
+    {
+      "question": "old_data",
+      "value": "little",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.13", "quote": "Maintenance history of the last two years shall be moved from the existing Excel sheets."}
+      ]
+    },
+    {
+      "question": "support_hours",
+      "value": "on_call",
+      "evidence": [
+        {"page": 3, "clause_ref": "5.1", "quote": "The vendor shall support the system for two years with round-the-clock on-call support."}
+      ]
+    }
+  ],
+  "numbers": [
+    {
+      "field": "om_years",
+      "value": 2,
+      "evidence": [
+        {"page": 3, "clause_ref": "5.1", "quote": "The vendor shall support the system for two years with round-the-clock on-call support."}
+      ]
+    }
+  ],
+  "unclear_points": [
+    {
+      "topic": "Sensor connection",
+      "why": "The document does not say how many sensors there are or how they send their readings to the system.",
+      "page": 2,
+      "clause_ref": "3.9",
+      "quote": "Sensors on the compressors and presses send temperature and vibration readings every minute;",
+      "prebid_query": "Ref. clause 3.9: Please state the number of sensors, the protocol or gateway through which they send readings, and whether the sensors and gateways are already installed.",
+      "answer": ""
+    }
+  ],
+  "not_priced": [],
+  "payment_terms": null,
+  "scope": [
+    {
+      "key": "sms",
+      "status": "explicit",
+      "note": "",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.11", "quote": "Supervisors shall get an app notification and SMS for every breakdown on a critical machine."}
+      ]
+    },
+    {
+      "key": "push",
+      "status": "explicit",
+      "note": "",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.11", "quote": "Supervisors shall get an app notification and SMS for every breakdown on a critical machine."}
+      ]
+    }
+  ],
+  "staff_lines": [],
+  "chatbot_buyer_systems": null
+}

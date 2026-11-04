@@ -21,11 +21,14 @@ from app.models import DescriptionReading
 from app.services import limits
 from app.services.documents.parsing import Page, ParsedDocument
 from app.services.extraction.basic_reader import basic_read
+from app.services.extraction.coverage import unmatched_parts
 from app.services.extraction.tender import (
     BASIC_READER_VERSION,
     PROMPT_VERSION,
     ExtractionOutput,
     FoundOtherFeature,
+    IndustrySuggestion,
+    ReadyMade,
     TenderExtraction,
     ai_read,
     verify_findings,
@@ -34,6 +37,13 @@ from app.services.quick.config import QuickConfig
 
 log = logging.getLogger(__name__)
 DESCRIPTION = "Your description"
+# a typed description has no "shall" (OPEN_QUESTIONS 210): every part of it is a requirement
+DESCRIPTION_ASK = (
+    "The text above is a short description the user wrote about their own software, not a "
+    "tender. Every thing it says the software does or lets people do is a requirement, however "
+    'short (for example "see their child\'s attendance"): report each one as a feature or an '
+    "other feature. Return your findings."
+)
 
 
 class SuggestedFeature(BaseModel):
@@ -57,9 +67,16 @@ class Suggestion(BaseModel):
     scope: list[SuggestedScope] = []  # scope items the words ask for (e.g. two-step sign-in)
     not_priced: list[str] = []  # asked for, but not something this estimate can price
     note: str | None  # e.g. why the basic reader may miss things
+    project_domain: str = ""  # the industry the AI read: shown only (OPEN_QUESTIONS 205)
     # ruled out by the words ("no mobile app"): offered as "Not included", with the words
     excluded: list[SuggestedFeature] = []
     excluded_scope: list[SuggestedScope] = []
+    # not in the words, usual for this kind of software: offered unticked (OPEN_QUESTIONS 207)
+    industry_suggestions: list[IndustrySuggestion] = []
+    industry_suggestions_asked: bool = False  # the AI was asked: [] means none
+    ready_made: ReadyMade | None = None  # ready products are common for this kind (209)
+    # parts of the words no finding quotes: shown as not matched yet (OPEN_QUESTIONS 210)
+    unmatched: list[str] = []
 
 
 def with_everyday_words(cfg: QuickConfig) -> QuickConfig:
@@ -140,7 +157,7 @@ def _remembered(
     if kept is not None:
         return ExtractionOutput.model_validate(kept.output)
     limits.spend_ai(db, org_id)  # LimitError past today's AI readings
-    output = ai_read(llm, cfg, parsed).output
+    output = ai_read(llm, cfg, parsed, ask=DESCRIPTION_ASK).output
     db.add(DescriptionReading(org_id=org_id, output=output.model_dump(mode="json"), **key))
     try:
         db.commit()
@@ -169,7 +186,7 @@ def suggest_features(
             raw = (
                 _remembered(db, org_id, llm, cfg, parsed, text)
                 if db is not None and org_id is not None
-                else ai_read(llm, cfg, parsed).output
+                else ai_read(llm, cfg, parsed, ask=DESCRIPTION_ASK).output
             )
             reader, version = "ai", PROMPT_VERSION
         except LLMRefusedError:
@@ -221,4 +238,11 @@ def suggest_features(
         ],
         not_priced=[n.label for n in found.not_priced],
         note=note,
+        project_domain=found.project_domain,
+        industry_suggestions=[s for s in found.industry_suggestions if s.feature not in excluded],
+        industry_suggestions_asked=found.industry_suggestions_asked,
+        ready_made=found.ready_made,
+        unmatched=unmatched_parts(cfg.coverage, found, text, list(excluded.values()))
+        if cfg.coverage
+        else [],
     )

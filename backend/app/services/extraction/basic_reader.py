@@ -140,7 +140,9 @@ EXCLUDED = re.compile(
     r"\b(not\s+(?:be\s+)?(?:required|needed|necessary|included|in\s+(?:the\s+)?scope|part\s+of)"
     r"|withdrawn"
     r"|no\s+need|out\s+of\s+(?:the\s+)?scope|excluded|exclude[sd]?|shall\s+not|will\s+not"
-    r"|need\s+not|does\s+not\s+(?:require|need)|is\s+not\s+expected)\b",
+    r"|need\s+not|does\s+not\s+(?:require|need)|is\s+not\s+expected"
+    # "no payment gateway is needed" (OPEN_QUESTIONS 206)
+    r"|no\s+(?:[\w-]+\s+){1,4}(?:is|are)\s+(?:needed|required|necessary))\b",
     re.I,
 )
 FUTURE = re.compile(

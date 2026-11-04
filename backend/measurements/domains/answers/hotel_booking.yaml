@@ -1,0 +1,29 @@
+# Answer file: hidden from the readers. Keys are the catalog's (seeds/quick_estimate.yaml).
+domain_words: [hotel, hospitality, resort, travel, tourism]
+features:
+  - public_website     # 3.1 site the sales team updates
+  - bookings           # 3.2
+  - payments           # 3.3
+  - notifications      # 3.4
+  - billing            # 3.7 bill with GST
+  - inventory          # 3.9 linen and toiletries stock
+  - crm                # 3.10 guest profiles, offers
+  - dashboards         # 3.11
+  - languages          # 3.13 English and Malayalam
+tolerated: [connect_existing, search, documents]
+not_features:
+  - mobile_app         # 4.1
+  - online_store
+scope:
+  - {any: [booking_payment], or_feature: payments}
+  - [booking_reminders]
+  - [whatsapp]
+  - [seo]              # 3.12
+custom:
+  - {what: Channel manager sync, match_any: [channel, booking.com, makemytrip, ota], or_feature: connect_existing}
+  - {what: Front desk check-in and room assignment, match_any: [check-in, check in, front desk, front-desk]}
+  - {what: Housekeeping, match_any: [housekeeping]}
+optional:
+  - {what: Restaurant billing machine, match_any: [billing machine]}
+prerequisites: []
+choices: {platforms: web}

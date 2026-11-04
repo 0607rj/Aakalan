@@ -65,6 +65,8 @@ def test_prefill_matches_the_review_form(benchmark_id: str) -> None:
     assert sent.pop("feature_stories") == {}
     # nor a typed description (recorded before it was saved, OPEN_QUESTIONS 174)
     assert sent.pop("description") == ""
+    # nor an industry: these readings were made before it was read (OPEN_QUESTIONS 205)
+    assert sent.pop("project_domain") == ""
     assert sent == FORM["requests"][benchmark_id]
 
 
@@ -126,7 +128,8 @@ def test_production_path_back_test() -> None:
     req = reading_request(cfg, readings[BATTERY], "india", NO_AI)
     assert req.choices[AI_USE] == NO_AI
     sent = req.model_dump(
-        mode="json", exclude={*NOT_SENT, "staff", "feature_stories", "description"}
+        mode="json",
+        exclude={*NOT_SENT, "staff", "feature_stories", "description", "project_domain"},
     )
     assert {**sent, "choices": {k: v for k, v in sent["choices"].items() if k != AI_USE}} == FORM[
         "requests"

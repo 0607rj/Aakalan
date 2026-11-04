@@ -1,0 +1,255 @@
+{
+  "project_name": "Digital Lending Platform",
+  "summary": "The requirement document asks for an online loan application platform for Sahyog Finance, a lender of small business loans. Applicants apply on the web or in an Android and iOS app, verify identity, upload documents and sign online, while the credit team scores, reviews and approves each application. The existing loan accounting system stays as it is, and the vendor supports the platform for three years.",
+  "project_domain": "Digital lending",
+  "features": [
+    {
+      "key": "online_forms",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.1", "quote": "Applicants shall apply for a loan online through a web form and an Android and iOS app, and save a draft to finish later."}
+      ],
+      "stories": [
+        "As an applicant, I can apply for a loan online through a web form",
+        "As an applicant, I can save a draft application to finish later"
+      ]
+    },
+    {
+      "key": "mobile_app",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.1", "quote": "Applicants shall apply for a loan online through a web form and an Android and iOS app, and save a draft to finish later."}
+      ],
+      "stories": [
+        "As an applicant, I can apply for a loan in the Android and iOS app"
+      ],
+      "covers": ["online_forms"]
+    },
+    {
+      "key": "aadhaar_digilocker",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.2", "quote": "Applicants shall verify their identity with Aadhaar e-KYC and fetch their PAN from DigiLocker."}
+      ],
+      "stories": [
+        "As an applicant, I can verify my identity with Aadhaar e-KYC",
+        "As an applicant, I can fetch my PAN from DigiLocker"
+      ]
+    },
+    {
+      "key": "documents",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.3", "quote": "Applicants shall upload documents: bank statements, GST returns and shop photos."}
+      ],
+      "stories": [
+        "As an applicant, I can upload bank statements, GST returns and shop photos"
+      ]
+    },
+    {
+      "key": "ai_documents",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.4", "quote": "The system shall read the uploaded bank statements automatically and pull out monthly credits, debits and balances."}
+      ],
+      "stories": [
+        "As a credit analyst, I can see monthly credits, debits and balances pulled automatically from the uploaded bank statements"
+      ]
+    },
+    {
+      "key": "connect_existing",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.5", "quote": "The system shall fetch the applicant's credit score from a credit bureau (CIBIL) through its API."}
+      ],
+      "stories": [
+        "As a credit analyst, I can see the applicant's credit score fetched from the credit bureau"
+      ]
+    },
+    {
+      "key": "approval_workflow",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.7", "quote": "Each application shall go through credit analyst review and credit manager approval; loans above ₹5 lakh also need a second manager."}
+      ],
+      "stories": [
+        "As a credit analyst, I can review an application",
+        "As a credit manager, I can approve an application",
+        "As a second credit manager, I can approve loans above the limit"
+      ]
+    },
+    {
+      "key": "payments",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.10", "quote": "Borrowers shall be able to pay an overdue EMI online through a payment gateway."}
+      ],
+      "stories": [
+        "As a borrower, I can pay an overdue EMI online through a payment gateway"
+      ]
+    },
+    {
+      "key": "notifications",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.11", "quote": "Applicants shall get SMS and email updates at each step of their application."}
+      ],
+      "stories": [
+        "As an applicant, I get SMS and email updates at each step of my application"
+      ]
+    },
+    {
+      "key": "dashboards",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.14", "quote": "Management shall see dashboards of applications, approval rates, disbursed amounts and turnaround times."}
+      ],
+      "stories": [
+        "As a manager, I can see a dashboard of applications",
+        "As a manager, I can see a dashboard of approval rates",
+        "As a manager, I can see a dashboard of disbursed amounts",
+        "As a manager, I can see a dashboard of turnaround times"
+      ]
+    },
+    {
+      "key": "staff_login",
+      "evidence": [
+        {"page": 1, "clause_ref": "2.2", "quote": "Employees shall sign in with their company Microsoft Azure AD accounts."}
+      ],
+      "stories": [
+        "As an employee, I can sign in with my company Microsoft Azure AD account"
+      ]
+    }
+  ],
+  "other_features": [
+    {
+      "name": "Credit scoring rules engine",
+      "description": "Each application is scored by rules from the bureau score, bank statement figures and business age, and the credit manager can change the rules without a developer.",
+      "category": "module",
+      "size": "M",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.6", "quote": "A rules engine shall score each application from the bureau score, bank statement figures and business age, with rules the credit manager can change without a developer."}
+      ],
+      "part_of": "",
+      "stories": [
+        "As a credit analyst, I can see each application scored from the bureau score, bank statement figures and business age",
+        "As a credit manager, I can change the scoring rules without a developer"
+      ]
+    },
+    {
+      "name": "e-NACH EMI mandate",
+      "description": "Applicants set up an e-NACH mandate so that EMIs are collected from their bank account every month.",
+      "category": "integration",
+      "size": "M",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.9", "quote": "Applicants shall set up an e-NACH mandate so that EMIs are collected from their bank account every month."}
+      ],
+      "part_of": "",
+      "stories": [
+        "As an applicant, I can set up an e-NACH mandate so my EMIs are collected from my bank account every month"
+      ]
+    }
+  ],
+  "choices": [
+    {
+      "question": "platforms",
+      "value": "web_mobile",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.1", "quote": "Applicants shall apply for a loan online through a web form and an Android and iOS app, and save a draft to finish later."}
+      ]
+    },
+    {
+      "question": "security_audit",
+      "value": "yes",
+      "evidence": [
+        {"page": 3, "clause_ref": "4.1", "quote": "The platform shall follow the RBI digital lending guidelines and pass a security audit before go-live."}
+      ]
+    }
+  ],
+  "numbers": [
+    {
+      "field": "om_years",
+      "value": 3,
+      "evidence": [
+        {"page": 3, "clause_ref": "5.1", "quote": "The vendor shall provide support and maintenance for three years after go-live."}
+      ]
+    }
+  ],
+  "unclear_points": [],
+  "not_priced": [
+    {
+      "topic": "data_rules",
+      "note": "The platform must follow the RBI digital lending guidelines.",
+      "evidence": [
+        {"page": 3, "clause_ref": "4.1", "quote": "The platform shall follow the RBI digital lending guidelines and pass a security audit before go-live."}
+      ]
+    }
+  ],
+  "payment_terms": null,
+  "scope": [
+    {
+      "key": "enterprise_sso",
+      "status": "explicit",
+      "note": "",
+      "evidence": [
+        {"page": 1, "clause_ref": "2.2", "quote": "Employees shall sign in with their company Microsoft Azure AD accounts."}
+      ]
+    },
+    {
+      "key": "otp_codes",
+      "status": "explicit",
+      "note": "",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.12", "quote": "Sign-in for applicants shall use a one-time password sent to their mobile number."}
+      ]
+    },
+    {
+      "key": "forms_ekyc",
+      "status": "explicit",
+      "note": "",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.2", "quote": "Applicants shall verify their identity with Aadhaar e-KYC and fetch their PAN from DigiLocker."}
+      ]
+    },
+    {
+      "key": "forms_digilocker",
+      "status": "explicit",
+      "note": "",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.2", "quote": "Applicants shall verify their identity with Aadhaar e-KYC and fetch their PAN from DigiLocker."}
+      ]
+    },
+    {
+      "key": "documents_esign",
+      "status": "explicit",
+      "note": "The loan agreement is signed online with Aadhaar e-Sign.",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.8", "quote": "Approved applicants shall sign the loan agreement online with Aadhaar e-Sign."}
+      ]
+    },
+    {
+      "key": "sms",
+      "status": "explicit",
+      "note": "",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.11", "quote": "Applicants shall get SMS and email updates at each step of their application."}
+      ]
+    },
+    {
+      "key": "workflow_alerts",
+      "status": "explicit",
+      "note": "",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.11", "quote": "Applicants shall get SMS and email updates at each step of their application."}
+      ]
+    },
+    {
+      "key": "audit_log",
+      "status": "explicit",
+      "note": "",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.13", "quote": "Every change to an application shall be recorded in an audit trail."}
+      ]
+    },
+    {
+      "key": "workflow_audit",
+      "status": "explicit",
+      "note": "",
+      "evidence": [
+        {"page": 2, "clause_ref": "3.13", "quote": "Every change to an application shall be recorded in an audit trail."}
+      ]
+    }
+  ],
+  "staff_lines": [],
+  "chatbot_buyer_systems": null
+}

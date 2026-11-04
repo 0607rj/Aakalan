@@ -11,6 +11,7 @@ import type { QuestionImpact } from "@/lib/api/client";
 
 import {
   type Choice,
+  CoverageTag,
   NotIncludedToggle,
   Mark,
   QuestionGroup,
@@ -651,6 +652,7 @@ function ScopeRow({
               </span>
             ) : null}
           </span>
+          <CoverageTag kind="partial" />
           {item.hint ? (
             <span className="text-sm text-muted-foreground">{item.hint}</span>
           ) : null}

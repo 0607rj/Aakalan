@@ -720,6 +720,27 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/quick-estimate/suggestion-prices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Suggestion Price List
+         * @description What each "usually needed" suggestion adds to the most likely total if added alone
+         *     (OPEN_QUESTIONS 207); priced by the engine, nothing is saved.
+         */
+        post: operations["suggestion_price_list_quick_estimate_suggestion_prices_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/quick-estimate/schedule": {
         parameters: {
             query?: never;
@@ -2231,6 +2252,15 @@ export interface components {
             /** Traditional Paise */
             traditional_paise: number | null;
         };
+        /** FeatureGroupOut */
+        FeatureGroupOut: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Features */
+            features: string[];
+        };
         /** FeatureOut */
         FeatureOut: {
             /** Key */
@@ -2770,6 +2800,58 @@ export interface components {
              */
             note: string;
         };
+        /**
+         * IndustryOut
+         * @description The manual form's "What is it for?" (OPEN_QUESTIONS 212): its usual features, offered
+         *     unticked and priced like the AI's suggestions.
+         */
+        IndustryOut: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Tag */
+            tag: string;
+            /** Hint */
+            hint: string;
+            /** Project Type */
+            project_type: string;
+            /** Suggestions */
+            suggestions: components["schemas"]["IndustrySuggestion"][];
+            /** Ticked */
+            ticked: string[];
+        };
+        /**
+         * IndustrySuggestion
+         * @description Usually needed for this kind of software, not asked for (OPEN_QUESTIONS 207): checked in
+         *     code, offered unticked, priced by the engine only when the user adds it.
+         */
+        IndustrySuggestion: {
+            /**
+             * Feature
+             * @default
+             */
+            feature: string;
+            /** Label */
+            label: string;
+            /** Why */
+            why: string;
+            /**
+             * Category
+             * @default
+             */
+            category: string;
+            /**
+             * Size
+             * @default
+             */
+            size: string;
+            /**
+             * Catalog Key
+             * @default
+             */
+            catalog_key: string;
+        };
         /** Infeasibility */
         Infeasibility: {
             /** Message */
@@ -3185,6 +3267,40 @@ export interface components {
             query: string;
         };
         /**
+         * Prerequisite
+         * @description A feature, or an add-on the document asks for, that usually needs a feature not ticked.
+         */
+        Prerequisite: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Needs */
+            needs: string[];
+            /** Why */
+            why: string;
+        };
+        /**
+         * PrerequisiteRule
+         * @description A feature that usually needs another one whose building blocks it does not bring
+         *     (OPEN_QUESTIONS 205): a warning only, never added to the price.
+         */
+        PrerequisiteRule: {
+            /** Feature */
+            feature: string;
+            /** Needs Any */
+            needs_any: string[];
+            /** Why */
+            why: string;
+            /**
+             * Not When Answered
+             * @default {}
+             */
+            not_when_answered: {
+                [key: string]: string[];
+            };
+        };
+        /**
          * PricedOption
          * @description A question left open (not in the document, or answered "Not sure"): priced at its usual
          *     answer, with what each other answer would change. Fast fixed-seed re-pricing (quick config
@@ -3250,6 +3366,21 @@ export interface components {
             why: string;
             /** Evidence */
             evidence: components["schemas"]["VerifiedEvidence"][];
+        };
+        /** ProjectContext */
+        ProjectContext: {
+            /**
+             * Domain
+             * @default
+             */
+            domain: string;
+            /** Project Type */
+            project_type: string;
+            /**
+             * User Roles
+             * @default []
+             */
+            user_roles: string[];
         };
         /** ProjectCreate */
         ProjectCreate: {
@@ -3453,6 +3584,16 @@ export interface components {
             countries: components["schemas"]["CountryOut"][];
             /** Project Types */
             project_types: components["schemas"]["ProjectTypeOut"][];
+            /**
+             * Industries
+             * @default []
+             */
+            industries: components["schemas"]["IndustryOut"][];
+            /**
+             * Feature Groups
+             * @default []
+             */
+            feature_groups: components["schemas"]["FeatureGroupOut"][];
             /** Features */
             features: components["schemas"]["FeatureOut"][];
             /** Default Level */
@@ -3478,6 +3619,11 @@ export interface components {
              * @default []
              */
             commonly_needed: string[];
+            /**
+             * Prerequisites
+             * @default []
+             */
+            prerequisites: components["schemas"]["PrerequisiteRule"][];
         };
         /** QuickRequest */
         "QuickRequest-Input": {
@@ -3566,6 +3712,11 @@ export interface components {
              * @default
              */
             description: string;
+            /**
+             * Project Domain
+             * @default
+             */
+            project_domain: string;
         };
         /** QuickRequest */
         "QuickRequest-Output": {
@@ -3654,6 +3805,11 @@ export interface components {
              * @default
              */
             description: string;
+            /**
+             * Project Domain
+             * @default
+             */
+            project_domain: string;
         };
         /**
          * QuickSchedule
@@ -3710,6 +3866,15 @@ export interface components {
              * @default 0
              */
             build_only_high_paise: number;
+            /** Quote Build Paise */
+            quote_build_paise?: number | null;
+            /** Quote Running Per Year Paise */
+            quote_running_per_year_paise?: number | null;
+            /**
+             * From Document
+             * @default false
+             */
+            from_document: boolean;
             /** Build Months */
             build_months: string;
             /** Support Years */
@@ -3834,6 +3999,17 @@ export interface components {
             deadline_asked_months?: string | null;
             /** Deadline Priced Months */
             deadline_priced_months?: string | null;
+            context?: components["schemas"]["ProjectContext"] | null;
+            /**
+             * Prerequisites
+             * @default []
+             */
+            prerequisites: components["schemas"]["Prerequisite"][];
+            /**
+             * Custom Features
+             * @default []
+             */
+            custom_features: string[];
         };
         /** RangeDriver */
         RangeDriver: {
@@ -3966,6 +4142,15 @@ export interface components {
          * @enum {string}
          */
         RateKind: "role" | "cloud_sku" | "llm_token" | "gpu_hour" | "licence" | "audit_fee" | "bank_charge" | "other";
+        /**
+         * ReadyMade
+         * @description Ready-made products are common for this kind of software (OPEN_QUESTIONS 209): shown
+         *     beside the "How will it be built?" prices, never an answer or a price.
+         */
+        ReadyMade: {
+            /** Note */
+            note: string;
+        };
         /** RealityOut */
         RealityOut: {
             /**
@@ -4562,6 +4747,11 @@ export interface components {
             label: string;
             /** Hint */
             hint: string;
+            /**
+             * Fixed
+             * @default false
+             */
+            fixed: boolean;
         };
         /** StoriesIn */
         StoriesIn: {
@@ -4631,6 +4821,11 @@ export interface components {
             /** Note */
             note: string | null;
             /**
+             * Project Domain
+             * @default
+             */
+            project_domain: string;
+            /**
              * Excluded
              * @default []
              */
@@ -4640,6 +4835,37 @@ export interface components {
              * @default []
              */
             excluded_scope: components["schemas"]["SuggestedScope"][];
+            /**
+             * Industry Suggestions
+             * @default []
+             */
+            industry_suggestions: components["schemas"]["IndustrySuggestion"][];
+            /**
+             * Industry Suggestions Asked
+             * @default false
+             */
+            industry_suggestions_asked: boolean;
+            ready_made?: components["schemas"]["ReadyMade"] | null;
+            /**
+             * Unmatched
+             * @default []
+             */
+            unmatched: string[];
+        };
+        /** SuggestionPrice */
+        SuggestionPrice: {
+            /** Feature */
+            feature: string;
+            /** Label */
+            label: string;
+            /** Adds Paise */
+            adds_paise: number | null;
+        };
+        /** SuggestionPricesIn */
+        SuggestionPricesIn: {
+            request: components["schemas"]["QuickRequest-Input"];
+            /** Suggestions */
+            suggestions: components["schemas"]["IndustrySuggestion"][];
         };
         /**
          * TaskType
@@ -4702,6 +4928,16 @@ export interface components {
             project_name: string;
             /** Summary */
             summary: string;
+            /**
+             * Project Domain
+             * @default
+             */
+            project_domain: string;
+            /**
+             * User Roles
+             * @default []
+             */
+            user_roles: string[];
             /** Features */
             features: components["schemas"]["FoundFeature"][];
             /**
@@ -4756,6 +4992,17 @@ export interface components {
              * @default 0
              */
             uncovered_more: number;
+            /**
+             * Industry Suggestions
+             * @default []
+             */
+            industry_suggestions: components["schemas"]["IndustrySuggestion"][];
+            /**
+             * Industry Suggestions Asked
+             * @default false
+             */
+            industry_suggestions_asked: boolean;
+            ready_made?: components["schemas"]["ReadyMade"] | null;
         };
         /** Timeline */
         Timeline: {
@@ -6552,6 +6799,39 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["QuestionImpact"][];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    suggestion_price_list_quick_estimate_suggestion_prices_post: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SuggestionPricesIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SuggestionPrice"][];
                 };
             };
             /** @description Validation Error */

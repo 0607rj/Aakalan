@@ -1,0 +1,13 @@
+{
+  "other_features": [
+    {
+      "name": "Case and shared document storage",
+      "description": "Documents are uploaded and kept with case files and shared between clients and lawyers.",
+      "category": "module",
+      "size": "S",
+      "evidence": [{"page": 2, "clause_ref": "3.6", "quote": "Lawyers shall keep case files with parties, court, case number, documents and notes."}],
+      "part_of": "documents",
+      "stories": ["As a lawyer, I can upload and keep documents in a case file"]
+    }
+  ]
+}

@@ -16,7 +16,7 @@ import type {
 } from "@/lib/api/client";
 import { cn } from "@/lib/utils";
 
-import { Citation, FeatureCard } from "./parts";
+import { Citation, CoverageTag, FeatureCard } from "./parts";
 
 /** A feature outside the ready-made list, as the user is editing it. */
 export interface CustomItem {
@@ -33,6 +33,8 @@ export interface CustomItem {
   catalogKey?: string | null;
   /** Found in the user's description (not in our list): the words it came from. */
   fromDescription?: string;
+  /** Added from "usually needed for this kind of software": why it was suggested. */
+  suggested?: string;
   /** How many modules of this size it is (a large sub-system can be several). */
   units?: number;
 }
@@ -276,16 +278,16 @@ function ItemCard({
           ) : null}
           {fromDocument ? (
             <>
-              <span className="text-xs text-muted-foreground">
-                Not in our list: priced as its own feature
-              </span>
+              <CoverageTag kind="custom" />
               <Citation
                 evidence={item.evidence}
                 approximatePages={approximatePages}
               />
             </>
           ) : (
-            <span className="text-xs text-muted-foreground">Added by you</span>
+            <span className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+              Added by you <CoverageTag kind="custom" />
+            </span>
           )}
         </div>
         {onRemove ? (

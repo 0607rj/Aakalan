@@ -11,6 +11,15 @@ from openpyxl import load_workbook
 
 H = dict[str, str]
 BASE = {"name": "Quote lists", "features": ["online_forms", "ai_chatbot"]}
+# big enough for the usual extras (manuals) besides the blocks every software has
+BIGGER = [
+    "online_forms",
+    "payments",
+    "approval_workflow",
+    "documents",
+    "dashboards",
+    "notifications",
+]
 
 
 def quick(client: TestClient, headers: H, **body: Any) -> Any:
@@ -50,16 +59,23 @@ def test_feature_marked_not_included(client: TestClient, admin_headers: H) -> No
 
 
 def test_standard_block_can_be_unticked(client: TestClient, admin_headers: H) -> None:
-    blocks = client.post("/quick-estimate/standard-blocks", json=BASE, headers=admin_headers)
+    """A usual block a client may not need (manuals) can be left out; one every software has
+    (putting it live) cannot, and stays in the price (OPEN_QUESTIONS 211)."""
+    body = {**BASE, "features": BIGGER}
+    blocks = client.post("/quick-estimate/standard-blocks", json=body, headers=admin_headers)
     assert blocks.status_code == 200, blocks.text
     keys = {b["key"]: b for b in blocks.json()}
-    assert keys["devops_cicd_setup"]["label"] == "Servers and release set-up"
-    plain = quick(client, admin_headers).json()
-    out = {"kind": "standard", "key": "devops_cicd_setup"}
-    s = quick(client, admin_headers, not_included=[out]).json()
+    assert keys["documentation_manuals"]["label"] == "Manuals"
+    assert keys["devops_cicd_setup"]["fixed"] and not keys["documentation_manuals"]["fixed"]
+    plain = quick(client, admin_headers, features=BIGGER).json()
+    out = {"kind": "standard", "key": "documentation_manuals"}
+    s = quick(client, admin_headers, features=BIGGER, not_included=[out]).json()
     assert s["build_only_paise"] < plain["build_only_paise"]
     removed = [i for i in s["not_included"] if i["why"] == "removed_by_you"]
-    assert [i["label"] for i in removed] == ["Servers and release set-up"]
+    assert [i["label"] for i in removed] == ["Manuals"]
+    fixed = [{"kind": "standard", "key": "devops_cicd_setup"}]
+    kept = quick(client, admin_headers, features=BIGGER, not_included=fixed).json()
+    assert kept["build_only_paise"] == plain["build_only_paise"]
     bad = quick(client, admin_headers, not_included=[{"kind": "standard", "key": "payments"}])
     assert bad.status_code == 422
 
@@ -97,8 +113,9 @@ def test_reports_print_assumed_and_not_included(client: TestClient, admin_header
         client,
         admin_headers,
         answered=[],
+        features=BIGGER,
         choices={"old_data": "not_sure"},
-        not_included=[{"kind": "standard", "key": "devops_cicd_setup"}],
+        not_included=[{"kind": "standard", "key": "documentation_manuals"}],
     ).json()
     r = client.get(f"/estimates/{s['estimate_id']}/boq.xlsx", headers=admin_headers)
     assert r.status_code == 200
@@ -107,7 +124,7 @@ def test_reports_print_assumed_and_not_included(client: TestClient, admin_header
     rows = list(wb["Not included"].iter_rows(min_row=2, values_only=True))
     why = {str(row[0]): str(row[1]) for row in rows}
     assert "If required:" in why["Move data from the old system"]
-    assert "Servers and release set-up" in why
+    assert "Manuals" in why
     assumed = [row[0] for row in wb["Assumed answers"].iter_rows(min_row=2, values_only=True)]
     assert "How many people will use it?" in assumed
     keys = [row[0] for row in wb["Assumptions"].iter_rows(min_row=2, values_only=True)]

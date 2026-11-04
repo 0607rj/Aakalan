@@ -48,6 +48,7 @@ import {
 import { Downloads } from "./downloads";
 import { RealityCheck } from "./reality";
 import { FeatureStoriesSection } from "./stories";
+import { PrerequisiteWarnings, ProjectContextLine } from "../new/parts";
 
 function Fact({ label, value }: { label: string; value: string }) {
   return (
@@ -121,6 +122,25 @@ function RangeBand({ summary }: { summary: QuickSummary }) {
   );
 }
 
+/** Industry, type and users, and what usually goes with the features: shown only, never priced. */
+function ProjectContextCard({ summary }: { summary: QuickSummary }) {
+  const c = summary.context;
+  const warnings = summary.prerequisites ?? [];
+  if (!c && warnings.length === 0) return null;
+  return (
+    <section className="soft-card flex flex-col gap-3 px-6 py-4 sm:px-10">
+      {c ? (
+        <ProjectContextLine
+          domain={c.domain}
+          projectType={c.project_type}
+          roles={c.user_roles}
+        />
+      ) : null}
+      <PrerequisiteWarnings items={warnings} />
+    </section>
+  );
+}
+
 function Headline({ summary }: { summary: QuickSummary }) {
   const years = summary.support_years;
   const range = (low: number | null, high: number | null) =>
@@ -130,36 +150,77 @@ function Headline({ summary }: { summary: QuickSummary }) {
   const risk = summary.risk_allowance_paise;
   const tax = summary.currency === "INR" ? "GST" : "tax";
   const perYear = runningPerYear(summary);
+  // a description is quoted as vendors quote (build, then running, + tax); a tender bids the
+  // whole contract, so its total leads
+  const quoteFirst =
+    !summary.from_document && (summary.quote_build_paise ?? 0) > 0;
   return (
     <section
       aria-labelledby="estimate-heading"
       className="slab app-rise flex flex-col gap-8 px-6 py-8 sm:px-10 sm:py-10"
     >
       <div className="flex flex-wrap items-end justify-between gap-x-10 gap-y-4">
-        <div className="settle flex flex-col gap-1">
-          <h2 id="estimate-heading" className="figure-label">
-            {summary.mode === "client"
-              ? "Fair budget, most likely"
-              : "Most likely price"}
-            , with {tax}
-          </h2>
-          <span className="font-wide mt-1 text-[clamp(3rem,7vw,4.5rem)] leading-none text-tape-bright tabular-nums">
-            {shortMoney(summary.likely_paise, summary.currency)}
-          </span>
-          {summary.likely_without_tax_paise ? (
-            <span className="text-sm text-muted-foreground tabular-nums">
-              {shortMoney(summary.likely_without_tax_paise, summary.currency)}{" "}
-              without {tax}
+        {quoteFirst ? (
+          // like a vendor's quote (OPEN_QUESTIONS 208): the build, then running, both + tax
+          <div className="settle flex flex-col gap-1">
+            <h2 id="estimate-heading" className="figure-label">
+              {summary.mode === "client"
+                ? "Fair budget to build and launch"
+                : "Price to build and launch"}
+              , most likely
+            </h2>
+            <span className="font-wide mt-1 text-[clamp(3rem,7vw,4.5rem)] leading-none text-tape-bright tabular-nums">
+              {shortMoney(summary.quote_build_paise ?? null, summary.currency)}
+              <span className="ml-2 align-baseline text-xl text-muted-foreground">
+                + {tax}
+              </span>
             </span>
-          ) : null}
-        </div>
+            {summary.quote_running_per_year_paise ? (
+              <span className="text-base tabular-nums">
+                Then running:{" "}
+                {shortMoney(
+                  summary.quote_running_per_year_paise,
+                  summary.currency,
+                )}{" "}
+                a year + {tax}
+              </span>
+            ) : null}
+          </div>
+        ) : (
+          <div className="settle flex flex-col gap-1">
+            <h2 id="estimate-heading" className="figure-label">
+              {summary.mode === "client"
+                ? "Fair budget, most likely"
+                : "Most likely price"}
+              , with {tax}
+            </h2>
+            <span className="font-wide mt-1 text-[clamp(3rem,7vw,4.5rem)] leading-none text-tape-bright tabular-nums">
+              {shortMoney(summary.likely_paise, summary.currency)}
+            </span>
+            {summary.likely_without_tax_paise ? (
+              <span className="text-sm text-muted-foreground tabular-nums">
+                {shortMoney(summary.likely_without_tax_paise, summary.currency)}{" "}
+                without {tax}
+                {summary.quote_build_paise
+                  ? `: ${shortMoney(summary.quote_build_paise, summary.currency)} to build and launch`
+                  : ""}
+              </span>
+            ) : null}
+          </div>
+        )}
         <p className="settle max-w-xs text-sm text-muted-foreground [--d:2]">
           An early estimate, not a quotation.{" "}
-          {summary.support_term_open
-            ? "Includes one year of support, margin and tax."
-            : years > 0
-              ? `Includes ${years} year${years === 1 ? "" : "s"} of support, margin and tax.`
-              : "Building and launch only, with margin and tax."}
+          {quoteFirst
+            ? `Includes margin and a safety buffer. Whole price with ${
+                summary.support_term_open || years === 1
+                  ? "one year"
+                  : `${years} years`
+              } of running and ${tax}: ${shortMoney(summary.likely_paise, summary.currency)}.`
+            : summary.support_term_open
+              ? "Includes one year of support, margin and tax."
+              : years > 0
+                ? `Includes ${years} year${years === 1 ? "" : "s"} of support, margin and tax.`
+                : "Building and launch only, with margin and tax."}
         </p>
       </div>
 
@@ -1090,6 +1151,7 @@ function SummaryView({
       {summary.feasible ? (
         <>
           <Headline summary={summary} />
+          <ProjectContextCard summary={summary} />
           <IndependentCheckCard summary={summary} onChange={onChange} />
           <SizeCheckCard summary={summary} />
           <RealityCheck summary={summary} />

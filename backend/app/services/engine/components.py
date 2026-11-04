@@ -618,7 +618,7 @@ def component_line(
         year=0,
         label=ci.label or catalog.name,
         formula_id=formula_id,
-        uncertainty_group=f"{catalog.bucket}|{ci.id}",
+        uncertainty_group=f"{catalog.bucket}|{ci.random_stream or ci.id}",
     )
     t.link_component(ci, catalog)
     t.add_input(

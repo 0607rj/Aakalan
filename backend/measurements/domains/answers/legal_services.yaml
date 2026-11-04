@@ -1,0 +1,28 @@
+# Answer file: hidden from the readers. Keys are the catalog's (seeds/quick_estimate.yaml).
+domain_words: [legal, law, lawyer, advocate]
+features:
+  - search             # 3.3
+  - bookings           # 3.4 consultation slots
+  - chat               # 3.5 messages
+  - documents          # 3.5, 3.6 shared documents and case files
+  - notifications      # 3.7 hearing SMS
+  - billing            # 3.8 invoices with GST
+  - languages          # 3.10
+  - dashboards         # 3.11
+tolerated: [marketplace, online_forms, approval_workflow, crm]
+not_features:
+  - payments           # 3.9 the platform collects no money
+  - mobile_app         # 4.2 later
+  - ai_agent           # 4.1 later
+  - ai_chatbot
+scope:
+  - [sms]
+custom:
+  - {what: Case files, match_any: [case file, case management, matter]}
+  - {what: Hearing diary, match_any: [hearing, diary]}
+  - {what: Time tracking, match_any: [time spent, time track, timesheet, time record]}
+optional:
+  - {what: AI notice drafting, match_any: [draft]}
+prerequisites: []
+prerequisites_if_ticked: [marketplace]   # a marketplace with no payments should be warned about
+choices: {platforms: web}

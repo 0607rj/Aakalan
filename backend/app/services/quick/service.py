@@ -9,7 +9,7 @@ only regroups and adds integer paise that the engine produced.
 import hashlib
 import json
 import re
-from collections.abc import Callable
+from collections.abc import Callable, Iterable
 from dataclasses import dataclass, field
 from datetime import UTC, date, datetime
 from decimal import ROUND_HALF_UP, Decimal
@@ -53,7 +53,7 @@ from app.services.estimates.reference_store import (
     get_taxonomy,
 )
 from app.services.extraction.merge import project_extraction
-from app.services.extraction.tender import FoundInventory, TenderExtraction
+from app.services.extraction.tender import FoundInventory, IndustrySuggestion, TenderExtraction
 from app.services.quick.anchor import CheckLine, IndependentCheckOut, independent_check
 from app.services.quick.config import (
     CostItemRule,
@@ -64,6 +64,13 @@ from app.services.quick.config import (
     SizeCheck,
     SizeTier,
     quick_config,
+)
+from app.services.quick.context import (
+    Prerequisite,
+    ProjectContext,
+    missing_prerequisites,
+    project_type,
+    user_roles,
 )
 from app.services.quick.reality import (
     FeatureShare,
@@ -220,6 +227,9 @@ class QuickRequest(BaseModel):
     # What the user typed about the software (the form's description), kept so user stories can
     # be drafted later from the results page. Never priced, not part of the seed.
     description: str = Field(default="", max_length=4000)
+    # the industry the AI read from the document or description: shown on the results page
+    # only, never priced and not part of the seed (OPEN_QUESTIONS 205)
+    project_domain: str = Field(default="", max_length=120)
 
 
 class PlainPart(BaseModel):
@@ -451,6 +461,11 @@ class QuickSummary(BaseModel):
     build_only_paise: int  # building only: before support, margin, buffer and tax
     build_only_low_paise: int = 0
     build_only_high_paise: int = 0
+    # the likely price without GST split as vendors quote it (OPEN_QUESTIONS 208): building and
+    # launch, and running per support year, each with its share of margin and buffer
+    quote_build_paise: int | None = None
+    quote_running_per_year_paise: int | None = None
+    from_document: bool = False  # priced from an uploaded document (a tender: the total leads)
     build_months: str
     support_years: int
     parts: list[PlainPart]
@@ -498,6 +513,11 @@ class QuickSummary(BaseModel):
     # a deadline too short to build in, priced at the fastest possible time (OPEN_QUESTIONS 179)
     deadline_asked_months: Decimal | None = None
     deadline_priced_months: Decimal | None = None
+    # shown only, never priced (OPEN_QUESTIONS 205): industry, project type and user roles;
+    # features that usually need one not ticked; the user's own (custom) features by name
+    context: ProjectContext | None = None
+    prerequisites: list[Prerequisite] = []
+    custom_features: list[str] = []
 
 
 def _default(cfg: QuickConfig, req: QuickRequest, key: str) -> str | int:
@@ -969,7 +989,10 @@ def _check_not_included(cfg: QuickConfig, req: QuickRequest, features: set[str])
             item.kind == "scope" and item.key in req.scope
         ):
             raise _unprocessable(f"{item.key!r} is both in the price and not included")
-    return {i.key for i in req.not_included if i.kind == "standard"}
+    # a block every working software has cannot be left out (OPEN_QUESTIONS 211): an older
+    # request that unticked one is priced with it
+    fixed = {k for k, b in cfg.standard_blocks.items() if b.fixed}
+    return {i.key for i in req.not_included if i.kind == "standard" and i.key not in fixed}
 
 
 def standard_blocks(cfg: QuickConfig, req: QuickRequest) -> list[str]:
@@ -1478,7 +1501,14 @@ def request_seed(req: QuickRequest, doc: Document | None) -> int:
     # user stories feed the size check only: they never move the price, not even its seed
     asked = req.model_dump(
         mode="json",
-        exclude={"document_id", "name", "answered", "feature_stories", "description"},
+        exclude={
+            "document_id",
+            "name",
+            "answered",
+            "feature_stories",
+            "description",
+            "project_domain",
+        },
     )
     if not asked["not_included"]:
         del asked["not_included"]
@@ -1594,6 +1624,53 @@ def question_impact(
             )
         )
     out.sort(key=lambda q: -q.impact_paise)
+    return out
+
+
+class SuggestionPrice(BaseModel):
+    feature: str  # "" for a new module
+    label: str
+    adds_paise: int | None  # to the most likely total; None = could not be priced
+
+
+def _with_suggestion(cfg: QuickConfig, req: QuickRequest, s: IndustrySuggestion) -> QuickRequest:
+    """The form with one suggestion added as the form adds it: a feature a question brings by
+    that question's first option that adds it, another feature ticked, a new module as a
+    custom feature of its type and size (the generic block: a general size estimate)."""
+    if not s.feature:
+        size = Size(s.size) if s.size in {z.value for z in Size} else Size.M
+        types = cfg.custom_feature_types
+        category = s.category if s.category in types else next(iter(types))
+        extra = CustomFeature(
+            name=s.label[:200],
+            category=category,
+            size=size,
+            catalog_key=s.catalog_key or None,  # its own block (OPEN_QUESTIONS 213)
+        )
+        return req.model_copy(update={"custom_features": [*req.custom_features, extra]})
+    for key, question in cfg.questions.items():
+        option = next((o for o in question.options if s.feature in o.add_features), None)
+        if option is not None and not option.retired:
+            return req.model_copy(update={"choices": {**req.choices, key: option.value}})
+    return req.model_copy(update={"features": [*req.features, s.feature]})
+
+
+def suggestion_prices(
+    db: Session, user: User, cfg: QuickConfig, req: QuickRequest, items: list[IndustrySuggestion]
+) -> list[SuggestionPrice]:
+    """What adding each "usually needed" suggestion alone adds to the form's most likely total
+    (OPEN_QUESTIONS 207): the engine prices the form with and without it, by the same fast
+    fixed-seed pricer as the question impact. Nothing is saved; the AI gives no number."""
+    req, likely = _impact_pricer(db, user, cfg, req)
+    base = likely(req)
+    have = set(request_features(cfg, req))
+    out = []
+    for s in items:
+        adds: int | None = 0
+        if not s.feature or s.feature not in have:
+            price = likely(_with_suggestion(cfg, req, s))
+            adds = max(0, price - base) if price is not None and base is not None else None
+        out.append(SuggestionPrice(feature=s.feature, label=s.label, adds_paise=adds))
     return out
 
 
@@ -1972,6 +2049,12 @@ def summarise(
         bid_check=_bid_check(cfg, estimate) if project.mode == BUYER_MODE else None,
         researched=researched_features(estimate),
         support_term_open=_support_term_open(cfg, project),
+        from_document=document,
+    )
+    summary.quote_build_paise, summary.quote_running_per_year_paise = quote_split(
+        [(ln.stage, ln.year, ln.likely_paise) for ln in estimate.lines],
+        summary.likely_without_tax_paise,
+        years,
     )
     share_of_range(summary)
     req = _saved_request(project)
@@ -1984,6 +2067,8 @@ def summarise(
             summary.not_included = not_included(cfg, req, priced, extraction)
         except (HTTPException, ValueError):  # saved with an older set of questions
             pass
+        summary.context, summary.prerequisites = _project_context(cfg, req, extraction)
+        summary.custom_features = [c.name for c in req.custom_features]
         asked = req.overrides.get(DEADLINE, req.deadline_months)
         priced_deadline = timeline.get("deadline_months")
         if asked is not None and priced_deadline is not None:
@@ -2155,6 +2240,33 @@ def _support_term_open(cfg: QuickConfig, project: Project) -> bool:
         return False
     chosen = (req.get("choices") or {}).get(SUPPORT_YEARS, cfg.questions[SUPPORT_YEARS].default)
     return str(chosen) == PER_YEAR
+
+
+COMMERCIAL_STAGE = "commercial"
+
+
+def quote_split(
+    lines: Iterable[tuple[str, int, int]], likely_without_tax: int | None, years: int
+) -> tuple[int | None, int | None]:
+    """The likely price without GST as a vendor quotes it (OPEN_QUESTIONS 208): building and
+    launch = price × (one-time cost ÷ all cost), running per year = the rest ÷ support years.
+    Costs are the non-commercial lines (year 0 one-time, later years running); margin, buffer
+    and the other commercial lines are shared in proportion. No new number: the parts add up to
+    the likely price without GST. `lines`: (stage, year, likely paise) of every cost line."""
+    if not likely_without_tax:
+        return None, None
+    costs = [(year, paise) for stage, year, paise in lines if stage != COMMERCIAL_STAGE]
+    once = sum(paise for year, paise in costs if year == 0)
+    later = sum(paise for year, paise in costs if year >= 1)
+    if once + later <= 0:
+        return None, None
+    build = int(
+        (Decimal(likely_without_tax) * once / (once + later)).to_integral_value(ROUND_HALF_UP)
+    )
+    if years <= 0 or later <= 0:
+        return build, None
+    run = (Decimal(likely_without_tax - build) / years).to_integral_value(ROUND_HALF_UP)
+    return build, int(run)
 
 
 def _without_tax(result: dict[str, Any], likely: int | None, planned: int) -> int | None:
@@ -2864,6 +2976,29 @@ def _story_counts(
         if f.source != "none":
             out[f.label] = out.get(f.label, 0) + len(f.stories)
     return out
+
+
+def _project_context(
+    cfg: QuickConfig, req: QuickRequest, extraction: TenderExtraction | None
+) -> tuple[ProjectContext | None, list[Prerequisite]]:
+    """The results page's project context and prerequisite warnings, in code from the saved
+    request (OPEN_QUESTIONS 205). Shown only: the price was made before and without them."""
+    rules = cfg.project_context
+    if rules is None:
+        return None, []
+    try:
+        stories = [s for f in feature_story_lists(cfg, req, extraction) for s in f.stories]
+    except (HTTPException, ValueError):  # saved with an older set of features
+        stories = []
+    domain = req.project_domain or (extraction.project_domain if extraction else "")
+    features = request_features(cfg, req)  # ticked, and those an answer adds (the app)
+    context = ProjectContext(
+        domain=domain,
+        project_type=project_type(cfg, features),
+        user_roles=user_roles(stories, rules.max_roles),
+    )
+    given = {k: str(v) for k, v in req.choices.items() if k in (req.answered or [])}
+    return context, missing_prerequisites(cfg, features, answered=given)
 
 
 def estimate_stories(

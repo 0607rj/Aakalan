@@ -32,6 +32,7 @@ from app.services.extraction.tender import (
     verify_findings,
 )
 from app.services.quick.config import quick_config
+from app.services.quick.context import user_roles
 
 OVERRIDING_KINDS = frozenset({"corrigendum", "prebid_reply"})
 
@@ -71,6 +72,7 @@ def merge_extractions(
     merged.scope, merged.scope_set_aside = [], []
     merged.staff_lines, merged.chatbot_buyer_systems, merged.staffing = [], None, None
     merged.uncovered, merged.uncovered_more = [], 0
+    merged.project_domain = next((ex.project_domain for _, ex in docs if ex.project_domain), "")
     scope: dict[str, Any] = {}
     set_aside: dict[str, Any] = {}
     others: dict[str, Any] = {}
@@ -154,6 +156,16 @@ def merge_extractions(
         if not (n.topic == "payment_terms" and merged.payment_terms is not None)
     ]
     apply_code_checks(merged, [doc for doc, _ in docs])
+    # the first file's "usually needed" list, less what any file (or the keyword net) found
+    found = {f.key for f in merged.features}
+    names = {o.name.strip().lower() for o in merged.other_features}
+    merged.ready_made = next((ex.ready_made for _, ex in docs if ex.ready_made), None)
+    merged.industry_suggestions_asked = any(ex.industry_suggestions_asked for _, ex in docs)
+    merged.industry_suggestions = [
+        s
+        for s in next((ex.industry_suggestions for _, ex in docs if ex.industry_suggestions), [])
+        if s.feature not in found and (s.feature or s.label.strip().lower() not in names)
+    ]
     return merged, changes
 
 
@@ -170,7 +182,18 @@ def apply_code_checks(extraction: TenderExtraction, docs: list[Document]) -> Ten
     apply_staffing(quick_config(), extraction, docs)  # staff lines and rules (OPEN_QUESTIONS 162)
     _keyword_net(extraction, docs)
     _coverage(extraction, docs)
+    _roles(extraction)
     return extraction
+
+
+def _roles(merged: TenderExtraction) -> None:
+    """The user roles named in the reading's user stories, shown only (OPEN_QUESTIONS 205)."""
+    rules = quick_config().project_context
+    if rules is None:
+        return
+    stories = [s for f in merged.features for s in f.stories]
+    stories += [s for o in merged.other_features for s in o.stories]
+    merged.user_roles = user_roles(stories, rules.max_roles)
 
 
 def _pages(doc: Document) -> list[tuple[int, str]]:

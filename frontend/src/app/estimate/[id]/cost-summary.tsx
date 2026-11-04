@@ -450,15 +450,28 @@ export function WhatsIncluded({
     USAGE_BASED.has(i.key.split(".")[0]),
   );
 
+  // the user's own features are priced from a general size block: said so, in client words
+  const custom = new Set(summary.custom_features ?? []);
+  const listed = summary.features.filter((f) => !custom.has(f));
+  const own = summary.features.filter((f) => custom.has(f));
   const included: React.ReactNode[] = [
-    summary.features.length > 0 ? (
+    listed.length > 0 ? (
       <>
         <span className="font-medium">
-          {summary.features.length} feature
-          {summary.features.length === 1 ? "" : "s"} you confirmed
+          {listed.length} feature{listed.length === 1 ? "" : "s"} from our price
+          list
+        </span>
+        <span className="text-muted-foreground">{listed.join(", ")}</span>
+      </>
+    ) : null,
+    own.length > 0 ? (
+      <>
+        <span className="font-medium">
+          {own.length} custom feature{own.length === 1 ? "" : "s"}
         </span>
         <span className="text-muted-foreground">
-          {summary.features.join(", ")}
+          {own.join(", ")}. Priced from a general size estimate, so less
+          certain.
         </span>
       </>
     ) : null,

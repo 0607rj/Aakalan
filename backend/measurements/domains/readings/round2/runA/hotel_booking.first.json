@@ -1,0 +1,137 @@
+{
+  "project_name": "Hotel Website and Property Management",
+  "summary": "The requirement document describes a booking website and a front-desk system for a group of three resorts with 140 rooms. Guests see the rooms, book and pay online and get confirmations, while staff handle check-in, billing with GST, housekeeping, stock and guest records, and managers see revenue reports. Room rates stay in step with travel websites through a channel manager, and the vendor hosts and supports the system for two years.",
+  "project_domain": "Hotels and resorts",
+  "features": [
+    {
+      "key": "public_website",
+      "evidence": [{"page": 2, "clause_ref": "3.1", "quote": "The group shall have a public website with each resort's rooms, photos, offers and a blog, which the sales team updates without a developer."}],
+      "stories": ["As a guest, I can see each resort's rooms, photos, offers and blog", "As a sales team member, I can update the website content without a developer"]
+    },
+    {
+      "key": "bookings",
+      "evidence": [{"page": 2, "clause_ref": "3.2", "quote": "Guests shall check availability and book rooms online for chosen dates and room types."}],
+      "stories": ["As a guest, I can check room availability for chosen dates and room types", "As a guest, I can book a room online"]
+    },
+    {
+      "key": "payments",
+      "evidence": [{"page": 2, "clause_ref": "3.3", "quote": "Guests shall pay the full amount or an advance online when booking."}],
+      "stories": ["As a guest, I can pay the full amount or an advance online when booking"]
+    },
+    {
+      "key": "notifications",
+      "evidence": [{"page": 2, "clause_ref": "3.4", "quote": "Guests shall get an email and WhatsApp confirmation, and a reminder two days before arrival."}],
+      "stories": ["As a guest, I get an email and WhatsApp confirmation of my booking", "As a guest, I get a reminder two days before arrival"]
+    },
+    {
+      "key": "connect_existing",
+      "evidence": [{"page": 2, "clause_ref": "3.5", "quote": "Rates and available rooms shall stay in step with the travel websites (Booking.com, MakeMyTrip) through a channel manager's API."}],
+      "stories": ["As a resort manager, I can have rates and available rooms kept in step with the travel websites through the channel manager"]
+    },
+    {
+      "key": "billing",
+      "evidence": [{"page": 2, "clause_ref": "3.7", "quote": "Room charges, restaurant bills and extra services shall be added to the guest's bill; the final invoice shall show GST."}],
+      "stories": ["As a front-desk staff member, I can add room charges, restaurant bills and extra services to the guest's bill", "As a front-desk staff member, I can issue the final invoice showing GST"]
+    },
+    {
+      "key": "inventory",
+      "evidence": [{"page": 2, "clause_ref": "3.9", "quote": "Resort managers shall track linen and toiletries stock and get an alert when stock is low."}],
+      "stories": ["As a resort manager, I can track linen and toiletries stock", "As a resort manager, I get an alert when stock is low"]
+    },
+    {
+      "key": "crm",
+      "evidence": [{"page": 2, "clause_ref": "3.10", "quote": "The sales team shall keep guest profiles, preferences and past stays, and send offers to past guests."}],
+      "stories": ["As a sales team member, I can keep guest profiles, preferences and past stays", "As a sales team member, I can send offers to past guests"]
+    },
+    {
+      "key": "dashboards",
+      "evidence": [{"page": 2, "clause_ref": "3.11", "quote": "Managers shall see occupancy, average room rate and revenue reports for each resort."}],
+      "stories": ["As a manager, I can see occupancy, average room rate and revenue reports for each resort"]
+    },
+    {
+      "key": "languages",
+      "evidence": [{"page": 2, "clause_ref": "3.13", "quote": "The website shall be available in English and Malayalam."}],
+      "stories": ["As a guest, I can read the website in English or Malayalam"]
+    }
+  ],
+  "other_features": [
+    {
+      "name": "Front-desk check-in, check-out and room assignment",
+      "description": "Front-desk staff check guests in and out, assign rooms and record guest ID details.",
+      "category": "module",
+      "size": "M",
+      "evidence": [{"page": 2, "clause_ref": "3.6", "quote": "Front-desk staff shall check guests in and out, assign rooms, and record guest ID details."}],
+      "part_of": "",
+      "stories": ["As a front-desk staff member, I can check a guest in", "As a front-desk staff member, I can check a guest out", "As a front-desk staff member, I can assign rooms", "As a front-desk staff member, I can record guest ID details"]
+    },
+    {
+      "name": "Housekeeping room status",
+      "description": "Housekeeping staff see which rooms need cleaning and mark them ready from a tablet in the browser.",
+      "category": "module",
+      "size": "S",
+      "evidence": [{"page": 2, "clause_ref": "3.8", "quote": "Housekeeping staff shall see which rooms to clean and mark them ready from a tablet in the browser."}],
+      "part_of": "",
+      "stories": ["As a housekeeping staff member, I can see which rooms to clean", "As a housekeeping staff member, I can mark a room ready from a tablet"]
+    }
+  ],
+  "choices": [
+    {
+      "question": "platforms",
+      "value": "web",
+      "evidence": [{"page": 3, "clause_ref": "4.1", "quote": "A mobile app is not required."}]
+    }
+  ],
+  "numbers": [
+    {
+      "field": "languages",
+      "value": 2,
+      "evidence": [{"page": 2, "clause_ref": "3.13", "quote": "The website shall be available in English and Malayalam."}]
+    },
+    {
+      "field": "om_years",
+      "value": 2,
+      "evidence": [{"page": 3, "clause_ref": "5.1", "quote": "The vendor shall host the website and support the system for two years."}]
+    }
+  ],
+  "unclear_points": [
+    {
+      "topic": "Channel manager product",
+      "why": "The document names no channel manager and does not say whether one is already in use or the vendor must supply it.",
+      "page": 2,
+      "clause_ref": "3.5",
+      "quote": "through a channel manager's API.",
+      "prebid_query": "Regarding clause 3.5, please state which channel manager product is in use or to be used, and whether its subscription and API access will be provided by the group.",
+      "answer": ""
+    }
+  ],
+  "not_priced": [],
+  "payment_terms": null,
+  "scope": [
+    {
+      "key": "booking_payment",
+      "status": "explicit",
+      "note": "",
+      "evidence": [{"page": 2, "clause_ref": "3.3", "quote": "Guests shall pay the full amount or an advance online when booking."}]
+    },
+    {
+      "key": "booking_reminders",
+      "status": "explicit",
+      "note": "",
+      "evidence": [{"page": 2, "clause_ref": "3.4", "quote": "Guests shall get an email and WhatsApp confirmation, and a reminder two days before arrival."}]
+    },
+    {
+      "key": "whatsapp",
+      "status": "explicit",
+      "note": "",
+      "evidence": [{"page": 2, "clause_ref": "3.4", "quote": "Guests shall get an email and WhatsApp confirmation, and a reminder two days before arrival."}]
+    },
+    {
+      "key": "seo",
+      "status": "explicit",
+      "note": "",
+      "evidence": [{"page": 2, "clause_ref": "3.12", "quote": "The website shall be found easily on Google."}]
+    }
+  ],
+  "staff_lines": [],
+  "chatbot_buyer_systems": null
+}

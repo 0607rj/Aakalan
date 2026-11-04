@@ -738,3 +738,64 @@ def test_questions_say_when_they_apply(client: TestClient, admin_headers: H) -> 
     assert q["onsite_period"]["only_with_override"] == "onsite_staff"
     for key in ("old_data", "hosting", "availability", "disaster_site"):
         assert q[key]["hide_when"]["build_part"] == ["frontend_only"]
+
+
+def test_results_show_the_project_context(client: TestClient, admin_headers: H) -> None:
+    """Industry, type and users are shown only (OPEN_QUESTIONS 205); that the industry never
+    reaches the seed is tested in tests/core/test_project_context.py."""
+    told = quick(
+        client, admin_headers, features=["marketplace"], project_domain="Handicraft trade"
+    ).json()
+    assert told["context"]["domain"] == "Handicraft trade"
+    assert told["context"]["project_type"]
+    assert [p["key"] for p in told["prerequisites"]] == ["marketplace"]  # payments not ticked
+
+
+def test_identical_requests_in_two_projects_give_identical_ranges(
+    client: TestClient, admin_headers: H
+) -> None:
+    """Same inputs + same versions + same seed => same output, whatever the database ids
+    (OPEN_QUESTIONS 206: Monte Carlo streams are named by what each block is)."""
+    body = {
+        "features": ["online_forms", "payments"],
+        "custom_features": [{"name": "Live video", "category": "module", "size": "M"}],
+    }
+    a, b = quick(client, admin_headers, **body).json(), quick(client, admin_headers, **body).json()
+    assert a["project_id"] != b["project_id"]
+    for key in ("low_paise", "likely_paise", "high_paise"):
+        assert a[key] == b[key]
+
+
+def test_the_price_is_also_split_as_vendors_quote(client: TestClient, admin_headers: H) -> None:
+    """Build and launch, then running per year, both without GST (OPEN_QUESTIONS 208): no new
+    number, the parts add up to the likely price without GST."""
+    for years in (1, 3):
+        s = quick(client, admin_headers, choices={"support_years": years}).json()
+        assert not s["from_document"]
+        build, run = s["quote_build_paise"], s["quote_running_per_year_paise"]
+        assert build > 0 and run > 0
+        assert build < s["likely_without_tax_paise"] < s["likely_paise"]
+        assert abs(build + run * years - s["likely_without_tax_paise"]) <= years  # rounding
+    s = quick(client, admin_headers, choices={"support_years": 0}).json()
+    assert s["quote_running_per_year_paise"] is None
+    assert s["quote_build_paise"] == s["likely_without_tax_paise"]
+
+
+def test_blocks_every_software_has_cannot_be_left_out(client: TestClient, admin_headers: H) -> None:
+    """Screens, sign-in, testing ... are always in the price (OPEN_QUESTIONS 211); a usual but
+    optional block (manuals) can still be unticked."""
+    body = {"name": "Blocks", "features": ["online_forms", "payments", "documents", "dashboards"]}
+    r = client.post("/quick-estimate/standard-blocks", json=body, headers=admin_headers)
+    blocks = {b["key"]: b["fixed"] for b in r.json()}
+    assert blocks["responsive_frontend"] and blocks["functional_testing_uat_support"]
+    assert blocks.get("documentation_manuals") is False
+
+    def build(*keys: str) -> int:
+        out = [{"kind": "standard", "key": k} for k in keys]
+        s = quick(client, admin_headers, **{**body, "not_included": out})
+        assert s.status_code == 201, s.text
+        return int(s.json()["build_only_paise"])
+
+    full = build()
+    assert build("responsive_frontend", "functional_testing_uat_support") == full
+    assert build("documentation_manuals") < full

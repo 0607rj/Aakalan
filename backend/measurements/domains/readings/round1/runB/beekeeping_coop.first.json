@@ -1,0 +1,159 @@
+{
+  "project_name": "Beekeepers' Co-operative Management System",
+  "summary": "The requirement document describes one system for a co-operative of about 2,500 beekeepers, its 12 collection centres and its head office. It covers member registration, apiary records, honey collection and quality testing, member payments, SMS updates, an online shop and reports. Screens are needed in three languages and centres must keep working without internet.",
+  "project_domain": "Beekeeping co-operative",
+  "features": [
+    {
+      "key": "online_forms",
+      "evidence": [{"page": 2, "clause_ref": "3.1", "quote": "Beekeepers shall register as members online with their village, bank details and the number of hives they keep."}],
+      "stories": ["As a beekeeper, I can register as a member online with my village, bank details and number of hives"],
+      "covers": [],
+      "mentions": 1,
+      "suggested": true
+    },
+    {
+      "key": "maps",
+      "evidence": [{"page": 2, "clause_ref": "3.3", "quote": "Head office shall see all apiaries on a map."}],
+      "stories": ["As a head office manager, I can see all apiaries on a map"],
+      "covers": [],
+      "mentions": 1,
+      "suggested": true
+    },
+    {
+      "key": "scanning",
+      "evidence": [{"page": 2, "clause_ref": "3.5", "quote": "Centre staff shall scan the drum QR codes with the tablet camera when drums leave for the processing plant."}],
+      "stories": ["As centre staff, I can scan a drum's QR code with the tablet camera when it leaves for the processing plant"],
+      "covers": [],
+      "mentions": 1,
+      "suggested": true
+    },
+    {
+      "key": "offline_app",
+      "evidence": [{"page": 2, "clause_ref": "3.6", "quote": "Collection centres often lose internet; entries shall be saved on the tablet and sent when the connection returns."}],
+      "stories": ["As centre staff, I can keep entering records without internet and have them sent when the connection returns"],
+      "covers": [],
+      "mentions": 1,
+      "suggested": true
+    },
+    {
+      "key": "notifications",
+      "evidence": [{"page": 2, "clause_ref": "3.10", "quote": "Members shall get an SMS when their honey is weighed and when payment is sent."}],
+      "stories": ["As a member, I get an SMS when my honey is weighed and when my payment is sent"],
+      "covers": [],
+      "mentions": 1,
+      "suggested": true
+    },
+    {
+      "key": "languages",
+      "evidence": [{"page": 2, "clause_ref": "3.11", "quote": "Screens shall be available in Marathi, Kannada and English."}],
+      "stories": ["As a user, I can use the screens in Marathi, Kannada or English"],
+      "covers": [],
+      "mentions": 1,
+      "suggested": true
+    },
+    {
+      "key": "online_store",
+      "evidence": [{"page": 2, "clause_ref": "3.12", "quote": "The co-operative shall sell bottled honey to the public in an online shop with a cart and online payment."}],
+      "stories": ["As a member of the public, I can buy bottled honey from the online shop using a cart"],
+      "covers": [],
+      "mentions": 1,
+      "suggested": true
+    },
+    {
+      "key": "payments",
+      "evidence": [{"page": 2, "clause_ref": "3.12", "quote": "The co-operative shall sell bottled honey to the public in an online shop with a cart and online payment."}],
+      "stories": ["As a shopper, I can pay online for my order"],
+      "covers": [],
+      "mentions": 1,
+      "suggested": true
+    },
+    {
+      "key": "dashboards",
+      "evidence": [{"page": 2, "clause_ref": "3.13", "quote": "Managers shall see reports of honey collected by centre, by month and by grade, and payments made."}],
+      "stories": ["As a manager, I can see reports of honey collected by centre, month and grade, and payments made"],
+      "covers": [],
+      "mentions": 1,
+      "suggested": true
+    }
+  ],
+  "other_features": [
+    {
+      "name": "Apiary and hive records",
+      "description": "Members keep a record of each apiary with its location, hives, queen replacement dates and inspection notes.",
+      "category": "module",
+      "size": "M",
+      "evidence": [{"page": 2, "clause_ref": "3.2", "quote": "Members shall keep a record of each apiary: its location, hives, queen replacement dates and inspection notes."}],
+      "part_of": "",
+      "stories": ["As a member, I can record each apiary with its location, hives, queen replacement dates and inspection notes"]
+    },
+    {
+      "name": "Honey weighing, grading and drum labels",
+      "description": "Collection centre staff weigh each member's honey, record moisture and grade, and print a QR-coded label for each drum.",
+      "category": "module",
+      "size": "M",
+      "evidence": [{"page": 2, "clause_ref": "3.4", "quote": "At the collection centre, staff shall weigh each member's honey, record moisture and grade, and print a label with a QR code for each drum."}],
+      "part_of": "",
+      "stories": ["As centre staff, I can weigh a member's honey and record moisture and grade", "As centre staff, I can print a QR code label for each drum"]
+    },
+    {
+      "name": "Lab results and batch traceability",
+      "description": "Quality testers record lab results per batch and every jar can be traced back to its drums and members.",
+      "category": "module",
+      "size": "M",
+      "evidence": [{"page": 2, "clause_ref": "3.8", "quote": "Quality testers shall record lab results for each batch, and every jar shall be traceable back to the drums and members it came from."}],
+      "part_of": "",
+      "stories": ["As a quality tester, I can record lab results for each batch", "As a manager, I can trace any jar back to its drums and members"]
+    },
+    {
+      "name": "Member payment calculation and bulk payout",
+      "description": "The accounts team works out each member's payment from weight and grade and sends payments to bank accounts in bulk.",
+      "category": "module",
+      "size": "M",
+      "evidence": [{"page": 2, "clause_ref": "3.9", "quote": "The accounts team shall work out each member's payment from the weight and grade, and send payments to members' bank accounts in bulk."}],
+      "part_of": "",
+      "stories": ["As an accounts user, I can work out each member's payment from weight and grade", "As an accounts user, I can send payments to members' bank accounts in bulk"]
+    }
+  ],
+  "choices": [
+    {
+      "question": "platforms",
+      "value": "web",
+      "evidence": [{"page": 2, "clause_ref": "3.7", "quote": "Centre staff use the system in a browser on tablets; a separate mobile app is not required."}]
+    },
+    {
+      "question": "scale",
+      "value": "up_to_5k",
+      "evidence": [{"page": 1, "clause_ref": "1.1", "quote": "Madhu Sahakari is a co-operative of about 2,500 beekeepers in the Western Ghats of Maharashtra and Karnataka."}]
+    }
+  ],
+  "numbers": [
+    {
+      "field": "om_years",
+      "value": 2,
+      "evidence": [{"page": 3, "clause_ref": "5.1", "quote": "The vendor shall support the system for two years after go-live."}]
+    },
+    {
+      "field": "languages",
+      "value": 3,
+      "evidence": [{"page": 2, "clause_ref": "3.11", "quote": "Screens shall be available in Marathi, Kannada and English."}]
+    },
+    {
+      "field": "users_total",
+      "value": 2500,
+      "evidence": [{"page": 1, "clause_ref": "1.1", "quote": "Madhu Sahakari is a co-operative of about 2,500 beekeepers in the Western Ghats of Maharashtra and Karnataka."}]
+    }
+  ],
+  "unclear_points": [],
+  "not_priced": [],
+  "payment_terms": null,
+  "scope": [
+    {
+      "key": "sms",
+      "status": "explicit",
+      "note": "",
+      "evidence": [{"page": 2, "clause_ref": "3.10", "quote": "Members shall get an SMS when their honey is weighed and when payment is sent."}]
+    }
+  ],
+  "staff_lines": [],
+  "chatbot_buyer_systems": null
+}

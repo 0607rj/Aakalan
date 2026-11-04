@@ -1,0 +1,162 @@
+{
+  "project_name": "Plant Maintenance System",
+  "summary": "The requirement document describes a maintenance system for two auto-component plants in Pune with 320 machines. Operators raise breakdowns by scanning QR codes, supervisors run work orders and preventive maintenance, technicians use an offline-capable Android app, and stores keep spare parts linked to SAP purchasing. It also asks for sensor readings with alerts, failure prediction for compressors, dashboards and two years of on-call support.",
+  "project_domain": "Factory maintenance",
+  "features": [
+    {
+      "key": "scanning",
+      "evidence": [{"page": 2, "clause_ref": "3.2", "quote": "Operators shall raise a breakdown request by scanning the QR code on the machine with a phone."}],
+      "stories": ["As an operator, I can raise a breakdown request by scanning the QR code on the machine with a phone"]
+    },
+    {
+      "key": "mobile_app",
+      "evidence": [{"page": 2, "clause_ref": "3.5", "quote": "Technicians shall use an Android app to see and update their work orders, take photos and follow checklists."}],
+      "stories": ["As a technician, I can see and update my work orders in the app", "As a technician, I can take photos in the app", "As a technician, I can follow checklists in the app"],
+      "covers": ["scanning"]
+    },
+    {
+      "key": "offline_app",
+      "evidence": [{"page": 2, "clause_ref": "3.6", "quote": "The technician app shall work inside the plant where Wi-Fi is weak and send updates when back in range."}],
+      "stories": ["As a technician, I can keep working in the app where Wi-Fi is weak and have my updates sent when I am back in range"]
+    },
+    {
+      "key": "inventory",
+      "evidence": [{"page": 2, "clause_ref": "3.7", "quote": "The stores team shall keep stock of spare parts with bin locations and minimum levels, and issue spares against work orders."}],
+      "stories": ["As a stores team member, I can keep stock of spare parts with bin locations and minimum levels", "As a stores team member, I can issue spares against work orders"]
+    },
+    {
+      "key": "approval_workflow",
+      "evidence": [{"page": 2, "clause_ref": "3.8", "quote": "Spare part purchase requests above ₹25,000 shall go to the plant head for approval"}],
+      "stories": ["As the plant head, I can approve spare part purchase requests above the stated amount"]
+    },
+    {
+      "key": "connect_existing",
+      "evidence": [{"page": 2, "clause_ref": "3.8", "quote": "approved requests shall be sent to SAP."}],
+      "stories": ["As a stores team member, I can have approved purchase requests sent to SAP"]
+    },
+    {
+      "key": "ai_forecast",
+      "evidence": [{"page": 2, "clause_ref": "3.10", "quote": "The system shall predict likely failures of the compressors from the sensor readings and past breakdowns."}],
+      "stories": ["As a supervisor, I can see predicted likely failures of the compressors"]
+    },
+    {
+      "key": "notifications",
+      "evidence": [{"page": 2, "clause_ref": "3.11", "quote": "Supervisors shall get an app notification and SMS for every breakdown on a critical machine."}],
+      "stories": ["As a supervisor, I get an app notification and SMS for every breakdown on a critical machine"]
+    },
+    {
+      "key": "dashboards",
+      "evidence": [{"page": 2, "clause_ref": "3.12", "quote": "The plant head shall see dashboards of downtime, mean time between failures, mean time to repair and maintenance cost per machine."}],
+      "stories": ["As the plant head, I can see dashboards of downtime, mean time between failures, mean time to repair and maintenance cost per machine"]
+    },
+    {
+      "key": "old_data",
+      "evidence": [{"page": 2, "clause_ref": "3.13", "quote": "Maintenance history of the last two years shall be moved from the existing Excel sheets."}],
+      "stories": ["As the plant, I can have the last two years of maintenance history moved from the existing Excel sheets"]
+    }
+  ],
+  "other_features": [
+    {
+      "name": "Machine records and history",
+      "description": "Every machine has a record with make, model, location, manuals and maintenance history.",
+      "category": "module",
+      "size": "M",
+      "evidence": [{"page": 2, "clause_ref": "3.1", "quote": "Every machine shall have a record with its make, model, location, manuals and maintenance history."}],
+      "part_of": "",
+      "stories": ["As a maintenance user, I can see a machine's record with its make, model, location, manuals and maintenance history"]
+    },
+    {
+      "name": "Maintenance work orders",
+      "description": "Supervisors create, assign and prioritise work orders and technicians close them with work done, time and spares used.",
+      "category": "module",
+      "size": "M",
+      "evidence": [{"page": 2, "clause_ref": "3.3", "quote": "Supervisors shall create work orders, assign technicians and set priorities; technicians shall close work orders with the work done, time spent and spares used."}],
+      "part_of": "",
+      "stories": ["As a supervisor, I can create work orders", "As a supervisor, I can assign technicians to work orders", "As a supervisor, I can set priorities", "As a technician, I can close a work order with the work done, time spent and spares used"]
+    },
+    {
+      "name": "Preventive maintenance scheduling",
+      "description": "The system creates preventive maintenance work orders on a calendar or running-hours schedule.",
+      "category": "module",
+      "size": "M",
+      "evidence": [{"page": 2, "clause_ref": "3.4", "quote": "The system shall create preventive maintenance work orders on schedule, by calendar or by running hours."}],
+      "part_of": "",
+      "stories": ["As a supervisor, I can have preventive maintenance work orders created automatically on a calendar or running-hours schedule"]
+    },
+    {
+      "name": "Sensor readings and limit alerts",
+      "description": "Compressor and press sensors send temperature and vibration readings every minute, which are stored and raise alerts when a limit is crossed.",
+      "category": "integration",
+      "size": "L",
+      "evidence": [{"page": 2, "clause_ref": "3.9", "quote": "Sensors on the compressors and presses send temperature and vibration readings every minute; the system shall store these readings and alert supervisors when a reading crosses its limit."}],
+      "part_of": "",
+      "stories": ["As a supervisor, I can have sensor readings stored every minute", "As a supervisor, I get an alert when a reading crosses its limit"]
+    }
+  ],
+  "choices": [
+    {
+      "question": "platforms",
+      "value": "web_mobile",
+      "evidence": [{"page": 2, "clause_ref": "3.5", "quote": "Technicians shall use an Android app to see and update their work orders, take photos and follow checklists."}]
+    },
+    {
+      "question": "support_hours",
+      "value": "on_call",
+      "evidence": [{"page": 3, "clause_ref": "5.1", "quote": "The vendor shall support the system for two years with round-the-clock on-call support."}]
+    }
+  ],
+  "numbers": [
+    {
+      "field": "om_years",
+      "value": 2,
+      "evidence": [{"page": 3, "clause_ref": "5.1", "quote": "The vendor shall support the system for two years with round-the-clock on-call support."}]
+    }
+  ],
+  "unclear_points": [
+    {
+      "topic": "Sensor interface and equipment",
+      "why": "The document does not say how the sensors send data (protocol, gateway) or who supplies and installs them.",
+      "page": 2,
+      "clause_ref": "3.9",
+      "quote": "Sensors on the compressors and presses send temperature and vibration readings every minute;",
+      "prebid_query": "Regarding clause 3.9, please state the number of sensors, the protocol or gateway used to send readings, and whether sensors and gateways are already installed or to be supplied by the vendor.",
+      "answer": ""
+    },
+    {
+      "topic": "SAP interface for purchase requests",
+      "why": "The document does not say which SAP module or interface (API, IDoc, file) accepts the approved requests.",
+      "page": 2,
+      "clause_ref": "3.8",
+      "quote": "approved requests shall be sent to SAP.",
+      "prebid_query": "Regarding clause 3.8, please specify the SAP version and the interface (API, IDoc or file) through which approved purchase requests are to be sent, and whether SAP-side support will be provided.",
+      "answer": ""
+    },
+    {
+      "topic": "Scope of round-the-clock on-call support",
+      "why": "The document does not say how many engineers are on call, their response times or whether anyone must be at the plant.",
+      "page": 3,
+      "clause_ref": "5.1",
+      "quote": "with round-the-clock on-call support.",
+      "prebid_query": "Regarding clause 5.1, please state the required response and resolution times for on-call support, the number of engineers expected on call, and whether any staff must be stationed at the plants.",
+      "answer": "support_staff"
+    }
+  ],
+  "not_priced": [],
+  "payment_terms": null,
+  "scope": [
+    {
+      "key": "sms",
+      "status": "explicit",
+      "note": "",
+      "evidence": [{"page": 2, "clause_ref": "3.11", "quote": "Supervisors shall get an app notification and SMS for every breakdown on a critical machine."}]
+    },
+    {
+      "key": "push",
+      "status": "explicit",
+      "note": "",
+      "evidence": [{"page": 2, "clause_ref": "3.11", "quote": "Supervisors shall get an app notification and SMS for every breakdown on a critical machine."}]
+    }
+  ],
+  "staff_lines": [],
+  "chatbot_buyer_systems": null
+}

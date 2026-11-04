@@ -1,0 +1,26 @@
+domain_words: [logistic, fleet, transport, freight, delivery, cargo, truck]
+features:
+  - mobile_app       # 3.5 Android driver app
+  - maps             # 3.4 trucks live on a map
+  - scanning         # 3.6 barcode scanning with phone camera
+  - offline_app      # 3.8 works without network
+  - notifications    # 3.9 SMS with tracking link
+  - approval_workflow  # 3.11 expenses above 5,000 approved
+  - billing          # 3.12 GST freight invoices
+  - connect_existing # 3.3 tracker API, 3.13 Tally
+  - dashboards       # 3.14
+tolerated: [documents, search, ai_forecast]
+not_features:
+  - payments         # 4.1 bank transfer, no online payment
+  - app_purchases
+scope:
+  - [sms]
+custom:
+  - {what: Trip planning and dispatch, match_any: [trip, dispatch]}
+  - {what: Route optimisation, match_any: [route, order of stops, stop order, optimi]}
+  - {what: Fuel and maintenance tracking, match_any: [fuel, maintenance, service due, repair]}
+  - {what: Proof of delivery, match_any: [proof of delivery, signature], or_feature: mobile_app}
+optional:
+  - {what: iPhone app, match_any: [iphone, ios]}
+prerequisites: []
+choices: {platforms: web_mobile}

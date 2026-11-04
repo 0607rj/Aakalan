@@ -1,0 +1,158 @@
+{
+  "project_name": "Fleet and Delivery Management Platform",
+  "summary": "The requirement document describes a platform for a trucking company with 140 trucks to plan delivery trips, track trucks live and run an Android driver app. Drivers scan parcels and capture proof of delivery, customers get SMS tracking links, and accounts staff produce GST freight invoices that go to Tally. Fleet managers see fuel, service and delivery reports.",
+  "project_domain": "Freight logistics",
+  "features": [
+    {
+      "key": "maps",
+      "evidence": [{"page": 2, "clause_ref": "3.4", "quote": "Dispatchers and customers shall see trucks live on a map, with the expected arrival time at each stop."}],
+      "stories": ["As a dispatcher, I can see trucks live on a map with the expected arrival time at each stop", "As a customer, I can see my truck live on a map with the expected arrival time"],
+      "covers": [],
+      "mentions": 1,
+      "suggested": true
+    },
+    {
+      "key": "mobile_app",
+      "evidence": [{"page": 2, "clause_ref": "3.5", "quote": "Drivers shall use an Android app to see their trips, start and finish each stop, and call the customer."}],
+      "stories": ["As a driver, I can see my trips in the Android app", "As a driver, I can start and finish each stop and call the customer"],
+      "covers": ["scanning", "offline_app"],
+      "mentions": 1,
+      "suggested": true
+    },
+    {
+      "key": "scanning",
+      "evidence": [{"page": 2, "clause_ref": "3.6", "quote": "Drivers shall scan the barcode on every parcel at pickup and delivery with the phone camera."}],
+      "stories": ["As a driver, I can scan the barcode on every parcel at pickup and delivery", "As a driver, I can capture the receiver's signature and a photo as proof of delivery"],
+      "covers": [],
+      "mentions": 1,
+      "suggested": true
+    },
+    {
+      "key": "offline_app",
+      "evidence": [{"page": 2, "clause_ref": "3.8", "quote": "The driver app shall keep working on highways without mobile network and send the data when the network returns."}],
+      "stories": ["As a driver, I can keep using the app without network and have my data sent when the network returns"],
+      "covers": [],
+      "mentions": 1,
+      "suggested": true
+    },
+    {
+      "key": "notifications",
+      "evidence": [{"page": 2, "clause_ref": "3.9", "quote": "Customers shall receive an SMS with a tracking link when their parcel is out for delivery."}],
+      "stories": ["As a customer, I get an SMS with a tracking link when my parcel is out for delivery"],
+      "covers": [],
+      "mentions": 1,
+      "suggested": true
+    },
+    {
+      "key": "approval_workflow",
+      "evidence": [{"page": 2, "clause_ref": "3.11", "quote": "Trip expenses above ₹5,000 shall go to the fleet manager for approval."}],
+      "stories": ["As a fleet manager, I can approve trip expenses above ₹5,000"],
+      "covers": [],
+      "mentions": 1,
+      "suggested": true
+    },
+    {
+      "key": "billing",
+      "evidence": [{"page": 2, "clause_ref": "3.12", "quote": "Accounts staff shall generate GST freight invoices for customers each month."}],
+      "stories": ["As an accounts user, I can generate GST freight invoices for customers each month"],
+      "covers": [],
+      "mentions": 1,
+      "suggested": true
+    },
+    {
+      "key": "connect_existing",
+      "evidence": [{"page": 2, "clause_ref": "3.13", "quote": "Invoices and payments shall be sent to Tally automatically every day."}],
+      "stories": ["As an accounts user, I have invoices and payments sent to Tally automatically every day"],
+      "covers": [],
+      "mentions": 1,
+      "suggested": true
+    },
+    {
+      "key": "dashboards",
+      "evidence": [{"page": 2, "clause_ref": "3.14", "quote": "Fleet managers shall see reports of trips, delays, fuel cost per kilometre and on-time delivery."}],
+      "stories": ["As a fleet manager, I can see reports of trips, delays, fuel cost per kilometre and on-time delivery"],
+      "covers": [],
+      "mentions": 1,
+      "suggested": true
+    }
+  ],
+  "other_features": [
+    {
+      "name": "Trip planning and dispatch",
+      "description": "Dispatchers create delivery trips, assign a truck and driver, and add the stops in order.",
+      "category": "module",
+      "size": "M",
+      "evidence": [{"page": 2, "clause_ref": "3.1", "quote": "Dispatchers shall create delivery trips, assign a truck and a driver, and add the stops in order."}],
+      "part_of": "",
+      "stories": ["As a dispatcher, I can create a delivery trip, assign a truck and a driver, and add the stops in order"]
+    },
+    {
+      "name": "Route order suggestion",
+      "description": "The system suggests the best order of stops for a trip to reduce distance and time.",
+      "category": "module",
+      "size": "M",
+      "evidence": [{"page": 2, "clause_ref": "3.2", "quote": "The system shall suggest the best order of stops for a trip to reduce distance and time."}],
+      "part_of": "",
+      "stories": ["As a dispatcher, I can get a suggested best order of stops for a trip"]
+    },
+    {
+      "name": "GPS tracker data feed",
+      "description": "The platform reads truck locations every minute from the tracker company's API.",
+      "category": "integration",
+      "size": "M",
+      "evidence": [{"page": 2, "clause_ref": "3.3", "quote": "Every truck carries a GPS tracker; the platform shall read the trackers' locations every minute from the tracker company's API."}],
+      "part_of": "",
+      "stories": ["As a dispatcher, I have truck locations updated every minute from the tracker company's API"]
+    },
+    {
+      "name": "Proof of delivery capture",
+      "description": "At delivery the driver captures the receiver's signature and a photo.",
+      "category": "mobile",
+      "size": "S",
+      "evidence": [{"page": 2, "clause_ref": "3.7", "quote": "At delivery the driver shall capture the receiver's signature and a photo as proof of delivery."}],
+      "part_of": "mobile_app",
+      "stories": ["As a driver, I can capture the receiver's signature and a photo at delivery"]
+    },
+    {
+      "name": "Fuel, repair and service tracking",
+      "description": "Drivers enter fuel fills and repair costs, and fleet managers see each truck's fuel use and service due dates.",
+      "category": "module",
+      "size": "M",
+      "evidence": [{"page": 2, "clause_ref": "3.10", "quote": "Drivers shall enter fuel fills and repair costs; fleet managers shall see each truck's fuel use and service due dates."}],
+      "part_of": "",
+      "stories": ["As a driver, I can enter fuel fills and repair costs", "As a fleet manager, I can see each truck's fuel use and service due dates"]
+    }
+  ],
+  "choices": [
+    {
+      "question": "platforms",
+      "value": "web_mobile",
+      "evidence": [{"page": 2, "clause_ref": "3.5", "quote": "Drivers shall use an Android app to see their trips, start and finish each stop, and call the customer."}]
+    },
+    {
+      "question": "support_hours",
+      "value": "on_call",
+      "evidence": [{"page": 3, "clause_ref": "5.1", "quote": "The vendor shall support the platform for three years, including round-the-clock on-call support for the driver app."}]
+    }
+  ],
+  "numbers": [
+    {
+      "field": "om_years",
+      "value": 3,
+      "evidence": [{"page": 3, "clause_ref": "5.1", "quote": "The vendor shall support the platform for three years, including round-the-clock on-call support for the driver app."}]
+    }
+  ],
+  "unclear_points": [],
+  "not_priced": [],
+  "payment_terms": null,
+  "scope": [
+    {
+      "key": "sms",
+      "status": "explicit",
+      "note": "",
+      "evidence": [{"page": 2, "clause_ref": "3.9", "quote": "Customers shall receive an SMS with a tracking link when their parcel is out for delivery."}]
+    }
+  ],
+  "staff_lines": [],
+  "chatbot_buyer_systems": null
+}

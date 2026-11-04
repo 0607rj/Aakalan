@@ -2258,6 +2258,57 @@
         ]
       }
     },
+    "/quick-estimate/suggestion-prices": {
+      "post": {
+        "tags": [
+          "quick estimate"
+        ],
+        "summary": "Suggestion Price List",
+        "description": "What each \"usually needed\" suggestion adds to the most likely total if added alone\n(OPEN_QUESTIONS 207); priced by the engine, nothing is saved.",
+        "operationId": "suggestion_price_list_quick_estimate_suggestion_prices_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SuggestionPricesIn"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/SuggestionPrice"
+                  },
+                  "type": "array",
+                  "title": "Response Suggestion Price List Quick Estimate Suggestion Prices Post"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ]
+      }
+    },
     "/quick-estimate/schedule": {
       "post": {
         "tags": [
@@ -6514,6 +6565,32 @@
         "title": "FeatureCost",
         "description": "Building one feature: the team's work on its building blocks (most likely), with the\nteam's AI tools and without them. Launch, running, management and tax are not included."
       },
+      "FeatureGroupOut": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "features": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Features"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "label",
+          "features"
+        ],
+        "title": "FeatureGroupOut"
+      },
       "FeatureOut": {
         "properties": {
           "key": {
@@ -7659,6 +7736,95 @@
         ],
         "title": "IndependentCheckOut"
       },
+      "IndustryOut": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "tag": {
+            "type": "string",
+            "title": "Tag"
+          },
+          "hint": {
+            "type": "string",
+            "title": "Hint"
+          },
+          "project_type": {
+            "type": "string",
+            "title": "Project Type"
+          },
+          "suggestions": {
+            "items": {
+              "$ref": "#/components/schemas/IndustrySuggestion"
+            },
+            "type": "array",
+            "title": "Suggestions"
+          },
+          "ticked": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Ticked"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "label",
+          "tag",
+          "hint",
+          "project_type",
+          "suggestions",
+          "ticked"
+        ],
+        "title": "IndustryOut",
+        "description": "The manual form's \"What is it for?\" (OPEN_QUESTIONS 212): its usual features, offered\nunticked and priced like the AI's suggestions."
+      },
+      "IndustrySuggestion": {
+        "properties": {
+          "feature": {
+            "type": "string",
+            "title": "Feature",
+            "default": ""
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "why": {
+            "type": "string",
+            "title": "Why"
+          },
+          "category": {
+            "type": "string",
+            "title": "Category",
+            "default": ""
+          },
+          "size": {
+            "type": "string",
+            "title": "Size",
+            "default": ""
+          },
+          "catalog_key": {
+            "type": "string",
+            "title": "Catalog Key",
+            "default": ""
+          }
+        },
+        "type": "object",
+        "required": [
+          "label",
+          "why"
+        ],
+        "title": "IndustrySuggestion",
+        "description": "Usually needed for this kind of software, not asked for (OPEN_QUESTIONS 207): checked in\ncode, offered unticked, priced by the engine only when the user adds it."
+      },
       "Infeasibility": {
         "properties": {
           "message": {
@@ -8778,6 +8944,78 @@
         ],
         "title": "PrebidQuery"
       },
+      "Prerequisite": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "needs": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Needs"
+          },
+          "why": {
+            "type": "string",
+            "title": "Why"
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "label",
+          "needs",
+          "why"
+        ],
+        "title": "Prerequisite",
+        "description": "A feature, or an add-on the document asks for, that usually needs a feature not ticked."
+      },
+      "PrerequisiteRule": {
+        "properties": {
+          "feature": {
+            "type": "string",
+            "title": "Feature"
+          },
+          "needs_any": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Needs Any"
+          },
+          "why": {
+            "type": "string",
+            "title": "Why"
+          },
+          "not_when_answered": {
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "type": "object",
+            "title": "Not When Answered",
+            "default": {}
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "feature",
+          "needs_any",
+          "why"
+        ],
+        "title": "PrerequisiteRule",
+        "description": "A feature that usually needs another one whose building blocks it does not bring\n(OPEN_QUESTIONS 205): a warning only, never added to the price."
+      },
       "PricedOption": {
         "properties": {
           "key": {
@@ -8921,6 +9159,32 @@
         ],
         "title": "PricedStaff",
         "description": "Staff the code prices from the staff lines (services/extraction/staffing.py): people at\nthe client's office (onsite) or elsewhere (support), with how long and why."
+      },
+      "ProjectContext": {
+        "properties": {
+          "domain": {
+            "type": "string",
+            "title": "Domain",
+            "default": ""
+          },
+          "project_type": {
+            "type": "string",
+            "title": "Project Type"
+          },
+          "user_roles": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "User Roles",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "project_type"
+        ],
+        "title": "ProjectContext"
       },
       "ProjectCreate": {
         "properties": {
@@ -9439,6 +9703,22 @@
             "type": "array",
             "title": "Project Types"
           },
+          "industries": {
+            "items": {
+              "$ref": "#/components/schemas/IndustryOut"
+            },
+            "type": "array",
+            "title": "Industries",
+            "default": []
+          },
+          "feature_groups": {
+            "items": {
+              "$ref": "#/components/schemas/FeatureGroupOut"
+            },
+            "type": "array",
+            "title": "Feature Groups",
+            "default": []
+          },
           "features": {
             "items": {
               "$ref": "#/components/schemas/FeatureOut"
@@ -9493,6 +9773,14 @@
             },
             "type": "array",
             "title": "Commonly Needed",
+            "default": []
+          },
+          "prerequisites": {
+            "items": {
+              "$ref": "#/components/schemas/PrerequisiteRule"
+            },
+            "type": "array",
+            "title": "Prerequisites",
             "default": []
           }
         },
@@ -9717,6 +10005,12 @@
             "maxLength": 4000,
             "title": "Description",
             "default": ""
+          },
+          "project_domain": {
+            "type": "string",
+            "maxLength": 120,
+            "title": "Project Domain",
+            "default": ""
           }
         },
         "type": "object",
@@ -9933,6 +10227,12 @@
             "maxLength": 4000,
             "title": "Description",
             "default": ""
+          },
+          "project_domain": {
+            "type": "string",
+            "maxLength": 120,
+            "title": "Project Domain",
+            "default": ""
           }
         },
         "type": "object",
@@ -10074,6 +10374,33 @@
             "type": "integer",
             "title": "Build Only High Paise",
             "default": 0
+          },
+          "quote_build_paise": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quote Build Paise"
+          },
+          "quote_running_per_year_paise": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Quote Running Per Year Paise"
+          },
+          "from_document": {
+            "type": "boolean",
+            "title": "From Document",
+            "default": false
           },
           "build_months": {
             "type": "string",
@@ -10439,6 +10766,32 @@
               }
             ],
             "title": "Deadline Priced Months"
+          },
+          "context": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProjectContext"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "prerequisites": {
+            "items": {
+              "$ref": "#/components/schemas/Prerequisite"
+            },
+            "type": "array",
+            "title": "Prerequisites",
+            "default": []
+          },
+          "custom_features": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Custom Features",
+            "default": []
           }
         },
         "type": "object",
@@ -10783,6 +11136,20 @@
           "other"
         ],
         "title": "RateKind"
+      },
+      "ReadyMade": {
+        "properties": {
+          "note": {
+            "type": "string",
+            "title": "Note"
+          }
+        },
+        "type": "object",
+        "required": [
+          "note"
+        ],
+        "title": "ReadyMade",
+        "description": "Ready-made products are common for this kind of software (OPEN_QUESTIONS 209): shown\nbeside the \"How will it be built?\" prices, never an answer or a price."
       },
       "RealityOut": {
         "properties": {
@@ -12353,6 +12720,11 @@
           "hint": {
             "type": "string",
             "title": "Hint"
+          },
+          "fixed": {
+            "type": "boolean",
+            "title": "Fixed",
+            "default": false
           }
         },
         "type": "object",
@@ -12541,6 +12913,11 @@
             ],
             "title": "Note"
           },
+          "project_domain": {
+            "type": "string",
+            "title": "Project Domain",
+            "default": ""
+          },
           "excluded": {
             "items": {
               "$ref": "#/components/schemas/SuggestedFeature"
@@ -12556,6 +12933,37 @@
             "type": "array",
             "title": "Excluded Scope",
             "default": []
+          },
+          "industry_suggestions": {
+            "items": {
+              "$ref": "#/components/schemas/IndustrySuggestion"
+            },
+            "type": "array",
+            "title": "Industry Suggestions",
+            "default": []
+          },
+          "industry_suggestions_asked": {
+            "type": "boolean",
+            "title": "Industry Suggestions Asked",
+            "default": false
+          },
+          "ready_made": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReadyMade"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "unmatched": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Unmatched",
+            "default": []
           }
         },
         "type": "object",
@@ -12567,6 +12975,57 @@
           "note"
         ],
         "title": "Suggestion"
+      },
+      "SuggestionPrice": {
+        "properties": {
+          "feature": {
+            "type": "string",
+            "title": "Feature"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "adds_paise": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Adds Paise"
+          }
+        },
+        "type": "object",
+        "required": [
+          "feature",
+          "label",
+          "adds_paise"
+        ],
+        "title": "SuggestionPrice"
+      },
+      "SuggestionPricesIn": {
+        "properties": {
+          "request": {
+            "$ref": "#/components/schemas/QuickRequest-Input"
+          },
+          "suggestions": {
+            "items": {
+              "$ref": "#/components/schemas/IndustrySuggestion"
+            },
+            "type": "array",
+            "maxItems": 22,
+            "title": "Suggestions"
+          }
+        },
+        "type": "object",
+        "required": [
+          "request",
+          "suggestions"
+        ],
+        "title": "SuggestionPricesIn"
       },
       "TaskType": {
         "type": "string",
@@ -12720,6 +13179,19 @@
             "type": "string",
             "title": "Summary"
           },
+          "project_domain": {
+            "type": "string",
+            "title": "Project Domain",
+            "default": ""
+          },
+          "user_roles": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "User Roles",
+            "default": []
+          },
           "features": {
             "items": {
               "$ref": "#/components/schemas/FoundFeature"
@@ -12848,6 +13320,29 @@
             "type": "integer",
             "title": "Uncovered More",
             "default": 0
+          },
+          "industry_suggestions": {
+            "items": {
+              "$ref": "#/components/schemas/IndustrySuggestion"
+            },
+            "type": "array",
+            "title": "Industry Suggestions",
+            "default": []
+          },
+          "industry_suggestions_asked": {
+            "type": "boolean",
+            "title": "Industry Suggestions Asked",
+            "default": false
+          },
+          "ready_made": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReadyMade"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "type": "object",

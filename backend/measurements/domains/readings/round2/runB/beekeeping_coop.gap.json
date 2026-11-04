@@ -1,0 +1,13 @@
+{
+  "other_features": [
+    {
+      "name": "Online payment for shop orders",
+      "description": "Customers pay for bottled honey orders online through a payment gateway.",
+      "category": "integration",
+      "size": "S",
+      "evidence": [{"page": 2, "clause_ref": "3.12", "quote": "The co-operative shall sell bottled honey to the public in an online shop with a cart and online payment."}],
+      "part_of": "payments",
+      "stories": ["As a customer, I can pay online for my honey order"]
+    }
+  ]
+}

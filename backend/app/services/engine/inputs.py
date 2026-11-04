@@ -55,6 +55,10 @@ class ComponentInstanceIn(Strict):
     # share, e.g. {S: 0.3, M: 0.7} near the edge of two project sizes, or {M: 0.3} for a block
     # the next project size adds. None = base_effort_pd[size].
     size_mix: dict[Size, Decimal] | None = None
+    # The name of its Monte Carlo stream (OPEN_QUESTIONS 206): the same for the same block in
+    # the same request, whatever its database id, so identical requests in two projects give
+    # identical ranges. None (inputs saved before it existed, golden files) = its id, as before.
+    random_stream: str | None = None
 
     @model_validator(mode="after")
     def _mix_shares(self) -> "ComponentInstanceIn":

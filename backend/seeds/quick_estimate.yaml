@@ -500,10 +500,10 @@ questions:
     default: custom
     options:
       # plain words for anyone (2026-10-27); the examples in brackets help the document reader
-      - {value: custom, label: Made fully to order, hint: "Every screen made just for you. Most flexible, costs the most", answers: {build_type: custom}}
+      - {value: custom, label: Made fully to order, hint: "Every screen made just for you, working exactly your way. Most flexible, costs the most", answers: {build_type: custom}}
       - {value: framework, label: Made faster with ready parts, hint: "Common screens like forms, lists and logins come ready-made; the rest is made for you (e.g. Django, Laravel, low-code tools)", answers: {build_type: framework}}
       - {value: cms, label: "On a website builder, with extra parts added", hint: "Pages, news and editing come ready; your own parts are added (e.g. WordPress or Drupal). Common for government portals", answers: {build_type: cms}}
-      - {value: ready_product, label: An existing product set up for you, hint: "Nothing new is made: a ready product is set up with your settings (e.g. Shopify, a SaaS service, a chatbot platform). Cheapest, least flexible", answers: {build_type: ready_product}}
+      - {value: ready_product, label: An existing product set up for you, hint: "A ready product is set up with your settings (e.g. Shopify, a school or hospital product, a chatbot platform). Cheapest and fastest when your needs are standard; you work the product's way, and each feature of your own is still priced as extra work", answers: {build_type: ready_product}}
       - {value: not_sure, label: "Not sure: let the team decide", hint: "We price it made fully to order and show a wider range", unsure: true, answers: {build_type: custom}}
   hosting:
     label: Where will it run?
@@ -1235,6 +1235,252 @@ always_included:
 # that question's usual answer. Reasoned list, agreed with the user (2026-10-23).
 commonly_needed: [old_data, mobile_app, connect_existing, payments, notifications, dashboards, documents, search]
 
+# The manual form's first screen (OPEN_QUESTIONS 212): "What is it for?". Each industry lists
+# the features software for it usually has, offered unticked as "Popular for ..." on the
+# features screen, each priced by the engine. An item is a listed feature (`feature`, shown
+# with its own label) or a module the list lacks (`name`, priced as the user's own feature of
+# `category` and `size`, less certain). `project_type`: the kind of software it is (the order
+# of the common features, never the price); `tag`: the sector's short name (EdTech);
+# `ticked`: ticked when the industry is picked (untick if not needed). Not read by the AI
+# and not used on the
+# document path. A "Something else" tile (no list) is always added.
+industries:
+  source: "reasoned (2026-11-04): the modules common e-commerce, school, online learning, healthcare, fitness, restaurant, property, logistics, travel, finance, government, SaaS and manufacturing software list on vendors' feature pages; `ticked` marks the 2-3 features the software cannot be without (agreed with the user); no prices, the engine prices each"
+  items:
+    - key: shop
+      label: E-commerce
+      tag: Online store
+      hint: Products, cart, orders, stock, invoices
+      project_type: store
+      features:
+        - {feature: online_store, why: "Product catalogue, cart and checkout", ticked: true}
+        - {feature: payments, why: "Pay online with UPI, cards or wallets", ticked: true}
+        - {feature: search, why: "Customers search and filter products"}
+        - {feature: crm, why: "Customer list, orders per customer and follow-ups"}
+        - {feature: ai_recommend, why: "Products recommended to each shopper"}
+        - {feature: chat, why: "Customers chat with support"}
+        - {feature: inventory, why: "Stock levels and low-stock alerts"}
+        - {feature: billing, why: "GST invoices for each order"}
+        - {feature: notifications, why: "Order updates by SMS, email or WhatsApp"}
+        - {feature: mobile_app, why: "A shopping app"}
+    - key: school
+      label: School / college
+      tag: School ERP
+      hint: Admissions, fees, attendance, exams, parents
+      project_type: business
+      features:
+        - {name: "Student records and classes", category: module, size: M, why: "Each student's details, class and section in one place", ticked: true, block: student_records}
+        - {name: "Daily attendance", category: module, size: M, why: "Teachers mark attendance; parents see it", ticked: true, block: attendance_tracking}
+        - {feature: payments, why: "Parents pay fees online", ticked: true}
+        - {feature: online_forms, why: "New students apply for admission online"}
+        - {name: "Exams, marks and report cards", category: module, size: L, why: "Marks entry, grades and printable report cards", block: exams_report_cards}
+        - {name: "Class timetable", category: module, size: S, why: "Periods, teachers and rooms for each class", block: timetable_scheduling}
+        - {name: "Homework and study material", category: module, size: S, why: "Teachers share homework and notes"}
+        - {feature: notifications, why: "Fee reminders and notices to parents"}
+        - {feature: maps, why: "School bus tracking on a map"}
+        - {feature: mobile_app, why: "An app for parents and teachers"}
+    - key: edtech
+      label: Online learning
+      tag: EdTech
+      hint: Courses, videos, quizzes, certificates
+      project_type: business
+      features:
+        - {name: "Courses and lessons", category: module, size: M, why: "Courses split into chapters and lessons", ticked: true, block: lms_courses}
+        - {name: "Video lessons", category: module, size: M, why: "Recorded videos students watch", ticked: true, block: video_lessons}
+        - {name: "Quizzes and tests", category: module, size: M, why: "Questions, scores and results for each student", ticked: true, block: quizzes_assessments}
+        - {feature: payments, why: "Students pay for a course"}
+        - {feature: billing, why: "Monthly or yearly subscriptions and invoices"}
+        - {name: "Live classes", category: integration, size: M, why: "Live classes through Zoom or Google Meet"}
+        - {name: "Course certificates", category: module, size: S, why: "A certificate when a course is finished"}
+        - {name: "Student progress", category: report, size: S, why: "Lessons finished and scores, for each student"}
+        - {name: "Teacher panel", category: module, size: M, why: "Teachers upload lessons and see their students"}
+        - {feature: mobile_app, why: "A learning app"}
+    - key: clinic
+      label: Healthcare
+      tag: HealthTech
+      hint: Hospitals and clinics - appointments, patient records, prescriptions
+      project_type: booking
+      features:
+        - {feature: bookings, why: "Patients book appointments online", ticked: true}
+        - {name: "Patient records", category: module, size: M, why: "Each patient's history, visits and reports in one place", ticked: true, block: patient_records}
+        - {name: "Doctor schedules", category: module, size: S, why: "Each doctor's days, slots and leave", block: timetable_scheduling}
+        - {name: "Prescriptions", category: module, size: M, why: "Doctors write prescriptions; patients get a copy"}
+        - {name: "Lab test reports", category: module, size: M, why: "Test results uploaded for patients to download"}
+        - {feature: billing, why: "Bills for visits, tests and medicines"}
+        - {feature: payments, why: "Patients pay online"}
+        - {feature: notifications, why: "Appointment reminders by SMS or WhatsApp"}
+        - {feature: inventory, why: "Medicine stock in the pharmacy"}
+        - {feature: mobile_app, why: "An app for patients"}
+    - key: fitness
+      label: Fitness & wellness
+      tag: ""
+      hint: Gyms, salons, spas - memberships, bookings, trainers
+      project_type: booking
+      features:
+        - {name: "Memberships and plans", category: module, size: M, why: "Plans, start and end dates, renewals", ticked: true, block: memberships_plans}
+        - {feature: bookings, why: "Members book classes, trainers or salon slots", ticked: true}
+        - {feature: payments, why: "Pay for memberships and services online"}
+        - {name: "Member check-in", category: module, size: S, why: "Members check in at the door with a QR code"}
+        - {name: "Trainer and staff schedules", category: module, size: S, why: "Who works when, and their bookings", block: timetable_scheduling}
+        - {name: "Workout and diet plans", category: module, size: M, why: "Trainers share a plan with each member"}
+        - {feature: billing, why: "Invoices for memberships and services"}
+        - {feature: notifications, why: "Renewal and class reminders"}
+        - {feature: crm, why: "Enquiries and follow-ups for new members"}
+        - {feature: mobile_app, why: "An app for members"}
+    - key: restaurant
+      label: Food & restaurants
+      tag: FoodTech
+      hint: Menu, online orders, table booking, kitchen
+      project_type: store
+      features:
+        - {name: "Online menu", category: module, size: S, why: "Dishes, prices and photos", ticked: true}
+        - {feature: online_store, why: "Customers order food for delivery or pickup", ticked: true}
+        - {feature: payments, why: "Pay online when ordering"}
+        - {feature: bookings, why: "Customers book a table"}
+        - {feature: scanning, why: "Scan a QR code at the table to see the menu and order"}
+        - {name: "Kitchen order screen", category: module, size: M, why: "New orders show on a screen in the kitchen"}
+        - {name: "Delivery tracking", category: module, size: M, why: "Customers see where their order is", block: order_tracking}
+        - {feature: billing, why: "Bills with GST"}
+        - {feature: inventory, why: "Ingredient stock"}
+        - {feature: notifications, why: "Order status updates"}
+    - key: property
+      label: Real estate
+      tag: PropTech
+      hint: Listings, site visits, leads, rent
+      project_type: portal
+      features:
+        - {name: "Property listings", category: module, size: M, why: "Properties with photos, price and location", ticked: true, block: listings_catalogue}
+        - {feature: search, why: "Search by area, price and type", ticked: true}
+        - {feature: maps, why: "Properties shown on a map"}
+        - {feature: crm, why: "Enquiries and follow-ups with buyers"}
+        - {feature: bookings, why: "Buyers book a site visit"}
+        - {feature: chat, why: "Buyers chat with agents"}
+        - {feature: documents, why: "Agreements and property papers"}
+        - {name: "Tenants and rent", category: module, size: M, why: "Tenants, rent due and receipts"}
+        - {feature: payments, why: "Pay rent or the booking amount online"}
+        - {feature: notifications, why: "Rent reminders and new-listing alerts"}
+    - key: transport
+      label: Logistics & delivery
+      tag: ""
+      hint: Shipments, live tracking, drivers, proof of delivery
+      project_type: business
+      features:
+        - {name: "Shipment booking", category: module, size: M, why: "Customers book a pickup or shipment", ticked: true}
+        - {name: "Shipment tracking", category: module, size: M, why: "Customers see each shipment's status", ticked: true, block: order_tracking}
+        - {feature: maps, why: "Vehicles on a live map"}
+        - {feature: mobile_app, why: "An app for drivers' pickups and deliveries"}
+        - {name: "Route planning", category: module, size: M, why: "The best order of stops for each vehicle", block: route_planning}
+        - {name: "Proof of delivery", category: module, size: S, why: "A photo or signature at delivery"}
+        - {name: "Vehicles and drivers", category: module, size: S, why: "Vehicles, servicing, documents and drivers"}
+        - {feature: billing, why: "Freight invoices"}
+        - {feature: notifications, why: "Delivery updates to customers"}
+        - {feature: dashboards, why: "Reports on deliveries and delays"}
+    - key: hotel
+      label: Travel & hotels
+      tag: TravelTech
+      hint: Room booking, rates, check-in, housekeeping
+      project_type: booking
+      features:
+        - {feature: bookings, why: "Guests book rooms online", ticked: true}
+        - {name: "Rooms and rates", category: module, size: M, why: "Room types, seasons and prices", ticked: true}
+        - {feature: payments, why: "Pay in advance online"}
+        - {name: "Check-in and check-out", category: module, size: S, why: "Guest details, ID and room handover"}
+        - {name: "Housekeeping", category: module, size: S, why: "Room cleaning tasks and status"}
+        - {name: "Booking sites connection", category: integration, size: M, why: "Rooms kept in step with travel booking sites", block: hotel_channel_manager}
+        - {feature: billing, why: "Bills for rooms, food and services"}
+        - {name: "Guest reviews", category: module, size: S, why: "Guests rate their stay", block: reviews_ratings}
+        - {feature: notifications, why: "Booking confirmations and reminders"}
+        - {feature: mobile_app, why: "An app for guests"}
+    - key: fintech
+      label: Finance
+      tag: FinTech
+      hint: KYC, accounts, loans, payments
+      project_type: business
+      features:
+        - {feature: aadhaar_digilocker, why: "Customer KYC with Aadhaar or DigiLocker", ticked: true}
+        - {name: "Accounts and transactions", category: module, size: L, why: "Each customer's balance and transaction history", ticked: true}
+        - {feature: payments, why: "Pay and collect money with UPI and cards", ticked: true}
+        - {name: "Loan applications", category: module, size: L, why: "Apply, check eligibility, approve and repay", block: loan_management}
+        - {name: "Wallet", category: module, size: M, why: "Add money, pay and see the balance", block: digital_wallet}
+        - {name: "Bank and credit score connection", category: integration, size: M, why: "Bank accounts, account aggregator or credit score checks"}
+        - {name: "Fraud alerts", category: ai, size: M, why: "Unusual transactions flagged for checking"}
+        - {feature: notifications, why: "Transaction alerts and one-time passwords"}
+        - {feature: dashboards, why: "Reports for the finance team"}
+        - {feature: mobile_app, why: "A customer app"}
+    - key: government
+      label: Government
+      tag: GovTech
+      hint: Applications, approvals, certificates, complaints
+      project_type: portal
+      features:
+        - {feature: online_forms, why: "Citizens apply online", ticked: true}
+        - {feature: approval_workflow, why: "Applications move from officer to officer for approval", ticked: true}
+        - {feature: documents, why: "Citizens upload documents; officers check them"}
+        - {feature: payments, why: "Pay fees online"}
+        - {feature: aadhaar_digilocker, why: "Login and verification with Aadhaar or DigiLocker"}
+        - {name: "Certificates", category: module, size: M, why: "Approved certificates to download, with a QR code check"}
+        - {feature: grievances, why: "Citizens raise complaints and track them"}
+        - {feature: public_website, why: "Notices, schemes and news"}
+        - {feature: languages, why: "Available in Indian languages"}
+        - {feature: dashboards, why: "Reports for officers"}
+    - key: saas
+      label: SaaS / B2B software
+      tag: SaaS
+      hint: Subscriptions, teams, usage, onboarding
+      project_type: other
+      features:
+        - {name: "Teams and workspaces", category: module, size: M, why: "Each customer company has its own space and users", ticked: true}
+        - {feature: billing, why: "Plans, subscriptions and invoices", ticked: true}
+        - {feature: payments, why: "Customers pay by card or UPI"}
+        - {name: "Onboarding guide", category: module, size: S, why: "First-time steps that show new users around"}
+        - {feature: dashboards, why: "Usage and revenue dashboards"}
+        - {feature: notifications, why: "Welcome emails and alerts"}
+        - {feature: chat, why: "In-app chat with support"}
+        - {name: "Public API for customers", category: integration, size: M, why: "Customers connect their own tools"}
+        - {name: "Connections to other apps", category: integration, size: M, why: "e.g. Google, Slack or WhatsApp"}
+        - {feature: ai_chatbot, why: "An AI assistant answers users' questions"}
+    - key: factory
+      label: Manufacturing
+      tag: ""
+      hint: Stock, production, purchases, dispatch
+      project_type: business
+      features:
+        - {feature: inventory, why: "Raw material and finished stock", ticked: true}
+        - {name: "Production planning", category: module, size: L, why: "What to make, when, on which machine", ticked: true}
+        - {name: "Purchases and suppliers", category: module, size: M, why: "Purchase orders and supplier records"}
+        - {name: "Quality checks", category: module, size: S, why: "Checks at each stage, with pass or fail"}
+        - {name: "Machine maintenance", category: module, size: S, why: "Service schedules and breakdowns"}
+        - {name: "Dispatch and delivery notes", category: module, size: S, why: "Goods sent out, with delivery notes"}
+        - {feature: scanning, why: "Barcode labels for materials and products"}
+        - {feature: billing, why: "Sales invoices with GST"}
+        - {feature: connect_existing, why: "Connect to Tally or SAP"}
+        - {feature: dashboards, why: "Production and stock reports"}
+
+# "Browse all features" in groups by what they are for (OPEN_QUESTIONS 212); a feature in no
+# group is listed under "More". Words only, never priced.
+feature_groups:
+  - {key: forms, label: "Forms, files and approvals", features: [online_forms, approval_workflow, documents, grievances]}
+  - {key: money, label: "Payments and billing", features: [payments, billing, app_purchases]}
+  - {key: selling, label: "Selling and stock", features: [online_store, marketplace, inventory]}
+  - {key: people, label: "Customers, bookings and messages", features: [bookings, crm, chat, notifications]}
+  - {key: data, label: "Reports and search", features: [dashboards, search]}
+  - {key: phone, label: "Phone, maps and scanning", features: [maps, scanning, offline_app]}
+  - {key: access, label: "Login, languages and public site", features: [aadhaar_digilocker, staff_login, languages, accessibility, public_website]}
+  - {key: ai, label: "AI", features: [ai_chatbot, ai_documents, ai_recommend, ai_voice, ai_text_sorting, ai_forecast, ai_images, ai_agent, ai_training]}
+  - {key: connect, label: "Other software", features: [connect_existing]}
+
+# "Usually needed for this kind of software" (OPEN_QUESTIONS 207): the AI reader names at most
+# `max_items` modules the words never mention, for any industry, each with a one-line reason;
+# the code keeps only listed features not found, not ruled out and not in `never`, and new
+# modules whose names have none of `never_words`. Offered unticked; when there are none (no
+# AI key) the fixed `commonly_needed` list is shown as before. Nothing here is a price.
+industry_suggestions:
+  source: "reasoned, agreed with the user (2026-11-04): up to 10 real modules a buyer would name (bus tracking, fee reminders), the most important first, fewer when fewer matter, none when the words already cover them; never the basics every project has (sign-in, a dashboard, search)"
+  max_items: 10
+  never: [staff_login, dashboards, search, accessibility, old_data, connect_existing]
+  # whole words, any case
+  never_words: [login, log in, sign in, sign-in, signup, sign up, profile, profiles, dashboard, dashboards, admin panel, admin console, settings, home page, homepage, landing page, screen, screens, button, buttons, user management, role management, password]
+
 # What a CMS already has (OPEN_QUESTIONS 154). Built on a CMS, these features, and extra
 # features whose names say they are the CMS's own parts, are set up rather than built: at most
 # the basic level, one module each, with `note` in the quote. Without this a tender read story
@@ -1252,19 +1498,23 @@ cms_built_in:
 # The standard building blocks in plain words: the form lists those of the project's size as
 # "included by default" and the user may untick one (it is then left out of the price and the
 # quote says so). Labels only; what each block costs comes from the catalog.
+# OPEN_QUESTIONS 211 (reasoned, agreed with the user 2026-11-04): `fixed` blocks are what every
+# working software has (its screens, their design, sign-in, basic security, testing, putting it
+# live): shown as "always part of the build", never unticked. The rest are usual at this size
+# but a client may not need them: offered ticked, untick if not needed.
 standard_blocks:
-  discovery_requirement_study: {label: "Requirement study", hint: "Workshops to agree what is built, written down before work starts"}
-  solution_architecture: {label: "Technical design", hint: "How the system is put together: servers, database, security"}
-  ui_ux_design: {label: "Screen design", hint: "How every screen looks and works"}
-  user_management_rbac: {label: "Sign-in, users and roles", hint: "Login, password reset, roles and who may see what"}
-  responsive_frontend: {label: "Screens that work on phones and computers", hint: "Menus, navigation and forms that fit any screen"}
-  audit_trail_logging: {label: "Audit log", hint: "A record of who did what and when"}
-  security_hardening: {label: "Security set-up", hint: "Protection against common attacks"}
-  notifications: {label: "Email and SMS alerts", hint: "Messages the system sends to users"}
+  discovery_requirement_study: {label: "Requirement study", hint: "Workshops to agree what is built, written down before work starts. Untick if the requirements are already clear and written"}
+  solution_architecture: {label: "Technical design", hint: "A written plan of servers, database and security, often asked for by large clients"}
+  ui_ux_design: {label: "Screen design", hint: "How every screen looks and works", fixed: true}
+  user_management_rbac: {label: "Login and user roles", hint: "Login, password reset, roles and who may see what", fixed: true}
+  responsive_frontend: {label: "Works on phone and computer", hint: "Menus, navigation and forms that fit any screen", fixed: true}
+  audit_trail_logging: {label: "Audit log", hint: "A record of who did what and when, often needed for government and finance"}
+  security_hardening: {label: "Security", hint: "Protection against common attacks", fixed: true}
+  notifications: {label: "System emails", hint: "Confirmations and password reset emails the system sends"}
   integration_sms_email_gateway: {label: "SMS and email service connection", hint: "Connecting to the SMS and email provider"}
-  functional_testing_uat_support: {label: "Testing", hint: "Test cases, bug fixing and help while users test it"}
-  documentation_manuals: {label: "Manuals", hint: "User and admin guides"}
-  devops_cicd_setup: {label: "Servers and release set-up", hint: "Test and live environments, automatic deployment"}
+  functional_testing_uat_support: {label: "Testing before launch", hint: "Test cases, bug fixing and help while users test it", fixed: true}
+  documentation_manuals: {label: "Manuals", hint: "Written user and admin guides. Untick if short help screens are enough"}
+  devops_cicd_setup: {label: "Putting it live", hint: "Test and live environments, automatic deployment", fixed: true}
   performance_load_testing: {label: "Load testing", hint: "Checking it stays fast with many users at once"}
   vapt_remediation: {label: "Fixing security audit findings", hint: "Fixing what the outside security audit finds"}
 
@@ -1436,7 +1686,8 @@ keywords:
     public_website: [public website, content management system, cms, notices and circulars, news and events]
     grievances: [grievance, grievances, complaint management, helpdesk ticket]
     old_data: [data migration, legacy data, historical data, migration of existing data, digitisation of records]
-    inventory: [inventory, stock management, stock register, warehouse, stock in, stock out, barcode]
+    # not "barcode" alone: a parcel or drum barcode is scanning, not stock (OPEN_QUESTIONS 206)
+    inventory: [inventory, stock management, stock register, warehouse, stock in, stock out, stock of, stock level, stock levels]
     billing: [billing, invoice, invoicing, invoices, receipts, tax invoice]
     bookings: [booking, bookings, appointment, appointments, scheduling, reservation, reservations]
     online_store: [online store, e-commerce, ecommerce, shopping cart, cart and checkout, product catalogue]
@@ -1449,7 +1700,7 @@ keywords:
     chat: [live chat, in-app chat, chat with support, instant messaging, one-to-one chat, messaging between users]
     offline_app: [offline mode, works offline, offline access, without internet, offline sync]
     app_purchases: [in-app purchase, in-app purchases, in-app subscription, google play billing, app store billing]
-    scanning: [qr code, qr codes, barcode scanning, scan barcodes, scan qr, camera capture]
+    scanning: [qr code, qr codes, barcode scanning, scan barcodes, scan qr, camera capture, scan the barcode, scan the barcodes, scan a barcode, barcode scanner, scan the qr]
     ai_documents: [ocr, optical character recognition, intelligent document processing, extract data from documents, invoice scanning]
     ai_recommend: [recommendation engine, personalised recommendations, personalized recommendations, recommended products, product recommendations]
     ai_voice: [speech to text, speech-to-text, text to speech, text-to-speech, voice assistant, voice commands]
@@ -1517,6 +1768,10 @@ keywords:
       frontend_only: [front end only, frontend only, front-end only, only the front end, only the frontend, only the front-end, ui only, only the ui, only ui, ui redesign, redesign the ui, redesign the app, app redesign, existing backend, existing back end, existing back-end, existing apis, backend already exists, backend stays, no backend, no back end, no backend changes, backend unchanged, keep the existing backend]
     penalties:
       "yes": [liquidated damages, penalty clause, penalties for delay]
+    # an outside security audit before go-live (OPEN_QUESTIONS 206); "security testing" alone
+    # is the team's own testing, so it is not here
+    security_audit:
+      "yes": [security audit, security audited, cert-in, cert in empanelled, vapt, vulnerability assessment and penetration testing, penetration testing, third party security audit, third-party security audit]
     web_domain:
       gov_in: [".gov.in domain", ".nic.in domain", "gov.in domain", "nic.in domain"]
     hosting:
@@ -1577,6 +1832,35 @@ stated_counts:
       per_unit: 2
       level: standard
 
+# What the review and results pages say about the project (OPEN_QUESTIONS 205): the industry
+# (read by the AI, shown only), the project type (the project type above sharing most features
+# with the ticked ones) and the user roles (from the user stories). None of it is priced.
+# A prerequisite rule warns when a feature usually needs another whose building blocks it does
+# not bring; it never adds anything. An add-on the document asks for whose feature is not
+# ticked is warned about too (no rule needed: each add-on names its feature).
+project_context:
+  source: "reasoned 2026-11-02 (OPEN_QUESTIONS 205) from each feature's building blocks: the needed feature's blocks are not among the asking feature's"
+  max_roles: 8
+  other_type: Custom software
+  mobile_app_note: with a mobile app
+  prerequisites:
+    - feature: marketplace
+      needs_any: [payments, online_store]
+      why: "Sellers on a marketplace are usually paid through it, but neither online payment nor an online store is ticked."
+    # a browser-only build the document or user chose (platforms: web) can work offline and
+    # scan with the camera in the browser: no warning then (OPEN_QUESTIONS 206)
+    - feature: offline_app
+      needs_any: [mobile_app]
+      why: "Working without internet is part of a mobile app, but the mobile app is not ticked."
+      not_when_answered: {platforms: [web]}
+    - feature: app_purchases
+      needs_any: [mobile_app]
+      why: "In-app purchases are sold inside a mobile app, but the mobile app is not ticked."
+    - feature: scanning
+      needs_any: [mobile_app]
+      why: "Camera and QR scanning is built into a mobile app, but the mobile app is not ticked."
+      not_when_answered: {platforms: [web]}
+
 # Every requirement sentence accounted for (OPEN_QUESTIONS 204): a sentence that asks for
 # something ("shall", "must", ...) and is quoted by no finding of the reading is listed on the
 # review screen as "not priced yet", so a requirement the reader skipped is never lost silently.
@@ -1587,6 +1871,12 @@ coverage:
   min_sentence_words: 5
   shared_words: 6
   max_listed: 40
+  # OPEN_QUESTIONS 210, reasoned: a typed description lists what it wants joined by these words
+  # ("pay fees online and see their child's attendance"); a part this long that no finding
+  # quotes is listed on the features screen as not matched yet
+  description_split_words: [and, also, but, plus, as well as, with, along with, so that]
+  description_min_words: 3
+  description_generic_words: [a, an, the, our, own, my, your, their, we, i, for, of, to, in, at, "on", new, simple, system, systems, software, app, apps, application, website, web site, site, portal, platform, product, tool, solution, management, project]
 
 # Support hours and dedicated support staff a document states, read in code on the page text
 # (OPEN_QUESTIONS 157; RailTel e-Empanelment tender p.30: "Minimum 2 offsite support resources

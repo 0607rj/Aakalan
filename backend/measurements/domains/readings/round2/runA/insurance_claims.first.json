@@ -1,0 +1,190 @@
+{
+  "project_name": "Motor Claims Platform",
+  "summary": "The requirement document describes one platform for a general insurance company to take in, survey, approve and settle about 4,000 motor claims a month. Policyholders report claims online, the system checks the policy, reads uploaded documents and photos with AI, surveyors work from a map, and handlers and managers approve and track claims with fraud flags and dashboards. The company's existing policy system stays as it is, and the vendor supports the platform for three years.",
+  "project_domain": "Motor insurance claims",
+  "features": [
+    {
+      "key": "online_forms",
+      "evidence": [{"page": 2, "clause_ref": "3.1", "quote": "Policyholders shall report a claim online with the policy number, accident details and place, and upload photos of the damage, the driving licence and the FIR where needed."}],
+      "stories": ["As a policyholder, I can report a claim online with the policy number, accident details and place, and upload photos, driving licence and FIR"]
+    },
+    {
+      "key": "connect_existing",
+      "evidence": [{"page": 2, "clause_ref": "3.2", "quote": "The platform shall check the policy number and cover against the policy administration system through its API."}],
+      "stories": ["As a claim handler, I can have the policy number and cover checked against the policy administration system"]
+    },
+    {
+      "key": "ai_documents",
+      "evidence": [{"page": 2, "clause_ref": "3.3", "quote": "The system shall read the uploaded driving licence and garage estimate automatically and fill in the fields."}],
+      "stories": ["As a claim handler, I can have the uploaded driving licence and garage estimate read automatically to fill in the fields"]
+    },
+    {
+      "key": "ai_images",
+      "evidence": [{"page": 2, "clause_ref": "3.4", "quote": "The system shall look at the damage photos and suggest which parts of the vehicle are damaged."}],
+      "stories": ["As a claim handler, I can see which vehicle parts the system suggests are damaged from the photos"]
+    },
+    {
+      "key": "maps",
+      "evidence": [{"page": 2, "clause_ref": "3.5", "quote": "surveyors shall see their assigned claims on a map."}],
+      "stories": ["As a surveyor, I can see my assigned claims on a map"]
+    },
+    {
+      "key": "approval_workflow",
+      "evidence": [{"page": 2, "clause_ref": "3.7", "quote": "Each claim shall be approved by the claim handler; claims above ₹2 lakh also need the claim manager's approval."}],
+      "stories": ["As a claim handler, I can approve a claim", "As a claim manager, I can approve claims above the stated amount"]
+    },
+    {
+      "key": "notifications",
+      "evidence": [{"page": 2, "clause_ref": "3.10", "quote": "Policyholders shall get SMS and email updates at each stage"}],
+      "stories": ["As a policyholder, I get SMS and email updates at each stage of my claim"]
+    },
+    {
+      "key": "grievances",
+      "evidence": [{"page": 2, "clause_ref": "3.11", "quote": "Policyholders shall be able to raise a complaint about a claim and track it."}],
+      "stories": ["As a policyholder, I can raise a complaint about a claim", "As a policyholder, I can track my complaint"]
+    },
+    {
+      "key": "dashboards",
+      "evidence": [{"page": 2, "clause_ref": "3.13", "quote": "Managers shall see dashboards of claims reported, settled, pending, average settlement time and fraud flags."}],
+      "stories": ["As a manager, I can see dashboards of claims reported, settled, pending, average settlement time and fraud flags"]
+    },
+    {
+      "key": "staff_login",
+      "evidence": [{"page": 1, "clause_ref": "2.2", "quote": "Employees shall sign in with the company's Azure Active Directory accounts."}],
+      "stories": ["As an employee, I can sign in with my company Azure Active Directory account"]
+    }
+  ],
+  "other_features": [
+    {
+      "name": "Surveyor assignment by location",
+      "description": "Claim handlers assign a surveyor to a claim based on location.",
+      "category": "module",
+      "size": "S",
+      "evidence": [{"page": 2, "clause_ref": "3.5", "quote": "Claim handlers shall assign a surveyor by location"}],
+      "part_of": "",
+      "stories": ["As a claim handler, I can assign a surveyor to a claim by location"]
+    },
+    {
+      "name": "Survey report submission",
+      "description": "Surveyors submit a survey report with photos and the assessed amount.",
+      "category": "module",
+      "size": "S",
+      "evidence": [{"page": 2, "clause_ref": "3.6", "quote": "Surveyors shall submit their survey report with photos and the assessed amount."}],
+      "part_of": "",
+      "stories": ["As a surveyor, I can submit my survey report with photos and the assessed amount"]
+    },
+    {
+      "name": "Fraud rules and flagging",
+      "description": "Rules flag suspicious claims, such as a claim soon after policy start or repeated claims on one vehicle, for the fraud team.",
+      "category": "module",
+      "size": "M",
+      "evidence": [{"page": 2, "clause_ref": "3.8", "quote": "Fraud rules shall flag claims for the fraud team, for example a claim within 30 days of the policy start or several claims on the same vehicle."}],
+      "part_of": "",
+      "stories": ["As a fraud team member, I can see claims flagged because they were made within 30 days of the policy start", "As a fraud team member, I can see claims flagged because several claims were made on the same vehicle"]
+    },
+    {
+      "name": "Settlement file to bank system",
+      "description": "Settlement amounts are sent to the payments team's existing bank file system, with no payment gateway.",
+      "category": "integration",
+      "size": "S",
+      "evidence": [{"page": 2, "clause_ref": "3.9", "quote": "Settlement amounts shall be sent to the payments team's existing bank file system; no payment gateway is needed."}],
+      "part_of": "",
+      "stories": ["As a payments team member, I receive settlement amounts in the existing bank file system"]
+    },
+    {
+      "name": "Online claim status view",
+      "description": "Policyholders see the current status of their claim online.",
+      "category": "module",
+      "size": "S",
+      "evidence": [{"page": 2, "clause_ref": "3.10", "quote": "can see their claim status online."}],
+      "part_of": "",
+      "stories": ["As a policyholder, I can see my claim status online"]
+    }
+  ],
+  "choices": [
+    {
+      "question": "security_audit",
+      "value": "yes",
+      "evidence": [{"page": 3, "clause_ref": "4.2", "quote": "pass a VAPT audit by a CERT-In empanelled auditor before launch."}]
+    },
+    {
+      "question": "support_hours",
+      "value": "office",
+      "evidence": [{"page": 3, "clause_ref": "5.1", "quote": "The vendor shall support the platform for three years, during business hours."}]
+    }
+  ],
+  "numbers": [
+    {
+      "field": "documents_per_month",
+      "value": 4000,
+      "evidence": [{"page": 1, "clause_ref": "1.1", "quote": "settles about 4,000 motor claims a month."}]
+    },
+    {
+      "field": "om_years",
+      "value": 3,
+      "evidence": [{"page": 3, "clause_ref": "5.1", "quote": "The vendor shall support the platform for three years, during business hours."}]
+    }
+  ],
+  "unclear_points": [
+    {
+      "topic": "Complete list of fraud rules",
+      "why": "Only two example fraud rules are given; the full rule set is not stated.",
+      "page": 2,
+      "clause_ref": "3.8",
+      "quote": "for example a claim within 30 days of the policy start or several claims on the same vehicle.",
+      "prebid_query": "Regarding clause 3.8, please provide the complete list of fraud rules and indicators to be implemented, or confirm that the two examples given are the full set for this phase.",
+      "answer": ""
+    },
+    {
+      "topic": "Policy administration system API",
+      "why": "The document does not say what the API of the existing policy system offers or whether documentation and a test environment will be provided.",
+      "page": 2,
+      "clause_ref": "3.2",
+      "quote": "The platform shall check the policy number and cover against the policy administration system through its API.",
+      "prebid_query": "Regarding clause 3.2, please share the API documentation of the policy administration system and confirm that a test environment will be made available.",
+      "answer": ""
+    }
+  ],
+  "not_priced": [
+    {
+      "topic": "data_rules",
+      "note": "The platform must meet IRDAI cyber security guidelines.",
+      "evidence": [{"page": 3, "clause_ref": "4.2", "quote": "The platform shall meet IRDAI cyber security guidelines"}]
+    }
+  ],
+  "payment_terms": null,
+  "scope": [
+    {
+      "key": "enterprise_sso",
+      "status": "explicit",
+      "note": "",
+      "evidence": [{"page": 1, "clause_ref": "2.2", "quote": "Employees shall sign in with the company's Azure Active Directory accounts."}]
+    },
+    {
+      "key": "audit_log",
+      "status": "explicit",
+      "note": "",
+      "evidence": [{"page": 2, "clause_ref": "3.12", "quote": "Every action on a claim shall be kept in an audit trail."}]
+    },
+    {
+      "key": "workflow_audit",
+      "status": "explicit",
+      "note": "",
+      "evidence": [{"page": 2, "clause_ref": "3.12", "quote": "Every action on a claim shall be kept in an audit trail."}]
+    },
+    {
+      "key": "sms",
+      "status": "explicit",
+      "note": "",
+      "evidence": [{"page": 2, "clause_ref": "3.10", "quote": "Policyholders shall get SMS and email updates at each stage"}]
+    },
+    {
+      "key": "whatsapp",
+      "status": "background",
+      "note": "Only describes how photos reach the company today.",
+      "evidence": [{"page": 1, "clause_ref": "1.2", "quote": "surveyors send photos on WhatsApp."}]
+    }
+  ],
+  "staff_lines": [],
+  "chatbot_buyer_systems": null
+}

@@ -1,0 +1,32 @@
+domain_words: [lending, loan, finance, financial, nbfc, banking, fintech, credit]
+features:
+  - online_forms       # 3.1 loan application form, drafts
+  - mobile_app         # 3.1 Android and iOS app
+  - aadhaar_digilocker # 3.2 e-KYC, DigiLocker
+  - documents          # 3.3 uploads
+  - ai_documents       # 3.4 bank statements read automatically
+  - connect_existing   # 3.5 CIBIL API (and the core system)
+  - approval_workflow  # 3.7 analyst -> manager -> second manager
+  - payments           # 3.10 overdue EMI through a gateway
+  - notifications      # 3.11 SMS and email updates
+  - staff_login        # 2.2 Azure AD
+  - dashboards         # 3.14
+tolerated: [search, ai_forecast]
+not_features:
+  - marketplace
+  - ai_chatbot
+scope:
+  - {any: [forms_ekyc], or_feature: aadhaar_digilocker}        # the feature brings e-KYC
+  - {any: [forms_digilocker], or_feature: aadhaar_digilocker}  # and DigiLocker
+  - [documents_esign]                # 3.8 Aadhaar e-Sign
+  - [otp_codes]                      # 3.12 OTP sign-in
+  - [sms]
+  - [workflow_audit, audit_log]      # 3.13 audit trail
+custom:
+  - {what: Credit rules engine / scoring, match_any: [rule, scoring]}
+  - {what: e-NACH mandate for EMIs, match_any: [nach, mandate, emi, auto-debit, autodebit]}
+optional:
+  - {what: Wallet / UPI app, match_any: [wallet]}
+  - {what: Field officer tools, match_any: [field officer]}
+prerequisites: []
+choices: {platforms: web_mobile, security_audit: "yes"}   # 4.1 audit before go-live (a question, not an add-on)

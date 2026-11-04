@@ -1,0 +1,198 @@
+{
+  "project_name": "Hospital Management System",
+  "summary": "The requirement document describes one web system for a 180-bed hospital covering appointments, electronic medical records, wards and beds, lab tests, pharmacy stock and billing. Patients can book and pay online and upload old reports, and the administrator sees dashboards. Five years of patient records must be moved from Excel, and screens are needed in English and Hindi.",
+  "project_domain": "Hospital care",
+  "features": [
+    {
+      "key": "bookings",
+      "evidence": [{"page": 2, "clause_ref": "3.1", "quote": "Patients shall book OPD appointments online with a chosen doctor and time slot, and front-desk staff shall book walk-in visits."}],
+      "stories": ["As a patient, I can book an OPD appointment online with a chosen doctor and time slot", "As front-desk staff, I can book walk-in visits"],
+      "covers": [],
+      "mentions": 1,
+      "suggested": true
+    },
+    {
+      "key": "notifications",
+      "evidence": [{"page": 2, "clause_ref": "3.2", "quote": "The system shall send an SMS reminder to the patient a day before the appointment."}],
+      "stories": ["As a patient, I get an SMS reminder a day before my appointment"],
+      "covers": [],
+      "mentions": 1,
+      "suggested": true
+    },
+    {
+      "key": "payments",
+      "evidence": [{"page": 2, "clause_ref": "3.3", "quote": "Patients shall be able to pay the consultation fee online when booking."}],
+      "stories": ["As a patient, I can pay the consultation fee online when booking"],
+      "covers": [],
+      "mentions": 1,
+      "suggested": true
+    },
+    {
+      "key": "staff_login",
+      "evidence": [{"page": 1, "clause_ref": "2.2", "quote": "Doctors and staff shall sign in with their existing hospital Microsoft accounts (single sign-on through the hospital's Active Directory)."}],
+      "stories": ["As a doctor or staff member, I can sign in with my hospital Microsoft account"],
+      "covers": [],
+      "mentions": 1,
+      "suggested": true
+    },
+    {
+      "key": "inventory",
+      "evidence": [{"page": 2, "clause_ref": "3.7", "quote": "The pharmacy shall keep stock of medicines with batch numbers and expiry dates, and get an alert when stock is low."}],
+      "stories": ["As a pharmacist, I can keep stock of medicines with batch numbers and expiry dates", "As a pharmacist, I get an alert when stock is low"],
+      "covers": [],
+      "mentions": 1,
+      "suggested": true
+    },
+    {
+      "key": "billing",
+      "evidence": [{"page": 2, "clause_ref": "3.8", "quote": "Billing staff shall create patient bills with GST for consultations, bed charges, lab tests and medicines, and print receipts."}],
+      "stories": ["As billing staff, I can create patient bills with GST and print receipts"],
+      "covers": [],
+      "mentions": 1,
+      "suggested": true
+    },
+    {
+      "key": "documents",
+      "evidence": [{"page": 2, "clause_ref": "3.9", "quote": "Patients shall upload old reports (PDF or photos) to their record."}],
+      "stories": ["As a patient, I can upload old reports (PDF or photos) to my record"],
+      "covers": [],
+      "mentions": 1,
+      "suggested": true
+    },
+    {
+      "key": "dashboards",
+      "evidence": [{"page": 2, "clause_ref": "3.10", "quote": "The administrator shall see dashboards of daily OPD visits, bed occupancy, collections and pharmacy stock value."}],
+      "stories": ["As the administrator, I can see dashboards of OPD visits, bed occupancy, collections and pharmacy stock value"],
+      "covers": [],
+      "mentions": 1,
+      "suggested": true
+    },
+    {
+      "key": "old_data",
+      "evidence": [{"page": 2, "clause_ref": "3.11", "quote": "Patient records of the last five years shall be moved from the existing Excel sheets into the new system."}],
+      "stories": ["As the hospital, I have the last five years of patient records moved from Excel into the new system"],
+      "covers": [],
+      "mentions": 1,
+      "suggested": true
+    },
+    {
+      "key": "languages",
+      "evidence": [{"page": 2, "clause_ref": "3.12", "quote": "Screens shall be available in English and Hindi."}],
+      "stories": ["As a user, I can use the screens in English or Hindi"],
+      "covers": [],
+      "mentions": 1,
+      "suggested": true
+    }
+  ],
+  "other_features": [
+    {
+      "name": "Electronic medical records",
+      "description": "Doctors record each visit's diagnosis, notes and prescriptions in the patient's record and see past visits.",
+      "category": "module",
+      "size": "L",
+      "evidence": [{"page": 2, "clause_ref": "3.4", "quote": "Doctors shall record each visit's diagnosis, notes and prescriptions in the patient's electronic medical record, and see the patient's past visits."}],
+      "part_of": "",
+      "stories": ["As a doctor, I can record a visit's diagnosis, notes and prescriptions in the patient's record", "As a doctor, I can see the patient's past visits"]
+    },
+    {
+      "name": "Ward and bed management",
+      "description": "Nurses see free beds in each ward and admit, transfer and discharge patients.",
+      "category": "module",
+      "size": "M",
+      "evidence": [{"page": 2, "clause_ref": "3.5", "quote": "Nurses shall see which beds are free in each ward, admit patients to a bed, transfer them and discharge them."}],
+      "part_of": "",
+      "stories": ["As a nurse, I can see which beds are free in each ward", "As a nurse, I can admit, transfer and discharge patients"]
+    },
+    {
+      "name": "Lab test orders and results",
+      "description": "Doctors order lab tests and lab technicians enter results that appear in the patient's record.",
+      "category": "module",
+      "size": "M",
+      "evidence": [{"page": 2, "clause_ref": "3.6", "quote": "Doctors shall order lab tests; lab technicians shall enter results, which appear in the patient's record."}],
+      "part_of": "",
+      "stories": ["As a doctor, I can order lab tests", "As a lab technician, I can enter results that appear in the patient's record"]
+    }
+  ],
+  "choices": [
+    {
+      "question": "platforms",
+      "value": "web",
+      "evidence": [{"page": 3, "clause_ref": "4.2", "quote": "A separate mobile app is not required; the web system shall work on phones and tablets."}]
+    },
+    {
+      "question": "hosting",
+      "value": "indian_cloud",
+      "evidence": [{"page": 3, "clause_ref": "5.1", "quote": "The vendor shall host the system on an Indian cloud and provide support for two years after go-live during hospital office hours."}]
+    },
+    {
+      "question": "support_hours",
+      "value": "office",
+      "evidence": [{"page": 3, "clause_ref": "5.1", "quote": "The vendor shall host the system on an Indian cloud and provide support for two years after go-live during hospital office hours."}]
+    }
+  ],
+  "numbers": [
+    {
+      "field": "om_years",
+      "value": 2,
+      "evidence": [{"page": 3, "clause_ref": "5.1", "quote": "The vendor shall host the system on an Indian cloud and provide support for two years after go-live during hospital office hours."}]
+    },
+    {
+      "field": "languages",
+      "value": 2,
+      "evidence": [{"page": 2, "clause_ref": "3.12", "quote": "Screens shall be available in English and Hindi."}]
+    }
+  ],
+  "unclear_points": [
+    {
+      "topic": "Number of users",
+      "why": "The document does not say how many patients or staff will use the system.",
+      "page": 1,
+      "clause_ref": "2.1",
+      "quote": "The system will be used by patients, front-desk staff, doctors, nurses, pharmacists, lab technicians, billing staff and the hospital administrator.",
+      "prebid_query": "With reference to clause 2.1, please state the expected number of registered patients and of staff users, and how many will be online at the same time.",
+      "answer": ""
+    }
+  ],
+  "not_priced": [
+    {
+      "topic": "data_rules",
+      "note": "Patient data must be kept confidential.",
+      "evidence": [{"page": 3, "clause_ref": "5.2", "quote": "Patient data shall be kept confidential and access shall be logged."}]
+    }
+  ],
+  "payment_terms": null,
+  "scope": [
+    {
+      "key": "sms",
+      "status": "explicit",
+      "note": "",
+      "evidence": [{"page": 2, "clause_ref": "3.2", "quote": "The system shall send an SMS reminder to the patient a day before the appointment."}]
+    },
+    {
+      "key": "booking_reminders",
+      "status": "explicit",
+      "note": "",
+      "evidence": [{"page": 2, "clause_ref": "3.2", "quote": "The system shall send an SMS reminder to the patient a day before the appointment."}]
+    },
+    {
+      "key": "booking_payment",
+      "status": "explicit",
+      "note": "",
+      "evidence": [{"page": 2, "clause_ref": "3.3", "quote": "Patients shall be able to pay the consultation fee online when booking."}]
+    },
+    {
+      "key": "enterprise_sso",
+      "status": "explicit",
+      "note": "",
+      "evidence": [{"page": 1, "clause_ref": "2.2", "quote": "Doctors and staff shall sign in with their existing hospital Microsoft accounts (single sign-on through the hospital's Active Directory)."}]
+    },
+    {
+      "key": "audit_log",
+      "status": "explicit",
+      "note": "",
+      "evidence": [{"page": 3, "clause_ref": "5.2", "quote": "Patient data shall be kept confidential and access shall be logged."}]
+    }
+  ],
+  "staff_lines": [],
+  "chatbot_buyer_systems": null
+}

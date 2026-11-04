@@ -96,6 +96,13 @@ backend/
                           #   each feature includes", GET/PUT /estimates/{id}/stories), the user
                           #   checks and saves them (`feature_stories`; the typed `description`
                           #   is saved for it); size check only, never price or seed
+                          #   context.py: shown only, never priced (OPEN_QUESTIONS 205): the
+                          #   industry (reading prompt v10 `project_domain`), the project type
+                          #   (most features shared with a `project_types` entry) and user roles
+                          #   (from the stories); prerequisite warnings (config
+                          #   `project_context.prerequisites`, and add-ons whose feature is not
+                          #   ticked) that never add anything; five-domain reading measurement
+                          #   outside the tests: backend/measurements/domains/
                           #   quote lists (OPEN_QUESTIONS 147): answers nobody gave
                           #   (`assumed`, the form sends `answered`), `not_included`
                           #   (features / scope / unticked standard blocks, the document's
@@ -142,13 +149,23 @@ backend/
       documents/ extraction/ retrieval/ mapping/ reports/ templates/   # later milestones
     llm/                  # LLMClient protocol, AnthropicClient, FakeClient; prompts/*.md (versioned)
     jobs/                 # Huey instance and tasks
-  seeds/                  # taxonomy/v1..v2, catalog/v1..v7, rate_cards/, parameters/,
+  seeds/                  # taxonomy/v1..v2, catalog/v1..v8, rate_cards/, parameters/,
                           #   quick_estimate.yaml (plain features/questions for simple mode)
                           #   + `topics`: the form asks one topic at a time (build, users, hosting,
                           #   support, contract) on both paths; every question / number has one
                           #   (OPEN_QUESTIONS 177); the EMD is read, never shown (`Fact.hidden`)
                           #   + `commonly_needed`: the fixed 8 features the features screen asks
                           #   about when the description did not mention them (OPEN_QUESTIONS 150)
+                          #   + `industry_suggestions`: the AI reading names up to 10 modules
+                          #   this kind of software usually has (any industry), checked in code
+                          #   (`tender.industry_suggestions`), offered unticked in place of that
+                          #   fixed list, each priced by the engine (POST /quick-estimate/
+                          #   suggestion-prices); never basics (OPEN_QUESTIONS 207)
+                          #   prompt v10 `ready_made`: "ready products are common for this kind",
+                          #   shown above the build-type prices, words only (OPEN_QUESTIONS 209)
+                          #   + `industries`: the manual form's "What is it for?" (13 + something
+                          #   else), each with its popular features offered unticked and priced,
+                          #   with a level; `feature_groups`: browse all by purpose (OPEN_QUESTIONS 212)
                           #   + `cms_built_in`: on a CMS build, what the CMS already has is
                           #   set up, not built (basic, one module; OPEN_QUESTIONS 154)
                           #   + `scope`: what else a feature needs, as catalog blocks at a level
@@ -233,6 +250,9 @@ backend/
                           #   .v3; milestones = tender, adds the requirement study)
                           #   catalog v7+: a tech-stack `section` per component (core, web,
                           #   mobile, ecommerce, ai_ml, security, ...) and a `url` per source
+                          #   catalog v8 (OPEN_QUESTIONS 213): + 15 industry blocks (education,
+                          #   health, finance, ...) from published hours; an `industries` module
+                          #   names its `block` (the custom feature's `catalog_key`)
   migrations/             # Alembic
   tests/                  # api/, core/, engine/ (unit, property, golden/*.yaml + *.expected.json)
                           #   fixtures/srs/: synthetic requirement documents + expected-results manifests
