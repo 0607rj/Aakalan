@@ -9,10 +9,10 @@ import {
 import {
   AiSavingFigure,
   DocumentFigure,
-  FeatureCostFigure,
   NotPricedFigure,
   QuestionFigure,
 } from "@/components/site/illustrations";
+import { LevelDial } from "@/components/site/level-dial";
 import {
   AppWindow,
   FeatureRow,
@@ -83,8 +83,8 @@ export default function FeaturesPage() {
             "Security audits only when the project asks for one",
           ]}
           art={
-            <AppWindow title="result · features">
-              <FeatureCostFigure />
+            <AppWindow title="result · pick a level">
+              <LevelDial />
             </AppWindow>
           }
         />
@@ -152,12 +152,17 @@ export default function FeaturesPage() {
       <Section className="py-[clamp(72px,10vw,120px)]">
         <Kicker n="06">Also included</Kicker>
         <Title claim="The rest of what a quote needs." className="mt-5" />
-        <dl className="mt-12 grid gap-5 lg:grid-cols-5">
+        <dl
+          data-reveal
+          className="focus-row tilt mt-12 grid gap-5 lg:grid-cols-5"
+        >
           {ALSO.map((a, i) => (
             <div
               key={a.title}
-              data-reveal
-              style={{ "--rd": i } as React.CSSProperties}
+              // the middle two first, then the outer two
+              style={
+                { "--fd": i === 0 || i === 3 ? 1 : 0 } as React.CSSProperties
+              }
               className={`flex items-start gap-5 p-8 ${ALSO_SHAPE[i]}`}
             >
               <span className="flex size-12 shrink-0 items-center justify-center rounded-full bg-tape-bright text-white">

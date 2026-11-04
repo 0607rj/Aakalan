@@ -977,7 +977,8 @@ function BidCheckCard({ summary }: { summary: QuickSummary }) {
       <SectionTitle icon={ScalesIcon} tone="warning">
         Bid check
       </SectionTitle>
-      <ul className="grid gap-3 sm:grid-cols-3">
+      {/* the fair range comes into focus first, then the two sides */}
+      <ul className="focus-row grid gap-3 [--fd:1] sm:grid-cols-3">
         <li className="flex flex-col gap-1 rounded-xl bg-warning-muted px-4 py-3">
           <span className="text-sm font-medium text-warning">
             Probably too low
@@ -986,7 +987,7 @@ function BidCheckCard({ summary }: { summary: QuickSummary }) {
             below {approx(check.too_low_below_paise).replace("about ", "")}
           </span>
         </li>
-        <li className="flex flex-col gap-1 rounded-xl bg-success/10 px-4 py-3">
+        <li className="flex flex-col gap-1 rounded-xl bg-success/10 px-4 py-3 [--fd:0]">
           <span className="text-sm font-medium text-success">Fair range</span>
           <span className="text-xl font-semibold tabular-nums">
             {formatRange(

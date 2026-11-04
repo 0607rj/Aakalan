@@ -6,6 +6,7 @@ import { CountUp } from "@/components/site/count-up";
 import { TenderLine } from "@/components/site/home-bands";
 import { EmberHero } from "@/components/site/ember-hero";
 import { FeatureTiles } from "@/components/site/feature-tiles";
+import { ScrambleText } from "@/components/site/scramble-text";
 import {
   Faq,
   Kicker,
@@ -106,6 +107,9 @@ const FAQ = [
 ];
 
 const delay = (rd: number) => ({ "--rd": rd }) as React.CSSProperties;
+/** A card's place counted from the middle of its row: the middle comes into focus first. */
+const fromCentre = (i: number, n: number) =>
+  ({ "--fd": Math.floor(Math.abs(i - (n - 1) / 2)) }) as React.CSSProperties;
 
 /** A section's space below it; the one above comes from the section before. */
 const BLOCK = "pt-6 pb-[clamp(72px,10vw,120px)]";
@@ -161,7 +165,12 @@ export default function HomePage() {
             className="rise-in font-display mt-[26px] text-[clamp(3.1rem,9vw,6.8rem)] leading-none"
             style={delay(1)}
           >
-            Price what gets <span className="text-peach">built.</span>
+            <ScrambleText
+              parts={[
+                { text: "Price what gets " },
+                { text: "built.", className: "text-peach" },
+              ]}
+            />
           </h1>
           <p
             className="rise-in mx-auto mt-[26px] max-w-[34rem] text-[clamp(1.1rem,1.8vw,1.3rem)] leading-[1.55] text-white/72"
@@ -304,12 +313,12 @@ export default function HomePage() {
         </p>
         <dl
           data-reveal
-          className="soft-card mt-14 grid w-full grid-cols-2 text-left min-[900px]:grid-cols-4"
+          className="soft-card focus-row mt-14 grid w-full grid-cols-2 text-left min-[900px]:grid-cols-4"
         >
           {FACTS.map((f, i) => (
             <div
               key={f.label}
-              style={delay(i)}
+              style={fromCentre(i, FACTS.length)}
               className="border-b px-6 py-[26px] odd:border-r min-[900px]:border-r min-[900px]:border-b-0 min-[900px]:last:border-r-0"
             >
               <dt className="font-wide text-[clamp(1.7rem,3vw,2.2rem)] leading-[1.1] tracking-[-0.03em]">

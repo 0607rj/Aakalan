@@ -620,6 +620,209 @@
   }
 }
 
+/* A page title's words slide up from behind a hidden edge, one after another (`SlideWords`). */
+.slide-word {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: bottom;
+  /* room for descenders inside the hidden edge */
+  padding-bottom: 0.12em;
+  margin-bottom: -0.12em;
+}
+
+.slide-word > span {
+  display: inline-block;
+  transform-origin: left bottom;
+  animation: slide-word 1s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  animation-delay: calc(0.1s + var(--wi, 0) * 0.09s);
+}
+
+@keyframes slide-word {
+  from {
+    transform: translateY(115%) rotate(7deg);
+  }
+}
+
+/* A row of cards that comes into focus from the middle out (`--fd`: 0 for the middle, 1 next to
+   it, ...). It plays when the row appears, or when it scrolls in if the row is `[data-reveal]`.
+   `.tilt` tips a card toward you on hover. */
+.focus-row > * {
+  animation: focus-in 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
+  animation-delay: calc(var(--fd, 0) * 0.13s);
+}
+
+.rv .focus-row[data-reveal]:not(.is-in) {
+  opacity: 1;
+  filter: none;
+  transform: none;
+}
+
+.rv .focus-row[data-reveal]:not(.is-in) > * {
+  animation: none;
+  opacity: 0;
+}
+
+@keyframes focus-in {
+  from {
+    opacity: 0;
+    filter: blur(12px);
+    transform: scale(0.9) translateY(16px);
+  }
+}
+
+.focus-row.tilt > * {
+  transition:
+    transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1),
+    box-shadow 0.3s;
+}
+
+.focus-row.tilt > *:hover {
+  transform: perspective(800px) translateY(-6px) rotateX(6deg);
+}
+
+/* How it works, step 1 (`DocumentScan`): a line scans a tender page; a sentence that asks for
+   something lights up and flies across as a priced feature, the rest turn grey. */
+.scan-clause {
+  margin: 0 -7px;
+  padding: 5px 7px;
+  border-radius: 6px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--muted-foreground);
+  transition:
+    background-color 0.35s,
+    color 0.35s;
+}
+
+.scan-clause b {
+  margin-right: 6px;
+  font-family: var(--font-mono);
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--faint);
+}
+
+.scan-clause.seen {
+  color: var(--faint);
+}
+
+.scan-clause.hit {
+  background: var(--tape-soft);
+  color: var(--foreground);
+}
+
+.scan-clause.hit b {
+  color: var(--tape);
+}
+
+.scan-beam {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 3px;
+  background: var(--tape-bright);
+  box-shadow: 0 0 18px 6px rgb(255 76 0 / 0.35);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.scan-item {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  min-height: 52px;
+  padding: 10px 12px;
+  border: 1px dashed var(--border);
+  border-radius: 12px;
+  font-size: 14px;
+  transition:
+    background-color 0.3s,
+    border-color 0.3s,
+    box-shadow 0.3s;
+}
+
+.scan-item > * {
+  opacity: 0;
+  transform: scale(0.94);
+  transition:
+    opacity 0.3s,
+    transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.scan-item.in {
+  border-style: solid;
+  background: var(--card);
+  box-shadow: 0 10px 24px -18px rgb(0 0 0 / 0.3);
+}
+
+.scan-item.in > * {
+  opacity: 1;
+  transform: none;
+}
+
+.scan-chip {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 6;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: var(--tape-bright);
+  box-shadow: 0 10px 20px -8px rgb(255 76 0 / 0.6);
+  color: #ffffff;
+  font: 500 12px var(--font-mono);
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* The level switch (`LevelSwitch`): the orange pill springs to the level picked. */
+.level-pill {
+  position: absolute;
+  inset-block: 2px;
+  left: 2px;
+  border-radius: 999px;
+  background: var(--tape);
+  box-shadow: 0 6px 14px -6px rgb(201 66 16 / 0.7);
+  animation: level-pill-in 0.3s ease-out;
+  transition: transform 0.55s cubic-bezier(0.34, 1.45, 0.64, 1);
+}
+
+@keyframes level-pill-in {
+  from {
+    opacity: 0;
+  }
+}
+
+/* The Features page's level card (`LevelDial`): digits roll like a meter, the range stretches. */
+.roll-col {
+  display: inline-block;
+  height: 1em;
+  overflow: hidden;
+}
+
+.roll-col > span {
+  display: flex;
+  flex-direction: column;
+  transition: transform 0.85s cubic-bezier(0.34, 1.3, 0.64, 1);
+}
+
+.roll-col i {
+  display: block;
+  height: 1em;
+  font-style: normal;
+}
+
+.range-band {
+  transition:
+    left 0.8s cubic-bezier(0.34, 1.3, 0.64, 1),
+    width 0.8s cubic-bezier(0.34, 1.3, 0.64, 1);
+}
+
+.range-pin {
+  transition: left 0.8s cubic-bezier(0.34, 1.5, 0.64, 1);
+}
+
 /* The "working out your cost" bar: a short piece measures across, again and again. */
 @keyframes measure {
   from {

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { DocumentScan } from "@/components/site/document-scan";
 import { StepNumber } from "@/components/site/step-number";
 import {
   Kicker,
@@ -109,6 +110,7 @@ export default function HowItWorksPage() {
                   />
                   {step.tip}
                 </p>
+                {i === 0 ? <DocumentScan className="mt-6 max-w-2xl" /> : null}
               </div>
             </li>
           ))}

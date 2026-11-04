@@ -2,6 +2,7 @@
 
 import * as React from "react";
 
+import { LevelSwitch } from "@/components/level-switch";
 import { Button } from "@/components/ui/button";
 import {
   api,
@@ -35,35 +36,25 @@ const LEVEL_SIZE: Record<Level, CustomItem["size"]> = {
 
 /** Basic / standard / advanced for a ticked suggestion; nothing picked = the usual level. */
 function LevelPicker({
+  name,
   value,
   onChange,
 }: {
+  name: string;
   value: Level | null;
   onChange: (level: Level) => void;
 }) {
   return (
-    <div
-      role="radiogroup"
-      aria-label="How big"
-      className="flex w-fit overflow-hidden rounded-full border text-xs"
-      onClick={(e) => e.stopPropagation()}
-    >
-      {LEVELS.map((l) => (
-        <button
-          key={l.key}
-          type="button"
-          role="radio"
-          aria-checked={value === l.key}
-          onClick={() => onChange(l.key)}
-          className={
-            value === l.key
-              ? "bg-primary px-3 py-1 text-primary-foreground"
-              : "px-3 py-1 hover:bg-panel-2"
-          }
-        >
-          {l.label}
-        </button>
-      ))}
+    // a click here picks a level, it does not untick the card
+    <div className="w-fit" onClick={(e) => e.stopPropagation()}>
+      <LevelSwitch
+        name={name}
+        label="How big"
+        options={LEVELS}
+        value={value}
+        onChange={onChange}
+        size="sm"
+      />
     </div>
   );
 }
@@ -249,6 +240,7 @@ export function IndustrySuggestions({
               <p className="text-sm">{s.why}</p>
               {checked && canLevel(s) ? (
                 <LevelPicker
+                  name={`level-${id}`}
                   value={levelOf(s)}
                   onChange={(level) => setLevel(s, level)}
                 />

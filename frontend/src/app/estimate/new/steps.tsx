@@ -3,6 +3,7 @@
 import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
+import { LevelSwitch } from "@/components/level-switch";
 import { Button } from "@/components/ui/button";
 import type { QuickOptions } from "@/lib/api/client";
 import { cn } from "@/lib/utils";
@@ -285,37 +286,13 @@ export function LevelsStep({
                   </span>
                 ) : null}
               </span>
-              <div
-                role="radiogroup"
-                aria-label={feature.label}
-                className="inline-flex w-fit shrink-0 rounded-lg border bg-background p-0.5"
-              >
-                {feature.levels.map((level) => {
-                  const selected = level.key === value;
-                  return (
-                    <label
-                      key={level.key}
-                      className={cn(
-                        "cursor-pointer rounded-md px-3 py-1.5 text-sm font-medium transition-colors has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring",
-                        selected
-                          ? "bg-tape text-primary-foreground"
-                          : "text-muted-foreground hover:text-foreground",
-                      )}
-                    >
-                      <input
-                        type="radio"
-                        name={`level-${feature.key}`}
-                        checked={selected}
-                        onChange={() =>
-                          onChange(feature.key, level.key as Level)
-                        }
-                        className="sr-only"
-                      />
-                      {level.label}
-                    </label>
-                  );
-                })}
-              </div>
+              <LevelSwitch
+                name={`level-${feature.key}`}
+                label={feature.label}
+                options={feature.levels}
+                value={value}
+                onChange={(key) => onChange(feature.key, key as Level)}
+              />
             </fieldset>
           );
         })}

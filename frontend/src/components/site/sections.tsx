@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import type { DotSceneName } from "./dot-scene";
 import { EmberHero } from "./ember-hero";
 import { Keypad } from "./keypad";
+import { SlideWords, wordCount } from "./slide-words";
 
 /*
  * The parts the public pages are made of. Each page opens on the ember panel and sinks into the
@@ -52,12 +53,17 @@ export function PageIntro({
       >
         <h1
           className={cn(
-            "rise-in font-display text-[clamp(2.6rem,6.4vw,4.75rem)] leading-[1]",
+            "font-display text-[clamp(2.6rem,6.4vw,4.75rem)] leading-[1]",
             center ? "mx-auto max-w-4xl" : "max-w-[40rem]",
           )}
         >
-          {title}
-          {rest ? <span className="text-peach"> {rest}</span> : null}
+          <SlideWords text={title} />
+          {rest ? (
+            <span className="text-peach">
+              {" "}
+              <SlideWords text={rest} from={wordCount(title)} />
+            </span>
+          ) : null}
         </h1>
         <div
           className={cn(
