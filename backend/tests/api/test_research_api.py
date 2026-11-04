@@ -202,12 +202,17 @@ def other_company(client: TestClient, db: Session, email: str) -> H:
 
 
 def test_research_is_shared_with_every_company(
-    client: TestClient, admin_headers: H, db: Session, fakes: list[str]
+    client: TestClient,
+    admin_headers: H,
+    db: Session,
+    fakes: list[str],
+    monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Researched once by one company, the feature waits for the site owner; once shared (table
     and file) another company that types it is priced by it with no AI call of its own, under
     an anonymous key, and never sees it listed or named, since its name shows what the first
-    company bids on (OPEN_QUESTIONS 185, 190)."""
+    company bids on (OPEN_QUESTIONS 185, 190). Here with approval on (auto_share off)."""
+    monkeypatch.setattr(library, "auto_share_on", lambda: False)
     ai(fakes, [], [{"block": "push_notifications", "level": "standard", "why": "alerts"}])
     name = "Parcel locker pickup slots"
     first = estimate(client, admin_headers, name)
@@ -270,5 +275,36 @@ def test_sharing_off_keeps_each_company_to_its_own(
     asked = len(fakes)
     estimate(client, them, name)
     assert len(fakes) > asked  # not in the library: researched for them
+    retire_all(client, admin_headers)
+    retire_all(client, them)
+
+
+def test_auto_share_prices_other_companies_at_once(
+    client: TestClient, admin_headers: H, db: Session, fakes: list[str]
+) -> None:
+    """`research.auto_share` (on in quick_estimate.yaml): no approval, the block is active and
+    in the file as soon as it is researched, and another company is priced by it with no AI
+    call of its own; the owner can still retire it (OPEN_QUESTIONS 214)."""
+    assert library.auto_share_on()
+    ai(fakes, [], [{"block": "push_notifications", "level": "standard", "why": "alerts"}])
+    name = "Bicycle dock reservation alerts"
+    first = estimate(client, admin_headers, name)
+    key = trace_key(client, admin_headers, first, name)
+    [row] = [
+        b
+        for b in client.get("/owner/shared-blocks", headers=admin_headers).json()
+        if b["name"] == name
+    ]
+    assert row["status"] == "active"
+    assert any(e.key == key for e in read_library(get_settings().resolved_research_library))
+    them = other_company(client, db, "auto@other.local")
+    asked = len(fakes)
+    theirs = estimate(client, them, "Reservation alerts for bicycle dock")
+    assert len(fakes) == asked
+    assert trace_key(client, them, theirs, "Reservation alerts for bicycle dock") == (
+        library.shared_key(key)
+    )
+    r = client.post(f"/owner/shared-blocks/{row['id']}/retire", headers=admin_headers)
+    assert r.json()["status"] == "retired"
     retire_all(client, admin_headers)
     retire_all(client, them)

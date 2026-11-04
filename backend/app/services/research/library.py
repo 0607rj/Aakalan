@@ -12,7 +12,8 @@ sharing off: then nothing new is shared and no organisation reads the shared blo
 one is priced by its own research only (OPEN_QUESTIONS 185).
 
 A newly shared block waits for the site owner (`pending`): only an approved (`active`) block
-prices other companies' features, and only then is it written to the file. Another company
+prices other companies' features, and only then is it written to the file. With
+`research.auto_share` it is approved as it is shared (OPEN_QUESTIONS 214). Another company
 sees it under an anonymous key (`shared_key`), never the words it was researched under
 (OPEN_QUESTIONS 190)."""
 
@@ -183,18 +184,19 @@ def share(db: Session, row: ResearchedComponent, method: str) -> None:
     ).first():
         return
     sources = public_sources([s for s in row.sources if s.get("kind") == "part" or s.get("ok")])
-    db.add(
-        SharedResearchedComponent(
-            key=row.key,
-            name=row.name,
-            section=row.section,
-            base_type=row.base_type,
-            method=method,
-            spec=public_spec(row.spec, sources),
-            sources=sources,
-            status="pending",
-        )
+    shared = SharedResearchedComponent(
+        key=row.key,
+        name=row.name,
+        section=row.section,
+        base_type=row.base_type,
+        method=method,
+        spec=public_spec(row.spec, sources),
+        sources=sources,
+        status="pending",
     )
+    db.add(shared)
+    if auto_share_on():
+        approve(shared)
     db.flush()
 
 
@@ -204,6 +206,14 @@ def sharing_on() -> bool:
 
     research = quick_config().research
     return bool(research and research.share)
+
+
+def auto_share_on() -> bool:
+    """`research.auto_share` in quick_estimate.yaml: shared blocks need no owner approval."""
+    from app.services.quick.config import quick_config
+
+    research = quick_config().research
+    return bool(research and research.auto_share)
 
 
 def shared_blocks(db: Session) -> list[SharedResearchedComponent]:

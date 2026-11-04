@@ -1543,6 +1543,10 @@ research:
   # a matching feature typed by any company, but is never listed by name to another company
   # (OPEN_QUESTIONS 185); false: each company is priced by its own research only
   share: true
+  # true: a newly shared feature prices other companies' features at once, with no approval
+  # on the Admin page (the owner can still retire it there); false: it waits for the owner
+  # (OPEN_QUESTIONS 214)
+  auto_share: true
   fetch_timeout_seconds: 15
   fetch_max_bytes: 3000000
   quote_window_chars: 300

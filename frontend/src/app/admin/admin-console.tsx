@@ -575,10 +575,11 @@ function SharedFeatures() {
       <div>
         <h2 className="text-xl font-semibold">Shared features</h2>
         <p className="text-sm text-muted-foreground">
-          {waiting ? `${waiting} waiting. ` : "Nothing waiting. "}A feature one
-          company researched prices other companies&apos; features only after
-          you share it. Its name is that company&apos;s own words: keep it
-          private if it names a client, a department or a tender.
+          {waiting
+            ? `${waiting} waiting: a feature one company researched prices other companies' features only after you share it. `
+            : "A feature one company researches is shared at once and helps price other companies' features; they never see its name. "}
+          Its name is that company&apos;s own words: retire it if it names a
+          client, a department or a tender, or if its days look wrong.
         </p>
       </div>
       {rows.length === 0 ? (

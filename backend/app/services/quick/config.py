@@ -609,6 +609,9 @@ class Research(Frozen):
     retry_no_evidence_days: int = Field(ge=0)
     # Share each researched block with every organisation (services/research/library.py).
     share: bool = True
+    # A shared block prices other companies' features at once, with no owner approval; the
+    # Admin page then only lists them to retire (OPEN_QUESTIONS 214). False: each waits.
+    auto_share: bool = False
     fetch_timeout_seconds: int = Field(ge=1, le=120)
     fetch_max_bytes: int = Field(ge=10_000)
     quote_window_chars: int = Field(ge=20)  # a figure counts only near the feature's words
