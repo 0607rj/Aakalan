@@ -66,7 +66,7 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
 
   if (state.kind === "loading") {
     return (
-      <div className="flex flex-1 items-center justify-center">
+      <div className="flex min-h-svh flex-1 items-center justify-center">
         <Loading>Checking your session…</Loading>
       </div>
     );

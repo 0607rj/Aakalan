@@ -37,7 +37,6 @@ import {
   NoReadyMadeNote,
   QuestionNotes,
   ReadyMadeNote,
-  Calculating,
   type Choice,
   FeatureCard,
   initialChoices,
@@ -66,6 +65,7 @@ import {
   missingPrerequisites,
   PrerequisiteWarnings,
 } from "./parts";
+import { Calculating } from "./calculating";
 import {
   allFeatures,
   answerLabel,
@@ -76,7 +76,7 @@ import {
   featuresWithLevels,
   type Level,
   LevelsStep,
-  ScopeStep,
+  AddOns,
   applicableScope,
   chosenScope,
   pickedLevels,
@@ -264,13 +264,7 @@ function ManualForm({
     details,
     customizing && leveled.length > 0 ? VERSION : null,
   );
-  const stepKeys = [
-    "type",
-    "features",
-    ...(scopeGroups.length > 0 ? ["scope"] : []),
-    ...questionSteps,
-    "check",
-  ];
+  const stepKeys = ["type", "features", ...questionSteps, "check"];
   const detailsStepOf = (topic: string) =>
     questionSteps.find((k) => detailsTopics(k).includes(topic)) ?? "check";
   const steps = useSteps(stepKeys);
@@ -459,7 +453,8 @@ function ManualForm({
     }
   }
 
-  if (submitting) return <Calculating labels={MANUAL_STEPS} />;
+  if (submitting)
+    return <Calculating labels={MANUAL_STEPS} name={name.trim()} />;
 
   const questionNotes = readyMade
     ? { build_type: <ReadyMadeNote note={readyMade} /> }
@@ -470,9 +465,7 @@ function ManualForm({
   const question = current.startsWith("q:")
     ? questions.find((q) => `q:${q.key}` === current)
     : undefined;
-  const phase = ["type", "features", "scope", "levels"].includes(current)
-    ? 1
-    : 2;
+  const phase = ["type", "features", "levels"].includes(current) ? 1 : 2;
 
   return (
     <QuestionNotes.Provider value={questionNotes}>
@@ -487,7 +480,8 @@ function ManualForm({
         <div key={current} className="step-in flex flex-col gap-8">
           {current === "type" ? (
             <section className="flex flex-col gap-8">
-              <header className="settle flex flex-col gap-2">
+              <header className="app-head step-head settle flex flex-col gap-2">
+                <div aria-hidden="true" className="app-head-grid" />
                 <p className="eyebrow">New estimate</p>
                 <h1 className="font-wide text-[2rem] leading-tight sm:text-[2.5rem]">
                   What do you want to build?
@@ -857,6 +851,23 @@ function ManualForm({
                 onTick={(k) => ticks.tick(k, change)}
               />
 
+              <AddOns
+                groups={scopeGroups}
+                chosen={scope}
+                suggested={Object.keys(scopeReasons)}
+                notIncluded={notIncluded
+                  .filter((n) => n.kind === "scope")
+                  .map((n) => n.key)}
+                onToggle={(key) => {
+                  setScope((now) =>
+                    now.includes(key)
+                      ? now.filter((k) => k !== key)
+                      : [...now, key],
+                  );
+                  unmark("scope", key);
+                }}
+              />
+
               <StepButtons
                 onBack={steps.prev}
                 onNext={steps.next}
@@ -868,39 +879,6 @@ function ManualForm({
                 }
               />
             </section>
-          ) : current === "scope" ? (
-            <>
-              <ScopeStep
-                groups={scopeGroups}
-                chosen={scope}
-                suggested={Object.keys(scopeReasons)}
-                onTickSuggested={() =>
-                  setScope((now) => [
-                    ...new Set([...now, ...Object.keys(scopeReasons)]),
-                  ])
-                }
-                notes={Object.fromEntries(
-                  Object.entries(scopeReasons).map(([k, quote]) => [
-                    k,
-                    <FromWords key={k} quote={quote} />,
-                  ]),
-                )}
-                onToggle={(key) => {
-                  setScope((now) =>
-                    now.includes(key)
-                      ? now.filter((k) => k !== key)
-                      : [...now, key],
-                  );
-                  unmark("scope", key);
-                }}
-                notIncluded={notIncluded
-                  .filter((n) => n.kind === "scope")
-                  .map((n) => n.key)}
-                onNotIncluded={(key) => toggleOut("scope", key)}
-                offerNotIncluded={false}
-              />
-              <StepButtons onBack={steps.prev} onNext={steps.next} />
-            </>
           ) : current === "levels" ? (
             <>
               <LevelsStep
@@ -1344,6 +1322,11 @@ function StartChoice({
       icon: FileArrowUpIcon,
       title: "Upload the requirement document",
       text: "PDF or Word. We read it and fill in the details for you to check.",
+      points: [
+        "Every feature found keeps the page and sentence it came from",
+        "A corrigendum overrides the original",
+        "You check what was found before any price is worked out",
+      ],
       recommended: true,
     },
     {
@@ -1352,6 +1335,11 @@ function StartChoice({
       icon: PencilSimpleLineIcon,
       title: "No document? Describe it yourself",
       text: "A few lines about the software, or tick what it should do.",
+      points: [
+        "Write a few lines and the features you mean are ticked",
+        "Or pick what it is for and tick from its usual features",
+        "Choose basic, standard or advanced for each one",
+      ],
       recommended: false,
     },
   ];
@@ -1398,6 +1386,22 @@ function StartChoice({
                 ) : null}
               </span>
               <span className="text-sm text-muted-foreground">{way.text}</span>
+              <ul className="mt-2 flex flex-col gap-1.5">
+                {way.points.map((point) => (
+                  <li
+                    key={point}
+                    className="flex items-start gap-2 text-sm text-foreground/80"
+                  >
+                    <CheckCircleIcon
+                      size={16}
+                      weight="fill"
+                      aria-hidden="true"
+                      className="mt-0.5 shrink-0 text-tape"
+                    />
+                    {point}
+                  </li>
+                ))}
+              </ul>
             </span>
             <ArrowRightIcon
               size={18}
@@ -1516,7 +1520,7 @@ function TemplateStep({
   );
   const { state } = useLoad(loader);
   if (state.kind === "loading")
-    return <Loading>Opening your template…</Loading>;
+    return <Loading fullPage>Opening your template…</Loading>;
   if (state.kind === "error") return <ErrorNotice message={state.message} />;
   return (
     <ManualForm
@@ -1598,7 +1602,7 @@ function ReviewStep({
   }, [docId, options.country]);
   const { state } = useLoad(loader);
   if (state.kind === "loading")
-    return <Loading>Opening your document…</Loading>;
+    return <Loading fullPage>Opening your document…</Loading>;
   if (state.kind === "error") return <ErrorNotice message={state.message} />;
   const { doc, form } = state.data;
   if (doc.status !== "extracted" || !doc.extraction || !form) {
@@ -1632,7 +1636,7 @@ export function NewEstimateWizard() {
   const country = searchParams.get("country") === "us" ? "us" : "india";
   const loader = React.useCallback(() => api.quickOptions(country), [country]);
   const { state } = useLoad(loader);
-  if (state.kind === "loading") return <Loading />;
+  if (state.kind === "loading") return <Loading fullPage />;
   if (state.kind === "error") return <ErrorNotice message={state.message} />;
   return <Flow key={state.data.country} options={state.data} />;
 }

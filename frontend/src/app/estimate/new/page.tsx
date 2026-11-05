@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 export default function NewEstimatePage() {
   // The wizard reads its step from the URL (useSearchParams), which needs a Suspense boundary.
   return (
-    <Suspense fallback={<Loading />}>
+    <Suspense fallback={<Loading fullPage />}>
       <NewEstimateWizard />
     </Suspense>
   );

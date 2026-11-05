@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 export default function ProjectPage() {
   // The project id and ?tab= are request-time data; the workspace reads them on the client.
   return (
-    <Suspense fallback={<Loading>Loading project…</Loading>}>
+    <Suspense fallback={<Loading fullPage>Loading project…</Loading>}>
       <ProjectWorkspace />
     </Suspense>
   );

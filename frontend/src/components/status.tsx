@@ -10,9 +10,13 @@ import { cn } from "@/lib/utils";
 export function Loading({
   children = "Loading…",
   className,
+  fullPage = false,
 }: {
   children?: React.ReactNode;
   className?: string;
+  /** A whole page is loading: centred on the screen (the screen less the page's top and
+   * bottom padding), not near the top. */
+  fullPage?: boolean;
 }) {
   return (
     <div
@@ -20,6 +24,7 @@ export function Loading({
       aria-live="polite"
       className={cn(
         "flex min-h-[40vh] w-full flex-col items-center justify-center gap-4 py-10",
+        fullPage && "min-h-[calc(100svh-6rem)]",
         className,
       )}
     >

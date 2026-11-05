@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 export default function EstimateResultPage() {
   // The estimate id is request-time data; the result component reads it on the client.
   return (
-    <Suspense fallback={<Loading>Loading your estimate…</Loading>}>
+    <Suspense fallback={<Loading fullPage>Loading your estimate…</Loading>}>
       <EstimateResult />
     </Suspense>
   );

@@ -45,7 +45,8 @@ export function ProjectWorkspace() {
   );
   const { state } = useLoad(loadProject);
 
-  if (state.kind === "loading") return <Loading>Loading project…</Loading>;
+  if (state.kind === "loading")
+    return <Loading fullPage>Loading project…</Loading>;
   if (state.kind === "error") return <ErrorNotice message={state.message} />;
   const project = state.data;
 

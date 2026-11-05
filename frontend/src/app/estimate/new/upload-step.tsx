@@ -26,6 +26,7 @@ import {
 import { cn } from "@/lib/utils";
 
 import { DOCUMENT_STEPS, StepHeader, StepIndicator } from "./parts";
+import { ReadingDocument } from "./reading-document";
 
 const NEXT: { icon: IconType; tone: Tone; text: string }[] = [
   {
@@ -86,23 +87,7 @@ export function UploadStep({
     if (file) void upload(file);
   }
 
-  if (uploading) {
-    return (
-      <div className="flex flex-col items-center gap-4 py-24 text-center">
-        <StepIndicator labels={DOCUMENT_STEPS} current={1} />
-        <IconTile icon={MagnifyingGlassIcon} size="lg" className="mt-8" />
-        <div className="h-1.5 w-64 overflow-hidden rounded-full bg-tape-soft">
-          <div className="h-full w-1/3 animate-[measure_1.4s_cubic-bezier(0.65,0,0.35,1)_infinite] rounded-full bg-primary/80" />
-        </div>
-        <p className="text-lg font-medium">Reading your document…</p>
-        <p className="max-w-md text-sm text-muted-foreground">
-          This can take a minute or two for long documents. Please keep this
-          page open.
-        </p>
-        <p className="text-sm text-muted-foreground">{uploading}</p>
-      </div>
-    );
-  }
+  if (uploading) return <ReadingDocument fileName={uploading} />;
 
   return (
     <div className="flex flex-col gap-8">

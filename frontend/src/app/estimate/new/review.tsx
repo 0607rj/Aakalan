@@ -25,7 +25,6 @@ import {
   NoReadyMadeNote,
   QuestionNotes,
   ReadyMadeNote,
-  Calculating,
   type Choice,
   Citation,
   DOCUMENT_STEPS,
@@ -52,7 +51,9 @@ import {
   missingPrerequisites,
   PrerequisiteWarnings,
   ProjectContextLine,
+  QuestionHeading,
 } from "./parts";
+import { Calculating } from "./calculating";
 import {
   allFeatures,
   answerLabel,
@@ -62,7 +63,8 @@ import {
   featuresWithLevels,
   type Level,
   LevelsStep,
-  ScopeStep,
+  AddOns,
+  DetailRow,
   applicableScope,
   chosenScope,
   pickedLevels,
@@ -362,17 +364,46 @@ export function ReviewForm({
       !(q.on_upload === "document" && isOpen(q)),
   );
   const rank = (key: string) => keyRank.get(key) ?? keyAnswers.length;
+  // The same questions as the manual form (OPEN_QUESTIONS 215): each main question on a screen
+  // of its own, in the topics' order; the rest on one optional screen. A tender-only question
+  // the document does not mention is not asked: its usual answer is priced and listed under
+  // "Not in the document: we assumed" on the check screen.
+  const foundInDocument = (q: Question) =>
+    extraction.choices[q.key] !== undefined ||
+    byNumber[q.key] !== undefined ||
+    prefill.answered.includes(q.key);
+  const hasQueries = (q: Question) =>
+    (keyAnswers.find((k) => k.key === q.key)?.queries ?? []).length > 0;
+  const mainQuestions = options.topics.flatMap((t) =>
+    questions.filter((q) => q.group === "main" && q.topic === t.key),
+  );
+  const moreQuestions = options.topics.flatMap((t) =>
+    questions
+      .filter(
+        (q) =>
+          q.topic === t.key &&
+          q.group !== "main" &&
+          !(
+            q.group === "document" &&
+            !foundInDocument(q) &&
+            !q.must_choose &&
+            !hasQueries(q) &&
+            unchosen([q], choices).length === 0
+          ),
+      )
+      .sort((a, b) => rank(a.key) - rank(b.key)),
+  );
+  const lastBuildQuestion = mainQuestions
+    .filter((q) => q.topic === "build")
+    .at(-1)?.key;
+  const stepOf = (q: Question) =>
+    mainQuestions.includes(q) ? `q:${q.key}` : "more";
   const topicQuestions = (topic: string) =>
     questions
       .filter((q) => q.topic === topic)
       .sort((a, b) => rank(a.key) - rank(b.key));
   const topicFacts = (topic: string) =>
     factsShown.filter((f) => f.topic === topic);
-  const hasTopic = (topic: string) =>
-    topicQuestions(topic).length > 0 ||
-    topicFacts(topic).length > 0 ||
-    (topic === "support" && staff !== null) ||
-    (topic === "contract" && terms !== null);
   // what the document does not state and is priced at the usual answer (a weak document
   // leaves many of these; each is worth confirming with the department before bidding)
   const assumed = relevant.filter(
@@ -417,20 +448,16 @@ export function ReviewForm({
     description: "", // nothing typed: the document says what it is
     project_domain: extraction.project_domain ?? "", // shown only, never priced
   };
-  // what is built, then one screen per topic in the form's order (OPEN_QUESTIONS 177)
+  // what is built, then the main questions one at a time, then the optional screen
   const steps = useSteps([
     "found",
-    ...(scopeGroups.length > 0 ? ["scope"] : []),
-    ...options.topics.flatMap((t) =>
-      hasTopic(t.key)
-        ? [
-            `t:${t.key}`,
-            ...(t.key === "build" && customizing && leveled.length > 0
-              ? ["levels"]
-              : []),
-          ]
-        : [],
-    ),
+    ...mainQuestions.flatMap((q) => [
+      `q:${q.key}`,
+      ...(q.key === lastBuildQuestion && customizing && leveled.length > 0
+        ? ["levels"]
+        : []),
+    ]),
+    "more",
     "check",
   ]);
   // ready products are common for this kind of software (OPEN_QUESTIONS 209)
@@ -440,12 +467,16 @@ export function ReviewForm({
       ? { build_type: <NoReadyMadeNote /> }
       : {};
   const impacts = useQuestionImpact(
-    anyFeature && !hasErrors && steps.current.startsWith("t:") ? request : null,
+    anyFeature &&
+      !hasErrors &&
+      (steps.current.startsWith("q:") || steps.current === "more")
+      ? request
+      : null,
   );
   // the build time beside the deadline (contract); the deadline itself does not change it
   const { deadline_months: deadlineMonths, ...otherNumbers } = overrides;
   const schedule = useSchedule(
-    anyFeature && !hasErrors && steps.current === "t:contract"
+    anyFeature && !hasErrors && steps.current === "more"
       ? { ...request, overrides: otherNumbers }
       : null,
   );
@@ -528,9 +559,10 @@ export function ReviewForm({
     }
   }
 
-  if (submitting) return <Calculating labels={DOCUMENT_STEPS} />;
+  if (submitting)
+    return <Calculating labels={DOCUMENT_STEPS} name={name.trim()} />;
 
-  const topic = options.topics.find((t) => `t:${t.key}` === steps.current);
+  const question = mainQuestions.find((q) => `q:${q.key}` === steps.current);
 
   /** A number the document may state: as found (with its page), or typed. */
   function factBox(fact: Fact) {
@@ -581,7 +613,7 @@ export function ReviewForm({
 
   /** One question: the document's answer with its page (change it if wrong), else the usual
    * answer to confirm; with any pre-bid query about it. */
-  function questionBlock(q: Question) {
+  function questionBlock(q: Question, ownScreen = false) {
     const found = extraction.choices[q.key];
     const value = byNumber[q.key] ?? shownChoice(q, choices);
     const queries = keyAnswers.find((k) => k.key === q.key)?.queries ?? [];
@@ -595,7 +627,11 @@ export function ReviewForm({
         >
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="flex flex-col gap-1">
-              <span className="text-sm text-muted-foreground">{q.label}</span>
+              {ownScreen ? (
+                <span className="eyebrow">The document says</span>
+              ) : (
+                <span className="text-sm text-muted-foreground">{q.label}</span>
+              )}
               <span className="font-semibold">
                 {selected?.label ?? found.label}
                 {selected?.hint ? (
@@ -640,7 +676,9 @@ export function ReviewForm({
     return (
       <div key={q.key} className="flex flex-col gap-3">
         <div className="flex flex-col gap-1">
-          <span className="font-wide text-lg">{q.label}</span>
+          {ownScreen ? null : (
+            <span className="font-wide text-lg">{q.label}</span>
+          )}
           <span className="text-sm text-muted-foreground">
             {q.must_choose
               ? "Your decision: pick one."
@@ -690,42 +728,41 @@ export function ReviewForm({
     );
   }
 
-  /** A topic's screen in three parts (OPEN_QUESTIONS 199): "Please answer" (what the
-   * document does not say and moves the price a lot, a decision, or an answer with a pre-bid
-   * query), then the numbers, then two folded lists: what the document says (with its page)
-   * and what it does not say that moves the price little (the usual answer is priced). A weak
-   * document asks about as much as the manual form; a full tender only a few questions. */
-  function topicScreen(key: string) {
-    const shown = topicQuestions(key);
-    const found = (q: Question) =>
-      extraction.choices[q.key] !== undefined ||
-      byNumber[q.key] !== undefined ||
-      prefill.answered.includes(q.key);
-    const queried = (q: Question) =>
-      (keyAnswers.find((k) => k.key === q.key)?.queries ?? []).length > 0;
+  /** The optional screen (OPEN_QUESTIONS 199, 215): the staff the document lists, then "Please
+   * answer" (what the document does not say and moves the price a lot, a decision, or an
+   * answer with a pre-bid query), the numbers, and two folded lists: what the document says
+   * (with its page) and the usual answers it leaves (priced as they are). */
+  function moreScreen() {
+    const shown = moreQuestions;
+    // asked open: a decision, an answer with a pre-bid query, or one with no answer yet;
+    // the rest the document leaves are closed rows with the usual answer, as on the manual form
     const ask = shown.filter(
       (q) =>
-        q.must_choose ||
-        queried(q) ||
-        unchosen([q], choices).length > 0 ||
-        (!found(q) && q.impact !== "low"),
+        q.must_choose || hasQueries(q) || unchosen([q], choices).length > 0,
     );
-    const fromDocument = shown.filter((q) => !ask.includes(q) && found(q));
-    const assumedHere = shown.filter((q) => !ask.includes(q) && !found(q));
-    const numbers = topicFacts(key);
+    const fromDocument = shown.filter(
+      (q) => !ask.includes(q) && foundInDocument(q),
+    );
+    const assumedHere = shown.filter(
+      (q) => !ask.includes(q) && !foundInDocument(q),
+    );
     const staffKey = keyAnswers.find((k) => k.key === "staff");
-    // pre-bid queries of a key answer a stated number replaced (e.g. the support years)
+    // a number the document states stays in view (by what it stated, so a box never moves
+    // while the user types in it)
+    const numbersStated = factsShown.filter(
+      (f) =>
+        extraction.numbers[f.key] !== undefined ||
+        (initialFacts[f.key] ?? "").trim() !== "",
+    );
+    const numbersOpen = factsShown.filter((f) => !numbersStated.includes(f));
+    // pre-bid queries of a key answer that is asked nowhere (e.g. a stated number replaced it)
+    const asked = new Set([...mainQuestions, ...shown].map((q) => q.key));
     const orphanQueries = keyAnswers
-      .filter(
-        (k) =>
-          k.key !== "staff" &&
-          !shown.some((q) => q.key === k.key) &&
-          options.questions.find((q) => q.key === k.key)?.topic === key,
-      )
+      .filter((k) => k.key !== "staff" && !asked.has(k.key))
       .flatMap((k) => k.queries);
     return (
       <>
-        {key === "support" && staff !== null ? (
+        {staff !== null ? (
           <div className="flex flex-col gap-3">
             <div className="flex flex-col gap-1">
               <span className="font-wide text-lg">Staff during support</span>
@@ -752,53 +789,70 @@ export function ReviewForm({
             </span>
           </div>
         ) : null}
-        {ask.map(questionBlock)}
-        {numbers.length > 0 ? (
-          <div className="grid gap-x-6 gap-y-5 border-y py-6 sm:grid-cols-2 lg:grid-cols-3">
-            {numbers.map(factBox)}
+        {ask.map((q) => questionBlock(q))}
+        {assumedHere.length > 0 ? (
+          <div className="flex flex-col gap-2">
+            <span className="text-sm text-muted-foreground">
+              Not in the document, so we used the usual answer:
+            </span>
+            <div className="flex flex-col divide-y overflow-hidden rounded-2xl border bg-card">
+              {assumedHere.map((q) => (
+                <DetailRow
+                  key={q.key}
+                  question={q}
+                  value={shownChoice(q, choices)}
+                  changed={q.key in choices && choices[q.key] !== q.default}
+                  impact={impacts.get(q.key)}
+                  currency={currency}
+                  onChange={(v) => changeChoice(q.key, v)}
+                />
+              ))}
+            </div>
           </div>
         ) : null}
-        <Queries queries={orphanQueries} approximatePages={approx} />
-        <Folded
-          title={`Found in your document (${fromDocument.length})`}
-          hint="Each answer shows its page. Open to check or change one."
-        >
-          {fromDocument.map(questionBlock)}
-        </Folded>
-        <Folded
-          title={`Not in the document, we assumed the usual answer (${assumedHere.length})`}
-          hint="These change the price little. Open to change one if you know better."
-        >
-          {assumedHere.map(questionBlock)}
-        </Folded>
-        {key === "build" && leveled.length > 0 ? (
-          <button
-            type="button"
-            className="w-fit text-sm font-medium text-primary hover:underline"
-            onClick={() => {
-              setCustomizing(true);
-              steps.goTo("levels");
-            }}
+        {numbersStated.length > 0 ? (
+          <div className="grid gap-x-6 gap-y-5 border-y py-6 sm:grid-cols-2 lg:grid-cols-3">
+            {numbersStated.map(factBox)}
+          </div>
+        ) : null}
+        {numbersOpen.length > 0 ? (
+          <Folded
+            title={`Numbers the document does not state (${numbersOpen.length})`}
+            hint="A typical value is used for each. Open to type one if you know it."
           >
-            Want to set each feature&apos;s level yourself? Change levels →
-          </button>
+            {[
+              <div
+                key="numbers"
+                className="grid gap-x-6 gap-y-5 sm:grid-cols-2 lg:grid-cols-3"
+              >
+                {numbersOpen.map(factBox)}
+              </div>,
+            ]}
+          </Folded>
         ) : null}
-        {key === "contract" ? (
-          <BuildTime
-            plan={schedule}
-            weeks={
-              deadlineMonths === undefined
-                ? null
-                : monthsToWeeks(Number(deadlineMonths))
-            }
-            keepTeam={
-              staff !== null
-                ? "add them under Staff during support (the support topic), or the price leaves them out."
-                : "the price leaves them out: this reading has no staff list (read the document again)."
-            }
-          />
+        <Queries queries={orphanQueries} approximatePages={approx} />
+        {fromDocument.length > 0 ? (
+          <Folded
+            title={`Found in your document (${fromDocument.length})`}
+            hint="Each answer shows its page. Open to check or change one."
+          >
+            {fromDocument.map((q) => questionBlock(q))}
+          </Folded>
         ) : null}
-        {key === "contract" && terms ? (
+        <BuildTime
+          plan={schedule}
+          weeks={
+            deadlineMonths === undefined
+              ? null
+              : monthsToWeeks(Number(deadlineMonths))
+          }
+          keepTeam={
+            staff !== null
+              ? "add them under Staff during support at the top of this screen, or the price leaves them out."
+              : "the price leaves them out: this reading has no staff list (read the document again)."
+          }
+        />
+        {terms ? (
           <div className="flex flex-col gap-2 rounded-xl border bg-card p-4">
             <span className="font-semibold">
               When you get paid, as the document says
@@ -939,36 +993,16 @@ export function ReviewForm({
                 }
                 onTick={(k) => ticks.tick(k, changeChoice)}
               />
-              <StepButtons
-                onBack={onBack}
-                onNext={steps.next}
-                nextDisabled={name.trim() === "" || !anyFeature}
-                hint={
-                  name.trim() === ""
-                    ? "Enter a project name."
-                    : !anyFeature
-                      ? "Tick or add at least one thing the software should do."
-                      : `${everything.length + customFeatures.length} selected`
-                }
-              />
-            </>
-          ) : steps.current === "scope" ? (
-            <>
-              <ScopeStep
+              <AddOns
                 groups={scopeGroups}
                 chosen={scope}
                 suggested={[...foundScope.keys()]}
                 source="the document"
-                onTickSuggested={() =>
-                  setScope((now) => [
-                    ...new Set([...now, ...foundScope.keys()]),
-                  ])
-                }
                 notes={Object.fromEntries(
                   [...foundScope.values()].map((s) => [
                     s.key,
                     <span key={s.key} className="flex flex-col gap-1">
-                      <span className="text-sm text-muted-foreground">
+                      <span className="text-muted-foreground">
                         {s.status === "explicit"
                           ? "The document asks for this."
                           : `The document suggests it may be needed${s.note ? `: ${s.note}` : ""}. Please check.`}
@@ -980,6 +1014,9 @@ export function ReviewForm({
                     </span>,
                   ]),
                 )}
+                notIncluded={notIncluded
+                  .filter((n) => n.kind === "scope")
+                  .map((n) => n.key)}
                 onToggle={(key) => {
                   setScope((now) =>
                     now.includes(key)
@@ -988,10 +1025,6 @@ export function ReviewForm({
                   );
                   ticks.unmark("scope", key);
                 }}
-                notIncluded={notIncluded
-                  .filter((n) => n.kind === "scope")
-                  .map((n) => n.key)}
-                onNotIncluded={(key) => ticks.toggleOut("scope", key)}
               />
               {(extraction.scope_set_aside ?? []).length > 0 ? (
                 <div className="flex flex-col gap-2 rounded-xl bg-muted/60 px-4 py-3 text-sm">
@@ -1017,11 +1050,22 @@ export function ReviewForm({
                     ))}
                   </ul>
                   <span className="text-muted-foreground">
-                    Tick it above if it should be built now.
+                    Add it under More options above if it should be built now.
                   </span>
                 </div>
               ) : null}
-              <StepButtons onBack={steps.prev} onNext={steps.next} />
+              <StepButtons
+                onBack={onBack}
+                onNext={steps.next}
+                nextDisabled={name.trim() === "" || !anyFeature}
+                hint={
+                  name.trim() === ""
+                    ? "Enter a project name."
+                    : !anyFeature
+                      ? "Tick or add at least one thing the software should do."
+                      : `${everything.length + customFeatures.length} selected`
+                }
+              />
             </>
           ) : steps.current === "levels" ? (
             <>
@@ -1035,26 +1079,61 @@ export function ReviewForm({
               />
               <StepButtons onBack={steps.prev} onNext={steps.next} />
             </>
-          ) : topic ? (
+          ) : question ? (
             <section className="flex flex-col gap-8">
-              <StepHeader eyebrow="From the document" title={topic.label}>
-                {topic.hint}. What the document says shows its page; what it
-                does not say is the usual answer: change it if you know better.
+              <QuestionHeading
+                question={question}
+                impact={impacts.get(question.key)}
+                currency={currency}
+              />
+              {questionBlock(question, true)}
+              {question.key === lastBuildQuestion && leveled.length > 0 ? (
+                <button
+                  type="button"
+                  className="w-fit text-sm font-medium text-primary hover:underline"
+                  onClick={() => {
+                    setCustomizing(true);
+                    steps.goTo("levels");
+                  }}
+                >
+                  Want to set each feature&apos;s level yourself? Change levels
+                  →
+                </button>
+              ) : null}
+              <StepButtons
+                onBack={steps.prev}
+                onNext={steps.next}
+                nextDisabled={unchosen([question], choices).length > 0}
+                hint={
+                  unchosen([question], choices).length > 0
+                    ? "Pick an answer to continue."
+                    : null
+                }
+              />
+            </section>
+          ) : steps.current === "more" ? (
+            <section className="flex flex-col gap-8">
+              <StepHeader
+                eyebrow="Optional"
+                title="Anything different from the usual?"
+              >
+                What the document says shows its page; what it does not say is
+                the usual answer. Change only what you know is different, or
+                just continue.
               </StepHeader>
-              {topicScreen(topic.key)}
+              {moreScreen()}
               <StepButtons
                 onBack={steps.prev}
                 onNext={steps.next}
                 nextDisabled={
-                  topicFacts(topic.key).some((f) => errors[f.key]) ||
-                  (topic.key === "support" && staffHasErrors) ||
-                  unchosen(topicQuestions(topic.key), choices).length > 0
+                  factsShown.some((f) => errors[f.key]) ||
+                  staffHasErrors ||
+                  unchosen(moreQuestions, choices).length > 0
                 }
                 hint={
-                  topicFacts(topic.key).some((f) => errors[f.key]) ||
-                  (topic.key === "support" && staffHasErrors)
+                  factsShown.some((f) => errors[f.key]) || staffHasErrors
                     ? "Fix the highlighted numbers."
-                    : unchosen(topicQuestions(topic.key), choices).length > 0
+                    : unchosen(moreQuestions, choices).length > 0
                       ? "Pick an answer for each question."
                       : null
                 }
@@ -1080,21 +1159,27 @@ export function ReviewForm({
                     ...(t.key === "support" && staff !== null
                       ? [
                           {
-                            step: "t:support",
+                            step: "more",
                             label: "Staff during support",
                             value: staffSummary(staff),
                           },
                         ]
                       : []),
-                    ...topicQuestions(t.key).map((q) => ({
-                      step: `t:${t.key}`,
-                      label: q.label,
-                      value: answerLabel(q, choices[q.key]),
-                    })),
+                    ...topicQuestions(t.key)
+                      .filter(
+                        (q) =>
+                          mainQuestions.includes(q) ||
+                          moreQuestions.includes(q),
+                      )
+                      .map((q) => ({
+                        step: stepOf(q),
+                        label: q.label,
+                        value: answerLabel(q, choices[q.key]),
+                      })),
                     ...topicFacts(t.key)
                       .filter((f) => (facts[f.key] ?? "").trim() !== "")
                       .map((f) => ({
-                        step: `t:${t.key}`,
+                        step: "more",
                         label: f.label,
                         value: facts[f.key] ?? "",
                       })),

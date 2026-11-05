@@ -54,7 +54,6 @@ export function topicSteps(
   };
   for (const topic of topics) {
     const own = main.filter((q) => q.topic === topic.key);
-    if (own.length > 0) flush();
     for (const q of own) {
       out.push(`q:${q.key}`);
       if (q.key === levelsAfter) out.push("levels");
@@ -389,34 +388,80 @@ export function DetailsStep({
   impacts: Map<string, QuestionImpact>;
   currency: string;
 }) {
-  const many = sections.length > 1;
   return (
-    <section className="flex flex-col gap-10">
-      <StepHeader
-        eyebrow={`Optional · ${sections.map((s) => s.topic.label).join(" · ")}`}
-        title={many ? "A few more details" : sections[0]?.topic.label}
-      >
-        Answer what you know and skip the rest. We use the usual answer for
-        anything you leave as it is.
+    <section className="flex flex-col gap-6">
+      <StepHeader eyebrow="Optional" title="Anything different from the usual?">
+        We filled in the usual answer for each of these. Open one only if yours
+        is different, or just continue.
       </StepHeader>
-      {sections.map((section) => (
-        <div key={section.topic.key} className="flex flex-col gap-8">
-          {many ? (
-            <h2 className="eyebrow border-b pb-2">{section.topic.label}</h2>
-          ) : null}
-          {section.questions.map((q) => (
-            <QuestionGroup
+      <div className="flex flex-col divide-y overflow-hidden rounded-2xl border bg-card">
+        {sections.flatMap((section) =>
+          section.questions.map((q) => (
+            <DetailRow
               key={q.key}
               question={q}
               value={shownChoice(q, choices)}
+              changed={q.key in choices && choices[q.key] !== q.default}
               impact={impacts.get(q.key)}
               currency={currency}
               onChange={(value) => onChange(q.key, value)}
             />
-          ))}
-        </div>
-      ))}
+          )),
+        )}
+      </div>
     </section>
+  );
+}
+
+/** One optional question, closed: the question and the answer used; opened to change it. */
+export function DetailRow({
+  question,
+  value,
+  changed,
+  impact,
+  currency,
+  onChange,
+}: {
+  question: Question;
+  value: Choice | undefined;
+  changed: boolean;
+  impact?: QuestionImpact;
+  currency: string;
+  onChange: (value: Choice) => void;
+}) {
+  const answer = question.options.find((o) => o.value === value)?.label;
+  return (
+    <details className="group/row">
+      <summary className="flex cursor-pointer list-none flex-wrap items-center gap-x-4 gap-y-1 px-5 py-4 hover:bg-panel-2/60 focus-visible:bg-panel-2 focus-visible:outline-none [&::-webkit-details-marker]:hidden">
+        <span className="min-w-0 basis-full font-medium sm:flex-1 sm:basis-auto">
+          {question.label}
+        </span>
+        <span
+          className={cn(
+            "rounded-full px-2.5 py-0.5 text-sm",
+            changed
+              ? "bg-tape-soft font-medium text-tape"
+              : "bg-panel-2 text-muted-foreground",
+          )}
+        >
+          {answer ?? "Not set"}
+        </span>
+        <span className="text-sm text-tape group-open/row:hidden">Change</span>
+        <span className="hidden text-sm text-muted-foreground group-open/row:inline">
+          Close
+        </span>
+      </summary>
+      <div className="px-5 pb-5">
+        <QuestionGroup
+          question={question}
+          value={value}
+          impact={impact}
+          currency={currency}
+          hideLegend
+          onChange={onChange}
+        />
+      </div>
+    </details>
   );
 }
 
@@ -439,6 +484,177 @@ export function chosenScope(groups: ScopeGroup[], chosen: string[]): string[] {
 }
 
 type ScopeItem = ScopeGroup["items"][number];
+
+/** One add-on as a chip: tap to add, tap again to take it out. */
+function AddOnChip({
+  item,
+  on,
+  suggested,
+  excluded,
+  onToggle,
+}: {
+  item: ScopeItem;
+  on: boolean;
+  suggested: boolean;
+  excluded: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      aria-pressed={on}
+      title={item.hint || undefined}
+      onClick={onToggle}
+      className={cn(
+        "inline-flex min-h-9 items-center gap-1.5 rounded-full border px-3 py-1.5 text-left text-sm transition-colors focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+        on
+          ? "border-tape bg-tape-soft font-medium text-tape"
+          : "bg-card hover:border-foreground/30 hover:bg-panel-2/60",
+        suggested && !on && "border-dashed border-tape/60",
+        excluded && !on && "text-muted-foreground line-through",
+      )}
+    >
+      <span aria-hidden="true" className="w-3 text-center leading-none">
+        {on ? "✓" : "+"}
+      </span>
+      {item.ask || item.label}
+      {suggested && !on ? (
+        <span className="text-xs font-normal text-tape">suggested</span>
+      ) : null}
+    </button>
+  );
+}
+
+/** A feature's add-ons on one line: its name, then the chips. */
+function AddOnRow({
+  label,
+  items,
+  chosen,
+  suggested,
+  notIncluded,
+  notes = {},
+  onToggle,
+}: {
+  label: string;
+  items: ScopeItem[];
+  chosen: string[];
+  suggested: string[];
+  notIncluded: string[];
+  notes?: Record<string, React.ReactNode>;
+  onToggle: (key: string) => void;
+}) {
+  const noted = items.filter((i) => notes[i.key] !== undefined);
+  return (
+    <div className="grid gap-2 py-3 sm:grid-cols-[10rem_minmax(0,1fr)] sm:gap-4">
+      <span className="pt-1.5 text-sm font-medium">{label}</span>
+      <div className="flex flex-wrap gap-2">
+        {items.map((item) => (
+          <AddOnChip
+            key={item.key}
+            item={item}
+            on={chosen.includes(item.key)}
+            suggested={suggested.includes(item.key)}
+            excluded={notIncluded.includes(item.key)}
+            onToggle={() => onToggle(item.key)}
+          />
+        ))}
+      </div>
+      {noted.length > 0 ? (
+        <div className="flex flex-col gap-2 text-sm sm:col-start-2">
+          {noted.map((i) => (
+            <div key={i.key} className="flex flex-col gap-0.5">
+              <span className="font-medium">{i.ask || i.label}</span>
+              {notes[i.key]}
+            </div>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
+/** The extras on the features screen, never asked: an add-on shows only when the user's own
+ * words mention it (or it was picked before); every other one waits in one closed "More
+ * options" line. Nothing is added unless tapped. */
+export function AddOns({
+  groups,
+  chosen,
+  suggested = [],
+  notIncluded = [],
+  notes = {},
+  source = "your description",
+  onToggle,
+}: {
+  groups: ScopeGroup[];
+  chosen: string[];
+  suggested?: string[];
+  notIncluded?: string[];
+  /** Where the document mentions an add-on, under its row. */
+  notes?: Record<string, React.ReactNode>;
+  /** Where the shown add-ons come from, in the heading. */
+  source?: string;
+  onToggle: (key: string) => void;
+}) {
+  const inPlay = (i: ScopeItem) =>
+    chosen.includes(i.key) ||
+    suggested.includes(i.key) ||
+    notIncluded.includes(i.key);
+  const shown = groups
+    .map((g) => ({ ...g, items: g.items.filter(inPlay) }))
+    .filter((g) => g.items.length > 0);
+  const rest = groups
+    .map((g) => ({ ...g, items: g.items.filter((i) => !inPlay(i)) }))
+    .filter((g) => g.items.length > 0);
+  const restCount = rest.reduce((n, g) => n + g.items.length, 0);
+  if (shown.length === 0 && rest.length === 0) return null;
+  const row = (g: ScopeGroup) => (
+    <AddOnRow
+      key={g.key}
+      label={g.label}
+      items={g.items}
+      chosen={chosen}
+      suggested={suggested}
+      notIncluded={notIncluded}
+      notes={notes}
+      onToggle={onToggle}
+    />
+  );
+  return (
+    <section className="flex flex-col gap-2">
+      {shown.length > 0 ? (
+        <>
+          <div className="flex flex-wrap items-baseline justify-between gap-x-4 border-b pb-2">
+            <span className="text-base font-semibold">
+              Add-ons from {source}
+            </span>
+            <span className="text-sm text-muted-foreground">
+              Tap to add. Nothing is added unless you tap it.
+            </span>
+          </div>
+          <div className="flex flex-col divide-y">{shown.map(row)}</div>
+        </>
+      ) : null}
+      {rest.length > 0 ? (
+        <details className="group/more border-y">
+          <summary className="flex cursor-pointer list-none flex-wrap items-baseline gap-x-2 py-3 text-sm [&::-webkit-details-marker]:hidden">
+            <span
+              aria-hidden="true"
+              className="text-muted-foreground transition-transform group-open/more:rotate-90"
+            >
+              ›
+            </span>
+            <span className="font-medium">More options</span>
+            <span className="text-muted-foreground">
+              optional, {restCount} small extras such as SMS login or an audit
+              log. Most projects skip this.
+            </span>
+          </summary>
+          <div className="flex flex-col divide-y pb-2">{rest.map(row)}</div>
+        </details>
+      ) : null}
+    </section>
+  );
+}
 
 /** What else the features need: each ticked item adds the work it takes; something already
  * in the project is not counted again. Suggestions (from a document or the user's own words)

@@ -1244,7 +1244,7 @@ export function EstimateResult() {
   );
   const { state, setData } = useLoad(loader);
   if (state.kind === "loading")
-    return <Loading>Loading your estimate…</Loading>;
+    return <Loading fullPage>Loading your estimate…</Loading>;
   if (state.kind === "error") return <ErrorNotice message={state.message} />;
   return <SummaryView summary={state.data} onChange={setData} />;
 }

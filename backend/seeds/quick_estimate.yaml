@@ -412,6 +412,7 @@ questions:
     # old data and the helpdesk (`hide_when` + `default_by` on each: their answer is then fixed)
     label: What needs to be built?
     topic: build
+    group: detail   # OPEN_QUESTIONS 215: rarely different from the usual answer
     default: whole
     options:
       - {value: whole, label: The whole software, hint: "Screens, the server side and the database. Pick this if unsure", answers: {build_layers: full}}
@@ -469,7 +470,7 @@ questions:
   integrations:
     label: Does it need to connect to other software you already use?
     topic: build
-    group: detail  # optional: skipped = the usual answer, which is priced
+    # OPEN_QUESTIONS 215: asked on its own screen (it moves the price most after the users)
     default: none
     options:
       - {value: none, label: "No", hint: "It works on its own", answers: {}}
@@ -508,7 +509,7 @@ questions:
   hosting:
     label: Where will it run?
     topic: hosting
-    group: detail  # optional: skipped = the usual answer, which is priced
+    # OPEN_QUESTIONS 215: asked on its own screen (everyone should choose where it runs)
     default: aws
     hide_when: {build_part: [frontend_only]}  # the screens run on the client's servers and in the app stores
     default_by: {build_part: {frontend_only: existing}}

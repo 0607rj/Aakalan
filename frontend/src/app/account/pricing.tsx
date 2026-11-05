@@ -67,7 +67,7 @@ export function AiSavingSetting() {
   }
 
   return (
-    <section className="slab flex w-full max-w-xl flex-col gap-6 p-6 sm:p-8">
+    <section className="slab flex w-full flex-col gap-6 p-6 sm:p-8">
       <div className="flex items-center gap-3">
         <IconTile icon={HandCoinsIcon} />
         <div className="flex flex-col gap-0.5">
@@ -79,7 +79,7 @@ export function AiSavingSetting() {
         </div>
       </div>
       <fieldset
-        className="flex flex-col gap-2"
+        className="grid grid-cols-1 gap-3 sm:grid-cols-2"
         disabled={!canEdit || busy || !settings}
       >
         <legend className="sr-only">AI saving passed on to the client</legend>
@@ -87,7 +87,7 @@ export function AiSavingSetting() {
           <label
             key={c.value}
             className={cn(
-              "flex cursor-pointer gap-3 rounded-lg border p-3.5 transition-colors",
+              "flex cursor-pointer gap-3 rounded-2xl border p-4 transition-colors",
               c.value === current
                 ? "border-tape bg-tape-soft"
                 : "hover:bg-muted/50",

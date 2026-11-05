@@ -35,9 +35,10 @@ Estimates are saved as templates, and recorded outcomes calibrate future estimat
   Look (OPEN_QUESTIONS 189): orange accent and Stack Sans Headline, Google Sans Flex, IBM Plex Mono
   everywhere; public pages open on the ember panel (`components/site/ember-hero.tsx`), each with its
   own dot picture (`dot-scene.tsx`, `public/hero`, drawn by code, not by an image AI), always light
-  below it, with `.soft-card` and `.dark-card`; the logged-in app has the same floating pill nav, each
-  page's top on a short ember band (`components/app-hero.tsx`, the next card rising into it with
-  `.app-rise`) and soft white cards below. Each thing is said on one page only (OPEN_QUESTIONS 189).
+  below it, with `.soft-card` and `.dark-card`; the logged-in app is laid out as a web app: an ink
+  sidebar with the ember glow (`components/app-sidebar.tsx`; a top bar and drawer on phones), each
+  page's title on a faint warm grid with no box (`components/app-hero.tsx`, `.app-head`; the
+  new-estimate steps too, `.step-head`) and soft white cards below in one column. Each thing is said on one page only (OPEN_QUESTIONS 189).
 - **Auth:** JWT (HS256) + argon2; roles `admin`, `estimator`, `finance`, `viewer`. Margin visible only to `finance`/`admin`.
   Sign-up creates a company with the person as admin; email verified and password reset by emailed
   6-digit codes (`services/auth.py`, hashed, expiring, limited tries); a reset or change raises the

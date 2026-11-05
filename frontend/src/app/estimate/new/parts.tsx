@@ -8,7 +8,6 @@ import {
   BedIcon,
   BuildingOfficeIcon,
   BuildingsIcon,
-  CalculatorIcon,
   CalendarCheckIcon,
   ChalkboardTeacherIcon,
   ChatCircleDotsIcon,
@@ -48,7 +47,7 @@ import {
   WrenchIcon,
 } from "@phosphor-icons/react/dist/ssr";
 
-import { IconTile, type IconType } from "@/components/site/illustrations";
+import { type IconType } from "@/components/site/illustrations";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -638,7 +637,8 @@ export function StepHeader({
   children?: React.ReactNode;
 }) {
   return (
-    <header className="settle flex flex-col gap-2">
+    <header className="app-head step-head settle flex flex-col gap-2">
+      <div aria-hidden="true" className="app-head-grid" />
       <p className="eyebrow">{eyebrow}</p>
       <h1 className="font-wide text-[2rem] leading-tight text-balance sm:text-[2.5rem]">
         {title}
@@ -692,7 +692,8 @@ export function QuestionHeading({
 }) {
   const Icon = QUESTION_ICONS[question.key] ?? QuestionIcon;
   return (
-    <div className="settle flex flex-col gap-2">
+    <div className="app-head step-head settle flex flex-col gap-2">
+      <div aria-hidden="true" className="app-head-grid" />
       <span className="flex items-center gap-2 text-tape">
         <Icon
           size={18}
@@ -1062,19 +1063,6 @@ export function Citation({
         “{first.quote}”
       </blockquote>
     </details>
-  );
-}
-
-export function Calculating({ labels }: { labels: string[] }) {
-  return (
-    <div className="flex flex-col items-center gap-4 py-24 text-center">
-      <StepIndicator labels={labels} current={3} />
-      <IconTile icon={CalculatorIcon} size="lg" className="mt-10" />
-      <div className="h-1.5 w-64 overflow-hidden rounded-full bg-tape-soft">
-        <div className="h-full w-1/3 animate-[measure_1.4s_cubic-bezier(0.65,0,0.35,1)_infinite] rounded-full bg-primary/80" />
-      </div>
-      <p className="text-lg font-medium">Working out your cost…</p>
-    </div>
   );
 }
 

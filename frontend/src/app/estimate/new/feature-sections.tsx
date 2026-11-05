@@ -264,8 +264,13 @@ export function FeatureSections({
   const suggested = onTick ? suggestions : [];
   const suggestedKeys = suggested.map((s) => s.feature).filter(Boolean);
   const fixedList = suggested.length === 0 && !(onTick && suggestionsAsked);
+  // a feature asked as a question (mobile app, other software, old data) is not offered
+  // here as well, or it would be asked twice (OPEN_QUESTIONS 215)
+  const askedAsQuestion = new Set(
+    options.features.filter((f) => f.hidden).map((f) => f.key),
+  );
   const shortlist = (fixedList ? (options.commonly_needed ?? []) : [])
-    .filter((k) => !foundKeys.includes(k))
+    .filter((k) => !foundKeys.includes(k) && !askedAsQuestion.has(k))
     .sort((a, b) => rank(a) - rank(b));
   const browse = options.features.filter(
     (f) =>

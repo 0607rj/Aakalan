@@ -23,7 +23,16 @@ def test_options_are_plain_language(client: TestClient, admin_headers: H) -> Non
     assert scale["default"] == "up_to_10k" and len(scale["options"]) == 11
     assert scale["options"][-1]["unsure"]  # every key question can be answered "Not sure"
     mains = [q["key"] for q in body["questions"] if q["group"] == "main"]
-    assert mains[:5] == ["version", "platforms", "build_part", "builder", "scale"]
+    # OPEN_QUESTIONS 215: only these get a screen of their own
+    assert mains == [
+        "version",
+        "platforms",
+        "builder",
+        "scale",
+        "integrations",
+        "build_type",
+        "hosting",
+    ]
     assert "ai_use" not in {q["key"] for q in body["questions"]}  # a company setting
     ticks = {f["key"] for f in body["features"] if not f["hidden"]}
     assert not ticks & {"mobile_app", "connect_existing", "old_data"}  # asked as questions

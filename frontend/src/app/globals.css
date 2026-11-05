@@ -308,33 +308,91 @@
     0 18px 40px -24px rgb(0 0 0 / 0.28);
 }
 
-/* The top of a signed-in page on the ember panel (components/app-hero.tsx): full width under
-   the floating nav, with the page's colours turned light so its words read in white. */
-.app-hero {
-  margin-inline: calc(50% - 50vw);
-  margin-top: -7rem;
-  --foreground: #ffffff;
-  --muted-foreground: rgb(255 255 255 / 0.72);
-  --muted: rgb(255 255 255 / 0.14);
-  --secondary: rgb(255 255 255 / 0.14);
-  --border: rgb(255 255 255 / 0.16);
-  --input: rgb(255 255 255 / 0.3);
-  --card: rgb(255 255 255 / 0.1);
+/* The app's sidebar (components/app-sidebar.tsx): ink with the ember glow at the top. */
+.app-side {
+  background:
+    radial-gradient(120% 40% at 10% 0%, rgb(194 80 15 / 0.55), transparent 70%),
+    var(--night);
 }
 
-.app-hero .eyebrow {
-  color: var(--peach);
+@keyframes drawer-in {
+  from {
+    transform: translateX(-100%);
+  }
 }
 
-.mist.app {
-  height: clamp(90px, 11vw, 140px);
+.drawer-in {
+  animation: drawer-in 0.28s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* The card that rises out of the band above it. */
+/* The top of a signed-in page (components/app-hero.tsx): no box. The title sits on the site's
+   faint square grid of hairlines, which fades out towards the edges and below, with a soft
+   orange light in the upper left; a rule closes the header. */
+.app-head {
+  position: relative;
+  isolation: isolate;
+  padding: 1.75rem 0 1.5rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.app-head-grid {
+  position: absolute;
+  z-index: -1;
+  inset: -2rem -2.25rem 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(40% 90% at 0% 0%, rgb(255 76 0 / 0.12), transparent 70%),
+    linear-gradient(to right, rgb(150 70 20 / 0.11) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(150 70 20 / 0.11) 1px, transparent 1px);
+  background-size:
+    100% 100%,
+    32px 32px,
+    32px 32px;
+  background-position:
+    0 0,
+    -1px -1px,
+    -1px -1px;
+  mask-image: radial-gradient(
+    ellipse 85% 100% at 30% 0%,
+    #000 35%,
+    transparent 90%
+  );
+}
+
+/* a step of a new estimate: the grid reaches up behind the step names and the progress bar
+   above the title (the main column's top padding plus their height), fading in at the top */
+.step-head .app-head-grid {
+  inset: -8.75rem -2.25rem 0;
+  mask-image:
+    linear-gradient(to bottom, transparent, #000 2rem),
+    radial-gradient(ellipse 90% 100% at 25% 10%, #000 40%, transparent 92%);
+  mask-composite: intersect;
+}
+
+@media (min-width: 64rem) {
+  .step-head .app-head-grid {
+    inset: -9.75rem -2.25rem 0;
+  }
+}
+
+.app-head .eyebrow {
+  color: var(--tape);
+}
+
+.app-head h1 {
+  font-size: clamp(1.9rem, 3vw, 2.6rem);
+  line-height: 1.06;
+}
+
+/* the old "card rising out of the band" hook; nothing rises now */
 .app-rise {
   position: relative;
-  z-index: 5;
-  margin-top: calc(-1 * clamp(110px, 12vw, 140px));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drawer-in {
+    animation: none;
+  }
 }
 
 /* Small figures in labels and table heads. */
@@ -1144,5 +1202,311 @@
 
   @media (min-width: 40rem) {
     padding-inline: 1.75rem;
+  }
+}
+
+/* Reading an uploaded document (estimate/new/reading-document.tsx): a sheet with a scan line
+   sweeping down; each line lights up as the line reaches it (its --d), and some are marked as
+   found. A drawing only. The sizes match the component's constants. */
+.read-stage {
+  position: relative;
+  isolation: isolate;
+}
+
+.read-grid {
+  inset: -1.5rem -2.25rem;
+  mask-image: radial-gradient(
+    ellipse 60% 55% at 50% 50%,
+    #000 25%,
+    transparent 78%
+  );
+}
+
+.read-sheet {
+  position: relative;
+  height: 310px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 1.25rem;
+  background: var(--card);
+  transform: rotate(-1.5deg);
+  box-shadow:
+    9px 9px 0 -1px var(--card),
+    9px 9px 0 0 var(--border),
+    0 26px 50px -30px rgb(0 0 0 / 0.4);
+}
+
+.read-sheet-head {
+  position: absolute;
+  top: 18px;
+  right: 22px;
+  left: 22px;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding-bottom: 12px;
+  border-bottom: 1px dashed var(--border);
+  color: var(--muted-foreground);
+  font-family: var(--font-mono);
+  font-size: 12px;
+}
+
+.read-line {
+  position: absolute;
+  left: 22px;
+  height: 8px;
+  border-radius: 4px;
+  background: rgb(22 24 29 / 0.08);
+  animation: read-line 4s linear infinite;
+  animation-delay: var(--d);
+}
+
+.read-line.hit {
+  animation-name: read-hit;
+}
+
+.read-line.hit::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: -14px;
+  width: 8px;
+  height: 8px;
+  margin-top: -4px;
+  border-radius: 50%;
+  background: var(--tape-bright);
+  transform: scale(0);
+  animation: read-dot 4s ease-out infinite;
+  animation-delay: var(--d);
+}
+
+.read-beam {
+  position: absolute;
+  top: -44px;
+  right: 0;
+  left: 0;
+  height: 44px;
+  border-bottom: 2px solid var(--tape-bright);
+  background: linear-gradient(to bottom, transparent, rgb(255 76 0 / 0.16));
+  animation: read-beam 4s linear infinite;
+}
+
+@keyframes read-beam {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(340px);
+  }
+}
+
+@keyframes read-line {
+  0% {
+    background: var(--peach);
+  }
+  25%,
+  100% {
+    background: rgb(22 24 29 / 0.08);
+  }
+}
+
+@keyframes read-hit {
+  0% {
+    background: var(--tape-bright);
+  }
+  12%,
+  80% {
+    background: var(--peach);
+  }
+  95%,
+  100% {
+    background: rgb(22 24 29 / 0.08);
+  }
+}
+
+@keyframes read-dot {
+  0% {
+    transform: scale(0);
+  }
+  6% {
+    transform: scale(1.35);
+  }
+  12%,
+  82% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  95%,
+  100% {
+    opacity: 0;
+    transform: scale(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .read-beam {
+    display: none;
+  }
+  .read-line,
+  .read-line.hit::before {
+    animation: none;
+  }
+  .read-line.hit {
+    background: var(--peach);
+  }
+  .read-line.hit::before {
+    transform: scale(1);
+  }
+}
+
+/* Working out the cost (estimate/new/calculating.tsx): a cost sheet filling in row by row, its
+   amounts growing in, then a low / likely / high range settling at the foot; the component
+   starts it again every 5 s. Each element rests in its finished state (reduced motion). */
+.cost-sheet {
+  position: relative;
+  padding: 18px 22px 20px;
+  border: 1px solid var(--border);
+  border-radius: 1.25rem;
+  background: var(--card);
+  transform: rotate(-1.5deg);
+  box-shadow:
+    9px 9px 0 -1px var(--card),
+    9px 9px 0 0 var(--border),
+    0 26px 50px -30px rgb(0 0 0 / 0.4);
+}
+
+.cost-sheet .read-sheet-head {
+  position: static;
+}
+
+.cost-loop {
+  animation: cost-fade 5s both;
+}
+
+.cost-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  animation: cost-row 0.5s ease-out var(--d) both;
+}
+
+.cost-bar {
+  flex: none;
+  height: 8px;
+  border-radius: 4px;
+  background: rgb(22 24 29 / 0.1);
+}
+
+.cost-dots {
+  flex: 1;
+  height: 0;
+  border-bottom: 2px dotted rgb(22 24 29 / 0.15);
+}
+
+.cost-amount {
+  display: flex;
+  flex: none;
+  justify-content: flex-end;
+  width: 22%;
+}
+
+.cost-amount > span {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--peach);
+  transform-origin: right;
+  animation: cost-amount 0.9s ease-out var(--d) both;
+}
+
+.cost-range {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px dashed var(--border);
+  animation: cost-row 0.5s ease-out 1.9s both;
+}
+
+.cost-track {
+  position: relative;
+  height: 12px;
+  border-radius: 6px;
+  background: rgb(22 24 29 / 0.07);
+}
+
+.cost-band {
+  position: absolute;
+  inset: 0 16% 0 18%;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--peach), var(--tape-bright));
+  animation: cost-band 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) 2.1s both;
+}
+
+.cost-pin {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 20px;
+  height: 20px;
+  margin: -10px 0 0 -10px;
+  border: 4px solid var(--card);
+  border-radius: 50%;
+  background: var(--night);
+  box-shadow: 0 0 0 1px var(--border);
+  animation: cost-pin 0.5s ease-out 2.7s both;
+}
+
+@keyframes cost-fade {
+  0%,
+  92% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes cost-row {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+@keyframes cost-amount {
+  0% {
+    background: var(--tape-bright);
+    transform: scaleX(0);
+  }
+  45% {
+    background: var(--tape-bright);
+    transform: scaleX(1);
+  }
+}
+
+@keyframes cost-band {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+@keyframes cost-pin {
+  0% {
+    transform: scale(0);
+  }
+  60% {
+    transform: scale(1.25);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cost-loop,
+  .cost-row,
+  .cost-amount > span,
+  .cost-range,
+  .cost-band,
+  .cost-pin {
+    animation: none;
   }
 }
