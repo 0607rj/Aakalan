@@ -10,7 +10,6 @@ import {
   ListBulletsIcon,
   MagnifyingGlassIcon,
   PlusIcon,
-  PuzzlePieceIcon,
   TrashIcon,
   WarningCircleIcon,
 } from "@phosphor-icons/react/dist/ssr";
@@ -290,41 +289,42 @@ function NoEstimates() {
   );
 }
 
-/** Four numbers across the top of the list, all from the estimates themselves. */
+/** Three facts across the top of the list. Estimates are separate projects, so their prices are
+ * never added up: the range shows the smallest and the largest likely price instead. */
 function StatTiles({ estimates }: { estimates: QuickSummary[] }) {
   const priced = estimates.filter((e) => e.feasible && e.likely_paise);
-  const currencies = new Set(priced.map((e) => e.currency));
-  const total = priced.reduce((sum, e) => sum + (e.likely_paise ?? 0), 0);
-  const features = estimates.reduce((sum, e) => sum + e.features.length, 0);
+  const oneCurrency = new Set(priced.map((e) => e.currency)).size === 1;
+  const byPrice = [...priced].sort(
+    (a, b) => (a.likely_paise ?? 0) - (b.likely_paise ?? 0),
+  );
+  const smallest = byPrice[0];
+  const largest = byPrice[byPrice.length - 1];
   const fromDocs = estimates.filter((e) => e.from_document).length;
   const latest = estimates.reduce((a, b) =>
     a.created_at > b.created_at ? a : b,
   );
+  let range = { value: "–", note: "none priced yet" };
+  if (smallest && largest && oneCurrency) {
+    range =
+      smallest === largest
+        ? {
+            value: short(smallest.likely_paise ?? 0, smallest.currency),
+            note: smallest.name,
+          }
+        : {
+            value: `${short(smallest.likely_paise ?? 0, smallest.currency)} – ${short(largest.likely_paise ?? 0, largest.currency)}`,
+            note: "likely price, smallest to largest",
+          };
+  }
   const tiles = [
     {
       label: "Estimates",
       value: String(estimates.length),
-      note: `${fromDocs} from a document`,
+      note:
+        fromDocs > 0 ? `${fromDocs} from a document` : "all from a description",
       icon: ListBulletsIcon,
     },
-    {
-      label: "Likely, all together",
-      value:
-        priced.length > 0 && currencies.size === 1
-          ? short(total, priced[0].currency)
-          : "–",
-      note:
-        priced.length < estimates.length
-          ? `${priced.length} priced`
-          : "build, launch and support",
-      icon: CurrencyInrIcon,
-    },
-    {
-      label: "Features priced",
-      value: String(features),
-      note: "across all estimates",
-      icon: PuzzlePieceIcon,
-    },
+    { label: "Price range", ...range, icon: CurrencyInrIcon },
     {
       label: "Latest",
       value: formatDate(latest.created_at),
@@ -333,15 +333,13 @@ function StatTiles({ estimates }: { estimates: QuickSummary[] }) {
     },
   ];
   return (
-    <dl className="slab grid grid-cols-2 lg:grid-cols-4">
+    <dl className="slab grid sm:grid-cols-3">
       {tiles.map((t, i) => (
         <div
           key={t.label}
           className={cn(
             "flex min-w-0 items-start gap-3 p-5",
-            i % 2 === 1 && "border-l",
-            i > 1 && "border-t lg:border-t-0",
-            i === 2 && "lg:border-l",
+            i > 0 && "border-t sm:border-t-0 sm:border-l",
           )}
         >
           <t.icon
@@ -363,21 +361,6 @@ function StatTiles({ estimates }: { estimates: QuickSummary[] }) {
   );
 }
 
-/** "5 estimates · about ₹2.15 Cr likely in all" (only when every one is in one currency). */
-function Totals({ estimates }: { estimates: QuickSummary[] }) {
-  const priced = estimates.filter((e) => e.feasible && e.likely_paise);
-  const currencies = new Set(priced.map((e) => e.currency));
-  const total = priced.reduce((sum, e) => sum + (e.likely_paise ?? 0), 0);
-  return (
-    <p className="text-muted-foreground">
-      {estimates.length} estimate{estimates.length === 1 ? "" : "s"}
-      {priced.length > 0 && currencies.size === 1
-        ? ` · ${short(total, priced[0].currency)} likely in all`
-        : ""}
-    </p>
-  );
-}
-
 export function EstimatesHome() {
   const user = useCurrentUser();
   const loader = React.useCallback(() => api.listQuickEstimates(), []);
@@ -391,14 +374,10 @@ export function EstimatesHome() {
           <div className="flex flex-col gap-3">
             <p className="eyebrow">{first ? `Hello, ${first}` : "Welcome"}</p>
             <h1 className="font-display leading-[1]">Your estimates</h1>
-            {state.kind === "ready" && state.data.length > 0 ? (
-              <Totals estimates={state.data} />
-            ) : (
-              <p className="max-w-xl text-muted-foreground">
-                The cost of building, launching and running software, as a low,
-                likely and high range.
-              </p>
-            )}
+            <p className="max-w-xl text-muted-foreground">
+              The cost of building, launching and running software, as a low,
+              likely and high range.
+            </p>
           </div>
           <Link
             href="/estimate/new"
