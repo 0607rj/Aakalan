@@ -28,6 +28,7 @@ import {
   api,
   errorText,
   startViewing,
+  type OwnerOverview,
   type OwnerUserChange,
   type OwnerUserRow,
   type QuickSummary,
@@ -94,12 +95,7 @@ function Stat({
   );
 }
 
-function Overview() {
-  const loader = React.useCallback(() => api.ownerOverview(), []);
-  const { state } = useLoad(loader);
-  if (state.kind === "error") return <ErrorNotice message={state.message} />;
-  if (state.kind !== "ready") return null;
-  const o = state.data;
+function Overview({ o }: { o: OwnerOverview }) {
   return (
     <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
       <Stat icon={BuildingsIcon} label="Companies" value={o.companies} />
@@ -167,7 +163,8 @@ function TheirEstimates({ row }: { row: OwnerUserRow }) {
   );
   const { state } = useLoad(loader);
   const [error, setError] = React.useState<string | null>(null);
-  if (state.kind === "loading") return <Loading />;
+  if (state.kind === "loading")
+    return <Loading className="min-h-0 py-4">Loading their estimates…</Loading>;
   if (state.kind === "error") return <ErrorNotice message={state.message} />;
   if (state.data.length === 0)
     return (
@@ -393,15 +390,17 @@ function UserCard({
   );
 }
 
-function People() {
-  const loader = React.useCallback(() => api.ownerUsers(), []);
-  const { state, reload, setData } = useLoad(loader);
+function People({
+  rows,
+  setData,
+  reload,
+}: {
+  rows: OwnerUserRow[];
+  setData: (rows: OwnerUserRow[]) => void;
+  reload: () => void;
+}) {
   const [query, setQuery] = React.useState("");
   const [filter, setFilter] = React.useState<Filter>("all");
-
-  if (state.kind === "loading") return <Loading />;
-  if (state.kind === "error") return <ErrorNotice message={state.message} />;
-  const rows = state.data;
 
   const q = query.trim().toLowerCase();
   const shown = rows.filter(
@@ -563,12 +562,13 @@ function SharedBlock({
 
 /** Features one company researched, waiting before they price anyone else's: the name is that
  * company's own text, so check it says nothing about a client or tender before sharing. */
-function SharedFeatures() {
-  const loader = React.useCallback(() => api.ownerSharedBlocks(), []);
-  const { state, setData } = useLoad(loader);
-  if (state.kind === "loading") return <Loading />;
-  if (state.kind === "error") return <ErrorNotice message={state.message} />;
-  const rows = state.data;
+function SharedFeatures({
+  rows,
+  setData,
+}: {
+  rows: SharedBlockRow[];
+  setData: (rows: SharedBlockRow[]) => void;
+}) {
   const waiting = rows.filter((r) => r.status === "pending").length;
   return (
     <section className="flex flex-col gap-4">
@@ -626,9 +626,39 @@ export function AdminConsole() {
           </div>
         </div>
       </AppHero>
-      <Overview />
-      <People />
-      <SharedFeatures />
+      <AdminSections />
     </div>
+  );
+}
+
+/** Everything below the title, loaded together: one loading screen for the page, not one per
+ * section. */
+function AdminSections() {
+  const loader = React.useCallback(
+    () =>
+      Promise.all([
+        api.ownerOverview(),
+        api.ownerUsers(),
+        api.ownerSharedBlocks(),
+      ]),
+    [],
+  );
+  const { state, setData, reload } = useLoad(loader);
+  if (state.kind === "loading") return <Loading>Loading accounts…</Loading>;
+  if (state.kind === "error") return <ErrorNotice message={state.message} />;
+  const [o, users, shared] = state.data;
+  return (
+    <>
+      <Overview o={o} />
+      <People
+        rows={users}
+        setData={(rows) => setData([o, rows, shared])}
+        reload={reload}
+      />
+      <SharedFeatures
+        rows={shared}
+        setData={(rows) => setData([o, users, rows])}
+      />
+    </>
   );
 }
