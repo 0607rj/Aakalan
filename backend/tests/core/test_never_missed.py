@@ -1,5 +1,5 @@
-"""A feature the reader skips is never lost silently (OPEN_QUESTIONS 204): the keyword check
-adds a listed feature an AI reading missed, every requirement sentence nothing quotes is
+"""A feature the reader skips is never lost silently (OPEN_QUESTIONS 204, 217): every
+requirement sentence nothing quotes is
 listed, and "sign in with Google" is the social login choice, not staff single sign-on."""
 
 from types import SimpleNamespace
@@ -51,12 +51,12 @@ def read(raw: Any, text: str = PAGE, kind: str = "rfp") -> TenderExtraction:
     return merged
 
 
-def test_the_keyword_check_adds_what_the_ai_missed_and_says_so() -> None:
+def test_after_an_ai_reading_keywords_add_nothing_and_the_sentence_is_listed() -> None:
+    """OPEN_QUESTIONS 217: features come from the AI's reading of the meaning; a requirement it
+    left out is listed as not priced yet, never added by its words."""
     merged = read(reading([{"key": "payments", "evidence": ev("pay online through a payment")}]))
-    by_key = {f.key: f for f in merged.features}
-    assert by_key["payments"].found_by == "reader"
-    assert by_key["billing"].found_by == "keywords"  # "GST invoice", missed by the AI
-    assert by_key["billing"].evidence[0].page == 1
+    assert [f.key for f in merged.features] == ["payments"]
+    assert any("GST invoice" in u.text for u in merged.uncovered)
 
 
 def test_the_keyword_check_never_reads_a_corrigendum() -> None:

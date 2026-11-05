@@ -8,6 +8,8 @@ replies) into one extraction for the review screen and the estimate.
 - Unclear points: all kept. Not-priced topics: union. Payment terms: like a number.
 """
 
+import re
+from decimal import Decimal
 from typing import Any
 
 from pydantic import BaseModel
@@ -15,22 +17,19 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models import Document, Project
-from app.services.documents.parsing import Page, ParsedDocument
-from app.services.extraction.basic_reader import basic_read
 from app.services.extraction.client_provided import client_provides, find_client_provided
-from app.services.extraction.coverage import find_uncovered
+from app.services.extraction.coverage import find_uncovered, terms_page
 from app.services.extraction.staffing import apply_staffing
 from app.services.extraction.stated_counts import StatedCount, find_stated_counts
 from app.services.extraction.support_terms import find_support_hours, find_support_staff
 from app.services.extraction.tender import (
-    BASIC_READER_VERSION,
     FoundFeature,
     FoundValue,
     TenderExtraction,
     UnclearPoint,
     VerifiedEvidence,
-    verify_findings,
 )
+from app.services.extraction.uptime_terms import find_uptime
 from app.services.quick.config import quick_config
 from app.services.quick.context import user_roles
 
@@ -178,12 +177,68 @@ def apply_code_checks(extraction: TenderExtraction, docs: list[Document]) -> Ten
     _answers_from_topics(extraction)
     _client_provided(extraction, docs)
     _support_terms(extraction, docs)
+    _uptime_terms(extraction, docs)
     apply_stated_counts(extraction, docs)
     apply_staffing(quick_config(), extraction, docs)  # staff lines and rules (OPEN_QUESTIONS 162)
-    _keyword_net(extraction, docs)
+    _drop_unstated(extraction)
+    _outside_scope(extraction, docs)
     _coverage(extraction, docs)
     _roles(extraction)
+    _own_report(extraction, docs)
     return extraction
+
+
+# A sentence saying the document does not give something, or asking for it, answers nothing:
+# "The requirement document does not state the helpdesk support hours", "Kindly confirm the
+# O&M period", "Is migration required?" (OPEN_QUESTIONS 218). Wording, not tunable numbers.
+UNSTATED = re.compile(
+    r"\b(?:does|do|did)\s+not\s+(?:state|specify|mention|say|indicate|provide|define)"
+    r"|\bnot\s+(?:been\s+|yet\s+)?(?:stated|specified|mentioned|provided|defined|given|indicated)\b"
+    r"|\b(?:kindly|please)\s+(?:confirm|specify|clarify|provide|state|indicate|advise)"
+    r"|\bis\s+silent\s+(?:on|about)\b",
+    re.IGNORECASE,
+)
+
+
+def unstated(quote: str) -> bool:
+    """True for a sentence that says something is not stated, asks for it, or is a question."""
+    text = quote.strip()
+    return text.endswith("?") or UNSTATED.search(text) is not None
+
+
+# An e-mail address or a phone number (ten digits or more): contact details, not something to
+# build or run. "Register with a mobile number" is a feature, so the words alone never count.
+CONTACT = re.compile(
+    r"[\w.+-]+@[\w-]+\.[a-z]{2,}|\+?\b\d[\d -]{8,}\d\b",
+    re.IGNORECASE,
+)
+
+
+def about_tendering(quote: str) -> bool:
+    """True for a sentence about the tendering process itself (quick config `tender_process`:
+    the portal, bidder registration, bid submission) or giving contact details: the buyer's or
+    the portal's helpdesk for bidders is not a helpdesk to provide (OPEN_QUESTIONS 219)."""
+    rules = quick_config().tender_process
+    text = " ".join(quote.lower().split())
+    if CONTACT.search(text):
+        return True
+    return rules is not None and any(w in text for w in rules.words)
+
+
+def _drop_unstated(merged: TenderExtraction) -> None:
+    """An answer or number whose every quote only says the document does not state it (or asks
+    for it) is dropped, so the question keeps its usual answer (OPEN_QUESTIONS 218); so is an
+    answer whose every quote is about the tendering process (219; a number such as the EMD may
+    come from there). It counts as a dropped finding; the pre-bid query, if any, stays."""
+    for key in [k for k, v in merged.choices.items() if v.evidence]:
+        quotes = [ev.quote for ev in merged.choices[key].evidence]
+        if all(unstated(q) or about_tendering(q) for q in quotes):
+            del merged.choices[key]
+            merged.dropped_findings += 1
+    for key in [k for k, v in merged.numbers.items() if v.evidence]:
+        if all(unstated(ev.quote) for ev in merged.numbers[key].evidence):
+            del merged.numbers[key]
+            merged.dropped_findings += 1
 
 
 def _roles(merged: TenderExtraction) -> None:
@@ -196,40 +251,54 @@ def _roles(merged: TenderExtraction) -> None:
     merged.user_roles = user_roles(stories, rules.max_roles)
 
 
+def _own_report(merged: TenderExtraction, docs: list[Document]) -> None:
+    """Flags a file that is one of our own estimate reports (its footer, quick config
+    `own_report`) so the review screen can say to upload the requirement document instead
+    (OPEN_QUESTIONS 220)."""
+    rules = quick_config().own_report
+    if rules is None:
+        return
+    merged.own_report = any(
+        phrase in " ".join(text.lower().split())
+        for doc in docs
+        for _, text in _pages(doc)
+        for phrase in rules.phrases
+    )
+
+
+def _outside_scope(merged: TenderExtraction, docs: list[Document]) -> None:
+    """A feature or extra whose every quote sits on a page of contract or bid terms (the strict
+    `coverage.terms_page`), is about the tendering process or says something is not stated is
+    marked `outside_scope` and not ticked: offered with its page, never dropped, since tenders
+    also ask for work in price tables and annexures (OPEN_QUESTIONS 220)."""
+    rules = quick_config().coverage
+    if rules is None:
+        return
+    terms = {
+        (doc.filename, page)
+        for doc in docs
+        for page, text in _pages(doc)
+        if terms_page(rules, text, strict=True)
+    }
+    single = docs[0].filename if len(docs) == 1 else ""
+
+    def outside(evidence: list[VerifiedEvidence]) -> bool:
+        return bool(evidence) and all(
+            (ev.document or single, ev.page) in terms
+            or about_tendering(ev.quote)
+            or unstated(ev.quote)
+            for ev in evidence
+        )
+
+    for feature in merged.features:
+        if outside(feature.evidence):
+            feature.outside_scope, feature.suggested = True, False
+    for other in merged.other_features:
+        other.outside_scope = outside(other.evidence)
+
+
 def _pages(doc: Document) -> list[tuple[int, str]]:
     return [(int(p["page"]), str(p["text"])) for p in (doc.page_texts or [])]
-
-
-def _keyword_net(merged: TenderExtraction, docs: list[Document]) -> None:
-    """Beside an AI reading, the keyword reader (code, the same result every time) reads the
-    same pages; a listed feature it finds that the AI did not is added with `found_by`
-    "keywords", ticked as the keyword reader would tick it, so the review screen asks the
-    person to check it (OPEN_QUESTIONS 204). A corrigendum or pre-bid reply only changes what
-    the other documents ask for, so it adds nothing here."""
-    cfg = quick_config()
-    have = {f.key for f in merged.features}
-    for doc in docs:
-        pages = _pages(doc)
-        stored = getattr(doc, "extraction", None) or {}
-        if stored.get("reader") != "ai" or doc.kind in OVERRIDING_KINDS:
-            continue
-        if not pages:
-            continue
-        parsed = ParsedDocument(
-            kind="text", pages=[Page(n, t) for n, t in pages], approximate_pages=False
-        )
-        basic = verify_findings(
-            cfg,
-            parsed,
-            basic_read(cfg, parsed),
-            reader="basic",
-            version=BASIC_READER_VERSION,
-            document=doc.filename,
-        )
-        for f in basic.features:
-            if f.key not in have:
-                merged.features.append(f.model_copy(update={"found_by": "keywords"}))
-                have.add(f.key)
 
 
 def _coverage(merged: TenderExtraction, docs: list[Document]) -> None:
@@ -291,7 +360,9 @@ def apply_stated_counts(
     """Counts the documents state for what is built ("200 services", "integration with 20 State
     Systems") make that feature several modules at the rule's level, citing the line
     (services/extraction/stated_counts.py, OPEN_QUESTIONS 194). A count only raises the
-    modules the reading found, never lowers them. `docs`: documents, or (file name, pages)."""
+    modules the reading found, never lowers them. After an AI reading a count only sizes a
+    feature the AI found; it never adds one (OPEN_QUESTIONS 217). `docs`: documents, or (file
+    name, pages)."""
     cfg = quick_config()
     rules = cfg.stated_counts
     if rules is None:
@@ -309,6 +380,8 @@ def apply_stated_counts(
     features = {f.key: f for f in merged.features}
     for key, hit in found.items():
         feature = features.get(key)
+        if feature is None and merged.reader == "ai":
+            continue  # the AI read the document and did not ask for it (OPEN_QUESTIONS 217)
         if feature is None:
             feature = FoundFeature(key=key, label=cfg.feature(key).label, evidence=[])
             merged.features.append(feature)
@@ -319,6 +392,39 @@ def apply_stated_counts(
         feature.suggested = True
         if hit.evidence not in feature.evidence:
             feature.evidence.append(hit.evidence)
+
+
+def _uptime_terms(merged: TenderExtraction, docs: list[Document]) -> None:
+    """The uptime the document asks for (an SLA's penalty threshold or a stated figure) answers
+    the downtime question with the lowest option that meets it, citing the line; it wins over
+    the reading's answer (services/extraction/uptime_terms.py, OPEN_QUESTIONS 219)."""
+    cfg = quick_config()
+    terms = cfg.uptime_terms
+    question = cfg.questions.get("availability")
+    if terms is None or question is None:
+        return
+    asked = None
+    for doc in docs:
+        pages = [(int(p["page"]), str(p["text"])) for p in (doc.page_texts or [])]
+        found = find_uptime(terms, pages, doc.filename)
+        if found is not None and (asked is None or found.percent > asked.percent):
+            asked = found
+    if asked is None:
+        return
+    by_uptime = sorted(
+        (
+            (Decimal(str(o.answers["uptime_sla"])), o)
+            for o in question.options
+            if "uptime_sla" in o.answers
+        ),
+        key=lambda pair: pair[0],
+    )
+    if not by_uptime:
+        return
+    option = next((o for up, o in by_uptime if up >= asked.percent), by_uptime[-1][1])
+    merged.choices["availability"] = FoundValue(
+        value=option.value, label=option.label, evidence=[asked.evidence]
+    )
 
 
 def _support_terms(merged: TenderExtraction, docs: list[Document]) -> None:

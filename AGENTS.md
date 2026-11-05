@@ -135,9 +135,16 @@ backend/
                           #   (code, cited); support_terms.py: support hours and stated support
                           #   staff, with a pre-bid query on a contradiction (OPEN_QUESTIONS 157)
                           #   coverage.py: requirement sentences ("shall", "must") no finding
-                          #   quotes, listed on the review screen as not priced yet; beside an
-                          #   AI reading the keyword reader adds features it missed
-                          #   (`found_by: keywords`; config `coverage`, OPEN_QUESTIONS 204)
+                          #   quotes, listed on the review screen as not priced yet (config
+                          #   `coverage`, OPEN_QUESTIONS 204); after an AI reading the features
+                          #   are only the AI's: no keyword or count adds one (217)
+                          #   a contract-terms page lists nothing (`terms_page`, 219)
+                          #   uptime_terms.py: the uptime an SLA table asks for ("<99.5%")
+                          #   answers the downtime question, cited (config `uptime_terms`, 219);
+                          #   an answer quoting only the tendering process (config
+                          #   `tender_process`) or a "not stated" sentence is dropped (218, 219)
+                          #   a feature found only on pages of terms is offered unticked
+                          #   (`outside_scope`); our own report uploaded is flagged (`own_report`, 220)
                           #   stated_counts.py: "200 services" / "integration with 20 State
                           #   Systems" make that feature several modules, cited (config
                           #   `stated_counts`, OPEN_QUESTIONS 194)

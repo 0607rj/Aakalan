@@ -37,6 +37,8 @@ export interface CustomItem {
   suggested?: string;
   /** How many modules of this size it is (a large sub-system can be several). */
   units?: number;
+  /** Found only on pages of bid or contract terms: offered, not ticked. */
+  outsideScope?: boolean;
 }
 
 const SIZES: { value: Size; label: string }[] = [
@@ -52,8 +54,35 @@ function asSize(value: string): Size {
 }
 
 /** Editable items from the document's other features, as the backend pre-fills them
- * (`custom`, each pointing at its finding), with the finding's words and pages. */
+ * (`custom`, each pointing at its finding), with the finding's words and pages; then the
+ * ones found only on pages of bid or contract terms, unticked. */
 export function itemsFromDocument(
+  custom: CustomFeature[],
+  found: FoundOtherFeature[],
+): CustomItem[] {
+  const listed = new Set(custom.map((c) => c.found_index));
+  const offered: CustomItem[] = found.flatMap((f, i) =>
+    f.outside_scope && !listed.has(i)
+      ? [
+          {
+            id: `found-${i}`,
+            name: f.name,
+            category: f.category,
+            size: asSize(f.size),
+            foundIndex: i,
+            description: f.description,
+            evidence: f.evidence,
+            included: false,
+            units: f.units,
+            outsideScope: true,
+          },
+        ]
+      : [],
+  );
+  return [...fromPrefill(custom, found), ...offered];
+}
+
+function fromPrefill(
   custom: CustomFeature[],
   found: FoundOtherFeature[],
 ): CustomItem[] {
@@ -155,6 +184,17 @@ export function ResearchedFeatures({
         </div>
       ))}
     </section>
+  );
+}
+
+/** Why a found feature is not ticked: the document names it only in its bid or contract
+ * terms, not where it describes the work. */
+export function OutsideScopeNote() {
+  return (
+    <span className="text-sm text-warning">
+      Found only in the bid or contract terms, not where the document describes
+      the work, so not ticked. Tick it if it is part of the work.
+    </span>
   );
 }
 
@@ -276,6 +316,7 @@ function ItemCard({
           {item.included ? (
             <TypeAndSize item={item} types={types} onChange={onChange} />
           ) : null}
+          {item.outsideScope ? <OutsideScopeNote /> : null}
           {fromDocument ? (
             <>
               <CoverageTag kind="custom" />

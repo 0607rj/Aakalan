@@ -34,16 +34,44 @@ def _has(phrase_words: list[list[str]], joined: str) -> bool:
     return any(f" {' '.join(p)} " in joined for p in phrase_words if p)
 
 
+def _kind(cfg: Coverage, sentence: str) -> str:
+    """ "ask": a requirement sentence (a modal word, long enough to say what); "terms": the same
+    about the bidder, the bid or the contract (a skip word); "": neither."""
+    w = words(sentence)
+    if len(w) < cfg.min_sentence_words:
+        return ""
+    joined = f" {' '.join(w)} "
+    if not _has([words(m) for m in cfg.modal_words], joined):
+        return ""
+    return "terms" if _has([words(s) for s in cfg.skip_words], joined) else "ask"
+
+
 def is_requirement(cfg: Coverage, sentence: str) -> bool:
     """Asks for something (a modal word), is not about the bidder or the bid, and is long
     enough to say what."""
-    w = words(sentence)
-    if len(w) < cfg.min_sentence_words:
+    return _kind(cfg, sentence) == "ask"
+
+
+def terms_page(cfg: Coverage, text: str, *, strict: bool = False) -> bool:
+    """A page of contract or bid terms (general conditions, bank guarantee formats, integrity
+    pact): at least `terms_page_min_sentences` modal sentences, and at least `terms_page_share`
+    of them about the bidder, the bid or the contract (OPEN_QUESTIONS 219). Its other modal
+    sentences are the same terms in other words, so none of them is listed.
+
+    `strict` (for features, OPEN_QUESTIONS 220): a sentence whose only skip words name the
+    vendor (`terms_page_ignore`: "The Bidder shall provide hand-holding support") states the
+    vendor's duties, so it does not count towards that share; a scope page is never a page of
+    terms then."""
+    ignore = set(cfg.terms_page_ignore) if strict else set()
+    duty = [words(s) for s in cfg.skip_words if s not in ignore]
+    modal = terms = 0
+    for sentence in sentences(text):
+        kind = _kind(cfg, sentence)
+        modal += kind != ""
+        terms += kind == "terms" and _has(duty, f" {' '.join(words(sentence))} ")
+    if cfg.terms_page_share is None or modal < cfg.terms_page_min_sentences:
         return False
-    joined = f" {' '.join(w)} "
-    modal = [words(m) for m in cfg.modal_words]
-    skip = [words(s) for s in cfg.skip_words]
-    return _has(modal, joined) and not _has(skip, joined)
+    return terms >= cfg.terms_page_share * modal
 
 
 def _quotes(value: Any) -> list[str]:
@@ -164,6 +192,8 @@ def find_uncovered(
     seen: set[str] = set()
     for document, pages in docs:
         for page, text in pages:
+            if terms_page(cfg, text):
+                continue
             for sentence in sentences(text):
                 if not is_requirement(cfg, sentence):
                     continue

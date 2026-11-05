@@ -706,6 +706,12 @@ class Coverage(Frozen):
     # a quote covers a sentence when they share this many words in a row (or all of a shorter one)
     shared_words: int = Field(ge=1)
     max_listed: int = Field(ge=1)
+    # a page whose modal sentences are mostly about the bid or the contract lists none of them
+    # (OPEN_QUESTIONS 219); None: every page is read
+    terms_page_share: float | None = Field(default=None, gt=0, le=1)
+    terms_page_min_sentences: int = Field(default=1, ge=1)
+    # skip words that, alone, mark the vendor's duties (scope), not contract terms (220)
+    terms_page_ignore: list[str] = []
     # a short description has no modal words: every part of it asks for something; the parts
     # are split at punctuation and these words, and listed when this long and unquoted (210)
     description_split_words: list[str] = []
@@ -765,6 +771,32 @@ class ClientProvided(Frozen):
     own_words: list[str] = []
     by_name: list[str] = []
     not_client: list[str] = []
+
+
+class OwnReport(Frozen):
+    """Wording printed on every page of our own estimate reports (OPEN_QUESTIONS 220)."""
+
+    source: str
+    phrases: list[str] = Field(min_length=1)
+
+
+class TenderProcess(Frozen):
+    """Wording of the tendering process itself (portal, bidder registration, bid submission):
+    an answer quoting only such sentences is dropped (OPEN_QUESTIONS 219)."""
+
+    source: str
+    words: list[str] = Field(min_length=1)
+
+
+class UptimeTerms(Frozen):
+    """The uptime a document asks for, read in code (services/extraction/uptime_terms.py,
+    OPEN_QUESTIONS 219): a percentage within `window_chars` after one of `words`, from
+    `min_percent` up to (not including) 100."""
+
+    source: str
+    words: list[str] = Field(min_length=1)
+    window_chars: int = Field(ge=1)
+    min_percent: Decimal = Field(gt=0, lt=100)
 
 
 class SupportTerms(Frozen):
@@ -889,6 +921,9 @@ class QuickConfig(Frozen):
     # rate-card role for dedicated support staff a document states (offsite or not said)
     support_role: str | None = None
     support_terms: SupportTerms | None = None  # support hours and staff read in code
+    uptime_terms: UptimeTerms | None = None  # the uptime asked for, read in code (219)
+    tender_process: TenderProcess | None = None  # answers never from bidding steps (219)
+    own_report: OwnReport | None = None  # our own estimate report uploaded (220)
     staffing: Staffing | None = None  # staff lines priced in code (OPEN_QUESTIONS 162)
     onsite_event_days: OnsiteEventDays | None = None  # onsite only for an event, no days given
     payment_points: PaymentPoints | None = None

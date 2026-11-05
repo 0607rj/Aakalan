@@ -77,6 +77,7 @@ import {
   type CustomItem,
   FoundOtherFeatures,
   itemsFromDocument,
+  OutsideScopeNote,
   toCustomFeatures,
 } from "./custom-features";
 import {
@@ -502,14 +503,8 @@ export function ReviewForm({
         {found ? (
           <CoverageTag kind={found.suggested ? "catalog" : "optional"} />
         ) : null}
-        {found && found.found_by === "keywords" ? (
-          <span className="text-sm text-warning">
-            The AI did not list this; our keyword check found it in the
-            document. Check the page below and untick it if it is not part of
-            the work.
-          </span>
-        ) : null}
-        {found && !found.suggested ? (
+        {found?.outside_scope ? <OutsideScopeNote /> : null}
+        {found && !found.suggested && !found.outside_scope ? (
           <span className="text-sm text-warning">
             Mentioned only{" "}
             {found.mentions === 1 ? "once" : `${found.mentions} times`} in a
@@ -740,8 +735,17 @@ export function ReviewForm({
       (q) =>
         q.must_choose || hasQueries(q) || unchosen([q], choices).length > 0,
     );
+    // what the document changes from the usual answer stays in view (it changes the price, so
+    // the user should see it); answers the same as usual are folded (OPEN_QUESTIONS 218). Split
+    // by the pre-filled answer, so a row never moves while the user changes it.
     const fromDocument = shown.filter(
       (q) => !ask.includes(q) && foundInDocument(q),
+    );
+    const changedByDocument = fromDocument.filter(
+      (q) => q.key in prefill.choices && prefill.choices[q.key] !== q.default,
+    );
+    const sameAsUsual = fromDocument.filter(
+      (q) => !changedByDocument.includes(q),
     );
     const assumedHere = shown.filter(
       (q) => !ask.includes(q) && !foundInDocument(q),
@@ -831,12 +835,22 @@ export function ReviewForm({
           </Folded>
         ) : null}
         <Queries queries={orphanQueries} approximatePages={approx} />
-        {fromDocument.length > 0 ? (
+        {changedByDocument.length > 0 ? (
+          <div className="flex flex-col gap-1">
+            <span className="eyebrow">Check these</span>
+            <span className="text-sm text-muted-foreground">
+              The document changes these from the usual answer, and that changes
+              the price. Each shows its page.
+            </span>
+          </div>
+        ) : null}
+        {changedByDocument.map((q) => questionBlock(q))}
+        {sameAsUsual.length > 0 ? (
           <Folded
-            title={`Found in your document (${fromDocument.length})`}
-            hint="Each answer shows its page. Open to check or change one."
+            title={`Found in your document (${sameAsUsual.length})`}
+            hint="The same as the usual answer. Each shows its page."
           >
-            {fromDocument.map((q) => questionBlock(q))}
+            {sameAsUsual.map((q) => questionBlock(q))}
           </Folded>
         ) : null}
         <BuildTime
@@ -891,6 +905,15 @@ export function ReviewForm({
                 >
                   Check the features, then continue.
                 </StepHeader>
+                {extraction.own_report ? (
+                  <WarningNotice>
+                    This file is an estimate report made by Aakalan, not a
+                    requirement document. Its features and answers come from
+                    that earlier estimate, so the price may not match your
+                    project. For a fresh reading, upload the RFP, SRS or scope
+                    document instead.
+                  </WarningNotice>
+                ) : null}
                 {extraction.reader !== "ai" ? (
                   <WarningNotice>
                     Read with basic keyword matching (no AI key set) — please

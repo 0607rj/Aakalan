@@ -15,11 +15,12 @@ from typing import Any, Literal
 from pydantic import BaseModel
 
 from app.llm.client import LLMClient, LLMResult, load_prompt
-from app.services.documents.parsing import ParsedDocument, normalise
+from app.services.documents.parsing import ParsedDocument, contains_quote, normalise, words_of
 from app.services.quick.config import LevelKey, QuickConfig
 
-PROMPT_FILE = "extract_tender_v10.md"
-PROMPT_VERSION = "extract_tender_v10"  # v10: project_domain (OPEN_QUESTIONS 205)
+PROMPT_FILE = "extract_tender_v11.md"
+# v10: project_domain (OPEN_QUESTIONS 205); v11: answers never from the tendering process (219)
+PROMPT_VERSION = "extract_tender_v11"
 SIZES = frozenset({"S", "M", "L"})
 BASIC_READER_VERSION = "basic_reader_v1"
 PAGE_TOLERANCE = 1  # a quote may straddle into the neighbouring page
@@ -250,6 +251,9 @@ class FoundFeature(BaseModel):
     # "reader": the reading found it; "keywords": only the keyword check did, beside an AI
     # reading (OPEN_QUESTIONS 204), so the review screen asks the person to check it
     found_by: str = "reader"
+    # every quote on a page of contract or bid terms, or about the tendering process: offered,
+    # not ticked (OPEN_QUESTIONS 220)
+    outside_scope: bool = False
 
 
 class FoundScope(BaseModel):
@@ -270,6 +274,7 @@ class FoundOtherFeature(BaseModel):
     evidence: list[VerifiedEvidence]
     stories: list[str] = []
     units: int = 1  # how many modules of that size its stories make (round 3)
+    outside_scope: bool = False  # as FoundFeature: offered, not ticked (OPEN_QUESTIONS 220)
 
 
 class FoundValue(BaseModel):
@@ -442,6 +447,9 @@ class TenderExtraction(BaseModel):
     industry_suggestions: list[IndustrySuggestion] = []
     industry_suggestions_asked: bool = False
     ready_made: ReadyMade | None = None  # set only when the AI says they are common
+    # the file is one of our own estimate reports, not a requirement document: the review
+    # screen says so (quick config `own_report`, OPEN_QUESTIONS 220)
+    own_report: bool = False
 
 
 def _fence(doc: ParsedDocument) -> str:
@@ -517,15 +525,18 @@ def _verify(
             if 1 <= ev.page <= len(doc.pages) and len(ev.quote.strip()) >= MIN_QUOTE_CHARS
         ]
     pages = {p.number: normalise(p.text) for p in doc.pages}
+    page_words = {p.number: words_of(p.text) for p in doc.pages}
     out = []
     for ev in evidence:
         quote = normalise(ev.quote.strip(" .\"'…"))
         if len(quote) < MIN_QUOTE_CHARS or ev.page not in pages:
             continue
-        window = " ".join(
-            pages.get(n, "") for n in range(ev.page - PAGE_TOLERANCE, ev.page + PAGE_TOLERANCE + 1)
-        )
-        if quote in window:
+        near = range(ev.page - PAGE_TOLERANCE, ev.page + PAGE_TOLERANCE + 1)
+        window = " ".join(pages.get(n, "") for n in near)
+        # word for word, or with the row numbers a PDF table mixes in skipped (221)
+        if quote in window or contains_quote(
+            [w for n in near for w in page_words.get(n, [])], words_of(ev.quote)
+        ):
             out.append(
                 VerifiedEvidence(
                     page=ev.page,

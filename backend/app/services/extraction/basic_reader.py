@@ -27,8 +27,19 @@ from app.services.quick.config import QuickConfig
 MAX_EVIDENCE = 2
 MAX_UNCLEAR = 12  # keep the pre-bid list readable
 MAX_QUOTE_CHARS = 300
-CLAUSE = re.compile(r"(?m)^\s*(\d{1,2}(?:\.\d{1,3}){1,4})\b")
+# "4.1" at the start of a line, or a plain section heading "5. External Integrations" (a short
+# line, no full stop, so a numbered list item "1. Which channels are required?" is not one)
+CLAUSE = re.compile(
+    r"(?m)^\s*(\d{1,2}(?:\.\d{1,3}){1,4})\b|^[ \t]*(\d{1,2})\.[ \t]+(?=[A-Z][^\n.?!:;]{1,60}$)"
+)
 SENTENCE_END = re.compile(r"(?<=[.;:!?])\s+|\n")
+# Where a whole sentence ends when a PDF wraps it over several lines: at its full stop, a blank
+# line, or a line that starts a clause, a numbered item or a bullet (a heading line joins the
+# first sentence under it). Used to judge what a sentence asks, never as a quote.
+FULL_END = re.compile(
+    r"(?<=[.!?;])\s+|\n\s*\n|\n(?=[ \t]*(?:\d{1,2}(?:\.\d{1,3})*\.?[ \t]|[•▪◦*·–-][ \t]))"
+)
+MAX_CONTEXT_CHARS = 400  # how far a joined sentence reaches on each side of the match
 # Unit words, not tunable parameters.
 SCALE_WORDS = {"lakh": 100_000, "lakhs": 100_000, "lac": 100_000, "lacs": 100_000,
                "crore": 10_000_000, "crores": 10_000_000, "million": 1_000_000}  # fmt: skip
@@ -93,20 +104,22 @@ def _sentence(text: str, start: int, end: int) -> str:
 
 
 def _clause(text: str, pos: int) -> str:
-    found = [m.group(1) for m in CLAUSE.finditer(text, 0, pos)]
+    found = [m.group(1) or m.group(2) for m in CLAUSE.finditer(text, 0, pos)]
     return found[-1] if found else ""
 
 
 def _evidence(
     doc: ParsedDocument, pattern: re.Pattern[str]
 ) -> Iterator[tuple[Evidence, re.Match[str]]]:
+    """Each match with its sentence, page and clause; a page that starts inside a clause takes
+    the clause the page before ended in."""
+    carry = ""
     for page in doc.pages:
         for m in pattern.finditer(page.text):
             quote = _sentence(page.text, m.start(), m.end())
-            yield (
-                Evidence(page=page.number, clause_ref=_clause(page.text, m.start()), quote=quote),
-                m,
-            )
+            clause = _clause(page.text, m.start()) or carry
+            yield Evidence(page=page.number, clause_ref=clause, quote=quote), m
+        carry = _clause(page.text, len(page.text)) or carry
 
 
 def _is_clause_number(m: re.Match[str]) -> bool:
@@ -140,6 +153,10 @@ EXCLUDED = re.compile(
     r"\b(not\s+(?:be\s+)?(?:required|needed|necessary|included|in\s+(?:the\s+)?scope|part\s+of)"
     r"|withdrawn"
     r"|no\s+need|out\s+of\s+(?:the\s+)?scope|excluded|exclude[sd]?|shall\s+not|will\s+not"
+    # "does not include a full medical record", "outside the first-release scope", "not
+    # included ... unless separately approved"
+    r"|(?:does|do|will)\s+not\s+include|outside\s+(?:the\s+)?(?:[\w-]+\s+){0,3}scope"
+    r"|unless\s+(?:separately|specifically|explicitly)\s+approved"
     r"|need\s+not|does\s+not\s+(?:require|need)|is\s+not\s+expected"
     # "no payment gateway is needed" (OPEN_QUESTIONS 206)
     r"|no\s+(?:[\w-]+\s+){1,4}(?:is|are)\s+(?:needed|required|necessary))\b",
@@ -148,7 +165,12 @@ EXCLUDED = re.compile(
 FUTURE = re.compile(
     r"\b(future|later\s+(?:phase|stage)|phase[-\s]?(?:2|ii|two)|next\s+phase|subsequent\s+phase"
     r"|in\s+due\s+course|may\s+be\s+(?:added|considered|required|taken\s+up)|optional(?:ly)?"
-    r"|nice\s+to\s+have|if\s+required)\b",
+    r"|nice\s+to\s+have|if\s+required"
+    # not decided yet: "no payment gateway ... has been selected", "the client has not yet
+    # selected", "do not assume a full migration is included"
+    r"|(?:has|have)\s+not\s+(?:yet\s+)?(?:been\s+)?(?:selected|chosen|decided|confirmed|finali[sz]ed)"
+    r"|no\s+(?:[\w/&,'()-]+\s+){1,20}?(?:has|have)\s+(?:yet\s+)?been\s+(?:selected|chosen|decided|confirmed|finali[sz]ed)"
+    r"|not\s+(?:yet\s+)?(?:been\s+)?confirmed|to\s+be\s+confirmed|do\s+not\s+assume|unresolved)\b",
     re.I,
 )
 ASKED = re.compile(
@@ -173,14 +195,21 @@ SET_ASIDE = ("excluded", "future", "background")
 
 
 def _context(ev: Evidence, m: re.Match[str]) -> str:
-    """The matched sentence plus a lead-in that ends with a colon on the same line, so that
-    "9.2 Not included: payouts, video calls" reads every item as ruled out."""
+    """The whole sentence around the match, joined over the lines a PDF wraps it on ("No ...
+    payment gateway ... has been selected", "The following are not included ...: ..., online
+    payments"), plus a lead-in that ends with a colon on the same line, so that "9.2 Not
+    included: payouts, video calls" reads every item as ruled out."""
     text = m.string
+    starts = [b.end() for b in FULL_END.finditer(text, 0, m.start())]
+    s = max(starts[-1] if starts else 0, m.start() - MAX_CONTEXT_CHARS)
+    tail = FULL_END.search(text, m.end())
+    e = min(tail.start() if tail else len(text), m.end() + MAX_CONTEXT_CHARS)
+    sentence = " ".join(text[s:e].split()) or ev.quote
     bounds = [b.end() for b in SENTENCE_END.finditer(text, 0, m.start())]
     start = bounds[-1] if bounds else 0
     line_start = text.rfind("\n", 0, m.start()) + 1
-    lead = text[line_start:start].strip()
-    return f"{lead} {ev.quote}" if lead.endswith(":") else ev.quote
+    lead = " ".join(text[line_start:start].split())
+    return f"{lead} {sentence}" if lead.endswith(":") and lead not in sentence else sentence
 
 
 def _asked(sentence: str) -> bool:
@@ -194,7 +223,8 @@ def scope_status(sentence: str) -> ScopeStatus:
     offered as probably needed (inferred) for the user to check."""
     if EXCLUDED.search(sentence):
         return "excluded"
-    if FUTURE.search(sentence):
+    # a question ("Is data migration required?") asks the reader, not for the software
+    if FUTURE.search(sentence) or sentence.rstrip().endswith("?"):
         return "future"
     if ASKED.search(sentence):
         return "explicit"
@@ -230,6 +260,9 @@ def basic_read(cfg: QuickConfig, doc: ParsedDocument) -> ExtractionOutput:
     features = []
     for key, words in cfg.keywords.features.items():
         all_hits = [ev for ev, m in _evidence(doc, _phrase(words)) if _asked(_context(ev, m))]
+        # one sentence two keywords match ("booking confirmations and appointment reminders")
+        # is quoted once
+        all_hits = list({(ev.page, ev.quote): ev for ev in all_hits[::-1]}.values())[::-1]
         if all_hits:
             mentions = len({(ev.page, ev.quote) for ev in all_hits})
             # In a long document a feature named once or twice is often boilerplate

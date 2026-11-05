@@ -6866,6 +6866,11 @@
             "type": "string",
             "title": "Found By",
             "default": "reader"
+          },
+          "outside_scope": {
+            "type": "boolean",
+            "title": "Outside Scope",
+            "default": false
           }
         },
         "type": "object",
@@ -7078,6 +7083,11 @@
             "type": "integer",
             "title": "Units",
             "default": 1
+          },
+          "outside_scope": {
+            "type": "boolean",
+            "title": "Outside Scope",
+            "default": false
           }
         },
         "type": "object",
@@ -13343,6 +13353,11 @@
                 "type": "null"
               }
             ]
+          },
+          "own_report": {
+            "type": "boolean",
+            "title": "Own Report",
+            "default": false
           }
         },
         "type": "object",

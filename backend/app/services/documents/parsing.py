@@ -127,6 +127,45 @@ def _parse_docx(data: bytes) -> ParsedDocument:
     return ParsedDocument(kind="docx", pages=pages, approximate_pages=True)
 
 
+# A PDF table puts each row's number among the cell's words ("including English and Hindi, 31
+# should be provided"): a quote may skip at most this many of them, each at most this long
+# (OPEN_QUESTIONS 221).
+MAX_SKIPPED_NUMBERS = 3
+MAX_ROW_NUMBER_DIGITS = 3
+
+
+def words_of(text: str) -> list[str]:
+    """Lower-case words and numbers, punctuation and line breaks ignored ("go-
+    live" and
+        "go-live" both give go, live)."""
+    return re.findall(r"\w+", text.lower().replace("’", "'"))
+
+
+def contains_quote(page: list[str], quote: list[str]) -> bool:
+    """True when the quote's words appear in order on the page, with nothing between them but
+    up to `MAX_SKIPPED_NUMBERS` bare row numbers. A number in the quote must itself be there:
+    "5 years" never matches "3 years"."""
+    if not quote:
+        return False
+    for start in (i for i, w in enumerate(page) if w == quote[0]):
+        at, skipped = start, 0
+        for word in quote:
+            while (
+                at < len(page)
+                and page[at] != word
+                and page[at].isdigit()
+                and len(page[at]) <= MAX_ROW_NUMBER_DIGITS
+                and skipped < MAX_SKIPPED_NUMBERS
+            ):
+                at, skipped = at + 1, skipped + 1
+            if at >= len(page) or page[at] != word:
+                break
+            at += 1
+        else:
+            return True
+    return False
+
+
 def normalise(text: str) -> str:
     """For citation checks: case-insensitive, whitespace- and quote-insensitive."""
     text = text.lower().replace("’", "'").replace("‘", "'").replace("“", '"').replace("”", '"')

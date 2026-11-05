@@ -176,8 +176,8 @@ def test_ai_reader_citations_are_verified(client: TestClient, admin_headers: H) 
     assert ex["reader"] == "ai" and doc["llm_model"] == "fake"
     by_reader = [f["key"] for f in ex["features"] if f["found_by"] == "reader"]
     assert by_reader == ["payments"]  # invented quote + bad key dropped
-    # what the AI left out, the keyword check offers, marked so (OPEN_QUESTIONS 204)
-    assert all(f["found_by"] == "keywords" for f in ex["features"][1:])
+    # nothing is added by keywords after an AI reading (OPEN_QUESTIONS 217)
+    assert [f["key"] for f in ex["features"]] == ["payments"]
     # the quote is real, but round the clock is on call without a committed staffed team
     # (staffing rule 3, OPEN_QUESTIONS 162); the user reviews it
     assert ex["choices"]["support_hours"]["value"] == "on_call"

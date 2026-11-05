@@ -321,7 +321,7 @@ def review_prefill(cfg: QuickConfig, extraction: TenderExtraction, country: str)
             units=o.units,
         )
         for i, o in enumerate(extraction.other_features)
-        if o.name.strip()
+        if o.name.strip() and not o.outside_scope  # offered unticked (OPEN_QUESTIONS 220)
     ]
     scope = [s.key for s in extraction.scope if s.status == "explicit"]
     applicable = {

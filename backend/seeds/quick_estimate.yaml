@@ -1698,7 +1698,7 @@ keywords:
     online_store: [online store, e-commerce, ecommerce, shopping cart, cart and checkout, product catalogue]
     crm: [crm, customer relationship, lead management, leads, sales pipeline]
     mobile_app: [mobile app, mobile application, android app, ios app, android, iphone app]
-    notifications: [sms, push notification, push notifications, email alerts, sms alerts, reminders by sms]  # OTP is its own item (sign-in), OPEN_QUESTIONS 196
+    notifications: [sms, push notification, push notifications, email alerts, sms alerts, reminders by sms, appointment reminders, booking confirmations, email notifications, sms notifications]  # OTP is its own item (sign-in), OPEN_QUESTIONS 196
     maps: [maps, map view, gis, geo-tagging, geotagging, geolocation, location tracking, gps tracking, google maps, nearby search]
     search: [search functionality, advanced search, search facility, full-text search]
     marketplace: [multi-vendor, multi vendor, multivendor, marketplace, seller onboarding, seller dashboard, vendor payout, vendor payouts, seller payout, seller payouts, split payment, split payments, settlement to sellers]
@@ -1872,16 +1872,56 @@ project_context:
 coverage:
   source: "placeholder, reasoned 2026-11-02 (OPEN_QUESTIONS 204): requirement words of SRS / RFP writing; skip words for the bidder's duties and bid terms; shared words so a quote of part of a sentence covers it"
   modal_words: [shall, must, should, will be able to, is required to, are required to, should be able to]
-  skip_words: [bidder, bidders, tenderer, tenderers, contractor, vendor, consultant, supplier, service provider, system integrator, selected agency, successful agency, emd, earnest money, bank guarantee, performance security, bid security, penalty, liquidated damages, payment shall, invoice shall be raised, tender, bid shall, proposal shall, the agency shall, the firm shall, the company shall, jurisdiction, arbitration, force majeure, termination]
+  skip_words: [bidder, bidders, tenderer, tenderers, contractor, vendor, consultant, supplier, service provider, system integrator, selected agency, successful agency, emd, earnest money, bank guarantee, performance security, bid security, penalty, liquidated damages, payment shall, invoice shall be raised, tender, bid shall, proposal shall, the agency shall, the firm shall, the company shall, jurisdiction, arbitration, force majeure, termination,
+    # OPEN_QUESTIONS 219: contract, legal, bid evaluation and tax wording (RailTel RFP: 233 listed,
+    # mostly its general conditions); phrases only contract terms use, so a school's marks, a
+    # lender's scoring or a legal firm's courts are still listed
+    liability, liable, representation or warranty, warranty shall, surety, indemnity, indemnify, arbitral, arbitrator, arbitrators, the purchaser, this contract, the contract shall, breach of contract, this agreement, integrity pact, joint venture, power of attorney, liquidator, debenture, corruption, forfeiture, forfeited, consequential damages, final and binding, notwithstanding, hereunder, hereinbefore, hereinafter, thereof, prior written consent,
+    eligibility criteria, blacklisted, blacklisting, similar work, annual turnover, scoring shall be, evaluation committee, technical evaluation, financial evaluation, evaluation of bids, evaluation of tenders, qcbs, awarded the work, award of work, award of contract, letter of acceptance, purchase order, sub po, po value, value of po, annexure, scanned copies, submitted online, be submitted along, bid should, clarification requests, unit rate, unit of rates, unit price shall prevail, rates quoted, sor, applicable taxes, applicable gst, date of invoicing, statutory requirement, tds,
+    bank guarantee, insolvent, insolvency, vigilance, beneficial owner, addendum, corrigendum, e-nivida, signed and stamped, in the offer, our offer, summarily rejected,
+    shall mean, the said, this guarantee, the guarantee, this bond, the bond, surety insurer, dispute resolution, monitor shall, discharged from, masculine gender, registration committee, the authority shall, conclusive, invocation, issuing branch, executant]
   min_sentence_words: 5
   shared_words: 6
   max_listed: 40
+  # OPEN_QUESTIONS 219, reasoned (placeholder): a page whose modal sentences are mostly contract or bid
+  # terms (general conditions, guarantee formats) is a terms page and lists nothing
+  terms_page_share: 0.5
+  terms_page_min_sentences: 4
+  # OPEN_QUESTIONS 220: a sentence about the vendor's duties ("The vendor shall provide...", in
+  # tenders also "The Bidder shall provide...", RailTel p30) describes the work; when deciding
+  # whether a feature was found only on pages of terms, these words alone never make a page one
+  terms_page_ignore: [bidder, bidders, tenderer, tenderers, contractor, vendor, consultant, supplier, service provider, system integrator, selected agency, successful agency, the agency shall, the firm shall, the company shall]
   # OPEN_QUESTIONS 210, reasoned: a typed description lists what it wants joined by these words
   # ("pay fees online and see their child's attendance"); a part this long that no finding
   # quotes is listed on the features screen as not matched yet
   description_split_words: [and, also, but, plus, as well as, with, along with, so that]
   description_min_words: 3
   description_generic_words: [a, an, the, our, own, my, your, their, we, i, for, of, to, in, at, "on", new, simple, system, systems, software, app, apps, application, website, web site, site, portal, platform, product, tool, solution, management, project]
+
+# OPEN_QUESTIONS 220: our own estimate report (services/reports/pdf.py prints this line on every
+# page) uploaded as if it were the requirement document: the review screen says so. Lower case.
+own_report:
+  source: "the footer of Aakalan's PDF report (services/reports/pdf.py), 2026-11-05"
+  phrases: ["every figure is computed by a deterministic engine and traced to its source"]
+
+# Wording of the tendering process itself (OPEN_QUESTIONS 219; RailTel e-Empanelment tender p.10:
+# "send your acknowledgement copy on our helpdesk e-mail address ... for activation of your
+# account" set the helpdesk to yes). An answer quoting only such sentences, or contact details
+# (an e-mail address, a phone number), is dropped. Lower case, matched inside the sentence.
+tender_process:
+  source: "placeholder, reasoned 2026-11-05: bid-process wording of Indian tender documents"
+  # the steps of bidding only, never a portal's name: the software itself may have to connect to
+  # e-tender portals or CPPP ("integration with ... e-tenders platform, CPPP")
+  words: [bid submission, submission of bid, submission of the bid, submit the bid, submit their bid, registration payment, tender fee, tender document fee, acknowledgement copy, activation of your account, digital signature certificate, pre-bid meeting, bidders may, bidders are requested, bidders should, prospective bidders, gem helpdesk]
+
+# The uptime a document asks for, read in code (services/extraction/uptime_terms.py,
+# OPEN_QUESTIONS 219; RailTel e-Empanelment tender p.40: penalties start below 99.5%). It answers
+# the downtime question with the lowest option that meets it, over the reading's answer.
+uptime_terms:
+  source: "placeholder, reasoned 2026-11-05: availability wording of SLA tables; 95% floor so a penalty share (0.5%, 5%) is never read as uptime"
+  words: [availability, available, uptime, up-time, up time]
+  window_chars: 200
+  min_percent: "95"
 
 # Support hours and dedicated support staff a document states, read in code on the page text
 # (OPEN_QUESTIONS 157; RailTel e-Empanelment tender p.30: "Minimum 2 offsite support resources

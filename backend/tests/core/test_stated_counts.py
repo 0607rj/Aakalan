@@ -1,12 +1,13 @@
 """Counts a document states for what is built (OPEN_QUESTIONS 194): real counts become modules,
-citing the line; table item numbers and section numbers are never read as counts."""
+citing the line; table item numbers and section numbers are never read as counts. After an AI
+reading a count only sizes a feature the AI found, never adds one (OPEN_QUESTIONS 217)."""
 
 import json
 from pathlib import Path
 
 from app.services.extraction.merge import apply_stated_counts
 from app.services.extraction.stated_counts import find_stated_counts
-from app.services.extraction.tender import TenderExtraction
+from app.services.extraction.tender import FoundFeature, TenderExtraction
 from app.services.quick.config import quick_config
 
 CFG = quick_config()
@@ -49,8 +50,14 @@ def test_item_and_section_numbers_are_not_counts() -> None:
     assert found("Integration with SMS gateway") == {}  # no count
 
 
+def found_by_ai(*keys: str) -> TenderExtraction:
+    """The saved AI reading with only these features found (one module each)."""
+    features = [FoundFeature(key=k, label=CFG.feature(k).label, evidence=[]) for k in keys]
+    return empty().model_copy(update={"features": features})
+
+
 def test_a_count_makes_the_feature_several_modules_and_cites_the_line() -> None:
-    reading = empty()
+    reading = found_by_ai("online_forms", "connect_existing")
     apply_stated_counts(reading, [("rfp.pdf", [(3, "200 services\nintegration with 20 systems")])])
     by_key = {f.key: f for f in reading.features}
     forms, links = by_key["online_forms"], by_key["connect_existing"]
@@ -59,8 +66,14 @@ def test_a_count_makes_the_feature_several_modules_and_cites_the_line() -> None:
     assert forms.evidence[0].quote == "200 services" and forms.evidence[0].page == 3
 
 
-def test_a_count_never_lowers_what_the_reading_found() -> None:
+def test_after_an_ai_reading_a_count_never_adds_a_feature() -> None:
     reading = empty()
+    apply_stated_counts(reading, [("rfp.pdf", [(3, "200 services\nintegration with 20 systems")])])
+    assert reading.features == []
+
+
+def test_a_count_never_lowers_what_the_reading_found() -> None:
+    reading = found_by_ai("online_forms")
     apply_stated_counts(reading, [("a.pdf", [(1, "200 services")])])
     apply_stated_counts(reading, [("b.pdf", [(1, "10 services")])])
     assert next(f for f in reading.features if f.key == "online_forms").story_units == 40

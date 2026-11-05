@@ -2381,6 +2381,11 @@ export interface components {
              * @default reader
              */
             found_by: string;
+            /**
+             * Outside Scope
+             * @default false
+             */
+            outside_scope: boolean;
         };
         /**
          * FoundInventory
@@ -2518,6 +2523,11 @@ export interface components {
              * @default 1
              */
             units: number;
+            /**
+             * Outside Scope
+             * @default false
+             */
+            outside_scope: boolean;
         };
         /**
          * FoundPayment
@@ -5003,6 +5013,11 @@ export interface components {
              */
             industry_suggestions_asked: boolean;
             ready_made?: components["schemas"]["ReadyMade"] | null;
+            /**
+             * Own Report
+             * @default false
+             */
+            own_report: boolean;
         };
         /** Timeline */
         Timeline: {
