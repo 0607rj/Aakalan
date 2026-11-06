@@ -23,6 +23,9 @@ from app.services.email import EmailNotConfiguredError
 router = APIRouter(prefix="/auth", tags=["auth"])
 
 NOT_VERIFIED = "Email not verified"
+ACCOUNT_DISABLED = (
+    "This account has been turned off. Contact us through the Contact page to use it again."
+)
 
 
 def user_out(user: User) -> UserOut:
@@ -72,12 +75,14 @@ def login(body: LoginRequest, db: DbSession, request: Request) -> TokenResponse:
             headers={"Retry-After": str(wait)},
         )
     user = auth.find_user(db, body.email)
-    if user is None or not user.is_active or not verify_password(body.password, user.password_hash):
+    if user is None or not verify_password(body.password, user.password_hash):
         auth.record_login_failure(db, body.email, ip)
         db.commit()
         raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Invalid email or password")
     auth.clear_login_failures(db, body.email)
     db.commit()
+    if not user.is_active:  # only after the password, so a stranger learns nothing (222)
+        raise HTTPException(status.HTTP_423_LOCKED, ACCOUNT_DISABLED)
     if user.email_verified_at is None:  # only after the password: says nothing to strangers
         raise HTTPException(status.HTTP_403_FORBIDDEN, NOT_VERIFIED)
     return token_for(user)

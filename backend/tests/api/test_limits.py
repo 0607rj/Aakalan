@@ -18,7 +18,7 @@ H = dict[str, str]
 
 
 class _Quiet:
-    def send(self, to: str, subject: str, body: str) -> None:
+    def send(self, to: str, subject: str, body: str, html: str | None = None) -> None:
         self.body = body
 
 

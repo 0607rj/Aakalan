@@ -33,6 +33,8 @@ class Settings(BaseSettings):
     # smtp_host is set; otherwise (not in production) it is written to the server log.
     signup_enabled: bool = True
     otp_minutes: int = 10  # a code's lifetime
+    # the web app's address for links in emails ("" = the first of cors_origins)
+    site_url: str = ""
     otp_max_attempts: int = 5  # wrong tries before a code stops working
     otp_resend_seconds: int = 60  # wait before another code
     otp_max_per_hour: int = 5  # codes per user and purpose in an hour

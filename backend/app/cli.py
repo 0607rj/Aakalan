@@ -217,13 +217,15 @@ def cmd_backtest(args: argparse.Namespace) -> None:
 def cmd_test_email(args: argparse.Namespace) -> None:
     """Send one email the way sign-up codes go out, to check the SMTP settings."""
     from app.services.email import EmailNotConfiguredError, LogSender, get_email_sender
+    from app.services.email_templates import test_email
 
     sender = get_email_sender()
     if isinstance(sender, LogSender):
         sys.stderr.write("SMTP is not set up (SMTP_HOST / SMTP_PASSWORD in .env): not sent.\n")
         raise SystemExit(1)
     try:
-        sender.send(args.to, "Aakalan test email", "Email from Aakalan works.\n\nAakalan")
+        mail = test_email()
+        sender.send(args.to, mail.subject, mail.text, mail.html)
     except EmailNotConfiguredError as exc:
         sys.stderr.write(f"Not sent: {exc.__cause__ or exc}\n")
         raise SystemExit(1) from exc

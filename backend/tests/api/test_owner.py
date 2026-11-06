@@ -1,7 +1,9 @@
 """The site owner's console: every account, read-only viewing, disable, role, delete."""
 
+from collections.abc import Iterator
 from uuid import uuid4
 
+import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -9,9 +11,26 @@ from sqlalchemy.orm import Session
 from app.core.security import hash_password
 from app.models import Estimate, Organisation, Project, Role, User
 from app.models.base import utcnow
+from app.services.email import set_email_sender
 from tests.conftest import TEST_PASSWORD, login
 
 H = dict[str, str]
+
+
+class _Outbox:
+    def __init__(self) -> None:
+        self.sent: list[tuple[str, str, str]] = []
+
+    def send(self, to: str, subject: str, body: str, html: str | None = None) -> None:
+        self.sent.append((to, subject, body))
+
+
+@pytest.fixture
+def outbox() -> Iterator[_Outbox]:
+    box = _Outbox()
+    set_email_sender(box)
+    yield box
+    set_email_sender(None)
 
 
 def _company(db: Session, members: int = 1) -> list[User]:
@@ -107,7 +126,9 @@ def test_owner_accounts_are_not_changed_here(
     assert client.patch("/owner/users/nope", json={}, headers=admin_headers).status_code == 404
 
 
-def test_disable_role_and_verify(client: TestClient, db: Session, admin_headers: H) -> None:
+def test_disable_role_and_verify(
+    client: TestClient, db: Session, admin_headers: H, outbox: _Outbox
+) -> None:
     (person,) = _company(db)
     theirs = login(client, person.email)
     url = f"/owner/users/{person.id}"
@@ -115,11 +136,21 @@ def test_disable_role_and_verify(client: TestClient, db: Session, admin_headers:
     r = client.patch(url, json={"is_active": False}, headers=admin_headers)
     assert r.status_code == 200 and r.json()["is_active"] is False
     assert client.get("/auth/me", headers=theirs).status_code == 401  # signed out at once
+    # the right password is told the account is turned off (OPEN_QUESTIONS 222); a wrong one
+    # still only hears "invalid", so a stranger learns nothing about the account
     login_again = {"email": person.email, "password": TEST_PASSWORD}
-    assert client.post("/auth/login", json=login_again).status_code == 401
+    r = client.post("/auth/login", json=login_again)
+    assert r.status_code == 423 and "turned off" in r.json()["detail"]
+    wrong = {"email": person.email, "password": "not-the-password-1"}
+    assert client.post("/auth/login", json=wrong).status_code == 401
     assert client.post(f"{url}/view", headers=admin_headers).status_code == 409
 
     client.patch(url, json={"is_active": True}, headers=admin_headers)
+    assert [(to, subject) for to, subject, _ in outbox.sent] == [
+        (person.email, "Your Aakalan account has been turned off"),
+        (person.email, "Your Aakalan account is on again"),
+    ]
+    assert "Contact page" in outbox.sent[0][2]
     r = client.patch(url, json={"role": "viewer", "email_verified": False}, headers=admin_headers)
     assert r.json()["role"] == "viewer" and r.json()["email_verified"] is False
     r = client.patch(url, json={"email_verified": True}, headers=admin_headers)
@@ -128,16 +159,19 @@ def test_disable_role_and_verify(client: TestClient, db: Session, admin_headers:
 
 
 def test_delete_a_lone_user_takes_the_company(
-    client: TestClient, db: Session, admin_headers: H
+    client: TestClient, db: Session, admin_headers: H, outbox: _Outbox
 ) -> None:
     (person,) = _company(db)
-    org_id = person.org_id
+    org_id, email = person.org_id, person.email
     _estimate(client, login(client, person.email), "Gone with them")
     assert client.delete(f"/owner/users/{person.id}", headers=admin_headers).status_code == 204
     db.expire_all()
     assert db.get(Organisation, org_id) is None
     assert db.scalars(select(Project).where(Project.org_id == org_id)).first() is None
     assert db.scalars(select(Estimate).where(Estimate.org_id == org_id)).first() is None
+    (to, subject, body) = outbox.sent[-1]  # told by email: sign-in cannot, the account is gone
+    assert to == email and subject == "Your Aakalan account has been deleted"
+    assert "estimates and uploaded documents" in body
 
 
 def test_delete_one_of_several_keeps_the_company(

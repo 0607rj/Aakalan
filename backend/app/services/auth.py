@@ -25,18 +25,10 @@ from app.core.security import hash_password, verify_password
 from app.models import LoginFailure, OneTimeCode, Organisation, Role, User
 from app.models.base import utcnow
 from app.services.email import get_email_sender
+from app.services.email_templates import code_email
 
 Purpose = Literal["verify_email", "reset_password"]
 EMAIL = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
-
-SUBJECTS: dict[Purpose, str] = {
-    "verify_email": "Your Aakalan verification code",
-    "reset_password": "Your Aakalan password reset code",
-}
-ACTIONS: dict[Purpose, str] = {
-    "verify_email": "confirm your email address",
-    "reset_password": "reset your password",
-}
 
 
 class AuthError(Exception):
@@ -152,14 +144,9 @@ def send_code(db: Session, user: User, purpose: Purpose) -> None:
         )
     )
     db.flush()
-    get_email_sender().send(
-        user.email,
-        SUBJECTS[purpose],
-        "Hello,\n\n"  # never the typed name: anyone can sign up with any address
-        f"Your code to {ACTIONS[purpose]} is {code}.\n"
-        f"It works for {s.otp_minutes} minutes.\n\n"
-        "If you did not ask for it, you can ignore this email.\n\nAakalan",
-    )
+    # never the typed name: anyone can sign up with any address (OPEN_QUESTIONS 223)
+    mail = code_email(purpose, code, s.otp_minutes)
+    get_email_sender().send(user.email, mail.subject, mail.text, mail.html)
 
 
 def use_code(db: Session, user: User, purpose: Purpose, code: str) -> bool:

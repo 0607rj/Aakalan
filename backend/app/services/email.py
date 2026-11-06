@@ -17,17 +17,22 @@ class EmailNotConfiguredError(RuntimeError):
 
 
 class EmailSender(Protocol):
-    def send(self, to: str, subject: str, body: str) -> None: ...
+    def send(self, to: str, subject: str, body: str, html: str | None = None) -> None: ...
 
 
 class SmtpSender:
-    def send(self, to: str, subject: str, body: str) -> None:
+    """Plain text, with the HTML copy as an alternative when there is one (mail apps that
+    cannot show HTML show the text)."""
+
+    def send(self, to: str, subject: str, body: str, html: str | None = None) -> None:
         s = get_settings()
         msg = EmailMessage()
         msg["From"] = s.smtp_from
         msg["To"] = to
         msg["Subject"] = subject
         msg.set_content(body)
+        if html is not None:
+            msg.add_alternative(html, subtype="html")
         try:
             with smtplib.SMTP(s.smtp_host, s.smtp_port, timeout=20) as smtp:
                 if s.smtp_starttls:
@@ -43,7 +48,7 @@ class SmtpSender:
 class LogSender:
     """Development only: the email in the server log instead of a mailbox."""
 
-    def send(self, to: str, subject: str, body: str) -> None:
+    def send(self, to: str, subject: str, body: str, html: str | None = None) -> None:
         log.warning("EMAIL (not sent, no SMTP configured) to %s: %s\n%s", to, subject, body)
 
 

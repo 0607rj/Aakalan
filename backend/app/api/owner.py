@@ -3,6 +3,7 @@ estimates, and the account actions an operator needs (disable, role, verify, del
 account read only). The one deliberate exception to per-organisation isolation (rule 8,
 OPEN_QUESTIONS 172): every route here is owner-only and reads across organisations."""
 
+import logging
 from datetime import timedelta
 from pathlib import Path
 
@@ -25,10 +26,18 @@ from app.models import (
 )
 from app.models.base import Base, utcnow
 from app.schemas.auth import TokenResponse
+from app.services.email import EmailNotConfiguredError, get_email_sender
+from app.services.email_templates import (
+    Email,
+    account_deleted_email,
+    account_off_email,
+    account_on_email,
+)
 from app.services.quick.config import quick_config
 from app.services.quick.service import QuickSummary, summarise
 from app.services.research import library
 
+log = logging.getLogger(__name__)
 router = APIRouter(prefix="/owner", tags=["owner"])
 
 RECENT_DAYS = 30  # "estimates in the last 30 days" on the overview
@@ -169,8 +178,9 @@ def change_user(user_id: str, body: UserChange, db: DbSession, owner: OwnerUser)
     """Disable or enable an account (disabling signs it out everywhere), change its role, or
     mark its email as verified."""
     user = _target(db, owner, user_id)
+    turned: bool | None = None
     if body.is_active is not None and body.is_active != user.is_active:
-        user.is_active = body.is_active
+        user.is_active = turned = body.is_active
         if not body.is_active:
             user.token_version += 1
     if body.role is not None and body.role != user.role:
@@ -181,6 +191,8 @@ def change_user(user_id: str, body: UserChange, db: DbSession, owner: OwnerUser)
             (user.email_verified_at or utcnow()) if body.email_verified else None
         )
     db.commit()
+    if turned is not None:
+        _tell(user.email, account_on_email() if turned else account_off_email())
     return next(r for r in _rows(db) if r.id == user.id)
 
 
@@ -195,6 +207,16 @@ def view_as(user_id: str, db: DbSession, owner: OwnerUser) -> TokenResponse:
         user.id, user.org_id, user.role.value, user.token_version, acting_owner=owner.id
     )
     return TokenResponse(access_token=token, user=user_out(user))
+
+
+# The person is told by email when the owner turns their account off or on, or deletes it: a
+# deleted account cannot be told at sign-in, its address is gone (OPEN_QUESTIONS 222, 223).
+def _tell(email: str, mail: Email) -> None:
+    """Email the person; a failed email never undoes the owner's change (it is logged)."""
+    try:
+        get_email_sender().send(email, mail.subject, mail.text, mail.html)
+    except EmailNotConfiguredError:
+        log.warning("account email to %s not sent", email)
 
 
 def _clear_references(db: Session, user_id: str) -> None:
@@ -224,11 +246,13 @@ def delete_user(user_id: str, db: DbSession, owner: OwnerUser) -> Response:
         if alone
         else []
     )
+    email = user.email
     _clear_references(db, user.id)
     db.execute(delete(User).where(User.id == user.id))
     if alone:
         db.execute(delete(Organisation).where(Organisation.id == org_id))
     db.commit()
+    _tell(email, account_deleted_email(with_company=alone))
     for name in files:
         Path(name).unlink(missing_ok=True)
     return Response(status_code=status.HTTP_204_NO_CONTENT)

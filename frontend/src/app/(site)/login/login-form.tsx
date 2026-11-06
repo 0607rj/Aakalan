@@ -21,6 +21,7 @@ export function LoginForm() {
   const [error, setError] = React.useState<string | null>(null);
   const [submitting, setSubmitting] = React.useState(false);
   const [verifying, setVerifying] = React.useState(false);
+  const [disabled, setDisabled] = React.useState(false);
 
   function signedIn(response: TokenResponse) {
     setToken(response.access_token);
@@ -30,12 +31,15 @@ export function LoginForm() {
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
+    setDisabled(false);
     setSubmitting(true);
     try {
       signedIn(await api.login({ email, password }));
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
         setError("Incorrect email or password.");
+      } else if (err instanceof ApiError && err.status === 423) {
+        setDisabled(true); // turned off by the site's team
       } else if (err instanceof ApiError && err.status === 403) {
         // the password is right but the address is not confirmed yet: send a code
         await api.resendCode(email).catch(() => undefined);
@@ -102,6 +106,19 @@ export function LoginForm() {
           </Link>
         </div>
         <FormError message={error} />
+        {disabled ? (
+          <div
+            role="alert"
+            className="rounded-lg border border-destructive/25 bg-destructive/5 px-3.5 py-2.5 text-sm text-destructive"
+          >
+            This account has been turned off, so you cannot sign in. To use it
+            again,{" "}
+            <Link href="/contact" className="font-medium underline">
+              contact us
+            </Link>
+            .
+          </div>
+        ) : null}
         <Button
           type="submit"
           size="lg"

@@ -53,8 +53,11 @@ Estimates are saved as templates, and recorded outcomes calibrate future estimat
   The owner's Admin page (`/admin`, `api/owner.py`, OPEN_QUESTIONS 172) is the one place that reads
   across organisations: every account and its estimates, the shared features waiting for approval
   (OPEN_QUESTIONS 190), disable, role, verify, delete, and "view as"
-  (a read-only token naming the owner, `act`; `viewed_by_owner` on `/auth/me`). Email through
-  `services/email.py` (SMTP, or the server log in development; tests use `set_email_sender`).
+  (a read-only token naming the owner, `act`; `viewed_by_owner` on `/auth/me`); a disabled
+  account signing in with the right password gets 423 "turned off", and the person is emailed
+  on disable, enable and delete (OPEN_QUESTIONS 222). Email through
+  `services/email.py` (SMTP, or the server log in development; tests use `set_email_sender`);
+  every email's text and HTML copy come from `services/email_templates.py` (OPEN_QUESTIONS 223).
 - **Ops:** no Docker. One Ubuntu server: systemd services (API, Huey worker, Next.js standalone)
   behind Caddy (`deploy/`, [`docs/DEPLOY.md`](docs/DEPLOY.md)); later Litestream → S3, Sentry.
 - **Licence rule:** no AGPL libraries (e.g. PyMuPDF) without a commercial licence.

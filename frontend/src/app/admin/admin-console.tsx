@@ -249,7 +249,11 @@ function UserCard({
     const what = alone
       ? `This also deletes the company "${row.org_name}" with its ${row.projects} project(s), estimates and uploaded documents.`
       : `The company "${row.org_name}" and its estimates stay for its other ${row.org_members - 1} member(s).`;
-    if (!window.confirm(`Delete ${row.email}? ${what} This cannot be undone.`))
+    if (
+      !window.confirm(
+        `Delete ${row.email}? ${what} They get an email saying so. This cannot be undone.`,
+      )
+    )
       return;
     void run(async () => {
       await api.ownerDeleteUser(row.id);
@@ -366,7 +370,16 @@ function UserCard({
               type="button"
               className={ACTION}
               disabled={busy}
-              onClick={() => void change({ is_active: !row.is_active })}
+              onClick={() => {
+                if (
+                  row.is_active &&
+                  !window.confirm(
+                    `Disable ${row.email}? They are signed out, cannot sign in until you enable the account again, and get an email saying so.`,
+                  )
+                )
+                  return;
+                void change({ is_active: !row.is_active });
+              }}
             >
               <ProhibitIcon size={16} aria-hidden="true" />
               {row.is_active ? "Disable" : "Enable"}
