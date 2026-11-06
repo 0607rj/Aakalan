@@ -381,7 +381,7 @@ export default function HomePage() {
         <AiCompare />
       </Section>
 
-      {/* What Aakalan does, on one line of a tender, edge to edge */}
+      {/* What Aakalan does, on one line of a requirement, edge to edge */}
       <TenderLine />
 
       {/* What the result shows: a warm and a white card */}

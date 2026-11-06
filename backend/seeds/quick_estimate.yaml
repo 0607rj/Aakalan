@@ -17,7 +17,7 @@ show_market_prices: false
 # Rewrite after each production-path back-test (OPEN_QUESTIONS 161).
 backtest_note:
   source: "docs/task2-staff-rules.md: production-path back-test 2026-10-24 (parameters v24, rate card v9, catalog v7, seed 7, 200 runs, without AI tools); 8 GeM tenders read by a stand-in model, not the production claude-sonnet-5-5 call, with staff lines entered by hand (OPEN_QUESTIONS 162)"
-  text: "Tested on 8 real government tenders, priced the way this app prices an uploaded tender. The tenders were read by a stand-in AI model, not the one the app uses, and their staff were entered by hand, so treat these figures as provisional. Our likely price came to 1.33 times the published price for medium tenders and 0.63 times for large ones (median), and 3 of the 8 published prices fell inside our low-to-high range."
+  text: "Tested on 8 real projects with published prices, priced the way this app prices an uploaded document. The documents were read by a stand-in AI model, not the one the app uses, and their staff were entered by hand, so treat these figures as provisional. Our likely price came to 1.33 times the published price for medium projects and 0.63 times for large ones (median), and 3 of the 8 published prices fell inside our low-to-high range."
 
 # Every quick estimate starts from these answers; sizes, questions and features add to them.
 # No client-type extras by default: audits, reports and meetings, accessibility, languages and
@@ -427,7 +427,7 @@ questions:
     options:
       - {value: freelancer, label: A freelancer, hint: "One or two people on their own. The lowest rates, best for small, simple software", answers: {builder_type: freelancer}}
       - {value: small_firm, label: A small company, hint: "Under about 50 people", answers: {builder_type: small_firm}}
-      - {value: mid_firm, label: A mid-size company, hint: "About 50 to 1,000 people, the usual bidder on government tenders. Pick this if unsure", answers: {builder_type: mid_firm}}
+      - {value: mid_firm, label: A mid-size company, hint: "About 50 to 1,000 people. Pick this if unsure", answers: {builder_type: mid_firm}}
       - {value: large_firm, label: A large IT company, hint: "Over 1,000 people, e.g. a national IT services firm. The highest rates", answers: {builder_type: large_firm}}
   scale:
     label: How many people will use it?
@@ -460,9 +460,9 @@ questions:
       - {value: up_to_1k, max_users: 1000, label: "100 – 1,000", hint: "A company or a few branches", answers: {users_total: 1000}}
       - {value: up_to_5k, max_users: 5000, label: "1,000 – 5,000", hint: "A large company or a district service", answers: {users_total: 5000}}
       - {value: up_to_10k, max_users: 10000, label: "5,000 – 10,000", hint: "A city-level service or a growing app", answers: {users_total: 10000}}
-      - {value: up_to_25k, max_users: 25000, label: "10,000 – 25,000", hint: "A city corporation or a regulator", answers: {users_total: 25000}, extra_components: [performance_load_testing]}
+      - {value: up_to_25k, max_users: 25000, label: "10,000 – 25,000", hint: "A big online shop or a city service", answers: {users_total: 25000}, extra_components: [performance_load_testing]}
       - {value: up_to_50k, max_users: 50000, label: "25,000 – 50,000", hint: "A popular app or a state service", answers: {users_total: 50000}, extra_components: [performance_load_testing]}
-      - {value: up_to_1l, max_users: 100000, label: "50,000 – 1 lakh", hint: "A state department", answers: {users_total: 100000}, extra_components: [performance_load_testing]}
+      - {value: up_to_1l, max_users: 100000, label: "50,000 – 1 lakh", hint: "A large online business or a state service", answers: {users_total: 100000}, extra_components: [performance_load_testing]}
       - {value: up_to_5l, max_users: 500000, label: "1 lakh – 5 lakh", hint: "A large app or a big state service", answers: {users_total: 500000}, extra_components: [performance_load_testing]}
       - {value: up_to_10l, max_users: 1000000, label: "5 lakh – 10 lakh", hint: "A state-wide service", answers: {users_total: 1000000}, extra_components: [performance_load_testing]}
       - {value: over_10l, max_users: null, label: "More than 10 lakh", hint: "National level", answers: {users_total: 5000000}, extra_components: [performance_load_testing]}
@@ -503,7 +503,7 @@ questions:
       # plain words for anyone (2026-10-27); the examples in brackets help the document reader
       - {value: custom, label: Made fully to order, hint: "Every screen made just for you, working exactly your way. Most flexible, costs the most", answers: {build_type: custom}}
       - {value: framework, label: Made faster with ready parts, hint: "Common screens like forms, lists and logins come ready-made; the rest is made for you (e.g. Django, Laravel, low-code tools)", answers: {build_type: framework}}
-      - {value: cms, label: "On a website builder, with extra parts added", hint: "Pages, news and editing come ready; your own parts are added (e.g. WordPress or Drupal). Common for government portals", answers: {build_type: cms}}
+      - {value: cms, label: "On a website builder, with extra parts added", hint: "Pages, news and editing come ready; your own parts are added (e.g. WordPress or Drupal). Common for content-heavy websites", answers: {build_type: cms}}
       - {value: ready_product, label: An existing product set up for you, hint: "A ready product is set up with your settings (e.g. Shopify, a school or hospital product, a chatbot platform). Cheapest and fastest when your needs are standard; you work the product's way, and each feature of your own is still priced as extra work", answers: {build_type: ready_product}}
       - {value: not_sure, label: "Not sure: let the team decide", hint: "We price it made fully to order and show a wider range", unsure: true, answers: {build_type: custom}}
   hosting:
@@ -596,7 +596,7 @@ questions:
     default: advance
     options:
       - {value: advance, label: "Part in advance, the rest in stages", hint: "Usual for private work: about 30% at the start, 40% halfway, 30% on delivery, paid on the invoice", answers: {payment_schedule: [{at_build_fraction: 0, percent: 0.3}, {at_build_fraction: 0.5, percent: 0.4}, {at_build_fraction: 1, percent: 0.3}], payment_delay_months: 0}}
-      - {value: milestones, label: "After milestones, as in tenders", hint: "Paid after each stage is accepted, often months later. The builder funds the work meanwhile", answers: {}, extra_components: [discovery_requirement_study]}
+      - {value: milestones, label: "After each milestone", hint: "Paid after each stage is accepted, often months later. The builder funds the work meanwhile", answers: {}, extra_components: [discovery_requirement_study]}
   penalties:
     # a reserve for penalties is priced only when the contract has them, cited from the document
     # (parameter sets v19+); an older reading's "not priced: penalties" quotes count too
@@ -742,7 +742,7 @@ questions:
     group: hidden   # the company's own setting (Account page)
     default: all
     options:
-      - {value: all, label: All of it, hint: "Lowest price. Best when you must win on price, such as a competitive or government tender", answers: {ai_passthrough_percent: 1}}
+      - {value: all, label: All of it, hint: "Lowest price. Best when you must win on price", answers: {ai_passthrough_percent: 1}}
       - {value: most, label: Most of it (75%), hint: "Still a competitive price, with a little extra margin", answers: {ai_passthrough_percent: 0.75}}
       - {value: half, label: Half, hint: "Between the two", answers: {ai_passthrough_percent: 0.5}}
       - {value: keep, label: Keep it, hint: "For private or negotiated work: the price stays at the usual level and the saving is your margin", answers: {ai_passthrough_percent: 0}}
@@ -1642,7 +1642,7 @@ client_mode:
   source: placeholder
   too_low_share_of_low: 0.75
   too_high_share_of_high: 1.25
-  note: "A bid far below the fair range usually means missed scope or a vendor who cannot deliver; ask for a written justification of the price before accepting it. A bid far above it is probably overpriced."
+  note: "A quote far below the fair range usually means missed scope or a vendor who cannot deliver; ask for a written justification of the price before accepting it. A quote far above it is probably overpriced."
 
 # "Similar real projects" shown with every estimate (from seeds/benchmarks): score = features
 # shared (Jaccard) x weight + same size (or a neighbouring size) + same build type.

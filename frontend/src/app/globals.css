@@ -738,7 +738,7 @@
   transform: perspective(800px) translateY(-6px) rotateX(6deg);
 }
 
-/* How it works, step 1 (`DocumentScan`): a line scans a tender page; a sentence that asks for
+/* How it works, step 1 (`DocumentScan`): a line scans a requirement page; a sentence that asks for
    something lights up and flies across as a priced feature, the rest turn grey. */
 .scan-clause {
   margin: 0 -7px;

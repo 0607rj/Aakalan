@@ -11,7 +11,7 @@ interface Clause {
   item: number | null;
 }
 
-/** Illustration only: a made-up page of a tender, not a real document or estimate. */
+/** Illustration only: a made-up page of a requirement document, not a real document or estimate. */
 const CLAUSES: Clause[] = [
   {
     n: "4.1",
@@ -20,7 +20,7 @@ const CLAUSES: Clause[] = [
   },
   {
     n: "4.1.1",
-    text: "The list of centres is kept by the department.",
+    text: "The list of centres is kept by the client.",
     item: null,
   },
   {
@@ -73,7 +73,7 @@ const FLY_MS = 950;
 const PAUSE_MS = 3400;
 
 /**
- * How it works, step 1: a line scans down a tender page; each sentence that asks for something
+ * How it works, step 1: a line scans down a requirement page; each sentence that asks for something
  * lights up and flies across as a priced feature, and the rest stay grey. It plays while on
  * screen and loops; at rest (and with reduced motion) the page shows everything found.
  */
@@ -199,7 +199,7 @@ export function DocumentScan({ className }: { className?: string }) {
         className="relative -rotate-[1.2deg] overflow-hidden rounded-2xl border bg-card px-[18px] pt-[18px] pb-3.5 shadow-[0_18px_40px_-26px_rgb(0_0_0/0.35)]"
       >
         <p className="mb-2.5 font-mono text-[11px] tracking-[0.05em] text-faint uppercase">
-          RFP · Section 4 · Page 7
+          Requirements · Section 4 · Page 7
         </p>
         {CLAUSES.map((c, i) => (
           <p

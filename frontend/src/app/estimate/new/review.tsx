@@ -1223,7 +1223,7 @@ export function ReviewForm({
                       </h2>
                       <p className="text-sm text-muted-foreground">
                         The document does not say these, so the usual answer is
-                        priced. Confirm them with the department before you bid.
+                        priced. Confirm them with the client.
                       </p>
                     </div>
                     <ul className="flex flex-col gap-2 text-sm">

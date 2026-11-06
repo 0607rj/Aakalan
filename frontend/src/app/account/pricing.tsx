@@ -16,7 +16,7 @@ const CHOICES: { value: Passthrough; label: string; hint: string }[] = [
   {
     value: "all",
     label: "All of it",
-    hint: "Lowest price. Best when you must win on price, such as a competitive or government tender.",
+    hint: "Lowest price. Best when you must win on price.",
   },
   {
     value: "most",

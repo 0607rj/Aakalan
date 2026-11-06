@@ -49,9 +49,9 @@ function CalibrationReport() {
       <p className="max-w-2xl text-muted-foreground">{report.message}</p>
       {share !== null ? (
         <p className="text-sm text-muted-foreground">
-          Winning prices fell inside our range in {formatDecimal(share, 0)}% of
-          projects ({report.with_l1} with a winning price recorded), from{" "}
-          {report.outcomes} recorded bid result
+          The prices clients chose fell inside our range in{" "}
+          {formatDecimal(share, 0)}% of projects ({report.with_l1} with that
+          price recorded), from {report.outcomes} recorded result
           {report.outcomes === 1 ? "" : "s"}.
         </p>
       ) : null}

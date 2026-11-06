@@ -967,7 +967,7 @@ const CLIENT_TYPES: Record<string, string> = {
   small_business: "Startup / small business",
 };
 
-/** Client mode: where bids stop looking realistic. */
+/** Client mode: where vendors' quotes stop looking realistic. */
 function BidCheckCard({ summary }: { summary: QuickSummary }) {
   const check = summary.bid_check;
   if (!check) return null;
@@ -975,7 +975,7 @@ function BidCheckCard({ summary }: { summary: QuickSummary }) {
   return (
     <section className="sheet">
       <SectionTitle icon={ScalesIcon} tone="warning">
-        Bid check
+        Quote check
       </SectionTitle>
       {/* the fair range comes into focus first, then the two sides */}
       <ul className="focus-row grid gap-3 [--fd:1] sm:grid-cols-3">

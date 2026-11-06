@@ -302,7 +302,7 @@ def _emd_check(rules: RealityCheck, price_paise: int | None, emd_paise: int | No
         else f"The price without GST ({_inr(price)}) is {times}x "
         + ("the top of that range. " if above else "below the bottom of that range. ")
         + (
-            "Check for features counted twice, stock tender text priced as work, staff priced "
+            "Check for features counted twice, standard document text priced as work, staff priced "
             "for too long, or work the buyer expects a ready-made product to cover."
             if above
             else "Check whether scope is missing."

@@ -2,7 +2,7 @@
 
 import * as React from "react";
 
-/* One plain requirement line, as tenders write them; the marked words are the features. */
+/* One plain requirement line, as requirement documents write them; the marked words are the features. */
 const LINE: (string | { words: string; feature: string })[] = [
   "The portal shall let citizens ",
   { words: "register", feature: "Sign-in" },
@@ -18,7 +18,7 @@ const LINE: (string | { words: string; feature: string })[] = [
 const MARKED = LINE.filter((part) => typeof part !== "string").length;
 
 /**
- * What Aakalan does, shown on one line: a tender sentence across the page in large type, on the
+ * What Aakalan does, shown on one line: a requirement sentence across the page in large type, on the
  * light page. As it rises up the screen its words light up
  * one by one, each with the feature it becomes under it. With reduced motion (or before the
  * script runs on a phone) every word is lit.
@@ -59,7 +59,7 @@ export function TenderLine() {
     <section className="pt-6 pb-[clamp(72px,10vw,120px)]">
       <div className="page-wrap">
         <p className="font-mono text-xs tracking-[0.08em] text-tape uppercase">
-          One line of a tender
+          One line of a requirement
         </p>
         <h2
           ref={ref}

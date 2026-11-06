@@ -781,9 +781,7 @@ export function ScopeStep({
               ›
             </span>
             <span className="flex flex-col gap-0.5">
-              <span className="font-wide text-lg">
-                For large or government projects
-              </span>
+              <span className="font-wide text-lg">For large projects</span>
               <span className="text-sm text-muted-foreground">
                 Security checks, data protection rules, office login.{" "}
                 {advanced.length} items

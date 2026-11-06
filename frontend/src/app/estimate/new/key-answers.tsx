@@ -74,7 +74,7 @@ export function Queries({
   return (
     <div className="flex flex-col gap-2 rounded-lg bg-warning-muted px-3 py-2 text-sm">
       <span className="font-medium">
-        Pre-bid {queries.length === 1 ? "query" : "queries"} to send
+        {queries.length === 1 ? "Question" : "Questions"} to ask the client
       </span>
       <ul className="flex flex-col gap-2">
         {queries.map((q) => (

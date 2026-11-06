@@ -398,7 +398,7 @@ class MarketComparison(Frozen):
 
 
 class ClientMode(Frozen):
-    """Bid check for clients planning a tender: shares of the fair range's ends."""
+    """Quote check for clients planning a budget: shares of the fair range's ends."""
 
     source: str
     too_low_share_of_low: Decimal = Field(gt=0, le=1)

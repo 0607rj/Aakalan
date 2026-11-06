@@ -70,7 +70,7 @@ const idOf = (s: { feature: string; label: string }) =>
  * "Usually needed for this kind of software" (OPEN_QUESTIONS 207): modules the AI says software
  * like this usually has and the words never mention, checked in code. Never ticked for the
  * user; what each adds is priced by the engine (the form with and without it). On a document,
- * each can be copied as a pre-bid question to ask the client first.
+ * each can be copied as a question to ask the client first.
  */
 export function IndustrySuggestions({
   options,
@@ -216,7 +216,7 @@ export function IndustrySuggestions({
         {fromIndustry
           ? "What software for this industry usually has, and what the AI adds from your description. The main ones are ticked for you: untick any you do not need, and pick how big each one is. Login, user roles and the admin panel are always included."
           : forDocument
-            ? "Suggested by the AI from the kind of software, not asked for by the client. Check with the client before adding any to a bid."
+            ? "Suggested by the AI from the kind of software, not asked for by the client. Check with the client before adding any to the price."
             : "Suggested by the AI from the kind of software. Nothing is added unless you tick it."}
       </p>
       <div className="grid gap-3 sm:grid-cols-2">
@@ -261,7 +261,7 @@ export function IndustrySuggestions({
                     className="h-7 px-2"
                     onClick={() => void copy(s)}
                   >
-                    {copied === id ? "Copied" : "Copy as pre-bid question"}
+                    {copied === id ? "Copied" : "Copy as a question"}
                   </Button>
                 ) : null}
               </div>

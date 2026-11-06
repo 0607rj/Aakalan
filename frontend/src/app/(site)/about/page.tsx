@@ -24,7 +24,7 @@ const TESTS = [
   {
     size: "Small projects",
     up: false,
-    text: "Real contracts mostly came in below ours: lowest bids, simpler builds.",
+    text: "Real contracts mostly came in below ours: lowest prices, simpler builds.",
   },
   {
     size: "Medium projects",

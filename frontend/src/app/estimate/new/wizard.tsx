@@ -1324,7 +1324,7 @@ function StartChoice({
       text: "PDF or Word. We read it and fill in the details for you to check.",
       points: [
         "Every feature found keeps the page and sentence it came from",
-        "A corrigendum overrides the original",
+        "A later update to the document replaces the original",
         "You check what was found before any price is worked out",
       ],
       recommended: true,

@@ -25,15 +25,15 @@ const MINOR_PER_MAJOR = 100; // paise per rupee, cents per dollar
 const RESULTS: { value: BidResult; label: string }[] = [
   { value: "won", label: "Won" },
   { value: "lost", label: "Lost" },
-  { value: "withdrawn", label: "Withdrawn" },
-  { value: "not_bid", label: "Did not bid" },
+  { value: "withdrawn", label: "Withdrew" },
+  { value: "not_bid", label: "Did not go ahead" },
 ];
 
 type PriceKey = "our_price_paise" | "l1_price_paise" | "actual_cost_paise";
 
 const PRICES: { key: PriceKey; label: (symbol: string) => string }[] = [
-  { key: "our_price_paise", label: (c) => `Our quoted price (${c})` },
-  { key: "l1_price_paise", label: (c) => `Winning (L1) price (${c})` },
+  { key: "our_price_paise", label: (c) => `Our price (${c})` },
+  { key: "l1_price_paise", label: (c) => `Price the client chose (${c})` },
   {
     key: "actual_cost_paise",
     label: (c) => `Actual final cost (${c}, if won and finished)`,
@@ -199,7 +199,7 @@ function OutcomeForm({
           id="outcome-notes"
           value={notes}
           maxLength={2000}
-          placeholder="e.g. L1 was a local firm; scope was reduced"
+          placeholder="e.g. a local firm was chosen; scope was reduced"
           onChange={(e) => setNotes(e.target.value)}
         />
       </div>
@@ -234,7 +234,7 @@ export function BidResultCard({
     <section className="sheet">
       <div>
         <SectionTitle icon={TrophyIcon} tone="warm">
-          Bid result
+          Did you get the project?
         </SectionTitle>
         <p className="pl-11 text-sm text-muted-foreground">
           Recording results teaches the tool to estimate closer to real prices.
@@ -266,7 +266,7 @@ export function BidResultCard({
             className="self-start"
             onClick={() => setEditing(true)}
           >
-            Record the bid result
+            Record the result
           </Button>
         )
       ) : null}

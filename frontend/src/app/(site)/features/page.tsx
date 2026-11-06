@@ -111,8 +111,8 @@ export default function FeaturesPage() {
           body="Each feature it finds keeps the page and the sentence it came from, so you can check every one before any price is worked out."
           points={[
             "PDF or Word",
-            "A corrigendum overrides the original",
-            "Questions to send the client before you bid",
+            "A later update to the document replaces the original",
+            "Questions to ask the client before you start",
           ]}
           art={
             <AppWindow title="requirement.pdf · page 4">

@@ -282,7 +282,7 @@ def test_no_market_prices_are_shown(client: TestClient, admin_headers: H) -> Non
         in (small["accuracy_note"])
     )
     # the production-path back-test, with who read the tenders (OPEN_QUESTIONS 161)
-    assert "8 real government tenders" in small["accuracy_note"]
+    assert "8 real projects with published prices" in small["accuracy_note"]
     assert "stand-in AI model" in small["accuracy_note"]
     assert "3 of the 8 published prices" in small["accuracy_note"]
 

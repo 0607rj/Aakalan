@@ -164,12 +164,12 @@ def calibration_report(db: Session, user: User) -> CalibrationReport:
         else None
     )
     if med_l1 is None:
-        message = "Record bid results (winning L1 price) to see how close the estimates are."
+        message = "Record results (the price the client chose) to see how close the estimates are."
     else:
         direction = "below" if med_l1 < 0 else "above"
         message = (
-            f"Winning prices were typically {abs(med_l1)}% {direction} our most-likely estimate "
-            f"({len(l1)} project{'s' if len(l1) != 1 else ''})."
+            f"The prices clients chose were typically {abs(med_l1)}% {direction} our "
+            f"most-likely estimate ({len(l1)} project{'s' if len(l1) != 1 else ''})."
         )
     return CalibrationReport(
         outcomes=len(rows),

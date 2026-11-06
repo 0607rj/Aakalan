@@ -229,7 +229,7 @@ def independent_check(
             f"The priced build ({priced_months} person-months) is {ratio}x the count-based "
             f"estimate ({anchor_months} person-months). "
             + (
-                "Check the largest lines below for work counted twice, stock tender text "
+                "Check the largest lines below for work counted twice, standard document text "
                 "priced as work, or levels set higher than the document asks."
                 if direction == "high"
                 else "Check whether features or screens the document names are missing."

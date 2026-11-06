@@ -206,9 +206,9 @@ def build_pdf(data: ReportData) -> bytes:
     if s.bid_check:
         c = s.bid_check
         story += [
-            _p("Bid check (for planning the tender budget)", H2),
+            _p("Quote check (for planning the budget)", H2),
             _p(
-                f"Fair range {span(c.fair_low_paise, c.fair_high_paise)}. Bids below "
+                f"Fair range {span(c.fair_low_paise, c.fair_high_paise)}. Quotes below "
                 f"{about(c.too_low_below_paise)} are probably too low; above "
                 f"{about(c.too_high_above_paise)} probably too high. {c.note}",
                 BODY,
