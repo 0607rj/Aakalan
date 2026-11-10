@@ -12,6 +12,9 @@ requirement_clarity: 3
 # same scope sells for up to 5x more or less (user's decision 2026-10-21, OPEN_QUESTIONS 127).
 # true brings back the market box and similar real projects on the results page and report.
 show_market_prices: false
+# Own servers the client buys itself (question hardware_supply): the line on the quote's list of
+# what is not included (OPEN_QUESTIONS 235)
+hardware_client_buys: "Servers, storage, network and licences: the client buys them (see Hardware to buy)"
 # How the pricing did in the latest production-path back-test (tenders read, the review form
 # accepted as it pre-fills, priced as an upload is), added to every estimate's accuracy note.
 # Rewrite after each production-path back-test (OPEN_QUESTIONS 161).
@@ -69,6 +72,9 @@ features:
     label: Online application or registration forms
     hint: People fill forms online and upload documents instead of visiting an office.
     components: [registration_empanelment, master_data_management]
+    # OPEN_QUESTIONS 230 (reasoned, agreed with the user 2026-11-10): one or two simple forms
+    # need no screens to edit their lists (set up once while building); several forms do
+    skip_at: {basic: {master_data_management: "Screens to edit the lists the forms use (states, categories, document types); set up once while building"}}
     levels:
       basic: "One or two simple forms"
       standard: "Several forms with document upload and saved drafts"
@@ -519,6 +525,32 @@ questions:
       - {value: on_prem, label: Own server room, hint: "Servers are bought and set up in your own building", answers: {hosting_provider: on_prem, hosting_in_scope: true}}
       - {value: existing, label: Servers you already have, hint: "e.g. NIC, a State Data Centre or your own cloud account: no new server cost (an estimate is shown separately)", answers: {hosting_provider: aws, hosting_in_scope: false}}
       - {value: not_sure, label: Not sure, hint: "We price a public cloud and show a wider range", unsure: true, answers: {hosting_provider: aws, hosting_in_scope: true}}
+  hardware_list:
+    # OPEN_QUESTIONS 231, 232: optional, and asked only for "Servers you already have" (e.g. a
+    # State Data Centre where the department buys the hardware); on a cloud nobody buys
+    # hardware, and with "Own server room" the list is shown anyway
+    label: Does new hardware need to be bought for these servers?
+    topic: hosting
+    group: detail  # optional: skipped = no list
+    default: "no"
+    hide_when: {hosting: [aws, indian_cloud, on_prem, not_sure], build_part: [frontend_only]}
+    default_by: {hosting: {aws: "no", indian_cloud: "no", on_prem: "no", not_sure: "no"}, build_part: {frontend_only: "no"}}  # a hidden answer is dropped
+    options:
+      - {value: "no", label: "No", hint: "No hardware to buy", answers: {hardware_list: none}}
+      - {value: client_buys, label: "Yes, the client buys it", hint: "A list of servers, storage, network and licences with sizes and quantities; shown with the estimate, not in its price", answers: {hardware_list: client_buys}}
+  hardware_supply:
+    # OPEN_QUESTIONS 235: on own servers the department often buys the hardware itself (its own
+    # tender or GeM). Asked only for "Own server room"; after hardware_list, whose hidden "No"
+    # it overrides. "We supply it" sets nothing, so it never undoes hardware_list.
+    label: Who buys the hardware?
+    topic: hosting
+    group: detail  # optional: skipped = we supply it, in the price
+    default: we_supply
+    hide_when: {hosting: [aws, indian_cloud, existing, not_sure], build_part: [frontend_only]}
+    default_by: {hosting: {aws: we_supply, indian_cloud: we_supply, existing: we_supply, not_sure: we_supply}, build_part: {frontend_only: we_supply}}  # a hidden answer is dropped
+    options:
+      - {value: we_supply, label: "We supply it", hint: "Servers, storage, network and licences are in the price", answers: {}}
+      - {value: client_buys, label: "The client buys it separately", hint: "The list of what to buy is shown with the estimate, not in its price", answers: {hardware_list: client_buys}}
   support_years:
     label: How many years of support after launch?
     topic: support
@@ -1900,6 +1932,116 @@ coverage:
 
 # OPEN_QUESTIONS 220: our own estimate report (services/reports/pdf.py prints this line on every
 # page) uploaded as if it were the requirement document: the review screen says so. Lower case.
+# Where each price comes from, in plain words (OPEN_QUESTIONS 226): the results page, the PDF
+# and the Excel quote list every source an estimate used, read from the engine's own trace of
+# each line. Wording only: nothing is priced from here. A study is `checked` only when its
+# finding was read on the page at its url.
+price_sources:
+  source: "wording 2026-11-10 (OPEN_QUESTIONS 226); task confidence from the comments of parameter set v32 ai_productivity.task_savings; study links checked on the page 2026-11-10"
+  settings:
+    calibration: "How much work a feature takes, and how much teams differ"
+    complexity_multipliers: "Extra work for more complex features"
+    complexity_source: "Extra work for more complex features"
+    nfr: "Extra work for heavy load, security and uptime"
+    ai_productivity: "Time AI tools save, by task"
+    reuse: "Work saved by building on a website builder or framework"
+    effort_caps: "Limits on review, testing and design work by project size"
+    task_roles: "Who does each task"
+    timeline: "Build time and deadlines"
+    programme: "Project management and meetings"
+    hosting: "Server sizing"
+    ai_runtime: "AI usage once the software is live"
+    maintenance: "Support and upkeep after launch"
+    go_live: "Launch, training and handover"
+    escalation: "Yearly price rise"
+    commercial: "Margin, tax and the cost of waiting for payment"
+    uncertainty: "How wide the price range is"
+    confidence: "How sure the estimate is"
+    defaults: "The usual answer when a question is skipped"
+    third_party: "Outside services (SMS, email, maps, payments, AI)"
+    lean: "Lean delivery for small projects"
+    layers: "Building only the front end"
+    builder: "Who builds it (freelancer, agency or company)"
+    calendar: "Working days and hours"
+  tasks:
+    crud: "Building screens and records"
+    documentation: "Writing documents"
+    tests: "Writing tests"
+    architecture: "Designing the system"
+    integration: "Connecting other systems"
+    review_uat: "Review and user testing"
+    pm: "Project management"
+    analysis: "Requirement study"
+    ui_design: "Screen design"
+    ai_engineering: "AI work"
+    data_migration: "Moving old data"
+    security_testing: "Security testing"
+    devops: "Servers and deployment"
+    training: "Training"
+  # plain names for prices, by the start of their rate-card key (longest match wins); a role's
+  # day rate is named from its key ("role.qa_engineer" = "QA engineer day rate")
+  rate_labels:
+    role.: "{name} day rate"
+    hosting.: "Hosting: all-in monthly price"
+    cloud.: "Cloud price list item"
+    llm_token.: "AI model usage"
+    gpu_hour.: "GPU server hour"
+    tools.ai_coding: "AI coding assistant subscription"
+    tools.dev_suite: "Developer tools subscription"
+    licence.ssl_certificate: "SSL certificate"
+    licence.domain: "Web address (domain)"
+    licence.: "Software licence"
+    audit_fee.: "Security audit fee"
+    bank_charge.pbg_commission: "Bank guarantee fee"
+    client.payment_gateway: "Online payment fees"
+    security.waf: "Web firewall"
+    service.: "Outside service"
+    onprem.: "Own servers (on premises)"
+    onprem.hw.server_8c: "Own server, small (8 cores)"
+    onprem.hw.server_16c: "Own server, medium (16 cores)"
+    onprem.hw.server_32c: "Own server, large (32 cores)"
+    onprem.hw.firewall: "Firewall"
+    onprem.hw.firewall_security_year: "Firewall security subscription"
+    onprem.hw.switch_24p: "Network switch"
+    onprem.hw.rack_42u: "Server rack"
+    onprem.hw.ups_5kva: "UPS (power backup)"
+    onprem.hw.backup: "Backup software"
+    onprem.hw.os_licensed_year: "Paid operating system licence"
+    onprem.hw.db_licence: "Database licence"
+    onprem.hw.antivirus_year: "Server antivirus"
+    onprem.storage.tb: "Own storage"
+    travel.: "Travel"
+    other.: "Other cost"
+    forex.: "Exchange rate"
+    fx.: "Exchange rate"
+  ai_task_confidence: {documentation: medium, crud: medium, architecture: medium, integration: medium, review_uat: medium, pm: medium, tests: low, analysis: low, ui_design: low, ai_engineering: low, data_migration: low, security_testing: low, devops: low, training: low}
+  ai_studies:
+    - {name: "Peng et al., The Impact of AI on Developer Productivity: Evidence from GitHub Copilot", year: 2023, finding: "Developers with the AI tool finished a set task 55.8% faster", url: "https://arxiv.org/abs/2302.06590", checked: true, checked_on: "2026-11-10"}
+    - {name: "Paradis et al. (Google), How much does AI impact development speed? An enterprise-based randomized controlled trial", year: 2024, finding: "About 21% faster on an enterprise task (wide confidence interval)", url: "https://arxiv.org/abs/2410.12944", checked: true, checked_on: "2026-11-10"}
+    - {name: "METR, Measuring the Impact of Early-2025 AI on Experienced Open-Source Developer Productivity", year: 2025, finding: "Experienced developers on their own large codebases took 19% longer with AI tools", url: "https://arxiv.org/abs/2507.09089", checked: true, checked_on: "2026-11-10"}
+    - {name: "Veracode, GenAI Code Security Report", year: 2025, finding: "AI-written code brought security flaws in 45% of tests, so it must be reviewed", url: "https://www.veracode.com/resources/analyst-reports/2025-genai-code-security-report/", checked: true, checked_on: "2026-11-10"}
+    - {name: "DORA, Accelerate State of DevOps Report", year: 2024, finding: "AI raises individual productivity but can lower delivery stability", url: "https://dora.dev/research/2024/dora-report/", checked: true, checked_on: "2026-11-10"}
+    - {name: "McKinsey, Unleashing developer productivity with generative AI", year: 2023, finding: "Documentation about 45-50% faster, new code 35-45%, refactoring 20-30%, complex tasks under 10%", url: "https://www.mckinsey.com/capabilities/mckinsey-digital/our-insights/unleashing-developer-productivity-with-generative-ai", checked: false}
+    - {name: "Cui, Demirer et al., The Effects of Generative AI on High-Skilled Work (three field experiments, 4,867 developers)", year: 2025, finding: "About 26% more tasks completed", checked: false}
+    - {name: "Faros AI, The AI Productivity Paradox", year: 2025, finding: "More code changes per engineer, but review work grows and company results stay flat", url: "https://www.faros.ai/ai-productivity-paradox", checked: true, checked_on: "2026-11-10"}
+  # The builder's profit (OPEN_QUESTIONS 227): one figure for everyone, never a choice. The
+  # parameter set's 15% on cost = 13.0% of the price (15 / 115), checked against FY25 (year to
+  # 31 March 2025) results of mid-size listed Indian IT firms, read on each page 2026-11-10.
+  # "On cost" = m / (1 - m) of an operating margin m. Wording only; nothing is priced from here.
+  margin:
+    summary: "15% added on the cost, which is 13% of the price. Mid-size Indian IT firms earned 13% to 21% of their revenue as operating profit in FY25 (median about 15.5%, or 18% on cost), so 15% is at the careful low end. The cost already counts every person's full day rate."
+    figures:
+      - {name: "Persistent Systems, Q4 FY25 results", year: 2025, finding: "EBIT 14.7% of revenue for FY25", url: "https://www.persistent.com/media/press-releases/q4-fy25-results/", checked: true, checked_on: "2026-11-10"}
+      - {name: "LTIMindtree, FY25 results (press release)", year: 2025, finding: "Operating margin (EBIT) 14.5% for FY25", url: "https://cxotoday.com/press-release/ltimindtrees-fy25-revenue-up-7-in-inr/", checked: true, checked_on: "2026-11-10"}
+      - {name: "Cyient, Q4 and FY25 results (press release)", year: 2025, finding: "EBIT 13.5% for its engineering services (12% for the group)", url: "https://cxotoday.com/press-release/cyient-announces-q4-and-annual-fy25-results-profit-up-32-per-cent-qoq-cash-position-strongest/", checked: true, checked_on: "2026-11-10"}
+      - {name: "Birlasoft, Q4 FY25 results", year: 2025, finding: "EBITDA margin 13.0% for FY25", url: "https://www.birlasoft.com/sites/default/files/resources/downloads/investors/birlasoft-q4-fy-2024-25-results-press-release.pdf", checked: true, checked_on: "2026-11-10"}
+      - {name: "Zensar Technologies, earnings release March 2025", year: 2025, finding: "EBITDA 15.5% of revenue for FY25", url: "https://files.tijorifinance.com/insight/india/588/Earnings%20Release/ER-Mar25.pdf", checked: true, checked_on: "2026-11-10"}
+      - {name: "Mastek, Q4 FY25 results", year: 2025, finding: "Operating EBITDA Rs 546.5 crore on revenue Rs 3,455.2 crore: 15.8%", url: "https://www.mastek.com/wp-content/uploads/2025/04/Press-Release-Q4FY25.pdf", checked: true, checked_on: "2026-11-10"}
+      - {name: "Sonata Software, Q4 FY25 results", year: 2025, finding: "International IT services EBITDA Rs 480.5 crore on revenue Rs 2,829.7 crore: 17.0%", url: "https://www.sonata-software.com/sites/default/files/quarterly-results/2025-05/pressreleasefy25q4.pdf", checked: true, checked_on: "2026-11-10"}
+      - {name: "Happiest Minds, Q4 FY25 results", year: 2025, finding: "EBITDA 21.4% of total income for FY25", url: "https://www.happiestminds.com/investors/Press%20Release/2024-2025-Q4/Press-Release-Q4FY25.pdf", checked: true, checked_on: "2026-11-10"}
+      - {name: "ICRA, Indian IT services outlook (15 firms, large ones weigh most)", year: 2025, finding: "Operating profit margin 22-23% in FY2025, expected the same in FY2026", url: "https://www.icra.in/Rating/DownloadResearchSummaryReport?id=6495", checked: true, checked_on: "2026-11-10"}
+      - {name: "Tofler, IT industry report (30 listed and unlisted firms)", year: 2025, finding: "Median operating margin 19.85% in FY25 (2.4% to 52%)", url: "https://www.tofler.in/industry-reports/it", checked: true, checked_on: "2026-11-10"}
+
 own_report:
   source: "the footer of Aakalan's PDF report (services/reports/pdf.py), 2026-11-05"
   phrases: ["every figure is computed by a deterministic engine and traced to its source"]

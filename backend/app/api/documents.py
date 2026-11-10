@@ -12,6 +12,7 @@ from app.core.tenancy import get_owned
 from app.models import Document, Project
 from app.services.documents.service import BYTES_PER_MB, upload_document
 from app.services.extraction.merge import (
+    DocumentInfo,
     ProjectExtraction,
     project_extraction,
 )
@@ -37,12 +38,15 @@ class DocumentOut(BaseModel):
     # the project's reading, all its documents merged with the code checks applied: the one
     # the price uses, so the review form pre-fills the same answers (OPEN_QUESTIONS 159)
     extraction: TenderExtraction | None
+    # every file of the project, in upload order: the main document first (OPEN_QUESTIONS 225)
+    files: list[DocumentInfo]
     llm_model: str | None
     llm_input_tokens: int
     llm_output_tokens: int
 
 
 def _out(db: Session, doc: Document, project: Project) -> DocumentOut:
+    merged = project_extraction(db, project)
     return DocumentOut(
         id=doc.id,
         project_id=doc.project_id,
@@ -53,7 +57,8 @@ def _out(db: Session, doc: Document, project: Project) -> DocumentOut:
         approximate_pages=doc.approximate_pages,
         status=doc.parse_status,
         error=doc.error,
-        extraction=project_extraction(db, project).extraction if doc.extraction else None,
+        extraction=merged.extraction if doc.extraction else None,
+        files=merged.documents,
         llm_model=doc.llm_model,
         llm_input_tokens=doc.llm_input_tokens,
         llm_output_tokens=doc.llm_output_tokens,

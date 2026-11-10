@@ -286,7 +286,7 @@ export interface paths {
         /**
          * Put Questionnaire
          * @description Replace the project's answers. Keys left out fall back to parameter-set defaults.
-         *     Restricted keys (margin) can only be changed by finance/admin and are kept otherwise.
+         *     Margin and safety buffer are one rule for everyone and can't be answered (OQ 227).
          */
         put: operations["put_questionnaire_projects__project_id__questionnaire_put"];
         post?: never;
@@ -605,6 +605,27 @@ export interface paths {
         };
         /** Summary */
         get: operations["summary_estimates__estimate_id__summary_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/estimates/{estimate_id}/sources": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Sources Of
+         * @description Where every price comes from: the numbered sources and each results-page row's sources,
+         *     work, rates and asking sentences, from the engine's trace (OPEN_QUESTIONS 226).
+         */
+        get: operations["sources_of_estimates__estimate_id__sources_get"];
         put?: never;
         post?: never;
         delete?: never;
@@ -972,12 +993,13 @@ export interface paths {
         };
         /**
          * Read Settings
-         * @description The company's settings; the margin only for finance and admin.
+         * @description The company's settings: facts about its team. Margin, safety buffer and how much of the
+         *     AI saving is passed on are no longer company choices (OPEN_QUESTIONS 227).
          */
         get: operations["read_settings_settings_get"];
         /**
          * Update Settings
-         * @description Margin and effort settings apply to every new estimate; finance or admin only.
+         * @description Team settings apply to every new estimate; finance or admin only.
          */
         put: operations["update_settings_settings_put"];
         post?: never;
@@ -1282,6 +1304,15 @@ export interface components {
             /** Kept Paise */
             kept_paise?: number | null;
         };
+        /** AiTask */
+        AiTask: {
+            /** Task */
+            task: string;
+            /** Saving Percent */
+            saving_percent: number;
+            /** Confidence */
+            confidence: ("medium" | "low") | null;
+        };
         /** AnswerIn */
         AnswerIn: {
             /** Key */
@@ -1293,6 +1324,18 @@ export interface components {
              * @default []
              */
             requirement_ids: string[];
+        };
+        /**
+         * Asked
+         * @description A document sentence (or typed feature) that asked for the work.
+         */
+        Asked: {
+            /** Text */
+            text: string;
+            /** Page */
+            page: number | null;
+            /** Clause */
+            clause: string | null;
         };
         /**
          * AssumedAnswer
@@ -1591,6 +1634,20 @@ export interface components {
             label: string;
             /** Amount Paise */
             amount_paise: number;
+        };
+        /**
+         * Cite
+         * @description One piece of evidence inside a source (a page of published hours, a study).
+         */
+        Cite: {
+            /** Text */
+            text: string;
+            /** Url */
+            url?: string | null;
+            /** Year */
+            year?: number | null;
+            /** Checked */
+            checked?: boolean | null;
         };
         /**
          * ClientPays
@@ -1948,6 +2005,8 @@ export interface components {
             /** Error */
             error: string | null;
             extraction: components["schemas"]["TenderExtraction"] | null;
+            /** Files */
+            files: components["schemas"]["DocumentInfo"][];
             /** Llm Model */
             llm_model: string | null;
             /** Llm Input Tokens */
@@ -2147,6 +2206,17 @@ export interface components {
             assumptions: components["schemas"]["AssumptionOut"][];
             /** Lines */
             lines: components["schemas"]["CostLineOut"][];
+        };
+        /** EstimateSources */
+        EstimateSources: {
+            /** Sources */
+            sources: components["schemas"]["Source"][];
+            /** Rows */
+            rows: components["schemas"]["RowSources"][];
+            /** Counts */
+            counts: {
+                [key: string]: number;
+            };
         };
         /** EstimateSummary */
         EstimateSummary: {
@@ -2695,6 +2765,69 @@ export interface components {
             /** Detail */
             detail?: components["schemas"]["ValidationError"][];
         };
+        /** HardwareItem */
+        HardwareItem: {
+            /** Key */
+            key: string;
+            /** Label */
+            label: string;
+            /** Spec */
+            spec: string;
+            /** Quantity */
+            quantity: number;
+            /**
+             * Site
+             * @enum {string}
+             */
+            site: "main" | "standby";
+            /** Why */
+            why: string;
+            /**
+             * Source
+             * @default sized
+             * @enum {string}
+             */
+            source: "sized" | "document";
+            /** Unit Paise */
+            unit_paise?: number | null;
+            /**
+             * Yearly
+             * @default false
+             */
+            yearly: boolean;
+            /**
+             * Rate Keys
+             * @default []
+             */
+            rate_keys: string[];
+            /** Tb */
+            tb?: number | null;
+            /** Amount Paise */
+            readonly amount_paise: number;
+        };
+        /** HardwareList */
+        HardwareList: {
+            /**
+             * Who Buys
+             * @enum {string}
+             */
+            who_buys: "in_price" | "client_buys";
+            /** Parameter Set Version */
+            parameter_set_version: string;
+            /** Source */
+            source: string;
+            /** Items */
+            items: components["schemas"]["HardwareItem"][];
+            /**
+             * Client Costs
+             * @default []
+             */
+            client_costs: string[];
+            /** Once Paise */
+            once_paise?: number | null;
+            /** Yearly Paise */
+            yearly_paise?: number | null;
+        };
         /** Health */
         Health: {
             /** Status */
@@ -2895,6 +3028,26 @@ export interface components {
             /** Impact Paise */
             impact_paise?: number | null;
         };
+        /**
+         * LeftOut
+         * @description A role not booked for this project (parameter sets v34+, OPEN_QUESTIONS 229): it had too
+         *     little work for its minimum booking, so someone already on the team does it, a little
+         *     slower. Read from the engine's lines (inputs.staffing); only regroups.
+         */
+        LeftOut: {
+            /** Role */
+            role: string;
+            /** Label */
+            label: string;
+            /** Done By */
+            done_by: string;
+            /** Done By Label */
+            done_by_label: string;
+            /** Work Days */
+            work_days: string;
+            /** Min Booking Days */
+            min_booking_days: string;
+        };
         /** LevelOut */
         LevelOut: {
             /** Key */
@@ -3028,7 +3181,7 @@ export interface components {
              * Why
              * @enum {string}
              */
-            why: "excluded_by_you" | "removed_by_you" | "not_sure" | "document_excluded" | "document_not_priced";
+            why: "excluded_by_you" | "removed_by_you" | "not_needed_at_level" | "client_pays" | "not_sure" | "document_excluded" | "document_not_priced";
             /**
              * Quote
              * @default
@@ -3947,6 +4100,12 @@ export interface components {
             team: components["schemas"]["TeamRole"][];
             /** Team People */
             team_people?: string | null;
+            /**
+             * Team Left Out
+             * @default []
+             */
+            team_left_out: components["schemas"]["LeftOut"][];
+            hardware?: components["schemas"]["HardwareList"] | null;
             /** Traditional Build Months */
             traditional_build_months?: string | null;
             /**
@@ -4029,6 +4188,17 @@ export interface components {
             name: string;
             /** Variance Share */
             variance_share: string;
+        };
+        /** Rate */
+        Rate: {
+            /** Label */
+            label: string;
+            /** Amount */
+            amount: string;
+            /** Currency */
+            currency: string;
+            /** Unit */
+            unit: string;
         };
         /** RateCard */
         "RateCard-Input": {
@@ -4387,6 +4557,30 @@ export interface components {
             /** Hours Per Day */
             hours_per_day: number;
         };
+        /** RowSources */
+        RowSources: {
+            /** Row */
+            row: string;
+            /** Sources */
+            sources: number[];
+            /** Person Days */
+            person_days?: string | null;
+            /**
+             * Rates
+             * @default []
+             */
+            rates: components["schemas"]["Rate"][];
+            /**
+             * Asked
+             * @default []
+             */
+            asked: components["schemas"]["Asked"][];
+            /**
+             * Ai Tasks
+             * @default []
+             */
+            ai_tasks: components["schemas"]["AiTask"][];
+        };
         /** SanityCheck */
         SanityCheck: {
             /** Key */
@@ -4656,6 +4850,41 @@ export interface components {
              * @default
              */
             note: string;
+        };
+        /** Source */
+        Source: {
+            /** N */
+            n: number;
+            /**
+             * Kind
+             * @enum {string}
+             */
+            kind: "rate" | "hours" | "setting" | "ai_saving" | "answers" | "margin";
+            /** Title */
+            title: string;
+            /** Detail */
+            detail: string;
+            /** Url */
+            url?: string | null;
+            /** Version */
+            version: string;
+            /**
+             * Status
+             * @enum {string}
+             */
+            status: "published" | "worked_out" | "estimate" | "your_choice";
+            /** Confidence */
+            confidence?: string | null;
+            /**
+             * Values
+             * @default []
+             */
+            values: string[];
+            /**
+             * Cites
+             * @default []
+             */
+            cites: components["schemas"]["Cite"][];
         };
         /**
          * SourceRef
@@ -6591,6 +6820,37 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["QuickSummary"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    sources_of_estimates__estimate_id__sources_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                estimate_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["EstimateSources"];
                 };
             };
             /** @description Validation Error */

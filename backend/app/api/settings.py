@@ -5,7 +5,7 @@ from datetime import UTC, datetime
 from fastapi import APIRouter
 from pydantic import BaseModel
 
-from app.api.deps import CurrentUser, DbSession, FinanceUser, can_see_margin
+from app.api.deps import CurrentUser, DbSession, FinanceUser
 from app.services.estimates.reference_store import get_rate_card
 from app.services.quick.config import quick_config
 from app.services.settings import (
@@ -20,17 +20,20 @@ router = APIRouter(tags=["settings"])
 
 @router.get("/settings", response_model=CompanySettings)
 def read_settings(db: DbSession, user: CurrentUser) -> CompanySettings:
-    """The company's settings; the margin only for finance and admin."""
-    settings = company_settings(db, user.org_id)
-    if not can_see_margin(user):
-        settings = settings.model_copy(update={"margin_percent": None})
-    return settings
+    """The company's settings: facts about its team. Margin, safety buffer and how much of the
+    AI saving is passed on are no longer company choices (OPEN_QUESTIONS 227)."""
+    return company_settings(db, user.org_id).model_copy(
+        update={"margin_percent": None, "contingency_percent": None, "ai_passthrough": None}
+    )
 
 
 @router.put("/settings", response_model=CompanySettings)
 def update_settings(body: CompanySettings, db: DbSession, user: FinanceUser) -> CompanySettings:
-    """Margin and effort settings apply to every new estimate; finance or admin only."""
-    return save_company_settings(db, user.org_id, body)
+    """Team settings apply to every new estimate; finance or admin only."""
+    clean = body.model_copy(
+        update={"margin_percent": None, "contingency_percent": None, "ai_passthrough": None}
+    )
+    return save_company_settings(db, user.org_id, clean)
 
 
 class RoleRate(BaseModel):

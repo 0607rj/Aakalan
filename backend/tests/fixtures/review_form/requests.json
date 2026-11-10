@@ -214,7 +214,9 @@
     "chatbot_task": "simple",
     "chatbot_volume": "by_users",
     "launch_help": "usual",
-    "onsite_period": "support"
+    "onsite_period": "support",
+    "hardware_list": "no",
+    "hardware_supply": "we_supply"
    },
    "scope": [
     "public_api",
@@ -410,7 +412,9 @@
     "chatbot_task": "simple",
     "chatbot_volume": "by_users",
     "launch_help": "usual",
-    "onsite_period": "support"
+    "onsite_period": "support",
+    "hardware_list": "no",
+    "hardware_supply": "we_supply"
    },
    "scope": [
     "otp_codes",
@@ -599,7 +603,9 @@
     "chatbot_task": "simple",
     "chatbot_volume": "by_users",
     "launch_help": "usual",
-    "onsite_period": "support"
+    "onsite_period": "support",
+    "hardware_list": "no",
+    "hardware_supply": "we_supply"
    },
    "scope": [],
    "overrides": {
@@ -776,7 +782,9 @@
     "chatbot_task": "simple",
     "chatbot_volume": "by_users",
     "launch_help": "usual",
-    "onsite_period": "support"
+    "onsite_period": "support",
+    "hardware_list": "no",
+    "hardware_supply": "we_supply"
    },
    "scope": [
     "workflow_audit",
@@ -1045,7 +1053,9 @@
     "chatbot_task": "advanced",
     "chatbot_volume": "by_users",
     "launch_help": "usual",
-    "onsite_period": "support"
+    "onsite_period": "support",
+    "hardware_list": "no",
+    "hardware_supply": "we_supply"
    },
    "scope": [
     "otp_codes",
@@ -1314,7 +1324,9 @@
     "chatbot_task": "simple",
     "chatbot_volume": "by_users",
     "launch_help": "usual",
-    "onsite_period": "support"
+    "onsite_period": "support",
+    "hardware_list": "no",
+    "hardware_supply": "we_supply"
    },
    "scope": [
     "audit_log",
@@ -1647,7 +1659,9 @@
     "chatbot_task": "simple",
     "chatbot_volume": "by_users",
     "launch_help": "usual",
-    "onsite_period": "support"
+    "onsite_period": "support",
+    "hardware_list": "no",
+    "hardware_supply": "we_supply"
    },
    "scope": [
     "otp_codes",
@@ -1855,7 +1869,9 @@
     "chatbot_task": "simple",
     "chatbot_volume": "by_users",
     "launch_help": "usual",
-    "onsite_period": "support"
+    "onsite_period": "support",
+    "hardware_list": "no",
+    "hardware_supply": "we_supply"
    },
    "scope": [
     "audit_log",

@@ -77,7 +77,8 @@ class Settings(BaseSettings):
     # file under seeds_dir. Tests point it at a temporary file.
     research_library_path: Path | None = None
 
-    llm_provider: str = "anthropic"  # "anthropic" or "fake" (tests / offline demos)
+    llm_provider: str = "anthropic"  # "anthropic", "claude_cli" (development: local `claude`)
+    llm_cli_timeout_seconds: int = 600  # claude_cli: the longest one call may take
     llm_model: str = "claude-sonnet-5-5"
     llm_effort: str = "medium"
     llm_max_output_tokens: int = 16000
@@ -86,6 +87,9 @@ class Settings(BaseSettings):
     llm_web_search_tool: str = "web_search_20250305"
 
     upload_max_mb: int = 25
+    # Files of one project: the main document plus annexures, updates and answers to
+    # questions, each read on its own and merged (OPEN_QUESTIONS 225).
+    project_max_documents: int = 5
     # A file that unpacks far beyond its size (a "zip bomb") or has a huge number of pages is
     # refused before it is read (services/documents/parsing.py).
     upload_max_pages: int = 3000

@@ -1,6 +1,6 @@
 # Component catalogs
 
-**The current catalog is the highest number (now `v8.yaml`).** Every new estimate is priced
+**The current catalog is the highest number (now `v9.yaml`).** Every new estimate is priced
 from it. To read it, open [`docs/CATALOG.md`](../../docs/CATALOG.md) (one plain table,
 regenerated with `uv run python -m app.cli catalog-table`).
 
@@ -27,3 +27,4 @@ change, with a `source` for every number), run `make seed`, and say why in
 | v6 | Where each number comes from (`evidence`, `source_era`) |
 | v7 | A tech-stack section per block, 27 new blocks (web, e-commerce, mobile, AI), a link per source |
 | v8 | 15 industry blocks (school, online learning, healthcare, fitness, delivery, property, finance, hotel) |
+| v9 | v8 unchanged, one block renamed: "Online forms and applications" (was a government tender's words) |

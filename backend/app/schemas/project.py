@@ -94,7 +94,7 @@ class QuestionnaireField(BaseModel):
     value: Any
     source: Literal["user", "default"]
     requirement_ids: list[str]
-    restricted: bool = False  # finance/admin only
+    restricted: bool = False  # one rule for everyone, shown but not answerable (OQ 227)
 
 
 class QuestionnaireOut(BaseModel):

@@ -37,6 +37,7 @@ from app.services.quick.service import (
     summarise,
     summary_for,
 )
+from app.services.quick.sources import EstimateSources, estimate_sources
 from app.services.quick.stories import DraftIn, DraftOut, draft_stories
 from app.services.research.service import ai_available, catalog_sections, research_rows
 from app.services.settings import company_settings
@@ -373,6 +374,14 @@ def summary(estimate_id: str, db: DbSession, user: CurrentUser) -> QuickSummary:
     estimate = get_owned(db, Estimate, estimate_id, user.org_id)
     project = get_owned(db, Project, estimate.project_id, user.org_id)
     return summary_for(db, estimate, project, quick_config(), margin_visible=can_see_margin(user))
+
+
+@router.get("/estimates/{estimate_id}/sources", response_model=EstimateSources)
+def sources_of(estimate_id: str, db: DbSession, user: CurrentUser) -> EstimateSources:
+    """Where every price comes from: the numbered sources and each results-page row's sources,
+    work, rates and asking sentences, from the engine's trace (OPEN_QUESTIONS 226)."""
+    estimate = get_owned(db, Estimate, estimate_id, user.org_id)
+    return estimate_sources(quick_config(), estimate, margin_visible=can_see_margin(user))
 
 
 @router.post("/estimates/{estimate_id}/check/confirm", response_model=QuickSummary)

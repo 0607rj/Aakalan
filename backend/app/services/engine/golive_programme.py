@@ -3,7 +3,8 @@ travel, environments) lines."""
 
 from decimal import Decimal
 
-from app.services.engine import spreads
+from app.services.engine import spreads, staffing
+from app.services.engine.components import staff_team
 from app.services.engine.context import LineBuilder, PricingContext, toward_lean
 from app.services.engine.money import ONE, ZERO, ceil
 from app.services.engine.outputs import CostLineOut, Timeline
@@ -131,6 +132,28 @@ def golive_lines(ctx: PricingContext, timeline: Timeline) -> list[CostLineOut]:
     return lines
 
 
+def pm_lead(
+    ctx: PricingContext, t: LineBuilder, pm_role: str, pm_pd: Decimal
+) -> tuple[str, Decimal, str]:
+    """Who manages the build (parameter sets v34+, formula staffing.v1): the project manager,
+    or, with too little management work for a booking, the lead of the team (staffing.pm's
+    fallback, down its own fallbacks) at pd × slowdown. Decided once; the O&M years follow."""
+    if ctx.pm_lead is None:
+        staff = t.param("staffing", "pm")
+        booking: Decimal = staff.min_booking_pd
+        joins, why = staffing.choose(
+            pm_role, staff, pm_pd, t.rate_local, lambda key: getattr(ctx.q, key)
+        )
+        if joins:
+            ctx.pm_lead = (pm_role, ONE, why)
+        else:
+            team = staff_team(ctx)
+            lead, further = team.done_by(staff.fallback) if team else (staff.fallback, ONE)
+            ctx.pm_lead = (lead, staff.slowdown * further, why)
+            ctx.pm_note = {pm_role: staffing.note(lead, pm_pd, booking, why)}
+    return ctx.pm_lead
+
+
 def programme_lines(ctx: PricingContext, timeline: Timeline) -> list[CostLineOut]:
     """Programme costs over max(deadline, natural duration) — compression does not shorten
     the management load; an extended deadline adds months of overhead. With
@@ -185,8 +208,18 @@ def programme_lines(ctx: PricingContext, timeline: Timeline) -> list[CostLineOut
             ),
             lean,
         )
-    t.add_role_pd(pm_role, pd)
-    lines.append(t.finish(pd * t.rate_local(pm_role)))
+    who, slowdown = pm_role, ONE
+    if ctx.p.staffing is not None and ctx.p.staffing.pm is not None:
+        who, slowdown, why = pm_lead(ctx, t, pm_role, pd)
+        if who != pm_role:
+            t.add_input(staffing={"formula": staffing.FORMULA_ID, "roles": ctx.pm_note})
+            pd = t.step(
+                f"managed by the {staffing.plain(who)}: {why}",
+                f"{pd:.2f} × {slowdown}",
+                pd * slowdown,
+            )
+    t.add_role_pd(who, pd)
+    lines.append(t.finish(pd * t.rate_local(who)))
 
     if ctx.q.governance_overheads:
         t = base(
@@ -279,9 +312,16 @@ def programme_lines(ctx: PricingContext, timeline: Timeline) -> list[CostLineOut
         rest = after_hypercare(t, year)
         if rest != ONE:
             pd = t.step("after hypercare", f"{pd:.2f} × {rest:.4f}", pd * rest)
-        t.add_role_pd(pm_role, pd)
+        lead = pm_role
+        if ctx.pm_lead is not None and ctx.pm_lead[0] != pm_role:  # staffing.v1, as in the build
+            t.param("staffing", "pm")
+            lead, slowdown, why = ctx.pm_lead
+            t.add_input(staffing={"formula": staffing.FORMULA_ID, "roles": ctx.pm_note})
+            pd = t.step(f"managed by the {staffing.plain(lead)}: {why}", f"{pd:.2f} × {slowdown}",
+                        pd * slowdown)  # fmt: skip
+        t.add_role_pd(lead, pd)
         esc = t.escalation("labour", year)
         spreads.clarity(t, overall)
         spreads.om_year(t, year)
-        lines.append(t.finish(pd * t.rate_local(pm_role) * esc))
+        lines.append(t.finish(pd * t.rate_local(lead) * esc))
     return lines

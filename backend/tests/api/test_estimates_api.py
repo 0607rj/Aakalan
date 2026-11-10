@@ -150,40 +150,36 @@ def test_saved_estimate_unchanged_when_catalog_v6_arrives(
     assert rows[new["id"]].result["era_sensitivity"] is None
 
 
-def test_margin_redacted_for_estimator_visible_to_finance(
-    client: TestClient, estimator_headers: H, finance_headers: H
-) -> None:
+def test_margin_is_shown_to_everyone(client: TestClient, estimator_headers: H) -> None:
+    """OPEN_QUESTIONS 227: the builder's profit is one rule for everyone, shown to every role
+    with its trace, and fixed in the questionnaire."""
     project, _ = ready_project(client, estimator_headers)
     est = estimate(client, estimator_headers, project["id"])
     margin = next(ln for ln in est["lines"] if ln["bucket"] == "commercial.margin")
-    assert margin["redacted"] and margin["likely_paise"] is None and not est["margin_visible"]
+    assert not margin["redacted"] and margin["likely_paise"] > 0 and est["margin_visible"]
     trace = client.get(
         f"/estimates/{est['id']}/lines/{margin['id']}/trace", headers=estimator_headers
     )
-    assert trace.json()["trace"] is None
+    assert trace.json()["trace"] is not None
     q = client.get(f"/projects/{project['id']}/questionnaire", headers=estimator_headers).json()
-    assert next(f for f in q["fields"] if f["key"] == "margin_percent")["value"] is None
-
-    seen = client.get(f"/estimates/{est['id']}", headers=finance_headers).json()
-    margin = next(ln for ln in seen["lines"] if ln["bucket"] == "commercial.margin")
-    assert not margin["redacted"] and margin["likely_paise"] > 0 and seen["margin_visible"]
+    field = next(f for f in q["fields"] if f["key"] == "margin_percent")
+    assert field["restricted"] and field["value"] == field["default"]
 
 
-def test_margin_answer_is_finance_only(
+def test_margin_and_buffer_cannot_be_answered(
     client: TestClient, estimator_headers: H, finance_headers: H
 ) -> None:
     project = make_project(client, estimator_headers)
     url = f"/projects/{project['id']}/questionnaire"
-    body = {"answers": [{"key": "margin_percent", "value": 0.2}]}
-    assert client.put(url, json=body, headers=estimator_headers).status_code == 403
-    assert client.put(url, json=body, headers=finance_headers).status_code == 200
-    # an estimator saving other answers keeps the finance-set margin
+    for key in ("margin_percent", "contingency_percent"):
+        body = {"answers": [{"key": key, "value": 0.2}]}
+        assert client.put(url, json=body, headers=finance_headers).status_code == 422
     r = client.put(
         url, json={"answers": [{"key": "om_years", "value": 2}]}, headers=estimator_headers
     )
     assert r.status_code == 200
     fields = {f["key"]: f for f in client.get(url, headers=finance_headers).json()["fields"]}
-    assert fields["margin_percent"]["value"] == 0.2 and fields["om_years"]["value"] == 2
+    assert fields["om_years"]["value"] == 2
 
 
 def test_questionnaire_validation(client: TestClient, estimator_headers: H) -> None:

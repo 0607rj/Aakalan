@@ -58,6 +58,20 @@ def upload_document(
             status.HTTP_413_CONTENT_TOO_LARGE, f"File is larger than {settings.upload_max_mb} MB."
         )
     safe = _safe_name(filename)
+    sha256 = hashlib.sha256(data).hexdigest()
+    if project_id is not None:
+        project = get_owned(db, Project, project_id, user.org_id)
+        files = list(
+            db.scalars(scoped(Document, user.org_id).where(Document.project_id == project.id))
+        )
+        same = next((d for d in files if d.sha256 == sha256), None)
+        if same is not None:  # the same file twice: read once (OPEN_QUESTIONS 225)
+            return same
+        if len(files) >= settings.project_max_documents:
+            raise HTTPException(
+                status.HTTP_422_UNPROCESSABLE_CONTENT,
+                f"A project takes at most {settings.project_max_documents} files.",
+            )
     try:
         parsed = parse_document(safe, data)
     except DocumentError as exc:
@@ -90,9 +104,7 @@ def upload_document(
             status.HTTP_422_UNPROCESSABLE_CONTENT, f"Unknown document kind {kind!r}"
         )
     first_document = project_id is None
-    if project_id is not None:
-        project = get_owned(db, Project, project_id, user.org_id)
-    else:
+    if project_id is None:
         project = Project(
             org_id=user.org_id,
             name=Path(safe).stem[:300],
@@ -112,7 +124,7 @@ def upload_document(
         file_type=parsed.kind,
         pages=len(parsed.pages),
         approximate_pages=parsed.approximate_pages,
-        sha256=hashlib.sha256(data).hexdigest(),
+        sha256=sha256,
         storage_path="",
         parse_status="parsed",
         page_texts=[{"page": p.number, "text": p.text} for p in parsed.pages],

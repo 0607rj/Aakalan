@@ -80,6 +80,7 @@ def test_country_limits_hosting_options(client: TestClient, admin_headers: H, us
 def test_company_settings_change_new_estimates(client: TestClient, admin_headers: H) -> None:
     before = quick(client, admin_headers)
     assert client.get("/settings", headers=admin_headers).json()["build_effort_multiplier"] == "1"
+    # a margin or safety buffer sent is dropped: one rule for everyone (OPEN_QUESTIONS 227)
     lean = {
         "margin_percent": "0.05",
         "contingency_percent": "0.05",
@@ -87,6 +88,7 @@ def test_company_settings_change_new_estimates(client: TestClient, admin_headers
     }
     r = client.put("/settings", json=lean, headers=admin_headers)
     assert r.status_code == 200, r.text
+    assert r.json()["margin_percent"] is None and r.json()["contingency_percent"] is None
     try:
         after = quick(client, admin_headers)
         assert after["likely_paise"] < before["likely_paise"]  # type: ignore[operator]
@@ -96,7 +98,7 @@ def test_company_settings_change_new_estimates(client: TestClient, admin_headers
             f"/estimates/{detail['id']}/lines/{margin['id']}/trace", headers=admin_headers
         )
         assert any(
-            d["key"] == "margin_percent" and d["value"] == "0.05"
+            d["key"] == "margin_percent" and d["value"] == "0.15"
             for d in trace.json()["trace"]["drivers"]
         )
         old = client.get(f"/estimates/{before['estimate_id']}", headers=admin_headers).json()

@@ -8,11 +8,10 @@ from fastapi import APIRouter, HTTPException, Response, status
 from pydantic import ValidationError
 from sqlalchemy import delete, select
 
-from app.api.deps import CurrentUser, DbSession, EditorUser, can_see_margin
+from app.api.deps import CurrentUser, DbSession, EditorUser
 from app.core.tenancy import get_owned, scoped
 from app.models import ComponentInstance, Document, Project, QuestionnaireAnswer, Requirement
 from app.schemas.project import (
-    AnswerIn,
     CatalogComponentOut,
     CatalogOut,
     ComponentOut,
@@ -32,10 +31,9 @@ from app.services.engine.context import resolve_questionnaire
 from app.services.engine.inputs import QUESTIONNAIRE_KEYS, Questionnaire
 from app.services.engine.inputs import AnswerIn as EngineAnswer
 from app.services.estimates.reference_store import catalog_for, get_parameter_set
+from app.services.estimates.service import FIXED_ANSWERS
 
 router = APIRouter(tags=["projects"])
-
-RESTRICTED_KEYS = frozenset({"margin_percent"})
 
 
 def _now() -> datetime:
@@ -182,22 +180,21 @@ def get_questionnaire(project_id: str, db: DbSession, user: CurrentUser) -> Ques
     params = get_parameter_set(db, None, _now().date())
     answers = {a.key: a for a in project.answers}
     schema = Questionnaire.model_json_schema()
-    show_margin = can_see_margin(user)
     fields = []
     for key in QUESTIONNAIRE_KEYS:
         ans = answers.get(key)
-        hidden = key in RESTRICTED_KEYS and not show_margin
+        fixed = key in FIXED_ANSWERS  # one rule for everyone, shown, not answerable
         default = params.defaults.values.get(key)
         fields.append(
             QuestionnaireField(
                 key=key,
                 title=schema["properties"][key].get("title", key),
                 schema_=schema["properties"][key],
-                default=None if hidden else default,
-                value=None if hidden else (ans.value if ans else default),
-                source="user" if ans else "default",
-                requirement_ids=ans.requirement_ids if ans else [],
-                restricted=key in RESTRICTED_KEYS,
+                default=default,
+                value=default if fixed or not ans else ans.value,
+                source="user" if ans and not fixed else "default",
+                requirement_ids=ans.requirement_ids if ans and not fixed else [],
+                restricted=fixed,
             )
         )
     return QuestionnaireOut(parameter_set_version=params.version, fields=fields)
@@ -208,7 +205,7 @@ def put_questionnaire(
     project_id: str, body: QuestionnairePut, db: DbSession, user: EditorUser
 ) -> QuestionnaireOut:
     """Replace the project's answers. Keys left out fall back to parameter-set defaults.
-    Restricted keys (margin) can only be changed by finance/admin and are kept otherwise."""
+    Margin and safety buffer are one rule for everyone and can't be answered (OQ 227)."""
     project = get_owned(db, Project, project_id, user.org_id)
     given = {a.key: a for a in body.answers}
     unknown = set(given) - set(QUESTIONNAIRE_KEYS)
@@ -216,8 +213,11 @@ def put_questionnaire(
         raise HTTPException(
             status.HTTP_422_UNPROCESSABLE_CONTENT, f"Unknown keys: {sorted(unknown)}"
         )
-    if not can_see_margin(user) and RESTRICTED_KEYS & set(given):
-        raise HTTPException(status.HTTP_403_FORBIDDEN, "Only finance or admin can set margin")
+    if FIXED_ANSWERS & set(given):
+        raise HTTPException(
+            status.HTTP_422_UNPROCESSABLE_CONTENT,
+            "Margin and safety buffer are one published rule for everyone and can't be set",
+        )
     req_ids = {r.id for r in project.requirements}
     for a in body.answers:
         if set(a.requirement_ids) - req_ids:
@@ -225,10 +225,6 @@ def put_questionnaire(
                 status.HTTP_422_UNPROCESSABLE_CONTENT, f"{a.key}: unknown requirement"
             )
     existing = {a.key: a for a in project.answers}
-    if not can_see_margin(user):
-        for key in RESTRICTED_KEYS & set(existing):  # keep the finance-set value
-            row = existing[key]
-            given[key] = AnswerIn(key=key, value=row.value, requirement_ids=row.requirement_ids)
     params = get_parameter_set(db, None, _now().date())
     try:
         resolve_questionnaire(

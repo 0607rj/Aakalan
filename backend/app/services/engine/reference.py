@@ -440,6 +440,90 @@ class Builder(Sourced):
         return self
 
 
+class StaffRole(Frozen):
+    """One specialist role on the team (v34+, OPEN_QUESTIONS 229): when it joins, and who does
+    its work when it does not (see engine/staffing.py)."""
+
+    fallback: str  # the role that does this work when the specialist is not booked
+    slowdown: Decimal = Field(ge=1)  # the fallback takes this much longer on the work
+    min_booking_pd: Decimal = Field(gt=0)  # nobody joins for less; a booking's worth always joins
+    # questionnaire answers that always need the specialist, e.g. {security_level: [very_high]}
+    required_when: dict[str, list[str | bool]] = {}
+
+
+class Staffing(Sourced):
+    """v34+ (OPEN_QUESTIONS 229): the team follows the work. Each role in `roles` is decided in
+    order (a role's fallback is decided after it, so work can move on down a chain); a role with
+    no work is not on the team at all. `pm` decides the project manager the same way, after
+    the build team, from the management work."""
+
+    roles: dict[str, StaffRole]
+    pm: StaffRole | None = None
+
+    @model_validator(mode="after")
+    def _order(self) -> "Staffing":
+        order = list(self.roles)
+        for i, (role, staff) in enumerate(self.roles.items()):
+            if staff.fallback == role:
+                raise ValueError(f"{role} cannot fall back to itself")
+            if staff.fallback in order[:i]:
+                raise ValueError(f"{role}: its fallback {staff.fallback} is decided before it")
+        return self
+
+
+class HardwareWords(Frozen):
+    label: str
+    spec: str  # may name {cores} {ram} {disk} {tb}
+    spec_licensed: str | None = None  # the operating system when licensing is "licensed"
+    # v37+ (OPEN_QUESTIONS 233): the rate card items one unit costs (summed, e.g. a rack and its
+    # UPS); servers are priced by `server_rate_by_cores` instead; [] = no price (e.g. free
+    # open-source software). per_tb: storage priced per TB; yearly: a subscription each year.
+    rate_keys: list[str] = []
+    rate_keys_licensed: list[str] = []  # the operating system when licensing is "licensed"
+    per_tb: bool = False
+    yearly: bool = False
+
+
+class DbServerSpec(Frozen):
+    cores: int = Field(gt=0)
+    ram_gb: int = Field(gt=0)
+
+
+class Hardware(Sourced):
+    """v35+ (OPEN_QUESTIONS 231): the hardware list for own servers (services/hosting/
+    hardware.py): what to buy, how many and of what size, from the same load and uptime sizing
+    as the cloud servers. A list only; what is priced is still the hosting lines."""
+
+    app_server_min_cores: int = Field(gt=0)  # the smallest rack server sold
+    ram_gb_per_core: int = Field(gt=0)
+    app_server_disk: str
+    db_servers: dict[str, DbServerSpec]  # by the concurrency band's db_tier
+    db_server_disk: str
+    paired_for: list[str]  # patterns with two of each network device per site
+    load_balancer_min_servers: int = Field(ge=2)  # application servers at one site
+    pattern_words: dict[str, str]
+    items: dict[str, HardwareWords]
+    # v36+: what an own server room costs the client itself, listed as not in the price
+    own_room_costs: list[str] = []
+    # v37+ (OPEN_QUESTIONS 233): the own-server price is the list's items × their rate card
+    # prices (formula golive.onprem_capex.v2); servers by size: the smallest listed size with
+    # at least the cores asked; application and database share servers while one server of
+    # shared_host_cores holds both (None: never)
+    priced: bool = False
+    server_rate_by_cores: dict[int, str] = {}
+    shared_host_cores: int | None = None
+
+    @model_validator(mode="after")
+    def _words(self) -> "Hardware":
+        needed = {
+            "app_server", "single_server", "db_server", "storage", "backup", "firewall",
+            "switch", "load_balancer", "rack", "os", "database_licence", "antivirus",
+        }  # fmt: skip
+        if missing := needed - set(self.items):
+            raise ValueError(f"hardware.items lacks {sorted(missing)}")
+        return self
+
+
 class EffortCaps(Sourced):
     """v20+: ceilings on work that tends to grow out of proportion with the build, applied to
     the summed component effort before pricing (each cap scales its tasks down, never up):
@@ -567,6 +651,9 @@ class OnPrem(Sourced):
     colocation_rate_key: str
     servers_per_rack: Decimal
     hw_amc_percent: Decimal
+    # v36+ (OPEN_QUESTIONS 232): False = the servers are in the client's own building, so no
+    # data-centre rack rent; True (older sets) = rent racks in a hired data centre
+    rent_racks: bool = True
 
 
 class Hosting(Sourced):
@@ -919,6 +1006,8 @@ class ParameterSet(Frozen):
     effort_caps: EffortCaps | None = None  # None (older sets): no ceilings
     layers: Layers | None = None  # None (older sets): every build is the whole system
     builder: Builder | None = None  # None (older sets): every rate as on the rate card
+    staffing: Staffing | None = None  # None (older sets): every task by its own role
+    hardware: Hardware | None = None  # None (older sets): no hardware list
     task_roles: TaskRoles
     timeline: Timeline
     programme: Programme

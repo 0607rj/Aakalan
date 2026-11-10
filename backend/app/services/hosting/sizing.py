@@ -274,6 +274,12 @@ def hosting_lines(ctx: PricingContext) -> list[CostLineOut]:
     if not ctx.q.hosting_in_scope:  # the client provides hosting: nothing to price
         return []
     if ctx.q.hosting_provider == "on_prem":
+        if ctx.q.hardware_list == "client_buys":  # the client buys it (OPEN_QUESTIONS 235)
+            return []
+        if ctx.p.hardware is not None and ctx.p.hardware.priced:  # v37+: from the hardware list
+            from app.services.hosting.hardware import on_prem_lines  # imports this module
+
+            return on_prem_lines(ctx)
         return _on_prem_lines(ctx)
     if _bundled(ctx):
         return _bundle_lines(ctx)
@@ -395,28 +401,32 @@ def _on_prem_lines(ctx: PricingContext) -> list[CostLineOut]:
     lines.append(t.finish(capex))
 
     months = ctx.months_per_year()
+    rent = ctx.p.hosting.on_prem.rent_racks  # v36+: False in the client's own building
     for year in range(1, ctx.q.om_years + 1):
-        c = _base(
-            ctx,
-            "colocation",
-            "run.hosting",
-            year,
-            f"Data-centre colocation (year {year})",
-            "hosting.onprem_colocation.v1",
-        )
-        c.driver("om_years")
-        per_rack: Decimal = c.param("hosting", "on_prem", "servers_per_rack")
-        racks = c.step("racks", f"ceil({servers} / {per_rack})", ceil(servers / per_rack))
-        coloc = racks * c.rate_local(c.param("hosting", "on_prem", "colocation_rate_key")) * months
-        esc = c.escalation("prices", year)
-        spreads.fixed(c, "hosting")
-        spreads.om_year(c, year)
-        lines.append(c.finish(coloc * esc))
+        if rent:
+            c = _base(
+                ctx,
+                "colocation",
+                "run.hosting",
+                year,
+                f"Data-centre colocation (year {year})",
+                "hosting.onprem_colocation.v1",
+            )
+            c.driver("om_years")
+            per_rack: Decimal = c.param("hosting", "on_prem", "servers_per_rack")
+            racks = c.step("racks", f"ceil({servers} / {per_rack})", ceil(servers / per_rack))
+            rack_rate = c.rate_local(c.param("hosting", "on_prem", "colocation_rate_key"))
+            esc = c.escalation("prices", year)
+            spreads.fixed(c, "hosting")
+            spreads.om_year(c, year)
+            lines.append(c.finish(racks * rack_rate * months * esc))
 
         a = _base(
             ctx, "amc", "run.hosting", year, f"Hardware AMC (year {year})", "hosting.onprem_amc.v1"
         )
         a.driver("om_years")
+        if not rent:
+            a.param("hosting", "on_prem", "rent_racks")  # own building: no rack rent
         amc: Decimal = a.param("hosting", "on_prem", "hw_amc_percent")
         a.step("capex", "servers × server_capex + TB × tb_capex", capex)
         esc = a.escalation("prices", year)

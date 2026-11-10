@@ -15,6 +15,7 @@ from app.services.extraction.prebid import PrebidQuery, prebid_queries
 from app.services.extraction.tender import TenderExtraction
 from app.services.quick.config import quick_config
 from app.services.quick.service import PricedOption, QuickSummary, priced_options, summary_for
+from app.services.quick.sources import EstimateSources, estimate_sources
 
 MARGIN_BUCKET = "commercial.margin"
 PAISE_PER_RUPEE = Decimal(100)
@@ -142,6 +143,8 @@ MARGIN_ANSWER = "margin_percent"
 NOT_INCLUDED_WHY = {
     "excluded_by_you": "Marked not included",
     "removed_by_you": "Standard part left out on request",
+    "not_needed_at_level": "Not needed for a feature this simple",
+    "client_pays": "The client's own cost",
     "not_sure": "Not decided yet: quoted separately",
     "document_excluded": "The document rules it out",
     "document_not_priced": "Asked for in the document, not priced here",
@@ -167,6 +170,15 @@ class ReportLine:
     steps: list[dict[str, Any]]
 
 
+# what each source is, in the words of the results page (OPEN_QUESTIONS 226)
+SOURCE_STATUS = {
+    "published": "Published source",
+    "worked_out": "Worked out from published prices",
+    "estimate": "Our estimate, not yet checked",
+    "your_choice": "Your answers and settings",
+}
+
+
 @dataclass
 class ReportData:
     project_name: str
@@ -180,6 +192,13 @@ class ReportData:
     prebid: list[PrebidQuery] = field(default_factory=list)
     # open answers with what other answers would change (GET /estimates/{id}/options)
     options: list[PricedOption] = field(default_factory=list)
+    # where every price comes from (OPEN_QUESTIONS 226)
+    sources: EstimateSources | None = None
+
+    def row_sources(self, row: str) -> str:
+        """ "[1] [5] [12]": the numbered sources one results row rests on."""
+        found = next((r for r in self.sources.rows if r.row == row), None) if self.sources else None
+        return " ".join(f"[{n}]" for n in found.sources) if found else ""
 
     def assumptions(self) -> list[Any]:
         """The engine's defaulted answers worth printing (margin only for who may see it)."""
@@ -274,4 +293,5 @@ def build_report(
         document_name=doc.filename if doc else None,
         prebid=prebid,
         options=options,
+        sources=estimate_sources(cfg, estimate, margin_visible=margin_visible),
     )

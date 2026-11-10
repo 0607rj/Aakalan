@@ -6,7 +6,6 @@ import {
   AccountSummary,
   ChangePassword,
 } from "./change-password";
-import { AiSavingSetting } from "./pricing";
 
 // Auth is client-side (token in localStorage), so there is no server-rendered shell to
 // validate for instant navigation.
@@ -22,10 +21,7 @@ export default function AccountPage() {
       <AppHero>
         <AccountSummary />
       </AppHero>
-      <div className="grid grid-cols-1 gap-5 lg:grid-cols-[minmax(0,1.7fr)_minmax(0,1fr)] lg:items-start">
-        <AiSavingSetting />
-        <AccountDetails />
-      </div>
+      <AccountDetails />
       <ChangePassword />
     </div>
   );

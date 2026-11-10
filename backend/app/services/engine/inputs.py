@@ -153,6 +153,9 @@ class Questionnaire(Strict):
     # Added after back-testing: in many government contracts the client provides hosting and
     # support is handled by the maintenance team. Defaults keep earlier parameter sets valid.
     hosting_in_scope: bool = True
+    # A list of the servers and equipment to buy (parameter sets v35+, OPEN_QUESTIONS 231):
+    # shown for own servers (hosting_provider on_prem) anyway; client_buys = shown, not priced.
+    hardware_list: Literal["none", "client_buys"] = "none"
     helpdesk_in_scope: bool = True
     # Government-style programme overheads (steering meetings, monthly MIS reports, travel);
     # private and small projects usually have none of these.

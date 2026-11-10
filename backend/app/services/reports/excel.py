@@ -9,7 +9,7 @@ from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.worksheet import Worksheet
 
-from app.services.reports.data import ReportData, rupees
+from app.services.reports.data import SOURCE_STATUS, ReportData, rupees
 
 MONEY_INR = "#,##,##0.00"  # Indian digit grouping
 MONEY_OTHER = "#,##0.00"
@@ -141,7 +141,7 @@ def build_boq(data: ReportData) -> bytes:
         _table(
             money_fmt,
             inside,
-            ["Group", "Item", "Person-days", "Low", "Planned", "High"],
+            ["Group", "Item", "Person-days", "Low", "Planned", "High", "Sources"],
             (
                 [
                     i.group_label,
@@ -150,6 +150,7 @@ def build_boq(data: ReportData) -> bytes:
                     _money(i.low_paise),
                     _money(i.amount_paise),
                     _money(i.high_paise),
+                    data.row_sources(f"item:{i.group}:{i.key}"),
                 ]
                 for i in s.cost_items
             ),
@@ -192,6 +193,33 @@ def build_boq(data: ReportData) -> bytes:
         open_sheet = wb.create_sheet("Open answers")
         _table(money_fmt, open_sheet, ["Question", "Priced as", "Other answers"], open_rows, set())
 
+    hardware = data.summary.hardware
+    if hardware is not None:  # own servers, or asked for (OPEN_QUESTIONS 231)
+        hw_sheet = wb.create_sheet("Hardware")
+        who = (
+            "The client buys these: not in the price"
+            if hardware.who_buys == "client_buys"
+            else "In the price: buying it, its AMC and yearly licences"
+            if hardware.once_paise is not None
+            else "Servers and storage in the price; network, rack and licences not priced yet"
+        )
+        _table(
+            money_fmt,
+            hw_sheet,
+            ["Site", "Item", "How many", "Size", "Price each", "Total", "Paid", "Why",
+             "Who buys", "Sized by", "Price from"],
+            (
+                [i.site, i.label, i.quantity, i.spec,
+                 _money((i.unit_paise or 0) * (i.tb or 1)) if i.unit_paise is not None else None,
+                 _money(i.amount_paise) if i.unit_paise is not None else None,
+                 "each year" if i.yearly else "once", i.why, who,
+                 f"our estimate (parameter set {hardware.parameter_set_version})",
+                 ", ".join(i.rate_keys)]
+                for i in hardware.items
+            ),
+            {5, 6},
+        )  # fmt: skip
+
     manpower = wb.create_sheet("Manpower")
     _table(
         money_fmt,
@@ -225,6 +253,31 @@ def build_boq(data: ReportData) -> bytes:
         )
         for row in prebid.iter_rows(min_row=2):
             row[3].alignment = Alignment(wrap_text=True, vertical="top")
+
+    if data.sources is not None and data.sources.sources:
+        sources = wb.create_sheet("Sources")
+        _table(
+            money_fmt,
+            sources,
+            ["#", "Source", "What it is", "Status", "Link", "Version", "Values used", "Evidence"],
+            (
+                [
+                    s.n,
+                    s.title,
+                    s.detail,
+                    SOURCE_STATUS[s.status],
+                    s.url or "",
+                    s.version,
+                    "; ".join(s.values),
+                    "; ".join(c.text + (f" ({c.url})" if c.url else "") for c in s.cites),
+                ]
+                for s in data.sources.sources
+            ),
+            set(),
+        )
+        for row in sources.iter_rows(min_row=2):
+            for cell in (row[2], row[6], row[7]):
+                cell.alignment = Alignment(wrap_text=True, vertical="top")
 
     buf = io.BytesIO()
     wb.save(buf)

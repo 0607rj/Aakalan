@@ -206,8 +206,8 @@ function QuestionnaireForm({
     const problems: string[] = [];
     for (const field of questionnaire.fields) {
       const draft = drafts[field.key];
-      const hidden = field.restricted && field.value === null;
-      if (hidden || draft.reset) continue;
+      // margin and safety buffer: one rule for everyone, never sent (OPEN_QUESTIONS 227)
+      if (field.restricted || draft.reset) continue;
       if (!draft.dirty && field.source !== "user") continue;
       try {
         answers.push({
@@ -243,7 +243,7 @@ function QuestionnaireForm({
           {questionnaire.fields.map((field) => {
             const kind = kinds[field.key];
             const draft = drafts[field.key];
-            const hidden = field.restricted && field.value === null;
+            const fixed = field.restricted;
             const isUser = field.source === "user" && !draft.reset;
             return (
               <div key={field.key} className="flex flex-col gap-1.5">
@@ -255,7 +255,7 @@ function QuestionnaireForm({
                     {field.title}
                   </label>
                   {field.restricted ? (
-                    <Badge variant="outline">finance only</Badge>
+                    <Badge variant="outline">same for everyone</Badge>
                   ) : null}
                   {draft.dirty ? (
                     <Badge variant="secondary">edited</Badge>
@@ -275,18 +275,18 @@ function QuestionnaireForm({
                   field={field}
                   kind={kind}
                   draft={draft}
-                  disabled={!canEdit || hidden}
+                  disabled={!canEdit || fixed}
                   onChange={(value) =>
                     update(field.key, { value, dirty: true, reset: false })
                   }
                 />
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <span>
-                    {hidden
-                      ? "Visible to finance and admin only."
+                    {fixed
+                      ? `${formatValue(field.default)}: one published rule for everyone`
                       : `Default: ${formatValue(field.default)}`}
                   </span>
-                  {canEdit && !hidden && (isUser || draft.dirty) ? (
+                  {canEdit && !fixed && (isUser || draft.dirty) ? (
                     <button
                       type="button"
                       className="text-primary hover:underline"

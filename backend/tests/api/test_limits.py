@@ -91,14 +91,15 @@ def test_viewers_start_no_ai_calls(client: TestClient, viewer_headers: H) -> Non
     )
 
 
-def test_settings_hide_the_margin_from_other_roles(
+def test_settings_keep_no_margin(
     client: TestClient, estimator_headers: H, admin_headers: H
 ) -> None:
+    """OPEN_QUESTIONS 227: margin is not a company setting any more; a saved one is dropped."""
     old = client.get("/settings", headers=admin_headers).json()
     try:
-        r = client.put("/settings", json={**old, "margin_percent": "0.15"}, headers=admin_headers)
+        r = client.put("/settings", json={**old, "margin_percent": "0.25"}, headers=admin_headers)
         assert r.status_code == 200
-        assert client.get("/settings", headers=admin_headers).json()["margin_percent"] == "0.15"
+        assert client.get("/settings", headers=admin_headers).json()["margin_percent"] is None
         assert client.get("/settings", headers=estimator_headers).json()["margin_percent"] is None
     finally:
         client.put("/settings", json=old, headers=admin_headers)

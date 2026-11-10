@@ -1,6 +1,6 @@
 """Quick estimate: plain form -> priced estimate -> plain summary."""
 
-from typing import Any
+from typing import Any, Literal
 
 from fastapi.testclient import TestClient
 
@@ -325,13 +325,14 @@ def test_cost_items_explain_the_whole_price(client: TestClient, admin_headers: H
     assert {"sms", "maps", "apple_developer"} <= {c["key"] for c in s["client_pays"]}
 
 
-def test_cost_items_hide_margin_from_viewers(
+def test_cost_items_show_margin_to_everyone(
     client: TestClient, admin_headers: H, viewer_headers: H
 ) -> None:
+    """OPEN_QUESTIONS 227: the builder's profit is its own item, for every role."""
     s = quick(client, admin_headers).json()
     assert "margin" in {i["key"] for i in s["cost_items"]}
     seen = client.get(f"/estimates/{s['estimate_id']}/summary", headers=viewer_headers).json()
-    assert "margin" not in {i["key"] for i in seen["cost_items"]}
+    assert seen["cost_items"] == s["cost_items"]
     assert sum(i["amount_paise"] for i in seen["cost_items"]) == s["planned_paise"]
 
 
@@ -505,10 +506,6 @@ def test_similar_real_projects_are_not_shown(client: TestClient, admin_headers: 
 def test_client_mode_gives_a_bid_check_at_market_rates(
     client: TestClient, admin_headers: H
 ) -> None:
-    assert (
-        client.put("/settings", json={"margin_percent": "0.5"}, headers=admin_headers).status_code
-        == 200
-    )
     vendor = quick(client, admin_headers).json()
     buyer = quick(client, admin_headers, mode="client").json()
     assert vendor["mode"] == "vendor" and vendor["bid_check"] is None
@@ -516,8 +513,8 @@ def test_client_mode_gives_a_bid_check_at_market_rates(
     assert buyer["mode"] == "client"
     assert check["too_low_below_paise"] < check["fair_low_paise"] < check["fair_high_paise"]
     assert check["fair_high_paise"] < check["too_high_above_paise"]
-    assert buyer["planned_paise"] < vendor["planned_paise"]  # market margin, not our 50%
-    client.put("/settings", json={}, headers=admin_headers)
+    # one builder's profit for everyone (OPEN_QUESTIONS 227): the same price either way
+    assert buyer["planned_paise"] == vendor["planned_paise"]
 
 
 def test_team_needed_by_role(client: TestClient, admin_headers: H) -> None:
@@ -638,8 +635,10 @@ def test_scope_items_priced_and_shown(client: TestClient, admin_headers: H) -> N
         "Online application or registration forms"
     ]["amount_paise"]
     # the feature itself costs about the same; the item is its own row (parameters v20+: the
-    # review cap is a share of the whole build, so more blocks can loosen it a little)
-    assert abs(form["amount_paise"] - before) <= before * 0.05
+    # review cap is a share of the whole build, so more blocks can loosen it a little; v34+:
+    # the team follows the whole project, so a role the extra work brings in also does some of
+    # the feature's work, at its own rate; OPEN_QUESTIONS 229)
+    assert abs(form["amount_paise"] - before) <= before * 0.10
     assert sum(c["amount_paise"] for c in more["feature_costs"]) > sum(
         c["amount_paise"] for c in base["feature_costs"]
     )
@@ -665,42 +664,25 @@ def test_typed_description_suggests_scope(client: TestClient, admin_headers: H) 
     assert "two-factor authentication" in scope["two_step_sign_in"]["quote"]
 
 
-def test_ai_saving_passed_to_the_client_is_a_company_setting(
-    client: TestClient, admin_headers: H
-) -> None:
-    """A company setting (OPEN_QUESTIONS 173), not a question on the form; the cost model is the
-    same, the share not passed on is kept as margin and shown as "AI saving identified"."""
-    options = client.get("/quick-estimate/options", headers=admin_headers).json()
-    assert "ai_passthrough" not in {q["key"] for q in options["questions"]}
-    keep = client.put("/settings", json={"ai_passthrough": "keep"}, headers=admin_headers)
-    assert keep.is_success
-    try:
-        by_setting = quick(client, admin_headers).json()
-        assert by_setting["ai_saving"]["passed_percent"] == 0
-    finally:
-        client.put("/settings", json={}, headers=admin_headers)
-    passed = quick(client, admin_headers, choices={"ai_passthrough": "all"}).json()
-    kept = quick(client, admin_headers, choices={"ai_passthrough": "keep"}).json()
-    assert passed["ai_saving"]["passed_percent"] == 100 and kept["ai_saving"]["passed_percent"] == 0
-    saving = passed["ai_saving"]["identified_paise"]
-    assert saving > 0 and kept["ai_saving"]["identified_paise"] == saving
-    assert 0 < passed["ai_saving"]["percent"] < 100
-    assert kept["likely_paise"] > passed["likely_paise"]
-    assert kept["build_only_paise"] == passed["build_only_paise"]  # costs unchanged
-
-
-def test_ai_saving_kept_is_its_own_internal_item(
+def test_the_whole_ai_saving_is_always_passed_on(
     client: TestClient, admin_headers: H, viewer_headers: H
 ) -> None:
-    """Kept AI saving shown apart from the profit margin (the estimator's discount room), and
-    only to people who may see margin."""
-    kept = quick(client, admin_headers, choices={"ai_passthrough": "keep"}).json()
-    assert kept["ai_saving"]["kept_paise"] > 0
-    items = {i["key"]: i for i in kept["cost_items"]}
-    assert items["ai_saving_kept"]["amount_paise"] == kept["ai_saving"]["kept_paise"]
-    seen = client.get(f"/estimates/{kept['estimate_id']}/summary", headers=viewer_headers).json()
-    assert seen["ai_saving"]["kept_paise"] is None
-    assert "ai_saving_kept" not in {i["key"] for i in seen["cost_items"]}
+    """OPEN_QUESTIONS 227: no part of the AI saving is kept back out of sight, whatever an
+    older company setting or a request says; every role sees the same price."""
+    options = client.get("/quick-estimate/options", headers=admin_headers).json()
+    assert "ai_passthrough" not in {q["key"] for q in options["questions"]}
+    client.put("/settings", json={"ai_passthrough": "keep"}, headers=admin_headers)
+    try:
+        by_setting = quick(client, admin_headers).json()
+        asked = quick(client, admin_headers, choices={"ai_passthrough": "keep"}).json()
+    finally:
+        client.put("/settings", json={}, headers=admin_headers)
+    for s in (by_setting, asked):
+        assert s["ai_saving"]["passed_percent"] == 100 and not s["ai_saving"]["kept_paise"]
+        assert "ai_saving_kept" not in {i["key"] for i in s["cost_items"]}
+    assert 0 < asked["ai_saving"]["percent"] < 100
+    seen = client.get(f"/estimates/{asked['estimate_id']}/summary", headers=viewer_headers).json()
+    assert seen["likely_paise"] == asked["likely_paise"]
 
 
 def test_users_price_smoothly(client: TestClient, admin_headers: H) -> None:
@@ -808,3 +790,91 @@ def test_blocks_every_software_has_cannot_be_left_out(client: TestClient, admin_
     full = build()
     assert build("responsive_frontend", "functional_testing_uat_support") == full
     assert build("documentation_manuals") < full
+
+
+def test_roles_with_too_little_work_are_listed(client: TestClient, admin_headers: H) -> None:
+    """A tiny site books no project manager or security engineer (parameters v34+, OPEN_QUESTIONS
+    229): the summary says who does their work instead, and the team table leaves them out."""
+    s = quick(
+        client, admin_headers, features=["online_forms"], feature_levels={"online_forms": "basic"}
+    ).json()
+    left = {r["role"]: r for r in s["team_left_out"]}
+    assert "role.project_manager" in left
+    pm = left["role.project_manager"]
+    assert pm["done_by"] != "role.project_manager" and pm["done_by_label"]
+    assert float(pm["work_days"]) < float(pm["min_booking_days"])
+    assert not {r["role"] for r in s["team"]} & set(left)
+
+
+def test_simple_forms_need_no_list_screens(client: TestClient, admin_headers: H) -> None:
+    """One or two simple forms leave out the screens to edit their lists, and the quote says so;
+    several forms keep them (OPEN_QUESTIONS 230)."""
+
+    from app.services.quick.config import quick_config
+    from app.services.quick.service import QuickRequest, plan_quick
+
+    def asked(level: Literal["basic", "standard"]) -> tuple[set[str], list[Any]]:
+        levels: dict[str, Literal["basic", "standard", "advanced"]] = {"online_forms": level}
+        s = quick(client, admin_headers, features=["online_forms"], feature_levels=levels).json()
+        req = QuickRequest(name="forms", features=["online_forms"], feature_levels=levels)
+        keys = {c.key for c in plan_quick(quick_config(), req, None, "test").components}
+        return keys, [n for n in s["not_included"] if n["why"] == "not_needed_at_level"]
+
+    basic, basic_note = asked("basic")
+    standard, standard_note = asked("standard")
+    assert "registration_empanelment" in basic and "master_data_management" not in basic
+    assert "master_data_management" in standard
+    assert len(basic_note) == 1 and "lists" in basic_note[0]["label"] and standard_note == []
+
+
+def test_hardware_list_is_optional(client: TestClient, admin_headers: H) -> None:
+    """Own servers show the list of what to buy; the client buying it shows it too, out of the
+    price; a cloud site has none; the Excel has a Hardware sheet (OPEN_QUESTIONS 231)."""
+    import io
+
+    import openpyxl
+
+    cloud = quick(client, admin_headers, features=["bookings"]).json()
+    assert cloud["hardware"] is None
+    own = quick(client, admin_headers, features=["bookings"], choices={"hosting": "on_prem"})
+    hw = own.json()["hardware"]
+    keys = {i["key"] for i in hw["items"]}
+    assert hw["who_buys"] == "in_price" and {"single_server", "firewall"} <= keys  # v37: shared
+    bought = [i for i in hw["items"] if not i["yearly"]]
+    assert all(i["unit_paise"] for i in bought if i["key"] != "load_balancer")  # v37: priced
+    assert hw["once_paise"] == sum(i["unit_paise"] * i["quantity"] * (i["tb"] or 1)
+                                   for i in bought if i["unit_paise"])  # fmt: skip
+    ours = own.json()["not_included"]
+    assert any(n["why"] == "client_pays" and "Power" in n["label"] for n in ours)
+    asked = {"hosting": "existing", "hardware_list": "client_buys"}
+    buys = quick(client, admin_headers, features=["bookings"], choices=asked).json()
+    assert buys["hardware"]["who_buys"] == "client_buys"
+    plain = quick(client, admin_headers, features=["bookings"], choices={"hosting": "existing"})
+    assert buys["planned_paise"] == plain.json()["planned_paise"]  # a list, not a price
+    on_cloud = {"hardware_list": "client_buys"}  # hidden on a cloud: the answer is dropped
+    assert (
+        quick(client, admin_headers, features=["bookings"], choices=on_cloud).json()["hardware"]
+        is None
+    )
+    xlsx = client.get(f"/estimates/{buys['estimate_id']}/boq.xlsx", headers=admin_headers)
+    assert "Hardware" in openpyxl.load_workbook(io.BytesIO(xlsx.content)).sheetnames
+
+
+def test_on_own_servers_the_client_may_buy_the_hardware(
+    client: TestClient, admin_headers: H
+) -> None:
+    """Own server room, "the client buys it separately": the list is shown, out of the price,
+    and said so on the quote; skipped, we supply it (OPEN_QUESTIONS 235)."""
+    ours = quick(client, admin_headers, features=["bookings"], choices={"hosting": "on_prem"})
+    theirs_choices = {"hosting": "on_prem", "hardware_supply": "client_buys"}
+    theirs = quick(client, admin_headers, features=["bookings"], choices=theirs_choices).json()
+    assert ours.json()["hardware"]["who_buys"] == "in_price"
+    assert theirs["hardware"]["who_buys"] == "client_buys"
+    assert theirs["planned_paise"] < ours.json()["planned_paise"]
+    labels = [n["label"] for n in theirs["not_included"] if n["why"] == "client_pays"]
+    assert any("client buys them" in label for label in labels)
+    assert any("Power" in label for label in labels)  # the room is still the client's
+    # hidden for other hosting: an answer sent anyway is dropped
+    asked = {"hosting": "existing", "hardware_list": "client_buys", "hardware_supply": "we_supply"}
+    kept = quick(client, admin_headers, features=["bookings"], choices=asked).json()
+    assert kept["hardware"]["who_buys"] == "client_buys"

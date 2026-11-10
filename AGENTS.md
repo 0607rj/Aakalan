@@ -39,7 +39,9 @@ Estimates are saved as templates, and recorded outcomes calibrate future estimat
   sidebar with the ember glow (`components/app-sidebar.tsx`; a top bar and drawer on phones), each
   page's title on a faint warm grid with no box (`components/app-hero.tsx`, `.app-head`; the
   new-estimate steps too, `.step-head`) and soft white cards below in one column. Each thing is said on one page only (OPEN_QUESTIONS 189).
-- **Auth:** JWT (HS256) + argon2; roles `admin`, `estimator`, `finance`, `viewer`. Margin visible only to `finance`/`admin`.
+- **Auth:** JWT (HS256) + argon2; roles `admin`, `estimator`, `finance`, `viewer`. Margin is shown to every role, and margin,
+  safety buffer and the AI saving are one rule for everyone, never a company's choice; company
+  settings keep only facts about the team: day rates, AI-tool use (OPEN_QUESTIONS 227).
   Sign-up creates a company with the person as admin; email verified and password reset by emailed
   6-digit codes (`services/auth.py`, hashed, expiring, limited tries); a reset or change raises the
   user's `token_version` (`tv` in the JWT) so older tokens stop working. Wrong passwords
@@ -100,6 +102,11 @@ backend/
                           #   each feature includes", GET/PUT /estimates/{id}/stories), the user
                           #   checks and saves them (`feature_stories`; the typed `description`
                           #   is saved for it); size check only, never price or seed
+                          #   sources.py: where every price comes from, read from each line's
+                          #   trace (GET /estimates/{id}/sources; results page, PDF page, Excel
+                          #   "Sources" sheet); words in config `price_sources` (ai_studies,
+                          #   margin: the published margins the profit was checked against);
+                          #   each source published / worked out / our estimate (OPEN_QUESTIONS 226)
                           #   context.py: shown only, never priced (OPEN_QUESTIONS 205): the
                           #   industry (reading prompt v10 `project_domain`), the project type
                           #   (most features shared with a `project_types` entry) and user roles
@@ -130,6 +137,8 @@ backend/
                           #   reading is kept per org by the text's sha256 (table
                           #   description_readings), so the same words give the same features
                           #   merge of several files (corrigenda override), pre-bid queries;
+                          #   the upload step takes up to `project_max_documents` (5) files with a
+                          #   type each; the same file once; the check counts all (OPEN_QUESTIONS 225)
                           #   inventory.py: AI lists quoted items for the independent check
                           #   (tried `inventory_tries` times; an AI-read document left uncounted
                           #   needs a person's confirm before export, OPEN_QUESTIONS 186)
@@ -160,7 +169,7 @@ backend/
       documents/ extraction/ retrieval/ mapping/ reports/ templates/   # later milestones
     llm/                  # LLMClient protocol, AnthropicClient, FakeClient; prompts/*.md (versioned)
     jobs/                 # Huey instance and tasks
-  seeds/                  # taxonomy/v1..v2, catalog/v1..v8, rate_cards/, parameters/,
+  seeds/                  # taxonomy/v1..v2, catalog/v1..v9, rate_cards/, parameters/,
                           #   quick_estimate.yaml (plain features/questions for simple mode)
                           #   + `topics`: the form asks one topic at a time (build, users, hosting,
                           #   support, contract) on both paths; every question / number has one
@@ -195,8 +204,8 @@ backend/
                           #   rate card v9: audited cloud/SSL rates, free DV certificate;
                           #   caps by project size (review, pre-build, architect; the
                           #   in-between sizes are written-out midpoints, a guess);
-                          #   `ai_passthrough` company setting (Account page; asked on every estimate until OPEN_QUESTIONS 173) keeps the
-                          #   rest of the AI saving as margin, shown as its own internal item
+                          #   the whole AI saving is always passed on (`ai_passthrough` forced to
+                          #   all; was a company setting, OPEN_QUESTIONS 173, 227)
                           #   parameters v21+: the range widens with project size
                           #   (model_spread_by_size, placeholder; OPEN_QUESTIONS 153)
                           #   parameters v22+: support level 24x7_on_call (office hours +
@@ -259,11 +268,34 @@ backend/
                           #   only what is needed (196): firewall above 10,000 users, SMS its own
                           #   choice, question `payment_terms` (advance = no delay, working_capital
                           #   .v3; milestones = tender, adds the requirement study)
+                          #   parameters v33+ (OPEN_QUESTIONS 228): complexity multipliers are
+                          #   COCOMO II.2000 CPLX (0.87 / 1.00 / 1.34 / 1.74); effort caps and the
+                          #   upkeep split name the published figures they were checked against
+                          #   parameters v34+ (OPEN_QUESTIONS 229): the team follows the work
+                          #   (`staffing`, engine/staffing.py, formula staffing.v1): a role joins
+                          #   when an answer needs it, with a booking's worth of work, or when
+                          #   booking it is no dearer; else its work × slowdown goes to its
+                          #   fallback; the project manager likewise, else the team's lead
+                          #   parameters v35+ (OPEN_QUESTIONS 231): a hardware list for own servers
+                          #   (`hardware`, services/hosting/hardware.py, hardware_list.v1), sized
+                          #   by load and uptime; optional (hosting on_prem, or question
+                          #   hardware_list = client_buys); from the saved inputs, a list only
+                          #   parameters v36+ (OPEN_QUESTIONS 232): own server room pays no rack
+                          #   rent (`on_prem.rent_racks`); power, cooling, room = client's own cost
+                          #   parameters v37+ / rate card v12 (OPEN_QUESTIONS 233): own servers priced
+                          #   from the hardware list (`hardware.priced`, on_prem_lines), servers by size,
+                          #   app and database share a 16-core server when they fit; yearly licences
+                          #   question `hardware_supply` (own server room only): the client may buy the
+                          #   hardware itself, list shown out of the price (OPEN_QUESTIONS 235)
                           #   catalog v7+: a tech-stack `section` per component (core, web,
                           #   mobile, ecommerce, ai_ml, security, ...) and a `url` per source
                           #   catalog v8 (OPEN_QUESTIONS 213): + 15 industry blocks (education,
                           #   health, finance, ...) from published hours; an `industries` module
                           #   names its `block` (the custom feature's `catalog_key`)
+                          #   catalog v9: v8 with registration_empanelment renamed "Online forms
+                          #   and applications" (OPEN_QUESTIONS 229)
+                          #   a feature's `skip_at` leaves out blocks at a level, listed on the
+                          #   quote as not needed (basic online forms: no master data, OQ 230)
   migrations/             # Alembic
   tests/                  # api/, core/, engine/ (unit, property, golden/*.yaml + *.expected.json)
                           #   fixtures/srs/: synthetic requirement documents + expected-results manifests
@@ -313,6 +345,8 @@ Run from the repo root. `make <target>` and `python scripts/tasks.py <target>` a
 - Money: integer paise in the DB and API (`*_paise` fields). Rate amounts are `Decimal` strings in major units of their currency.
 - LLM output is validated against Pydantic schemas; document text is fenced in prompts and never treated as instructions.
 - Tests never call a real LLM: `tests/conftest.py` blanks `ANTHROPIC_API_KEY`; use `set_llm_client(FakeClient(...))`.
+- To try the AI paths in the running app without the API key: `LLM_PROVIDER=claude_cli` uses the
+  local `claude` command and the developer's own Claude account (development only, OPEN_QUESTIONS 234).
 - TypeScript: strict mode; never hand-write API types — run `make openapi` (writes
   `backend/openapi.json` and `frontend/src/lib/api/schema.d.ts`; commit both).
 - Next.js 16 differs from older versions: read `frontend/AGENTS.md` and the docs in

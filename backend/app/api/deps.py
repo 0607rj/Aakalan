@@ -97,4 +97,8 @@ OwnerUser = Annotated[User, Depends(require_owner)]
 
 
 def can_see_margin(user: User) -> bool:
-    return user.role in FINANCE_ROLES
+    """Everyone sees the builder's profit: every number is shown with its source, nothing is
+    hidden (OPEN_QUESTIONS 227). Kept as a function so the places that once hid margin stay
+    marked."""
+    del user
+    return True

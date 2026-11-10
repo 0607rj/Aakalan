@@ -43,6 +43,9 @@ SEED_BITS = 31
 # more: the client type (prices follow what is built). Not stored on new estimates, and not
 # shown for old ones (OPEN_QUESTIONS 147).
 UNRECORDED_ASSUMPTIONS = frozenset({"buyer_segment"})
+# one published rule for everyone, never an answer or a company's choice (OPEN_QUESTIONS 227):
+# a saved answer or a scenario override of these is ignored
+FIXED_ANSWERS = frozenset({"margin_percent", "contingency_percent"})
 
 
 def _conflict(message: str) -> HTTPException:
@@ -113,6 +116,7 @@ def build_input(
                 requirement_ids=[x for x in a.requirement_ids if x in priced_ids],
             )
             for a in project.answers
+            if a.key not in FIXED_ANSWERS
         ],
         taxonomy=get_taxonomy(db),
         catalog=catalog,
@@ -341,4 +345,10 @@ def reprice(db: Session, project: Project, estimate: Estimate, user: User, as_of
 
 
 def scenarios(estimate: Estimate, variants: list[Scenario]) -> list[ScenarioResult]:
-    return run_scenarios(snapshot(estimate), variants)
+    fixed = [
+        v.model_copy(
+            update={"overrides": {k: x for k, x in v.overrides.items() if k not in FIXED_ANSWERS}}
+        )
+        for v in variants
+    ]
+    return run_scenarios(snapshot(estimate), fixed)

@@ -20,6 +20,7 @@ import {
   type TenderDocument,
   type TenderExtraction,
 } from "@/lib/api/client";
+import { cn } from "@/lib/utils";
 
 import {
   NoReadyMadeNote,
@@ -52,6 +53,7 @@ import {
   PrerequisiteWarnings,
   ProjectContextLine,
   QuestionHeading,
+  ManyFiles,
 } from "./parts";
 import { Calculating } from "./calculating";
 import {
@@ -169,6 +171,48 @@ function Folded({
   );
 }
 
+const KIND_LABEL: Record<string, string> = {
+  rfp: "Main document",
+  annexure: "Extra document",
+  corrigendum: "Update to the document",
+  prebid_reply: "Answers to questions",
+};
+
+/** The project's files (OPEN_QUESTIONS 225): what each is, its pages, and any that could not
+ * be read (their findings are missing from the lists below). Shown only for several files. */
+function FilesRead({ files }: { files: TenderDocument["files"] }) {
+  if (files.length < 2) return null;
+  const failed = files.filter((f) => f.status !== "extracted");
+  return (
+    <div className="flex flex-col gap-2">
+      <ul className="flex flex-wrap gap-2 text-sm">
+        {files.map((f) => (
+          <li
+            key={f.id}
+            className={cn(
+              "rounded-lg border bg-card px-3 py-1.5",
+              f.status !== "extracted" && "border-warning/40 bg-warning/10",
+            )}
+          >
+            <span className="font-medium">{f.filename}</span>{" "}
+            <span className="text-muted-foreground">
+              · {KIND_LABEL[f.kind] ?? f.kind} · {f.pages} page
+              {f.pages === 1 ? "" : "s"}
+            </span>
+          </li>
+        ))}
+      </ul>
+      {failed.length > 0 ? (
+        <WarningNotice>
+          Could not read {failed.map((f) => f.filename).join(", ")}. What{" "}
+          {failed.length === 1 ? "it says" : "they say"} is not in the lists
+          below: add anything missing as your own feature.
+        </WarningNotice>
+      ) : null}
+    </div>
+  );
+}
+
 /** Requirement sentences no finding quotes (OPEN_QUESTIONS 204): shown so none is lost. */
 function Uncovered({
   sentences,
@@ -242,6 +286,10 @@ export function ReviewForm({
 }) {
   const router = useRouter();
   const approx = doc.approximate_pages;
+  const pages =
+    doc.files.length > 1
+      ? doc.files.reduce((sum, f) => sum + f.pages, 0)
+      : doc.pages;
   const foundFeatures = React.useMemo(
     () => new Map(extraction.features.map((f) => [f.key, f])),
     [extraction.features],
@@ -890,417 +938,434 @@ export function ReviewForm({
   }
 
   return (
-    <QuestionNotes.Provider value={questionNotes}>
-      <div className="flex flex-col gap-8">
-        <StepIndicator labels={DOCUMENT_STEPS} current={2} />
-        <Progress index={steps.index} total={steps.total} />
+    <ManyFiles.Provider value={doc.files.length > 1}>
+      <QuestionNotes.Provider value={questionNotes}>
+        <div className="flex flex-col gap-8">
+          <StepIndicator labels={DOCUMENT_STEPS} current={2} />
+          <Progress index={steps.index} total={steps.total} />
 
-        <div key={steps.current} className="step-in flex flex-col gap-8">
-          {steps.current === "found" ? (
-            <>
-              <section className="flex flex-col gap-4">
-                <StepHeader
-                  eyebrow={`${doc.pages} ${approx ? "approximate " : ""}page${doc.pages === 1 ? "" : "s"} · ${extraction.reader === "ai" ? "read by AI" : "basic reading"}`}
-                  title={<>Here&apos;s what we found in {doc.filename}</>}
-                >
-                  Check the features, then continue.
-                </StepHeader>
-                {extraction.own_report ? (
-                  <WarningNotice>
-                    This file is an estimate report made by Aakalan, not a
-                    requirement document. Its features and answers come from
-                    that earlier estimate, so the price may not match your
-                    project. For a fresh reading, upload the RFP, SRS or scope
-                    document instead.
-                  </WarningNotice>
-                ) : null}
-                {extraction.reader !== "ai" ? (
-                  <WarningNotice>
-                    Read with basic keyword matching (no AI key set) — please
-                    check carefully, some items may be missed.
-                  </WarningNotice>
-                ) : null}
-                {extraction.summary ? (
-                  <p className="max-w-3xl rounded-xl border bg-card px-4 py-3 text-muted-foreground">
-                    {extraction.summary}
-                  </p>
-                ) : null}
-                <ProjectContextLine
-                  domain={extraction.project_domain}
-                  roles={extraction.user_roles}
-                />
-                <div className="flex max-w-xl flex-col gap-2">
-                  <Label htmlFor="project-name" className="text-base">
-                    Project name
-                  </Label>
-                  <Input
-                    id="project-name"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="h-11 text-base"
+          <div key={steps.current} className="step-in flex flex-col gap-8">
+            {steps.current === "found" ? (
+              <>
+                <section className="flex flex-col gap-4">
+                  <StepHeader
+                    eyebrow={`${doc.files.length > 1 ? `${doc.files.length} files · ` : ""}${pages} ${approx ? "approximate " : ""}page${pages === 1 ? "" : "s"} · ${extraction.reader === "ai" ? "read by AI" : extraction.reader === "mixed" ? "partly read by AI" : "basic reading"}`}
+                    title={
+                      doc.files.length > 1 ? (
+                        <>
+                          Here&apos;s what we found in your {doc.files.length}{" "}
+                          files
+                        </>
+                      ) : (
+                        <>Here&apos;s what we found in {doc.filename}</>
+                      )
+                    }
+                  >
+                    Check the features, then continue.
+                  </StepHeader>
+                  <FilesRead files={doc.files} />
+                  {extraction.own_report ? (
+                    <WarningNotice>
+                      This file is an estimate report made by Aakalan, not a
+                      requirement document. Its features and answers come from
+                      that earlier estimate, so the price may not match your
+                      project. For a fresh reading, upload the RFP, SRS or scope
+                      document instead.
+                    </WarningNotice>
+                  ) : null}
+                  {extraction.reader !== "ai" ? (
+                    <WarningNotice>
+                      {extraction.reader === "mixed"
+                        ? "Some files were read with basic keyword matching, not the AI (today's AI readings were used up). Please check carefully, some items may be missed."
+                        : "Read with basic keyword matching (no AI key set) — please check carefully, some items may be missed."}
+                    </WarningNotice>
+                  ) : null}
+                  {extraction.summary ? (
+                    <p className="max-w-3xl rounded-xl border bg-card px-4 py-3 text-muted-foreground">
+                      {extraction.summary}
+                    </p>
+                  ) : null}
+                  <ProjectContextLine
+                    domain={extraction.project_domain}
+                    roles={extraction.user_roles}
                   />
-                </div>
-              </section>
+                  <div className="flex max-w-xl flex-col gap-2">
+                    <Label htmlFor="project-name" className="text-base">
+                      Project name
+                    </Label>
+                    <Input
+                      id="project-name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="h-11 text-base"
+                    />
+                  </div>
+                </section>
 
-              <FeatureSections
-                options={options}
-                foundTitle="Found in your document"
-                foundKeys={foundKeys}
-                foundCount={foundKeys.length + foundOther.length}
-                found={
-                  <>
-                    {foundKeys.map((key) => card(key))}
-                    <FoundOtherFeatures
-                      items={customItems}
-                      onChange={setCustomItems}
-                      types={options.custom_feature_types}
-                      approximatePages={approx}
-                    />
-                  </>
-                }
-                foundNote={
-                  <>
-                    {(extraction.not_priced ?? []).length > 0 ? (
-                      <div className="rounded-xl border border-dashed px-4 py-3 text-sm">
-                        <span className="font-medium">
-                          Asked for, but not priced by this estimate:
-                        </span>{" "}
-                        {(extraction.not_priced ?? [])
-                          .map((n) => n.label)
-                          .join(", ")}
-                        . Details on the last screen; price these separately.
-                      </div>
-                    ) : null}
-                    <PrerequisiteWarnings
-                      items={missingPrerequisites(
-                        options,
-                        everything,
-                        [...foundScope.keys()],
-                        Object.fromEntries(
-                          touched.flatMap((k) =>
-                            k in choices ? [[k, choices[k]]] : [],
-                          ),
-                        ),
-                      )}
-                    />
-                    <Uncovered
-                      sentences={extraction.uncovered ?? []}
-                      more={extraction.uncovered_more ?? 0}
-                    />
-                  </>
-                }
-                emptyHint={
-                  extraction.reader === "ai"
-                    ? "Nothing from our list was found in the document. Tick features below, or add your own."
-                    : "Nothing from our list was found (basic reading, no AI key). Tick features below, or add your own."
-                }
-                card={card}
-                isTicked={ticks.isTicked}
-                blocksBody={
-                  name.trim() !== ""
-                    ? { ...request, not_included: [], answered: null }
-                    : null
-                }
-                removedBlocks={notIncluded
-                  .filter((n) => n.kind === "standard")
-                  .map((n) => n.key)}
-                onToggleBlock={(key) => ticks.toggleOut("standard", key)}
-                customItems={customItems}
-                onCustomItems={setCustomItems}
-                approximatePages={approx}
-                suggestions={extraction.industry_suggestions ?? []}
-                domain={extraction.project_domain ?? ""}
-                forDocument
-                suggestionsAsked={
-                  extraction.industry_suggestions_asked ?? false
-                }
-                onTick={(k) => ticks.tick(k, changeChoice)}
-              />
-              <AddOns
-                groups={scopeGroups}
-                chosen={scope}
-                suggested={[...foundScope.keys()]}
-                source="the document"
-                notes={Object.fromEntries(
-                  [...foundScope.values()].map((s) => [
-                    s.key,
-                    <span key={s.key} className="flex flex-col gap-1">
-                      <span className="text-muted-foreground">
-                        {s.status === "explicit"
-                          ? "The document asks for this."
-                          : `The document suggests it may be needed${s.note ? `: ${s.note}` : ""}. Please check.`}
-                      </span>
-                      <Citation
-                        evidence={s.evidence}
+                <FeatureSections
+                  options={options}
+                  foundTitle="Found in your document"
+                  foundKeys={foundKeys}
+                  foundCount={foundKeys.length + foundOther.length}
+                  found={
+                    <>
+                      {foundKeys.map((key) => card(key))}
+                      <FoundOtherFeatures
+                        items={customItems}
+                        onChange={setCustomItems}
+                        types={options.custom_feature_types}
                         approximatePages={approx}
                       />
-                    </span>,
-                  ]),
-                )}
-                notIncluded={notIncluded
-                  .filter((n) => n.kind === "scope")
-                  .map((n) => n.key)}
-                onToggle={(key) => {
-                  setScope((now) =>
-                    now.includes(key)
-                      ? now.filter((k) => k !== key)
-                      : [...now, key],
-                  );
-                  ticks.unmark("scope", key);
-                }}
-              />
-              {(extraction.scope_set_aside ?? []).length > 0 ? (
-                <div className="flex flex-col gap-2 rounded-xl bg-muted/60 px-4 py-3 text-sm">
-                  <span className="font-medium">
-                    Mentioned in the document, but not asked for now (not
-                    priced)
-                  </span>
-                  <ul className="flex flex-col gap-1">
-                    {(extraction.scope_set_aside ?? []).map((s) => (
-                      <li key={s.key}>
-                        {s.label}:{" "}
-                        {s.status === "excluded"
-                          ? "ruled out"
-                          : s.status === "future"
-                            ? "for a later phase or optional"
-                            : "only mentioned"}
-                        {" — "}
+                    </>
+                  }
+                  foundNote={
+                    <>
+                      {(extraction.not_priced ?? []).length > 0 ? (
+                        <div className="rounded-xl border border-dashed px-4 py-3 text-sm">
+                          <span className="font-medium">
+                            Asked for, but not priced by this estimate:
+                          </span>{" "}
+                          {(extraction.not_priced ?? [])
+                            .map((n) => n.label)
+                            .join(", ")}
+                          . Details on the last screen; price these separately.
+                        </div>
+                      ) : null}
+                      <PrerequisiteWarnings
+                        items={missingPrerequisites(
+                          options,
+                          everything,
+                          [...foundScope.keys()],
+                          Object.fromEntries(
+                            touched.flatMap((k) =>
+                              k in choices ? [[k, choices[k]]] : [],
+                            ),
+                          ),
+                        )}
+                      />
+                      <Uncovered
+                        sentences={extraction.uncovered ?? []}
+                        more={extraction.uncovered_more ?? 0}
+                      />
+                    </>
+                  }
+                  emptyHint={
+                    extraction.reader === "ai"
+                      ? "Nothing from our list was found in the document. Tick features below, or add your own."
+                      : "Nothing from our list was found (basic reading, no AI key). Tick features below, or add your own."
+                  }
+                  card={card}
+                  isTicked={ticks.isTicked}
+                  blocksBody={
+                    name.trim() !== ""
+                      ? { ...request, not_included: [], answered: null }
+                      : null
+                  }
+                  removedBlocks={notIncluded
+                    .filter((n) => n.kind === "standard")
+                    .map((n) => n.key)}
+                  onToggleBlock={(key) => ticks.toggleOut("standard", key)}
+                  customItems={customItems}
+                  onCustomItems={setCustomItems}
+                  approximatePages={approx}
+                  suggestions={extraction.industry_suggestions ?? []}
+                  domain={extraction.project_domain ?? ""}
+                  forDocument
+                  suggestionsAsked={
+                    extraction.industry_suggestions_asked ?? false
+                  }
+                  onTick={(k) => ticks.tick(k, changeChoice)}
+                />
+                <AddOns
+                  groups={scopeGroups}
+                  chosen={scope}
+                  suggested={[...foundScope.keys()]}
+                  source="the document"
+                  notes={Object.fromEntries(
+                    [...foundScope.values()].map((s) => [
+                      s.key,
+                      <span key={s.key} className="flex flex-col gap-1">
+                        <span className="text-muted-foreground">
+                          {s.status === "explicit"
+                            ? "The document asks for this."
+                            : `The document suggests it may be needed${s.note ? `: ${s.note}` : ""}. Please check.`}
+                        </span>
                         <Citation
                           evidence={s.evidence}
                           approximatePages={approx}
                         />
-                      </li>
-                    ))}
-                  </ul>
-                  <span className="text-muted-foreground">
-                    Add it under More options above if it should be built now.
-                  </span>
-                </div>
-              ) : null}
-              <StepButtons
-                onBack={onBack}
-                onNext={steps.next}
-                nextDisabled={name.trim() === "" || !anyFeature}
-                hint={
-                  name.trim() === ""
-                    ? "Enter a project name."
-                    : !anyFeature
-                      ? "Tick or add at least one thing the software should do."
-                      : `${everything.length + customFeatures.length} selected`
-                }
-              />
-            </>
-          ) : steps.current === "levels" ? (
-            <>
-              <LevelsStep
-                features={leveled}
-                levels={effective}
-                defaultLevel={options.default_level}
-                onChange={(key, level) =>
-                  setLevels((now) => ({ ...now, [key]: level }))
-                }
-              />
-              <StepButtons onBack={steps.prev} onNext={steps.next} />
-            </>
-          ) : question ? (
-            <section className="flex flex-col gap-8">
-              <QuestionHeading
-                question={question}
-                impact={impacts.get(question.key)}
-                currency={currency}
-              />
-              {questionBlock(question, true)}
-              {question.key === lastBuildQuestion && leveled.length > 0 ? (
-                <button
-                  type="button"
-                  className="w-fit text-sm font-medium text-primary hover:underline"
-                  onClick={() => {
-                    setCustomizing(true);
-                    steps.goTo("levels");
+                      </span>,
+                    ]),
+                  )}
+                  notIncluded={notIncluded
+                    .filter((n) => n.kind === "scope")
+                    .map((n) => n.key)}
+                  onToggle={(key) => {
+                    setScope((now) =>
+                      now.includes(key)
+                        ? now.filter((k) => k !== key)
+                        : [...now, key],
+                    );
+                    ticks.unmark("scope", key);
                   }}
-                >
-                  Want to set each feature&apos;s level yourself? Change levels
-                  →
-                </button>
-              ) : null}
-              <StepButtons
-                onBack={steps.prev}
-                onNext={steps.next}
-                nextDisabled={unchosen([question], choices).length > 0}
-                hint={
-                  unchosen([question], choices).length > 0
-                    ? "Pick an answer to continue."
-                    : null
-                }
-              />
-            </section>
-          ) : steps.current === "more" ? (
-            <section className="flex flex-col gap-8">
-              <StepHeader
-                eyebrow="Optional"
-                title="Anything different from the usual?"
-              >
-                What the document says shows its page; what it does not say is
-                the usual answer. Change only what you know is different, or
-                just continue.
-              </StepHeader>
-              {moreScreen()}
-              <StepButtons
-                onBack={steps.prev}
-                onNext={steps.next}
-                nextDisabled={
-                  factsShown.some((f) => errors[f.key]) ||
-                  staffHasErrors ||
-                  unchosen(moreQuestions, choices).length > 0
-                }
-                hint={
-                  factsShown.some((f) => errors[f.key]) || staffHasErrors
-                    ? "Fix the highlighted numbers."
-                    : unchosen(moreQuestions, choices).length > 0
-                      ? "Pick an answer for each question."
-                      : null
-                }
-              />
-            </section>
-          ) : (
-            <>
-              <CheckStep
-                rows={[
-                  { step: "found", label: "Project name", value: name.trim() },
-                  {
-                    step: "found",
-                    label: "Features",
-                    value: featureSummary(
-                      options,
-                      everything,
-                      effective,
-                      customFeatures.map((c) => c.name),
-                    ),
-                  },
-                  // the answers in the order asked: one topic at a time
-                  ...options.topics.flatMap((t) => [
-                    ...(t.key === "support" && staff !== null
-                      ? [
-                          {
-                            step: "more",
-                            label: "Staff during support",
-                            value: staffSummary(staff),
-                          },
-                        ]
-                      : []),
-                    ...topicQuestions(t.key)
-                      .filter(
-                        (q) =>
-                          mainQuestions.includes(q) ||
-                          moreQuestions.includes(q),
-                      )
-                      .map((q) => ({
-                        step: stepOf(q),
-                        label: q.label,
-                        value: answerLabel(q, choices[q.key]),
-                      })),
-                    ...topicFacts(t.key)
-                      .filter((f) => (facts[f.key] ?? "").trim() !== "")
-                      .map((f) => ({
-                        step: "more",
-                        label: f.label,
-                        value: facts[f.key] ?? "",
-                      })),
-                  ]),
-                  {
-                    step: "found",
-                    label: "Not included",
-                    value: notIncludedText(options, notIncluded),
-                  },
-                ]}
-                onChange={steps.goTo}
-              >
-                {assumed.length > 0 ? (
-                  <section className="flex flex-col gap-3 rounded-2xl border px-6 py-5">
-                    <div>
-                      <h2 className="text-lg font-semibold">
-                        Not in the document: we assumed
-                      </h2>
-                      <p className="text-sm text-muted-foreground">
-                        The document does not say these, so the usual answer is
-                        priced. Confirm them with the client.
-                      </p>
-                    </div>
-                    <ul className="flex flex-col gap-2 text-sm">
-                      {assumed.map((q) => (
-                        <li
-                          key={q.key}
-                          className="flex flex-wrap justify-between gap-x-4"
-                        >
-                          <span className="text-muted-foreground">
-                            {q.label}
-                          </span>
-                          <span className="font-medium">
-                            {answerLabel(q, choices[q.key] ?? q.default)}
-                          </span>
-                        </li>
-                      ))}
-                    </ul>
-                  </section>
-                ) : null}
-                {(extraction.not_priced ?? []).length > 0 ? (
-                  <section className="flex flex-col gap-3 rounded-2xl border border-warning/30 bg-warning-muted px-6 py-5">
-                    <div>
-                      <h2 className="text-lg font-semibold">
-                        In the document, but not in this price
-                      </h2>
-                      <p className="text-sm text-muted-foreground">
-                        The document asks for these. This estimate does not
-                        price them, so check them yourself before you quote.
-                      </p>
-                    </div>
-                    <ul className="flex flex-col gap-3">
-                      {(extraction.not_priced ?? []).map((n) => (
-                        <li key={n.topic} className="flex flex-col gap-1">
-                          <span className="font-medium">{n.label}</span>
-                          {n.note ? (
-                            <span className="text-sm text-muted-foreground">
-                              {n.note}
-                            </span>
-                          ) : null}
+                />
+                {(extraction.scope_set_aside ?? []).length > 0 ? (
+                  <div className="flex flex-col gap-2 rounded-xl bg-muted/60 px-4 py-3 text-sm">
+                    <span className="font-medium">
+                      Mentioned in the document, but not asked for now (not
+                      priced)
+                    </span>
+                    <ul className="flex flex-col gap-1">
+                      {(extraction.scope_set_aside ?? []).map((s) => (
+                        <li key={s.key}>
+                          {s.label}:{" "}
+                          {s.status === "excluded"
+                            ? "ruled out"
+                            : s.status === "future"
+                              ? "for a later phase or optional"
+                              : "only mentioned"}
+                          {" — "}
                           <Citation
-                            evidence={n.evidence}
+                            evidence={s.evidence}
                             approximatePages={approx}
                           />
                         </li>
                       ))}
                     </ul>
-                  </section>
+                    <span className="text-muted-foreground">
+                      Add it under More options above if it should be built now.
+                    </span>
+                  </div>
                 ) : null}
-                <PrebidQueries
-                  documentId={doc.id}
-                  approximatePages={approx}
-                  fallback={extraction.unclear_points}
-                />
-              </CheckStep>
-              <ErrorNotice message={error} />
-              <StepButtons
-                onBack={steps.prev}
-                onNext={submit}
-                nextLabel="Calculate my cost"
-                nextDisabled={!canSubmit}
-                hint={
-                  canSubmit
-                    ? null
-                    : name.trim() === ""
+                <StepButtons
+                  onBack={onBack}
+                  onNext={steps.next}
+                  nextDisabled={name.trim() === "" || !anyFeature}
+                  hint={
+                    name.trim() === ""
                       ? "Enter a project name."
                       : !anyFeature
                         ? "Tick or add at least one thing the software should do."
-                        : toChoose.length > 0
-                          ? `Answer: ${toChoose[0].label}`
-                          : "Fix the highlighted numbers."
-                }
-              />
-            </>
-          )}
+                        : `${everything.length + customFeatures.length} selected`
+                  }
+                />
+              </>
+            ) : steps.current === "levels" ? (
+              <>
+                <LevelsStep
+                  features={leveled}
+                  levels={effective}
+                  defaultLevel={options.default_level}
+                  onChange={(key, level) =>
+                    setLevels((now) => ({ ...now, [key]: level }))
+                  }
+                />
+                <StepButtons onBack={steps.prev} onNext={steps.next} />
+              </>
+            ) : question ? (
+              <section className="flex flex-col gap-8">
+                <QuestionHeading
+                  question={question}
+                  impact={impacts.get(question.key)}
+                  currency={currency}
+                />
+                {questionBlock(question, true)}
+                {question.key === lastBuildQuestion && leveled.length > 0 ? (
+                  <button
+                    type="button"
+                    className="w-fit text-sm font-medium text-primary hover:underline"
+                    onClick={() => {
+                      setCustomizing(true);
+                      steps.goTo("levels");
+                    }}
+                  >
+                    Want to set each feature&apos;s level yourself? Change
+                    levels →
+                  </button>
+                ) : null}
+                <StepButtons
+                  onBack={steps.prev}
+                  onNext={steps.next}
+                  nextDisabled={unchosen([question], choices).length > 0}
+                  hint={
+                    unchosen([question], choices).length > 0
+                      ? "Pick an answer to continue."
+                      : null
+                  }
+                />
+              </section>
+            ) : steps.current === "more" ? (
+              <section className="flex flex-col gap-8">
+                <StepHeader
+                  eyebrow="Optional"
+                  title="Anything different from the usual?"
+                >
+                  What the document says shows its page; what it does not say is
+                  the usual answer. Change only what you know is different, or
+                  just continue.
+                </StepHeader>
+                {moreScreen()}
+                <StepButtons
+                  onBack={steps.prev}
+                  onNext={steps.next}
+                  nextDisabled={
+                    factsShown.some((f) => errors[f.key]) ||
+                    staffHasErrors ||
+                    unchosen(moreQuestions, choices).length > 0
+                  }
+                  hint={
+                    factsShown.some((f) => errors[f.key]) || staffHasErrors
+                      ? "Fix the highlighted numbers."
+                      : unchosen(moreQuestions, choices).length > 0
+                        ? "Pick an answer for each question."
+                        : null
+                  }
+                />
+              </section>
+            ) : (
+              <>
+                <CheckStep
+                  rows={[
+                    {
+                      step: "found",
+                      label: "Project name",
+                      value: name.trim(),
+                    },
+                    {
+                      step: "found",
+                      label: "Features",
+                      value: featureSummary(
+                        options,
+                        everything,
+                        effective,
+                        customFeatures.map((c) => c.name),
+                      ),
+                    },
+                    // the answers in the order asked: one topic at a time
+                    ...options.topics.flatMap((t) => [
+                      ...(t.key === "support" && staff !== null
+                        ? [
+                            {
+                              step: "more",
+                              label: "Staff during support",
+                              value: staffSummary(staff),
+                            },
+                          ]
+                        : []),
+                      ...topicQuestions(t.key)
+                        .filter(
+                          (q) =>
+                            mainQuestions.includes(q) ||
+                            moreQuestions.includes(q),
+                        )
+                        .map((q) => ({
+                          step: stepOf(q),
+                          label: q.label,
+                          value: answerLabel(q, choices[q.key]),
+                        })),
+                      ...topicFacts(t.key)
+                        .filter((f) => (facts[f.key] ?? "").trim() !== "")
+                        .map((f) => ({
+                          step: "more",
+                          label: f.label,
+                          value: facts[f.key] ?? "",
+                        })),
+                    ]),
+                    {
+                      step: "found",
+                      label: "Not included",
+                      value: notIncludedText(options, notIncluded),
+                    },
+                  ]}
+                  onChange={steps.goTo}
+                >
+                  {assumed.length > 0 ? (
+                    <section className="flex flex-col gap-3 rounded-2xl border px-6 py-5">
+                      <div>
+                        <h2 className="text-lg font-semibold">
+                          Not in the document: we assumed
+                        </h2>
+                        <p className="text-sm text-muted-foreground">
+                          The document does not say these, so the usual answer
+                          is priced. Confirm them with the client.
+                        </p>
+                      </div>
+                      <ul className="flex flex-col gap-2 text-sm">
+                        {assumed.map((q) => (
+                          <li
+                            key={q.key}
+                            className="flex flex-wrap justify-between gap-x-4"
+                          >
+                            <span className="text-muted-foreground">
+                              {q.label}
+                            </span>
+                            <span className="font-medium">
+                              {answerLabel(q, choices[q.key] ?? q.default)}
+                            </span>
+                          </li>
+                        ))}
+                      </ul>
+                    </section>
+                  ) : null}
+                  {(extraction.not_priced ?? []).length > 0 ? (
+                    <section className="flex flex-col gap-3 rounded-2xl border border-warning/30 bg-warning-muted px-6 py-5">
+                      <div>
+                        <h2 className="text-lg font-semibold">
+                          In the document, but not in this price
+                        </h2>
+                        <p className="text-sm text-muted-foreground">
+                          The document asks for these. This estimate does not
+                          price them, so check them yourself before you quote.
+                        </p>
+                      </div>
+                      <ul className="flex flex-col gap-3">
+                        {(extraction.not_priced ?? []).map((n) => (
+                          <li key={n.topic} className="flex flex-col gap-1">
+                            <span className="font-medium">{n.label}</span>
+                            {n.note ? (
+                              <span className="text-sm text-muted-foreground">
+                                {n.note}
+                              </span>
+                            ) : null}
+                            <Citation
+                              evidence={n.evidence}
+                              approximatePages={approx}
+                            />
+                          </li>
+                        ))}
+                      </ul>
+                    </section>
+                  ) : null}
+                  <PrebidQueries
+                    documentId={doc.id}
+                    approximatePages={approx}
+                    fallback={extraction.unclear_points}
+                  />
+                </CheckStep>
+                <ErrorNotice message={error} />
+                <StepButtons
+                  onBack={steps.prev}
+                  onNext={submit}
+                  nextLabel="Calculate my cost"
+                  nextDisabled={!canSubmit}
+                  hint={
+                    canSubmit
+                      ? null
+                      : name.trim() === ""
+                        ? "Enter a project name."
+                        : !anyFeature
+                          ? "Tick or add at least one thing the software should do."
+                          : toChoose.length > 0
+                            ? `Answer: ${toChoose[0].label}`
+                            : "Fix the highlighted numbers."
+                  }
+                />
+              </>
+            )}
+          </div>
         </div>
-      </div>
-    </QuestionNotes.Provider>
+      </QuestionNotes.Provider>
+    </ManyFiles.Provider>
   );
 }
 

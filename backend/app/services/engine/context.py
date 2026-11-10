@@ -38,6 +38,7 @@ from app.services.engine.reference import PLACEHOLDER, CatalogComponent, RateIte
 
 if TYPE_CHECKING:
     from app.services.engine.components import EffortPlan
+    from app.services.engine.staffing import Team
 
 SPREAD_QUANTUM = Decimal("0.0001")
 
@@ -92,6 +93,11 @@ class PricingContext:
         # the effort caps and project-wide reuse ratio (engine/components.py), worked out once
         # from every component on first use
         self.effort_plan: EffortPlan | None = None
+        # who is on the team (engine/staffing.py, parameter sets v34+), decided once from the
+        # work of every component; and who manages it: (role, slowdown, why)
+        self.team: Team | None = None
+        self.pm_lead: tuple[str, Decimal, str] | None = None
+        self.pm_note: dict[str, dict[str, str]] = {}  # the PM left out: who manages and why
 
     # --- convenience accessors -------------------------------------------------------------
 
@@ -127,6 +133,7 @@ class PricingContext:
             "build_layers": False,  # default: the whole system, as before the answer existed
             "builder_type": False,  # default: a mid-size firm (factor 1), as before
             "payment_delay_months": False,  # default: the parameter set's delay, as before
+            "hardware_list": False,  # default: no list, as before the answer existed
         }.get(key, True)
 
     def assumptions(self) -> list[AssumptionOut]:

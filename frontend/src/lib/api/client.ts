@@ -66,6 +66,13 @@ export type StandardBlock = Schemas["StandardBlockOut"];
 export type Researched = Schemas["ResearchedOut"];
 export type PlainPart = Schemas["PlainPart"];
 export type TenderDocument = Schemas["DocumentOut"];
+export type DocumentFile = Schemas["DocumentInfo"];
+/** Where every price comes from (OPEN_QUESTIONS 226). */
+export type EstimateSources = Schemas["EstimateSources"];
+export type PriceSource = Schemas["Source"];
+export type RowSources = Schemas["RowSources"];
+/** What a file of the project is: the main document first, updates override it. */
+export type DocumentKind = "rfp" | "annexure" | "corrigendum" | "prebid_reply";
 export type TenderExtraction = Schemas["TenderExtraction"];
 export type ReviewPrefill = Schemas["ReviewPrefill"];
 export type FactValue = Schemas["FactValue"];
@@ -295,6 +302,10 @@ export const api = {
   listEstimates: (projectId: string) =>
     request<EstimateSummary[]>(`/projects/${projectId}/estimates`),
   getEstimate: (id: string) => request<Estimate>(`/estimates/${id}`),
+  getSources: (estimateId: string) =>
+    request<EstimateSources>(
+      `/estimates/${encodeURIComponent(estimateId)}/sources`,
+    ),
   getTrace: (estimateId: string, lineId: string) =>
     request<Trace>(`/estimates/${estimateId}/lines/${lineId}/trace`),
   runScenarios: (estimateId: string, scenarios: Scenario[]) =>
@@ -341,9 +352,16 @@ export const api = {
       signal,
     }),
 
-  uploadDocument: (file: File) => {
+  uploadDocument: (
+    file: File,
+    more?: { projectId: string; kind: DocumentKind },
+  ) => {
     const form = new FormData();
     form.append("file", file);
+    if (more) {
+      form.append("project_id", more.projectId);
+      form.append("kind", more.kind);
+    }
     return request<TenderDocument>("/documents", {
       method: "POST",
       body: form,

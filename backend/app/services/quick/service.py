@@ -25,6 +25,7 @@ from app.core.config import get_settings
 from app.core.tenancy import get_owned
 from app.models import (
     ComponentInstance,
+    CostLine,
     Document,
     Estimate,
     Project,
@@ -54,9 +55,9 @@ from app.services.estimates.reference_store import (
 )
 from app.services.extraction.merge import project_extraction
 from app.services.extraction.tender import FoundInventory, IndustrySuggestion, TenderExtraction
+from app.services.hosting.hardware import HardwareList, hardware_list
 from app.services.quick.anchor import CheckLine, IndependentCheckOut, independent_check
 from app.services.quick.config import (
-    CostItemRule,
     Feature,
     LevelKey,
     Option,
@@ -269,6 +270,19 @@ class TeamRole(BaseModel):
     traditional_person_months: Decimal | None = None
 
 
+class LeftOut(BaseModel):
+    """A role not booked for this project (parameter sets v34+, OPEN_QUESTIONS 229): it had too
+    little work for its minimum booking, so someone already on the team does it, a little
+    slower. Read from the engine's lines (inputs.staffing); only regroups."""
+
+    role: str
+    label: str
+    done_by: str
+    done_by_label: str
+    work_days: Decimal  # the work it had, before the slowdown
+    min_booking_days: Decimal
+
+
 class HoursRow(BaseModel):
     """One role's hours over the build (the engine's person-days × hours per day)."""
 
@@ -428,7 +442,13 @@ class AssumedAnswer(BaseModel):
 
 
 NotIncludedWhy = Literal[
-    "excluded_by_you", "removed_by_you", "not_sure", "document_excluded", "document_not_priced"
+    "excluded_by_you",
+    "removed_by_you",
+    "not_needed_at_level",
+    "client_pays",
+    "not_sure",
+    "document_excluded",
+    "document_not_priced",
 ]
 
 
@@ -485,6 +505,8 @@ class QuickSummary(BaseModel):
     feature_costs: list[FeatureCost] = []  # building cost of each feature, with and without AI
     team: list[TeamRole] = []  # people needed to build it, by role
     team_people: Decimal | None = None  # all roles together, average over the build
+    team_left_out: list[LeftOut] = []  # roles with too little work: someone else does it
+    hardware: HardwareList | None = None  # own servers, or asked for (OPEN_QUESTIONS 231)
     traditional_build_months: str | None = None  # time to build without AI tools
     support_team: list[TeamRole] = []  # people per year after launch (year 1)
     hours: HoursSummary | None = None  # the build in hours, with and without AI tools
@@ -740,7 +762,7 @@ def plan_quick(
     component_level: dict[str, LevelKey] = {}
     component_units: dict[str, int] = {}  # a block two features share: the larger count
     for f in features:
-        for key in f.components:
+        for key in f.components_at(levels[f.key]):
             component_reqs.setdefault(key, []).append(feature_req[f.key])
             component_level[key] = _larger(cfg, component_level.get(key), levels[f.key])
             if key not in standard:
@@ -1149,6 +1171,11 @@ def not_included(
             block = cfg.standard_blocks.get(item.key)
             label = block.label if block else item.key
             out.append(NotIncludedOut(label=label, why="removed_by_you", quote=item.quote))
+    for key in req.features:  # a block the feature skips at its level (OPEN_QUESTIONS 230)
+        for skipped in cfg.feature(key).skip_at.values():
+            for skipped_key, words in skipped.items():
+                if skipped_key not in priced_blocks:
+                    out.append(NotIncludedOut(label=words, why="not_needed_at_level"))
     options = {key: _choice(cfg, req, key) for key in cfg.questions}
     for key, option in options.items():
         if option.unsure:
@@ -1335,17 +1362,18 @@ def _document_context(
 
 AI_USE = "ai_use"
 AI_PASSTHROUGH = "ai_passthrough"
+ALL_PASSED = "all"  # the ai_passthrough answer that passes the whole AI saving on
 
 
 def with_company_defaults(db: Session, user: User, req: QuickRequest) -> QuickRequest:
-    """Unanswered company questions follow the company's settings: the team's AI level and
-    how much of the AI saving is passed on. The answer is saved with the estimate."""
+    """Unanswered company questions follow the company's settings: the team's AI level. The
+    whole AI saving is always passed on in the price (OPEN_QUESTIONS 227): nothing is kept
+    back out of sight, whatever an older setting or request says."""
     settings = company_settings(db, user.org_id)
-    saved = {AI_USE: settings.team_ai_maturity, AI_PASSTHROUGH: settings.ai_passthrough}
-    given = {k: v for k, v in saved.items() if v is not None and k not in req.choices}
-    if not given:
-        return req
-    return req.model_copy(update={"choices": {**req.choices, **given}})
+    choices: dict[str, Any] = {**req.choices, AI_PASSTHROUGH: ALL_PASSED}
+    if settings.team_ai_maturity is not None and AI_USE not in req.choices:
+        choices[AI_USE] = settings.team_ai_maturity
+    return req.model_copy(update={"choices": choices})
 
 
 def with_catalog_blocks(
@@ -2031,6 +2059,8 @@ def summarise(
         scope_items=scope_costs(cfg, project, costs),
         team=(build_team := team_by_role(cfg, result, 0)),
         team_people=sum((r.people for r in build_team), Decimal(0)) if build_team else None,
+        team_left_out=left_out(cfg, estimate),
+        hardware=_hardware(estimate),
         traditional_build_months=traditional.get("delivery_months"),
         support_team=team_by_role(cfg, result, 1),
         hours=hours_summary(cfg, estimate),
@@ -2065,6 +2095,15 @@ def summarise(
         try:
             summary.assumed = assumed_answers(cfg, req, set(found), set(numbers))
             summary.not_included = not_included(cfg, req, priced, extraction)
+            if summary.hardware is not None:  # own building (OPEN_QUESTIONS 232)
+                if summary.hardware.who_buys == "client_buys":  # OPEN_QUESTIONS 235
+                    summary.not_included.append(
+                        NotIncludedOut(label=cfg.hardware_client_buys, why="client_pays")
+                    )
+                summary.not_included += [
+                    NotIncludedOut(label=c, why="client_pays")
+                    for c in summary.hardware.client_costs
+                ]
         except (HTTPException, ValueError):  # saved with an older set of questions
             pass
         summary.context, summary.prerequisites = _project_context(cfg, req, extraction)
@@ -2593,6 +2632,35 @@ OTHER_ITEM = "Other"
 BUILD_ONLY_STAGES = ("pre_build", "build", "go_live")
 
 
+def cost_item_of(
+    cfg: QuickConfig, ln: CostLine, margin_visible: bool
+) -> tuple[str, str, str, bool]:
+    """The plain item one cost line is shown in: (group, key, label, people's time), by the
+    config's rules in order (first match wins); margin goes to the buffer for users who may not
+    see it."""
+    rules = list(cfg.cost_items)
+    rule = next(
+        (
+            r
+            for r in rules
+            if any(ln.line_key.startswith(p) for p in r.line_prefixes) or ln.bucket in r.buckets
+        ),
+        None,
+    )
+    if rule is not None and rule.margin and not margin_visible:
+        rule = next((r for r in rules if r.key == MARGIN_FALLBACK), rule)
+    if rule is None:
+        return ln.stage, "other", OTHER_ITEM, False
+    if rule.per_line:
+        return (
+            rule.group,
+            f"{rule.key}.{ln.line_key.split('/')[1]}",
+            YEAR_SUFFIX.sub("", ln.label),
+            rule.people,
+        )
+    return rule.group, rule.key, rule.label, rule.people
+
+
 def cost_items(
     cfg: QuickConfig, estimate: Estimate, years: int, margin_visible: bool
 ) -> list[CostItem]:
@@ -2601,28 +2669,12 @@ def cost_items(
     the risk buffer for users who may not see it."""
     period = f"{years} year{'s' if years != 1 else ''}"
     groups = {g.key: g.label.format(years=period) for g in cfg.cost_item_groups}
-    rules = list(cfg.cost_items)
     traditional = _traditional_lines(estimate)
     # (group, key) -> [label, likely, pd, people, low, high, pd_low, pd_high, traditional]
     acc: dict[tuple[str, str], list[Any]] = {}
 
-    def rule_for(line_key: str, bucket: str) -> CostItemRule | None:
-        for rule in rules:
-            if any(line_key.startswith(p) for p in rule.line_prefixes) or bucket in rule.buckets:
-                return rule
-        return None
-
     for ln in sorted(estimate.lines, key=lambda x: x.sort_order):
-        rule = rule_for(ln.line_key, ln.bucket)
-        if rule is not None and rule.margin and not margin_visible:
-            rule = next((r for r in rules if r.key == MARGIN_FALLBACK), rule)
-        if rule is None:
-            group, key, label, people = ln.stage, "other", OTHER_ITEM, False
-        else:
-            group, key, label, people = rule.group, rule.key, rule.label, rule.people
-            if rule.per_line:
-                key = f"{rule.key}.{ln.line_key.split('/')[1]}"
-                label = YEAR_SUFFIX.sub("", ln.label)
+        group, key, label, people = cost_item_of(cfg, ln, margin_visible)
         item = acc.setdefault(
             (group, key), [label, 0, Decimal(0), people, 0, 0, Decimal(0), Decimal(0), 0]
         )
@@ -2771,16 +2823,43 @@ def team_by_role(cfg: QuickConfig, result: dict[str, Any], year: int) -> list[Te
     return sorted(rows, key=lambda r: (-r.people, r.label))
 
 
+def _hardware(estimate: Estimate) -> HardwareList | None:
+    """The hardware list from the estimate's own inputs (hosting/hardware.py): worked out the
+    same way every time, so it never changes for a saved estimate."""
+    try:
+        return hardware_list(EstimateInput.model_validate(estimate.inputs_snapshot))
+    except ValueError:  # an input snapshot older than the current engine accepts
+        return None
+
+
+def left_out(cfg: QuickConfig, estimate: Estimate) -> list[LeftOut]:
+    """Roles the engine did not book (staffing.v1), from the lines that record it, once each."""
+
+    def label(role: str) -> str:
+        return cfg.role_labels.get(role, role.removeprefix("role.").replace("_", " "))
+
+    seen: dict[str, LeftOut] = {}
+    for line in sorted(estimate.lines, key=lambda x: x.sort_order):
+        staffing = (line.inputs or {}).get("staffing") or {}
+        for role, n in (staffing.get("roles") or {}).items():
+            if role not in seen:
+                seen[role] = LeftOut(
+                    role=role,
+                    label=label(role),
+                    done_by=n["done_by"],
+                    done_by_label=label(n["done_by"]),
+                    work_days=Decimal(n["work_pd"]).quantize(PEOPLE_QUANTUM),
+                    min_booking_days=Decimal(n["min_booking_pd"]),
+                )
+    return sorted(seen.values(), key=lambda r: r.label)
+
+
 STANDARD_BLOCKS = "Standard building blocks (screens design, login and roles, testing, set-up)"
 
 
-def feature_costs(cfg: QuickConfig, estimate: Estimate, project: Project) -> list[FeatureCost]:
-    """The team's building cost per feature: each component line goes to the features that
-    asked for it (split evenly when shared, remainder to the first); a block only scope items
-    added goes to those items (e.g. "Sign-in and user accounts: Two-step sign-in (MFA)"); lines
-    of components no feature asked for are the standard building blocks (also when a scope item
-    made one bigger). Sums to the component lines."""
-    snapshot = estimate.inputs_snapshot
+def feature_owners(snapshot: dict[str, Any]) -> dict[str, list[str]]:
+    """Component instance id -> the features (or, for a block only scope items added, those
+    items) that asked for it; [] = a standard building block."""
 
     def labels_of(category: str) -> dict[str, str]:
         return {
@@ -2796,6 +2875,16 @@ def feature_costs(cfg: QuickConfig, estimate: Estimate, project: Project) -> lis
         owners[c["id"]] = [features[r] for r in reqs if r in features] or (
             [scope[r] for r in reqs if r in scope] if c.get("label") else []
         )
+    return owners
+
+
+def feature_costs(cfg: QuickConfig, estimate: Estimate, project: Project) -> list[FeatureCost]:
+    """The team's building cost per feature: each component line goes to the features that
+    asked for it (split evenly when shared, remainder to the first); a block only scope items
+    added goes to those items (e.g. "Sign-in and user accounts: Two-step sign-in (MFA)"); lines
+    of components no feature asked for are the standard building blocks (also when a scope item
+    made one bigger). Sums to the component lines."""
+    owners = feature_owners(estimate.inputs_snapshot)
     traditional = _traditional_lines(estimate)
     acc: dict[str, list[int]] = {}  # label -> [with AI, without AI]
     for ln in sorted(estimate.lines, key=lambda x: x.sort_order):

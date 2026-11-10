@@ -1035,7 +1035,11 @@ export function usersOverrides(
   return out;
 }
 
-/** "Page 2 · Clause 4.3", with the exact sentence from the document on demand. */
+/** True when the project has several files: every citation then names its file. */
+export const ManyFiles = React.createContext(false);
+
+/** "Page 2 · Clause 4.3" (with the file's name when there are several), with the exact
+ * sentence from the document on demand. */
 export function Citation({
   evidence,
   approximatePages = false,
@@ -1043,9 +1047,11 @@ export function Citation({
   evidence: Evidence[];
   approximatePages?: boolean;
 }) {
+  const manyFiles = React.useContext(ManyFiles);
   const first = evidence[0];
   if (!first) return null;
   const where = [
+    manyFiles && first.document ? first.document : null,
     `${approximatePages ? "≈ page" : "Page"} ${first.page}`,
     first.clause_ref ? `Clause ${first.clause_ref}` : null,
   ]
@@ -1055,7 +1061,7 @@ export function Citation({
     <details className="group text-sm">
       <summary className="w-fit cursor-pointer list-none text-muted-foreground transition-colors hover:text-foreground">
         {first.checked === false
-          ? `From a scanned page — please verify on ${where.charAt(0).toLowerCase()}${where.slice(1)}`
+          ? `From a scanned page — please verify: ${where}`
           : where}
         <span className="ml-1 text-primary group-open:hidden">show text</span>
       </summary>

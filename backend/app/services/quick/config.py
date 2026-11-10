@@ -37,6 +37,26 @@ class Feature(Frozen):
     # sentences for both (e.g. "sign in with Google" is social login, not staff single sign-on;
     # OPEN_QUESTIONS 204)
     yields_to: str | None = None
+    # blocks this feature does not need at a level, with the plain words the quote lists as not
+    # included (OPEN_QUESTIONS 230), e.g. one or two simple forms need no screens to edit their
+    # lists: {basic: {master_data_management: "Screens to edit the forms' lists"}}
+    skip_at: dict[str, dict[str, str]] = {}
+
+    @model_validator(mode="after")
+    def _skips(self) -> "Feature":
+        for level, keys in self.skip_at.items():
+            if level not in ("basic", "standard", "advanced"):
+                raise ValueError(f"{self.key}: skip_at names an unknown level {level!r}")
+            if not set(keys) <= set(self.components):
+                raise ValueError(f"{self.key}: skip_at lists a block it does not have")
+            if set(keys) == set(self.components):
+                raise ValueError(f"{self.key}: skip_at cannot leave out every block")
+        return self
+
+    def components_at(self, level: str) -> list[str]:
+        """The blocks this feature is built from at a level."""
+        skip = self.skip_at.get(level, {})
+        return [k for k in self.components if k not in skip]
 
 
 LevelKey = Literal["basic", "standard", "advanced"]
@@ -773,6 +793,42 @@ class ClientProvided(Frozen):
     not_client: list[str] = []
 
 
+class AiStudy(Frozen):
+    """One published study behind the AI time saving. `checked`: its finding was read on the
+    page at `url` (on `checked_on`); False = cited from the study, link or figure not confirmed."""
+
+    name: str
+    year: int
+    finding: str
+    url: str | None = None
+    checked: bool = False
+    checked_on: str | None = None
+
+
+class PriceSources(Frozen):
+    """Plain words for where each price comes from (OPEN_QUESTIONS 226): a label per group of
+    the parameter set, per task type, the studies behind the AI saving, and which task savings
+    rest on a measurement (medium) or are reasoned (low). Wording only; no number is priced
+    from here."""
+
+    source: str
+    settings: dict[str, str]
+    tasks: dict[str, str]
+    rate_labels: dict[str, str] = {}  # key prefix -> plain name; {name} = the key's last part
+    ai_task_confidence: dict[str, Literal["medium", "low"]] = {}
+    ai_studies: list[AiStudy] = []
+    margin: "MarginSource | None" = None
+
+
+class MarginSource(Frozen):
+    """Why the builder's profit is what it is (OPEN_QUESTIONS 227): one figure for everyone,
+    from the parameter set; these are the published margins it was checked against. Wording
+    only; the margin itself is priced from the parameter set."""
+
+    summary: str
+    figures: list[AiStudy] = Field(min_length=1)
+
+
 class OwnReport(Frozen):
     """Wording printed on every page of our own estimate reports (OPEN_QUESTIONS 220)."""
 
@@ -896,6 +952,8 @@ class QuickConfig(Frozen):
     source: str
     requirement_clarity: int = Field(ge=1, le=5)
     show_market_prices: bool = True  # show published contract prices beside the estimate
+    # own servers the client buys itself: the line on the quote's "not included" list (235)
+    hardware_client_buys: str = "Servers, storage, network and licences (the client buys them)"
     # how the pricing did in the latest production-path back-test, added to the accuracy note
     backtest_note: BacktestNote | None = None
     # Answers every quick estimate starts from (before sizes, questions and features).
@@ -924,6 +982,7 @@ class QuickConfig(Frozen):
     uptime_terms: UptimeTerms | None = None  # the uptime asked for, read in code (219)
     tender_process: TenderProcess | None = None  # answers never from bidding steps (219)
     own_report: OwnReport | None = None  # our own estimate report uploaded (220)
+    price_sources: PriceSources | None = None  # where each price comes from (226)
     staffing: Staffing | None = None  # staff lines priced in code (OPEN_QUESTIONS 162)
     onsite_event_days: OnsiteEventDays | None = None  # onsite only for an event, no days given
     payment_points: PaymentPoints | None = None

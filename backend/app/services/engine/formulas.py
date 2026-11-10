@@ -2,6 +2,31 @@
 shows the expression. Change a formula -> bump its version suffix so old traces stay accurate."""
 
 FORMULAS: dict[str, str] = {
+    "golive.onprem_capex.v2": (
+        "own servers bought (v37+, OPEN_QUESTIONS 233): Σ the hardware list's one-time items,"
+        " quantity × (TB for storage) × unit price from the rate card; servers priced by size"
+        " (the smallest listed size with at least the cores asked)"
+    ),
+    "hosting.onprem_subscriptions.v1": (
+        "own servers, year y (v37+): Σ the hardware list's yearly items (licences, antivirus,"
+        " firewall security services) quantity × unit price × (1 + escalation_prices)^y"
+    ),
+    "hardware_list.v1": (
+        "the hardware list for own servers (v35+, OPEN_QUESTIONS 231), per site from the hosting"
+        " sizing: application servers = app_servers, database servers = db_instances, storage"
+        " TB = ceil(storage_gb(om_years) × (1 + backup_factor) / gb_per_tb), firewall and switch"
+        " 2 when the pattern is paired else 1, a load balancer with ≥ load_balancer_min_servers"
+        " application servers, racks = ceil(servers / servers_per_rack), an operating system and"
+        " antivirus per server; a standby site gets ceil(servers × dr_cost_factor). A list, not"
+        " a price"
+    ),
+    "staffing.v1": (
+        "who does each role's work (v34+, OPEN_QUESTIONS 229), decided once for the project from"
+        " the work by role: a role joins if an answer requires it, or work_pd ≥ min_booking_pd,"
+        " or min_booking_pd × rate(role) ≤ work_pd × slowdown × rate(fallback); else its work"
+        " × slowdown goes to the fallback (decided after it). The project manager likewise, from"
+        " the management work, else the team's lead manages; recorded as steps on the lines"
+    ),
     # components (brief 7.1)
     "role_rate.v2": (
         "rate_role = rate card amount × builder.rate_factor_by_builder[builder_type] (v32+,"

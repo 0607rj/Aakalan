@@ -24,6 +24,8 @@ from app.services.extraction.stated_counts import StatedCount, find_stated_count
 from app.services.extraction.support_terms import find_support_hours, find_support_staff
 from app.services.extraction.tender import (
     FoundFeature,
+    FoundInventory,
+    FoundItem,
     FoundValue,
     TenderExtraction,
     UnclearPoint,
@@ -144,6 +146,7 @@ def merge_extractions(
                 merged.chatbot_buyer_systems = ex.chatbot_buyer_systems.model_copy(deep=True)
             else:
                 merged.chatbot_buyer_systems.evidence.extend(ex.chatbot_buyer_systems.evidence)
+    merged.inventory = merged_inventory([ex for _, ex in docs])
     merged.features = list(features.values())
     merged.other_features = list(others.values())
     merged.scope = list(scope.values())
@@ -166,6 +169,40 @@ def merge_extractions(
         if s.feature not in found and (s.feature or s.label.strip().lower() not in names)
     ]
     return merged, changes
+
+
+INVENTORY_LISTS = ("entities", "roles", "screens", "integrations", "hard_problems")
+
+
+def merged_inventory(readings: list[TenderExtraction]) -> FoundInventory | None:
+    """What the system must contain, counted over every file (OPEN_QUESTIONS 225): each list
+    the union by name (an item named in two files is counted once, with both quotes), the
+    classifications from the first file that gives them, several tenants if any file says so.
+    None when a file read by the AI has no count: the independent check then cannot be made
+    and the price waits for a person's look, as for one file (OPEN_QUESTIONS 186)."""
+    if any(ex.reader == "ai" and ex.inventory is None for ex in readings):
+        return None
+    counted = [ex.inventory for ex in readings if ex.inventory is not None]
+    if not counted:
+        return None
+    out = counted[0].model_copy(deep=True)
+    for name in INVENTORY_LISTS:
+        items: dict[str, FoundItem] = {}
+        for inv in counted:
+            for item in getattr(inv, name):
+                key = " ".join(item.name.lower().split())
+                if key in items:
+                    items[key].evidence.extend(item.evidence)
+                else:
+                    items[key] = item.model_copy(deep=True)
+        setattr(out, name, list(items.values()))
+    for field in ("system_class", "quality", "ai_fit", "clarity"):
+        setattr(out, field, next((getattr(i, field) for i in counted if getattr(i, field)), ""))
+    multi = [i for i in counted if i.tenancy != out.tenancy]
+    if multi and out.tenancy == "single":
+        out.tenancy, out.tenancy_evidence = multi[0].tenancy, list(multi[0].tenancy_evidence)
+    out.dropped = sum(i.dropped for i in counted)
+    return out
 
 
 def apply_code_checks(extraction: TenderExtraction, docs: list[Document]) -> TenderExtraction:

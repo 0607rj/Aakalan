@@ -4,7 +4,7 @@ from collections.abc import Sequence
 from dataclasses import dataclass
 from decimal import Decimal
 
-from app.services.engine import spreads
+from app.services.engine import spreads, staffing
 from app.services.engine.context import LineBuilder, PricingContext
 from app.services.engine.inputs import ComponentInstanceIn
 from app.services.engine.money import ONE, ZERO, dsum, paise_to_rupees, to_paise
@@ -637,19 +637,31 @@ def component_line(
             era_scenario=ctx.inp.era_scenario,
         )
     efforts, _ = _task_efforts(t, ci, catalog)
+    team = staff_team(ctx)
+    handed: set[str] = set()
     total = ZERO
     for task, pd in efforts.items():
         for role_key, share in task_role_shares(t, task):
-            rate = t.rate_local(role_key)
-            pd_c = pd * share * compression
+            who, slowdown = team.done_by(role_key) if team else (role_key, ONE)
+            rate = t.rate_local(who)
+            pd_c = pd * share * slowdown * compression
             of = "" if share == ONE else f" × share {share}"
+            slow = ""
+            label = f"{task.value} → {who}"
+            if who != role_key:  # staffing.v1: the specialist is not booked
+                handed.add(role_key)
+                t.param("staffing", "roles", role_key)
+                slow = f" × slowdown {slowdown}"
+                label += f" (no {staffing.plain(role_key)} on the team)"
             cost = t.step(
-                f"{task.value} → {role_key}",
-                f"{pd:.4f} pd{of} × compression {compression:.4f} × ₹{rate}/pd",
+                label,
+                f"{pd:.4f} pd{of}{slow} × compression {compression:.4f} × ₹{rate}/pd",
                 pd_c * rate,
             )
-            t.add_role_pd(role_key, pd_c)
+            t.add_role_pd(who, pd_c)
             total += cost
+    if team and handed:
+        t.add_input(staffing={"formula": staffing.FORMULA_ID, "roles": team.notes(handed)})
     t.add_input(effort_pd=str(dsum(efforts.values()) * compression))
     spreads.clarity(t, ctx.component_clarity(ci))
     spreads.template_match(t)
@@ -658,6 +670,32 @@ def component_line(
     if ci.hard_problem:
         spreads.hard_problem(t)
     return t.finish(total)
+
+
+def staff_team(ctx: PricingContext) -> staffing.Team | None:
+    """The team for the whole project (parameter sets v34+, formula staffing.v1): each role's
+    work summed over every component (after reuse, caps and AI savings, before compression),
+    then decided by engine/staffing.decide. None for older parameter sets."""
+    if ctx.p.staffing is None:
+        return None
+    if ctx.team is None:
+        work: dict[str, Decimal] = {}
+        scratch: LineBuilder | None = None
+        for ci in ctx.inp.components:
+            catalog = ctx.inp.catalog.get(ci.catalog_key)
+            scratch = _scratch(ctx, catalog)
+            efforts, _ = _task_efforts(scratch, ci, catalog)
+            for task, pd in efforts.items():
+                for role, share in task_role_shares(scratch, task):
+                    work[role] = work.get(role, ZERO) + pd * share
+        if scratch is None:
+            ctx.team = staffing.Team(staffing=ctx.p.staffing)
+        else:
+            rates = scratch  # a throw-away trace: the rates as every line prices them
+            ctx.team = staffing.decide(
+                ctx.p.staffing, work, rates.rate_local, lambda key: getattr(ctx.q, key)
+            )
+    return ctx.team
 
 
 def task_role_shares(t: LineBuilder, task: TaskType) -> list[tuple[str, Decimal]]:
@@ -720,12 +758,19 @@ def ai_review_line(
     else:
         t.param("ai_productivity", "review_task")
         total = ZERO
-        for role, role_share in task_role_shares(t, ai.review_task):
+        team = staff_team(ctx)
+        for named, role_share in task_role_shares(t, ai.review_task):
+            role, slowdown = team.done_by(named) if team else (named, ONE)
             rate = t.rate_local(role)
-            role_pd = pd * role_share
+            role_pd = pd * role_share * slowdown
             t.add_role_pd(role, role_pd)
+            slow = f" × slowdown {slowdown}" if role != named else ""
+            if role != named:  # staffing.v1: the specialist is not booked
+                t.param("staffing", "roles", named)
             total += t.step(
-                f"cost → {role}", f"{pd:.4f} pd × share {role_share} × ₹{rate}/pd", role_pd * rate
+                f"cost → {role}",
+                f"{pd:.4f} pd × share {role_share}{slow} × ₹{rate}/pd",
+                role_pd * rate,
             )
     t.add_input(ai_saved_pd=str(saved))
     spreads.clarity(t, ctx.overall_clarity())

@@ -26,7 +26,14 @@ from reportlab.platypus import (
     TableStyle,
 )
 
-from app.services.reports.data import ReportData, fmt_approx, fmt_headline, fmt_money, fmt_range
+from app.services.reports.data import (
+    SOURCE_STATUS,
+    ReportData,
+    fmt_approx,
+    fmt_headline,
+    fmt_money,
+    fmt_range,
+)
 
 NAVY = colors.HexColor("#1F2A44")
 LIGHT = colors.HexColor("#F1F3F7")
@@ -371,6 +378,29 @@ def build_pdf(data: ReportData) -> bytes:
         for q in data.prebid:
             where = f" (clause {q.clause_ref or '-'}, page {q.page})" if q.page else ""
             story.append(_p(f"{q.number}. {q.query}{where}", BODY))
+    if data.sources is not None and data.sources.sources:
+        counts = data.sources.counts
+        story += [
+            PageBreak(),
+            _p("Where every price comes from", H2),
+            _p(
+                f"{len(data.sources.sources)} sources: {counts['published']} published, "
+                f"{counts['worked_out']} worked out from published prices, {counts['estimate']} our "
+                "estimates not yet checked. Every number is worked out by fixed rules from "
+                "these; the AI only reads documents and never sets a price.",
+                BODY,
+            ),
+            _table(
+                ["#", "Source", "What it is", "Status"],
+                [
+                    [s.n, s.title, s.detail + (f" {s.url}" if s.url else "") + f" ({s.version})",
+                     SOURCE_STATUS[s.status]]
+                    for s in data.sources.sources
+                ],
+                [width * 0.06, width * 0.26, width * 0.48, width * 0.2],
+                set(),
+            ),
+        ]  # fmt: skip
     if data.lines:
         story += [PageBreak(), _p("Trace appendix", H2)]
         for ln in data.lines:

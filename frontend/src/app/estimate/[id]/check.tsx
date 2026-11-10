@@ -307,6 +307,8 @@ const NOT_INCLUDED_WHY: Record<
 > = {
   excluded_by_you: "marked not included",
   removed_by_you: "standard part left out on request",
+  not_needed_at_level: "not needed for a feature this simple",
+  client_pays: "the client's own cost",
   not_sure: "not decided yet, quoted separately",
   document_excluded: "the document rules it out",
   document_not_priced: "asked for in the document, not priced here",

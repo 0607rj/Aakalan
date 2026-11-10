@@ -3,6 +3,7 @@
 import * as React from "react";
 import {
   BuildingsIcon,
+  HardDrivesIcon,
   ScalesIcon,
   TimerIcon,
   TreeStructureIcon,
@@ -48,6 +49,12 @@ import {
 import { Downloads } from "./downloads";
 import { RealityCheck } from "./reality";
 import { FeatureStoriesSection } from "./stories";
+import {
+  AiSavingSources,
+  RowSourcesNote,
+  SourcesList,
+  SourcesProvider,
+} from "./sources";
 import { PrerequisiteWarnings, ProjectContextLine } from "../new/parts";
 
 function Fact({ label, value }: { label: string; value: string }) {
@@ -287,6 +294,7 @@ function Headline({ summary }: { summary: QuickSummary }) {
       </dl>
 
       <AiSaving summary={summary} />
+      <AiSavingSources />
 
       <details className="fold group text-sm">
         <summary className="w-fit cursor-pointer list-none rounded font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none [&::-webkit-details-marker]:hidden">
@@ -356,32 +364,15 @@ function MarketBox({ summary }: { summary: QuickSummary }) {
   );
 }
 
-/** "AI saving identified: ₹X (Y%) — passed to client: Z%" (the rest is kept as margin). */
+/** "AI saving: ₹X (Y%), all of it passed on in the price" (OPEN_QUESTIONS 227: nothing is
+ * kept back out of sight). */
 function Passthrough({ summary }: { summary: QuickSummary }) {
   const s = summary.ai_saving;
   if (!s) return null;
   return (
-    <span className="text-sm">
-      <span className="font-medium">
-        AI saving identified:{" "}
-        {formatApprox(s.identified_paise, summary.currency)} ({s.percent}%) —
-        passed to client: {s.passed_percent}%
-      </span>
-      {s.passed_percent < 100 ? (
-        <span className="opacity-60">
-          {" "}
-          The rest is kept as margin; the cost of the work is the same.
-        </span>
-      ) : null}
-      {s.kept_paise ? (
-        <span className="mt-1 block font-medium">
-          AI saving kept: {formatApprox(s.kept_paise, summary.currency)} before
-          GST — your discount room.{" "}
-          <span className="font-normal opacity-60">
-            Internal: shown only to people who can see margin.
-          </span>
-        </span>
-      ) : null}
+    <span className="text-sm font-medium">
+      AI saving: {formatApprox(s.identified_paise, summary.currency)} (
+      {s.percent}%), all of it passed on in the price
     </span>
   );
 }
@@ -649,6 +640,7 @@ function TeamNeeded({
           </table>
         </div>
       ) : null}
+      <LeftOut summary={summary} />
       {summary.support_team.length > 0 && summary.support_years > 0 ? (
         <p className="text-sm text-muted-foreground">
           <strong className="text-foreground">After launch</strong> (each year):{" "}
@@ -662,6 +654,125 @@ function TeamNeeded({
           .
         </p>
       ) : null}
+    </section>
+  );
+}
+
+/** Roles with too little work to book: someone already on the team does it, a little slower
+ * (OPEN_QUESTIONS 229). Roles with no work at all are simply not on the team. */
+function LeftOut({ summary }: { summary: QuickSummary }) {
+  const rows = summary.team_left_out ?? [];
+  if (rows.length === 0) return null;
+  const days = (v: string | number) => formatDecimal(Number(v), 1);
+  return (
+    <div className="flex flex-col gap-1.5 text-sm">
+      <p className="font-medium">Not booked for this project</p>
+      <ul className="flex flex-col gap-1 text-muted-foreground">
+        {rows.map((r) => (
+          <li key={r.role}>
+            <span className="text-foreground">{r.label}</span>: only{" "}
+            {days(r.work_days)} days of work, less than the{" "}
+            {days(r.min_booking_days)} days one is booked for, so the{" "}
+            {r.done_by_label.toLowerCase()} does it (a little slower).
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/** What to buy for own servers (OPEN_QUESTIONS 231): sizes and quantities worked out from the
+ * people online at once, the uptime and the data kept. A list only: no prices yet. */
+function HardwareList({ summary }: { summary: QuickSummary }) {
+  const hw = summary.hardware;
+  if (!hw) return null;
+  const money = (paise: number | null | undefined) =>
+    formatApprox(paise ?? null, summary.currency);
+  const priced = hw.once_paise != null;
+  const free = priced ? hw.items.filter((i) => !i.unit_paise) : [];
+  const shown = hw.items.filter((i) => !free.includes(i));
+  const freeNames = [...new Set(free.map((i) => i.label))];
+  const sites = [
+    { key: "main", title: "Main site" },
+    {
+      key: "standby",
+      title: "Standby site (takes over if the main one fails)",
+    },
+  ].filter((s) => shown.some((i) => i.site === s.key));
+  const who =
+    hw.who_buys === "client_buys"
+      ? "The client buys these, so they are not in the price."
+      : priced
+        ? "This is in the price."
+        : "The servers and storage are in the price; the rest is not priced yet.";
+  return (
+    <section className="flex flex-col gap-4">
+      {priced ? (
+        <p>
+          <strong>{money(hw.once_paise)}</strong> to buy, once
+          {hw.yearly_paise ? (
+            <>
+              , then <strong>{money(hw.yearly_paise)}</strong> a year for
+              licences
+            </>
+          ) : null}{" "}
+          <span className="text-sm text-muted-foreground">(before tax)</span>
+        </p>
+      ) : null}
+      <p className="text-sm text-muted-foreground">
+        {who} Our estimate from the number of users and the uptime. If the
+        tender lists its own hardware, use that instead.
+      </p>
+      {sites.map((site) => (
+        <div key={site.key} className="flex flex-col gap-2">
+          {sites.length > 1 ? (
+            <h3 className="text-base font-semibold">{site.title}</h3>
+          ) : null}
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b text-left text-muted-foreground">
+                <th className="py-2 pr-4 font-medium">Item</th>
+                <th className="py-2 pr-4 text-right font-medium">How many</th>
+                {priced ? (
+                  <th className="py-2 text-right font-medium">Price</th>
+                ) : null}
+              </tr>
+            </thead>
+            <tbody className="divide-y">
+              {shown
+                .filter((i) => i.site === site.key)
+                .map((i) => (
+                  <tr key={`${i.site}-${i.key}`}>
+                    <td className="py-2 pr-4">{i.label}</td>
+                    <td className="py-2 pr-4 text-right tabular-nums">
+                      {i.quantity}
+                    </td>
+                    {priced ? (
+                      <td className="py-2 text-right whitespace-nowrap tabular-nums">
+                        {money(i.amount_paise)}
+                        {i.yearly ? " a year" : ""}
+                      </td>
+                    ) : null}
+                  </tr>
+                ))}
+            </tbody>
+          </table>
+        </div>
+      ))}
+      {freeNames.length > 0 ? (
+        <p className="text-sm text-muted-foreground">
+          Free, no licence fee: {freeNames.join(", ").toLowerCase()}.
+        </p>
+      ) : null}
+      {hw.client_costs.length > 0 ? (
+        <p className="text-sm text-muted-foreground">
+          Not in the price, paid by the client:{" "}
+          {hw.client_costs.join("; ").toLowerCase()}.
+        </p>
+      ) : null}
+      <p className="text-sm text-muted-foreground">
+        Sizes and the reason for each item are in the Excel download.
+      </p>
     </section>
   );
 }
@@ -712,7 +823,10 @@ function FeatureCosts({ summary }: { summary: QuickSummary }) {
           <tbody className="divide-y">
             {summary.feature_costs.map((f) => (
               <tr key={f.label}>
-                <td className="py-2 pr-4">{f.label}</td>
+                <td className="py-2 pr-4 align-top">
+                  {f.label}
+                  <RowSourcesNote row={`feature:${f.label}`} />
+                </td>
                 <td className="py-2 pr-4 text-muted-foreground">
                   {f.level ?? "—"}
                 </td>
@@ -860,6 +974,7 @@ function CostItems({ summary }: { summary: QuickSummary }) {
                           {workRange(item)} of work
                         </span>
                       ) : null}
+                      <RowSourcesNote row={`item:${item.group}:${item.key}`} />
                     </span>
                     <span className="flex flex-col items-end">
                       <span className="font-medium tabular-nums">
@@ -1112,126 +1227,147 @@ function SummaryView({
   const hasMarket =
     Boolean(summary.market) || summary.similar_projects.length > 0;
   return (
-    <div className="flex flex-col gap-5">
-      <AppHero overlap>
-        <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-6">
-          <div>
-            <Link
-              href="/projects"
-              className="group inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
-            >
-              <span
-                aria-hidden="true"
-                className="inline-block rotate-180 transition-transform group-hover:-translate-x-0.5"
+    <SourcesProvider estimateId={summary.estimate_id}>
+      <div className="flex flex-col gap-5">
+        <AppHero overlap>
+          <div className="flex flex-wrap items-end justify-between gap-x-8 gap-y-6">
+            <div>
+              <Link
+                href="/projects"
+                className="group inline-flex items-center gap-1 text-sm text-muted-foreground transition-colors hover:text-foreground"
               >
-                <Chevron />
-              </span>
-              Your estimates
-            </Link>
-            <h1 className="font-display mt-4 max-w-3xl text-[clamp(2.2rem,5vw,3.5rem)] leading-[1.02] text-balance">
-              {summary.name}
-            </h1>
-            <p className="mt-3 text-sm text-muted-foreground">
-              {formatDate(summary.created_at)}
-              {summary.indicative
-                ? " · Based on market prices and typical effort, not your own costs: a guide."
-                : ""}
-            </p>
+                <span
+                  aria-hidden="true"
+                  className="inline-block rotate-180 transition-transform group-hover:-translate-x-0.5"
+                >
+                  <Chevron />
+                </span>
+                Your estimates
+              </Link>
+              <h1 className="font-display mt-4 max-w-3xl text-[clamp(2.2rem,5vw,3.5rem)] leading-[1.02] text-balance">
+                {summary.name}
+              </h1>
+              <p className="mt-3 text-sm text-muted-foreground">
+                {formatDate(summary.created_at)}
+                {summary.indicative
+                  ? " · Based on market prices and typical effort, not your own costs: a guide."
+                  : ""}
+              </p>
+            </div>
+            <div className="flex flex-wrap items-start gap-3">
+              <Downloads
+                estimateId={summary.estimate_id}
+                name={summary.name}
+                blocked={exportBlocked(summary)}
+              />
+              <SaveTemplate summary={summary} />
+            </div>
           </div>
-          <div className="flex flex-wrap items-start gap-3">
-            <Downloads
+        </AppHero>
+
+        {summary.feasible ? (
+          <>
+            <Headline summary={summary} />
+            <ProjectContextCard summary={summary} />
+            <IndependentCheckCard summary={summary} onChange={onChange} />
+            <SizeCheckCard summary={summary} />
+            <RealityCheck summary={summary} />
+            <OpenAnswers summary={summary} options={options} />
+            <BidCheckCard summary={summary} />
+            <CostSummary summary={summary} />
+            <WhatsIncluded summary={summary} options={options} />
+            <FeatureStoriesSection summary={summary} onChange={onChange} />
+            <OngoingCosts summary={summary} />
+
+            {hasTeam ? (
+              <Disclosure
+                title="Team and hours"
+                icon={UsersThreeIcon}
+                hint={effortHint(summary)}
+              >
+                <TeamAndHours summary={summary} />
+              </Disclosure>
+            ) : null}
+
+            {summary.hardware ? (
+              <Disclosure
+                title="Hardware to buy"
+                icon={HardDrivesIcon}
+                hint={
+                  summary.hardware.who_buys === "client_buys"
+                    ? "Servers, network and licences the client buys"
+                    : "Servers, network and licences for your own server room"
+                }
+              >
+                <HardwareList summary={summary} />
+              </Disclosure>
+            ) : null}
+
+            <Disclosure
+              title="Detailed breakdown"
+              icon={TreeStructureIcon}
+              hint="Each feature, where the money goes, every cost item"
+            >
+              <FeatureCosts summary={summary} />
+              <MoneyBreakdown summary={summary} />
+              <CostItems summary={summary} />
+              <ClientPays summary={summary} />
+            </Disclosure>
+
+            <SourcesList />
+
+            {hasMarket ? (
+              <Disclosure
+                title="Market comparison"
+                icon={BuildingsIcon}
+                hint="What similar real projects were bought for"
+              >
+                <MarketBox summary={summary} />
+                <SimilarProjects summary={summary} />
+              </Disclosure>
+            ) : null}
+
+            <CompareOptions
               estimateId={summary.estimate_id}
-              name={summary.name}
-              blocked={exportBlocked(summary)}
+              currency={summary.currency}
+              country={summary.country}
             />
-            <SaveTemplate summary={summary} />
-          </div>
-        </div>
-      </AppHero>
-
-      {summary.feasible ? (
-        <>
-          <Headline summary={summary} />
-          <ProjectContextCard summary={summary} />
-          <IndependentCheckCard summary={summary} onChange={onChange} />
-          <SizeCheckCard summary={summary} />
-          <RealityCheck summary={summary} />
-          <OpenAnswers summary={summary} options={options} />
-          <BidCheckCard summary={summary} />
-          <CostSummary summary={summary} />
-          <WhatsIncluded summary={summary} options={options} />
-          <FeatureStoriesSection summary={summary} onChange={onChange} />
-          <OngoingCosts summary={summary} />
-
-          {hasTeam ? (
-            <Disclosure
-              title="Team and hours"
-              icon={UsersThreeIcon}
-              hint={effortHint(summary)}
+          </>
+        ) : (
+          <section className="slab app-rise flex flex-col items-start gap-4 px-6 py-8 sm:px-10">
+            <SectionTitle icon={TimerIcon} tone="warning">
+              The deadline is too short to give a price
+            </SectionTitle>
+            <p className="max-w-2xl text-muted-foreground">{summary.message}</p>
+            <Link
+              href="/estimate/new"
+              className={buttonVariants({ size: "lg" })}
             >
-              <TeamAndHours summary={summary} />
-            </Disclosure>
-          ) : null}
+              Change the deadline
+            </Link>
+          </section>
+        )}
 
-          <Disclosure
-            title="Detailed breakdown"
-            icon={TreeStructureIcon}
-            hint="Each feature, where the money goes, every cost item"
-          >
-            <FeatureCosts summary={summary} />
-            <MoneyBreakdown summary={summary} />
-            <CostItems summary={summary} />
-            <ClientPays summary={summary} />
-          </Disclosure>
-
-          {hasMarket ? (
-            <Disclosure
-              title="Market comparison"
-              icon={BuildingsIcon}
-              hint="What similar real projects were bought for"
-            >
-              <MarketBox summary={summary} />
-              <SimilarProjects summary={summary} />
-            </Disclosure>
-          ) : null}
-
-          <CompareOptions
-            estimateId={summary.estimate_id}
+        {user.is_owner ? (
+          <BidResultCard
+            projectId={summary.project_id}
             currency={summary.currency}
-            country={summary.country}
           />
-        </>
-      ) : (
-        <section className="slab app-rise flex flex-col items-start gap-4 px-6 py-8 sm:px-10">
-          <SectionTitle icon={TimerIcon} tone="warning">
-            The deadline is too short to give a price
-          </SectionTitle>
-          <p className="max-w-2xl text-muted-foreground">{summary.message}</p>
+        ) : null}
+
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-3 pt-6">
           <Link href="/estimate/new" className={buttonVariants({ size: "lg" })}>
-            Change the deadline
+            Start another estimate
           </Link>
-        </section>
-      )}
-
-      {user.is_owner ? (
-        <BidResultCard
-          projectId={summary.project_id}
-          currency={summary.currency}
-        />
-      ) : null}
-
-      <div className="flex flex-wrap items-center gap-x-6 gap-y-3 pt-6">
-        <Link href="/estimate/new" className={buttonVariants({ size: "lg" })}>
-          Start another estimate
-        </Link>
-        <Link
-          href={`/projects/${summary.project_id}?tab=estimate`}
-          className="text-sm text-muted-foreground underline hover:text-foreground"
-        >
-          Expert view
-        </Link>
+          <Link
+            href={`/projects/${summary.project_id}?tab=estimate`}
+            className="text-sm text-muted-foreground underline hover:text-foreground"
+          >
+            Expert view
+          </Link>
+        </div>
       </div>
-    </div>
+    </SourcesProvider>
   );
 }
 

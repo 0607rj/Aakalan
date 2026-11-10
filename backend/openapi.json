@@ -879,7 +879,7 @@
           "projects"
         ],
         "summary": "Put Questionnaire",
-        "description": "Replace the project's answers. Keys left out fall back to parameter-set defaults.\nRestricted keys (margin) can only be changed by finance/admin and are kept otherwise.",
+        "description": "Replace the project's answers. Keys left out fall back to parameter-set defaults.\nMargin and safety buffer are one rule for everyone and can't be answered (OQ 227).",
         "operationId": "put_questionnaire_projects__project_id__questionnaire_put",
         "security": [
           {
@@ -1910,6 +1910,54 @@
         }
       }
     },
+    "/estimates/{estimate_id}/sources": {
+      "get": {
+        "tags": [
+          "quick estimate"
+        ],
+        "summary": "Sources Of",
+        "description": "Where every price comes from: the numbered sources and each results-page row's sources,\nwork, rates and asking sentences, from the engine's trace (OPEN_QUESTIONS 226).",
+        "operationId": "sources_of_estimates__estimate_id__sources_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "estimate_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Estimate Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EstimateSources"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/estimates/{estimate_id}/check/confirm": {
       "post": {
         "tags": [
@@ -2895,7 +2943,7 @@
           "settings"
         ],
         "summary": "Read Settings",
-        "description": "The company's settings; the margin only for finance and admin.",
+        "description": "The company's settings: facts about its team. Margin, safety buffer and how much of the\nAI saving is passed on are no longer company choices (OPEN_QUESTIONS 227).",
         "operationId": "read_settings_settings_get",
         "responses": {
           "200": {
@@ -2920,7 +2968,7 @@
           "settings"
         ],
         "summary": "Update Settings",
-        "description": "Margin and effort settings apply to every new estimate; finance or admin only.",
+        "description": "Team settings apply to every new estimate; finance or admin only.",
         "operationId": "update_settings_settings_put",
         "requestBody": {
           "content": {
@@ -3733,6 +3781,40 @@
         "title": "AiSavingOut",
         "description": "The AI saving the engine identified and how much of it the price passes to the client\n(the rest is kept as margin; line commercial.ai_saving_kept.v1)."
       },
+      "AiTask": {
+        "properties": {
+          "task": {
+            "type": "string",
+            "title": "Task"
+          },
+          "saving_percent": {
+            "type": "integer",
+            "title": "Saving Percent"
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "medium",
+                  "low"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence"
+          }
+        },
+        "type": "object",
+        "required": [
+          "task",
+          "saving_percent",
+          "confidence"
+        ],
+        "title": "AiTask"
+      },
       "AnswerIn": {
         "properties": {
           "key": {
@@ -3756,6 +3838,44 @@
           "key"
         ],
         "title": "AnswerIn"
+      },
+      "Asked": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "page": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Page"
+          },
+          "clause": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Clause"
+          }
+        },
+        "type": "object",
+        "required": [
+          "text",
+          "page",
+          "clause"
+        ],
+        "title": "Asked",
+        "description": "A document sentence (or typed feature) that asked for the work."
       },
       "AssumedAnswer": {
         "properties": {
@@ -4607,6 +4727,53 @@
           "amount_paise"
         ],
         "title": "CheckLine"
+      },
+      "Cite": {
+        "properties": {
+          "text": {
+            "type": "string",
+            "title": "Text"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          },
+          "year": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Year"
+          },
+          "checked": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Checked"
+          }
+        },
+        "type": "object",
+        "required": [
+          "text"
+        ],
+        "title": "Cite",
+        "description": "One piece of evidence inside a source (a page of published hours, a study)."
       },
       "ClientPays": {
         "properties": {
@@ -5654,6 +5821,13 @@
               }
             ]
           },
+          "files": {
+            "items": {
+              "$ref": "#/components/schemas/DocumentInfo"
+            },
+            "type": "array",
+            "title": "Files"
+          },
           "llm_model": {
             "anyOf": [
               {
@@ -5686,6 +5860,7 @@
           "status",
           "error",
           "extraction",
+          "files",
           "llm_model",
           "llm_input_tokens",
           "llm_output_tokens"
@@ -6279,6 +6454,46 @@
           "lines"
         ],
         "title": "EstimateOut"
+      },
+      "EstimateSources": {
+        "properties": {
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/Source"
+            },
+            "type": "array",
+            "title": "Sources"
+          },
+          "rows": {
+            "items": {
+              "$ref": "#/components/schemas/RowSources"
+            },
+            "type": "array",
+            "title": "Rows"
+          },
+          "counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "propertyNames": {
+              "enum": [
+                "published",
+                "worked_out",
+                "estimate",
+                "your_choice"
+              ]
+            },
+            "type": "object",
+            "title": "Counts"
+          }
+        },
+        "type": "object",
+        "required": [
+          "sources",
+          "rows",
+          "counts"
+        ],
+        "title": "EstimateSources"
       },
       "EstimateSummary": {
         "properties": {
@@ -7444,6 +7659,163 @@
         "type": "object",
         "title": "HTTPValidationError"
       },
+      "HardwareItem": {
+        "properties": {
+          "key": {
+            "type": "string",
+            "title": "Key"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "spec": {
+            "type": "string",
+            "title": "Spec"
+          },
+          "quantity": {
+            "type": "integer",
+            "title": "Quantity"
+          },
+          "site": {
+            "type": "string",
+            "enum": [
+              "main",
+              "standby"
+            ],
+            "title": "Site"
+          },
+          "why": {
+            "type": "string",
+            "title": "Why"
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "sized",
+              "document"
+            ],
+            "title": "Source",
+            "default": "sized"
+          },
+          "unit_paise": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Unit Paise"
+          },
+          "yearly": {
+            "type": "boolean",
+            "title": "Yearly",
+            "default": false
+          },
+          "rate_keys": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Rate Keys",
+            "default": []
+          },
+          "tb": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tb"
+          },
+          "amount_paise": {
+            "type": "integer",
+            "title": "Amount Paise",
+            "readOnly": true
+          }
+        },
+        "type": "object",
+        "required": [
+          "key",
+          "label",
+          "spec",
+          "quantity",
+          "site",
+          "why",
+          "amount_paise"
+        ],
+        "title": "HardwareItem"
+      },
+      "HardwareList": {
+        "properties": {
+          "who_buys": {
+            "type": "string",
+            "enum": [
+              "in_price",
+              "client_buys"
+            ],
+            "title": "Who Buys"
+          },
+          "parameter_set_version": {
+            "type": "string",
+            "title": "Parameter Set Version"
+          },
+          "source": {
+            "type": "string",
+            "title": "Source"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/HardwareItem"
+            },
+            "type": "array",
+            "title": "Items"
+          },
+          "client_costs": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Client Costs",
+            "default": []
+          },
+          "once_paise": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Once Paise"
+          },
+          "yearly_paise": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Yearly Paise"
+          }
+        },
+        "type": "object",
+        "required": [
+          "who_buys",
+          "parameter_set_version",
+          "source",
+          "items"
+        ],
+        "title": "HardwareList"
+      },
       "Health": {
         "properties": {
           "status": {
@@ -7925,6 +8297,45 @@
         "title": "KeyAnswer",
         "description": "One of the answers that move the price most, with the clause that gives it and the\npre-bid queries about it. The form orders them by `impact_paise` (GET /documents/{id}/form)."
       },
+      "LeftOut": {
+        "properties": {
+          "role": {
+            "type": "string",
+            "title": "Role"
+          },
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "done_by": {
+            "type": "string",
+            "title": "Done By"
+          },
+          "done_by_label": {
+            "type": "string",
+            "title": "Done By Label"
+          },
+          "work_days": {
+            "type": "string",
+            "title": "Work Days"
+          },
+          "min_booking_days": {
+            "type": "string",
+            "title": "Min Booking Days"
+          }
+        },
+        "type": "object",
+        "required": [
+          "role",
+          "label",
+          "done_by",
+          "done_by_label",
+          "work_days",
+          "min_booking_days"
+        ],
+        "title": "LeftOut",
+        "description": "A role not booked for this project (parameter sets v34+, OPEN_QUESTIONS 229): it had too\nlittle work for its minimum booking, so someone already on the team does it, a little\nslower. Read from the engine's lines (inputs.staffing); only regroups."
+      },
       "LevelOut": {
         "properties": {
           "key": {
@@ -8224,6 +8635,8 @@
             "enum": [
               "excluded_by_you",
               "removed_by_you",
+              "not_needed_at_level",
+              "client_pays",
               "not_sure",
               "document_excluded",
               "document_not_priced"
@@ -10565,6 +10978,24 @@
             ],
             "title": "Team People"
           },
+          "team_left_out": {
+            "items": {
+              "$ref": "#/components/schemas/LeftOut"
+            },
+            "type": "array",
+            "title": "Team Left Out",
+            "default": []
+          },
+          "hardware": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/HardwareList"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "traditional_build_months": {
             "anyOf": [
               {
@@ -10856,6 +11287,34 @@
           "variance_share"
         ],
         "title": "RangeDriver"
+      },
+      "Rate": {
+        "properties": {
+          "label": {
+            "type": "string",
+            "title": "Label"
+          },
+          "amount": {
+            "type": "string",
+            "title": "Amount"
+          },
+          "currency": {
+            "type": "string",
+            "title": "Currency"
+          },
+          "unit": {
+            "type": "string",
+            "title": "Unit"
+          }
+        },
+        "type": "object",
+        "required": [
+          "label",
+          "amount",
+          "currency",
+          "unit"
+        ],
+        "title": "Rate"
       },
       "RateCard-Input": {
         "properties": {
@@ -11842,6 +12301,62 @@
         ],
         "title": "RoleRate"
       },
+      "RowSources": {
+        "properties": {
+          "row": {
+            "type": "string",
+            "title": "Row"
+          },
+          "sources": {
+            "items": {
+              "type": "integer"
+            },
+            "type": "array",
+            "title": "Sources"
+          },
+          "person_days": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Person Days"
+          },
+          "rates": {
+            "items": {
+              "$ref": "#/components/schemas/Rate"
+            },
+            "type": "array",
+            "title": "Rates",
+            "default": []
+          },
+          "asked": {
+            "items": {
+              "$ref": "#/components/schemas/Asked"
+            },
+            "type": "array",
+            "title": "Asked",
+            "default": []
+          },
+          "ai_tasks": {
+            "items": {
+              "$ref": "#/components/schemas/AiTask"
+            },
+            "type": "array",
+            "title": "Ai Tasks",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "row",
+          "sources"
+        ],
+        "title": "RowSources"
+      },
       "SanityCheck": {
         "properties": {
           "key": {
@@ -12480,6 +12995,96 @@
           "available"
         ],
         "title": "SizeCheckOut"
+      },
+      "Source": {
+        "properties": {
+          "n": {
+            "type": "integer",
+            "title": "N"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "rate",
+              "hours",
+              "setting",
+              "ai_saving",
+              "answers",
+              "margin"
+            ],
+            "title": "Kind"
+          },
+          "title": {
+            "type": "string",
+            "title": "Title"
+          },
+          "detail": {
+            "type": "string",
+            "title": "Detail"
+          },
+          "url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Url"
+          },
+          "version": {
+            "type": "string",
+            "title": "Version"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "published",
+              "worked_out",
+              "estimate",
+              "your_choice"
+            ],
+            "title": "Status"
+          },
+          "confidence": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Confidence"
+          },
+          "values": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array",
+            "title": "Values",
+            "default": []
+          },
+          "cites": {
+            "items": {
+              "$ref": "#/components/schemas/Cite"
+            },
+            "type": "array",
+            "title": "Cites",
+            "default": []
+          }
+        },
+        "type": "object",
+        "required": [
+          "n",
+          "kind",
+          "title",
+          "detail",
+          "version",
+          "status"
+        ],
+        "title": "Source"
       },
       "SourceRef": {
         "properties": {

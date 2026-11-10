@@ -1,6 +1,7 @@
-"""Company settings: how *this* company prices (margin, safety buffer, how lean or thorough its
-build and support effort is). Applied on top of the published parameter set when an estimate is
-built, and recorded in the estimate snapshot, so every estimate stays reproducible."""
+"""Company settings: facts about *this* company's team (its day rates, how much it uses AI
+tools, how lean or thorough its build and support effort is). Applied on top of the published
+parameter set when an estimate is built, and recorded in the estimate snapshot, so every
+estimate stays reproducible."""
 
 from decimal import Decimal
 from typing import Literal
@@ -17,16 +18,18 @@ COMPANY = "company"  # suffix on a rate card version that carries this company's
 
 
 class CompanySettings(BaseModel):
-    margin_percent: Decimal | None = Field(default=None, ge=0, le=1)  # None = parameter default
-    contingency_percent: Decimal | None = Field(default=None, ge=0, le=1)  # None = from clarity
+    # No longer used: the builder's profit and the safety buffer are one published rule for
+    # everyone, never a company's choice (OPEN_QUESTIONS 227); kept so old saved settings load.
+    margin_percent: Decimal | None = Field(default=None, ge=0, le=1)
+    contingency_percent: Decimal | None = Field(default=None, ge=0, le=1)
     build_effort_multiplier: Decimal = Field(default=ONE, ge=Decimal("0.3"), le=Decimal(3))
     support_effort_multiplier: Decimal = Field(default=ONE, ge=Decimal("0.3"), le=Decimal(3))
     # The company's own cost per person-day by role (rupees), replacing public market averages.
     role_day_rates: dict[str, Decimal] = {}
     # How much the company's team uses AI tools (None = the parameter set's default).
     team_ai_maturity: Literal["none", "low", "medium", "high"] | None = None
-    # How much of the AI saving the price passes to the client (the quick estimate's
-    # ai_passthrough answer; None = the question's default, all). OPEN_QUESTIONS 173.
+    # No longer used: the whole AI saving is always passed on (OPEN_QUESTIONS 227); kept so
+    # old saved settings still load. Was the ai_passthrough answer (OPEN_QUESTIONS 173).
     ai_passthrough: Literal["all", "most", "half", "keep"] | None = None
 
 
@@ -47,13 +50,10 @@ def save_company_settings(db: Session, org_id: str, settings: CompanySettings) -
 
 
 def apply_company_settings(params: ParameterSet, settings: CompanySettings) -> ParameterSet:
-    """Parameter set as this company uses it: margin/buffer defaults replaced, calibration dials
-    multiplied by the company's effort adjustments."""
+    """Parameter set as this company uses it: facts about its team (how much it uses AI tools,
+    its effort adjustments). A saved margin or safety buffer is ignored: those are one rule
+    for everyone, shown with their source (OPEN_QUESTIONS 227)."""
     defaults = dict(params.defaults.values)
-    if settings.margin_percent is not None:
-        defaults["margin_percent"] = str(settings.margin_percent)
-    if settings.contingency_percent is not None:
-        defaults["contingency_percent"] = str(settings.contingency_percent)
     if settings.team_ai_maturity is not None:
         defaults["team_ai_maturity"] = settings.team_ai_maturity
     base = params.calibration or Calibration(source="none")
