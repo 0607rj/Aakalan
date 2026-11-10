@@ -287,6 +287,10 @@ backend/
                           #   app and database share a 16-core server when they fit; yearly licences
                           #   question `hardware_supply` (own server room only): the client may buy the
                           #   hardware itself, list shown out of the price (OPEN_QUESTIONS 235)
+                          #   parameters v38+ (OPEN_QUESTIONS 236): a small site on own servers is one
+                          #   server, firewall and switch at 99.5% (`small_site.single_on_own_servers`);
+                          #   bought hardware, its AMC and licences carry a reseller's margin
+                          #   (`commercial.bought_items`, formula commercial.margin.v2)
                           #   catalog v7+: a tech-stack `section` per component (core, web,
                           #   mobile, ecommerce, ai_ml, security, ...) and a `url` per source
                           #   catalog v8 (OPEN_QUESTIONS 213): + 15 industry blocks (education,

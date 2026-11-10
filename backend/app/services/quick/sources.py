@@ -75,6 +75,9 @@ class Source(BaseModel):
     confidence: str | None = None  # hours: the catalog's own confidence word
     values: list[str] = []  # settings: the values this estimate used ("medium = 1.0")
     cites: list[Cite] = []
+    amount: str | None = None  # rates: the price (Decimal string, major units)
+    currency: str | None = None  # rates: its currency
+    role: bool = False  # rates: a person's day rate (role.*)
 
 
 class Rate(BaseModel):
@@ -178,6 +181,9 @@ class _Collector:
                 url=item.get("source_url"),
                 version=f"rate card {item.get('rate_card_version', '')}",
                 status=_rate_status(item),
+                amount=str(item["amount"]) if item.get("amount") is not None else None,
+                currency=str(item.get("currency") or "") or None,
+                role=str(item["key"]).startswith("role."),
             ),
         )
 

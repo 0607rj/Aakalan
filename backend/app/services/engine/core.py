@@ -160,6 +160,7 @@ def _calculate(inp: EstimateInput) -> EstimateResult:
         centre,
         # a range driver of its own from v23, so older estimates reprice identically
         f"Shared: {spread.name}" if spread and centre == "median" else "",
+        p.commercial.bought_items,
     )
     client_paid = client_paid_lines(ctx)
     notes = client_paid_notes(ctx)

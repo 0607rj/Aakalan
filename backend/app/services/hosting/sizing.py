@@ -112,13 +112,23 @@ def _single_is_enough(t: LineBuilder, sla: str, at_peak: int | None = None) -> b
     small_app_server_max_vcpus), at an uptime level in small_site.single_for_sla, runs on one
     server, not two with a load balancer. A single cloud server is itself covered at 99.5%
     (small_site.source). Servers follow the load and the uptime answer only, not how many
-    features are built; bigger loads keep pattern_by_sla."""
+    features are built; bigger loads keep pattern_by_sla. Parameter sets v38+: on own servers
+    too (small_site.single_on_own_servers), up to single_max_vcpus."""
     rule = t.ctx.p.hosting.small_site
     if rule is None or sla not in rule.single_for_sla:
         return False
+    # v38+ (OPEN_QUESTIONS 236): own servers have no small cloud server price; the rule holds
+    # there too, up to single_max_vcpus
+    own = (
+        t.ctx.q.hosting_provider == "on_prem"
+        and rule.single_on_own_servers
+        and rule.single_max_vcpus is not None
+    )
     small_max = t.ctx.p.hosting.small_app_server_max_vcpus
     small_key = f"cloud.{t.ctx.q.hosting_provider}.app_server_small.month"
-    if small_max is None or small_key not in t.ctx.rates:
+    if own:
+        t.param("hosting", "small_site", "single_on_own_servers")
+    elif small_max is None or small_key not in t.ctx.rates:
         return False
     peak: int = t.driver("peak_concurrent_users") if at_peak is None else at_peak
     per_vcpu: Decimal = t.param("hosting", "concurrent_users_per_vcpu")

@@ -13073,6 +13073,33 @@
             "type": "array",
             "title": "Cites",
             "default": []
+          },
+          "amount": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Amount"
+          },
+          "currency": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Currency"
+          },
+          "role": {
+            "type": "boolean",
+            "title": "Role",
+            "default": false
           }
         },
         "type": "object",

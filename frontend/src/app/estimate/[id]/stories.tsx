@@ -37,9 +37,12 @@ function lines(text: string): string[] {
 export function FeatureStoriesSection({
   summary,
   onChange,
+  bare = false,
 }: {
   summary: QuickSummary;
   onChange: (summary: QuickSummary) => void;
+  /** inside another fold: a heading, not a fold of its own */
+  bare?: boolean;
 }) {
   const user = useCurrentUser();
   const canEdit = EDITORS.has(user.role) && !user.viewed_by_owner;
@@ -130,98 +133,111 @@ export function FeatureStoriesSection({
     }
   }
 
+  const hint =
+    total > 0
+      ? `${total} thing${total === 1 ? "" : "s"} people can do, feature by feature`
+      : "Break each feature into what people can do with it";
+  const body = (
+    <div className="flex flex-col gap-5">
+      <p className="max-w-2xl text-sm text-muted-foreground">
+        One line per thing a person can do (a user story). They show what each
+        feature&apos;s price covers and double-check the size of the build.
+        Changing them never changes the price.
+      </p>
+
+      {draft ? (
+        <div className="flex flex-col gap-4">
+          {data.features.map((f) => (
+            <label key={f.key} className="flex flex-col gap-2">
+              <span className="font-medium">{f.label}</span>
+              <textarea
+                value={draft[f.key] ?? ""}
+                onChange={(e) =>
+                  setDraft({ ...draft, [f.key]: e.target.value })
+                }
+                rows={Math.min(
+                  10,
+                  Math.max(2, (draft[f.key] ?? "").split("\n").length),
+                )}
+                placeholder="One line each, e.g. “A candidate can apply for a job”"
+                className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+              />
+            </label>
+          ))}
+        </div>
+      ) : (
+        <ul className="flex flex-col divide-y border-y">
+          {data.features.map((f) => (
+            <FeatureRow
+              key={f.key}
+              feature={f}
+              amount={cost.get(f.label)?.amount_paise ?? null}
+              money={money}
+            />
+          ))}
+        </ul>
+      )}
+
+      {note ? <p className="text-sm">{note}</p> : null}
+      <ErrorNotice message={error} />
+
+      {canEdit ? (
+        <div className="flex flex-wrap items-center gap-3">
+          {draft ? (
+            <>
+              <Button onClick={save} disabled={busy !== null}>
+                {busy === "save" ? "Saving…" : "Save"}
+              </Button>
+              <Button
+                variant="ghost"
+                onClick={() => {
+                  setDraft(null);
+                  setNote(null);
+                }}
+                disabled={busy !== null}
+              >
+                Cancel
+              </Button>
+            </>
+          ) : (
+            <>
+              {missing.length > 0 && data.can_draft ? (
+                <Button onClick={writeForMe} disabled={busy !== null}>
+                  {busy === "draft" ? "Writing…" : "Break it into user stories"}
+                </Button>
+              ) : null}
+              <Button
+                variant="outline"
+                onClick={() => edit()}
+                disabled={busy !== null}
+              >
+                {total > 0 ? "Edit" : "Write them myself"}
+              </Button>
+            </>
+          )}
+        </div>
+      ) : null}
+    </div>
+  );
+  if (bare)
+    return (
+      <section className="flex flex-col gap-3">
+        <div>
+          <h3 className="text-base font-semibold">
+            What each feature includes
+          </h3>
+          <p className="text-sm text-muted-foreground">{hint}</p>
+        </div>
+        {body}
+      </section>
+    );
   return (
     <Disclosure
       title="What each feature includes"
       icon={ListBulletsIcon}
-      hint={
-        total > 0
-          ? `${total} thing${total === 1 ? "" : "s"} people can do, feature by feature`
-          : "Break each feature into what people can do with it"
-      }
+      hint={hint}
     >
-      <div className="flex flex-col gap-5">
-        <p className="max-w-2xl text-sm text-muted-foreground">
-          One line per thing a person can do (a user story). They show what each
-          feature&apos;s price covers and double-check the size of the build.
-          Changing them never changes the price.
-        </p>
-
-        {draft ? (
-          <div className="flex flex-col gap-4">
-            {data.features.map((f) => (
-              <label key={f.key} className="flex flex-col gap-2">
-                <span className="font-medium">{f.label}</span>
-                <textarea
-                  value={draft[f.key] ?? ""}
-                  onChange={(e) =>
-                    setDraft({ ...draft, [f.key]: e.target.value })
-                  }
-                  rows={Math.min(
-                    10,
-                    Math.max(2, (draft[f.key] ?? "").split("\n").length),
-                  )}
-                  placeholder="One line each, e.g. “A candidate can apply for a job”"
-                  className="w-full rounded-lg border bg-background px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                />
-              </label>
-            ))}
-          </div>
-        ) : (
-          <ul className="flex flex-col divide-y border-y">
-            {data.features.map((f) => (
-              <FeatureRow
-                key={f.key}
-                feature={f}
-                amount={cost.get(f.label)?.amount_paise ?? null}
-                money={money}
-              />
-            ))}
-          </ul>
-        )}
-
-        {note ? <p className="text-sm">{note}</p> : null}
-        <ErrorNotice message={error} />
-
-        {canEdit ? (
-          <div className="flex flex-wrap items-center gap-3">
-            {draft ? (
-              <>
-                <Button onClick={save} disabled={busy !== null}>
-                  {busy === "save" ? "Saving…" : "Save"}
-                </Button>
-                <Button
-                  variant="ghost"
-                  onClick={() => {
-                    setDraft(null);
-                    setNote(null);
-                  }}
-                  disabled={busy !== null}
-                >
-                  Cancel
-                </Button>
-              </>
-            ) : (
-              <>
-                {missing.length > 0 && data.can_draft ? (
-                  <Button onClick={writeForMe} disabled={busy !== null}>
-                    {busy === "draft"
-                      ? "Writing…"
-                      : "Break it into user stories"}
-                  </Button>
-                ) : null}
-                <Button
-                  variant="outline"
-                  onClick={() => edit()}
-                  disabled={busy !== null}
-                >
-                  {total > 0 ? "Edit" : "Write them myself"}
-                </Button>
-              </>
-            )}
-          </div>
-        ) : null}
-      </div>
+      {body}
     </Disclosure>
   );
 }

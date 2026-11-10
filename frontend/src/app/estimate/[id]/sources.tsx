@@ -44,22 +44,13 @@ export function SourcesProvider({
 }
 
 const STATUS: Record<PriceSource["status"], { label: string; tone: string }> = {
-  published: {
-    label: "Published source",
-    tone: "bg-success/10 text-success",
-  },
+  published: { label: "Published", tone: "bg-success/10 text-success" },
   worked_out: {
     label: "Worked out from published prices",
     tone: "bg-tape-soft text-foreground",
   },
-  estimate: {
-    label: "Our estimate, not yet checked",
-    tone: "bg-warning/10 text-warning",
-  },
-  your_choice: {
-    label: "Project details you gave",
-    tone: "bg-primary/10 text-primary",
-  },
+  estimate: { label: "Our estimate", tone: "bg-warning/10 text-warning" },
+  your_choice: { label: "Your answers", tone: "bg-primary/10 text-primary" },
 };
 
 function StatusTag({ status }: { status: PriceSource["status"] }) {
@@ -67,7 +58,7 @@ function StatusTag({ status }: { status: PriceSource["status"] }) {
   return (
     <span
       className={cn(
-        "inline-flex rounded-full px-2 py-0.5 text-xs font-medium",
+        "inline-flex w-fit shrink-0 rounded-full px-2 py-0.5 text-xs font-medium whitespace-nowrap",
         s.tone,
       )}
     >
@@ -76,22 +67,83 @@ function StatusTag({ status }: { status: PriceSource["status"] }) {
   );
 }
 
+/** "payscale.com" from a link. */
+function site(url: string): string {
+  try {
+    return new URL(url).hostname.replace(/^www\./, "");
+  } catch {
+    return url;
+  }
+}
+
+/** A source's name in a few words: "Cleveroad CRM role table (UI/UX 380 h)" -> "Cleveroad
+ * CRM role table". */
+function shortName(text: string): string {
+  const head = text.split(/ \(|: |; | — /)[0].trim();
+  return head.length > 60 ? `${head.slice(0, 57)}…` : head;
+}
+
+/** Where a source comes from, in a few words, linked where there is a page. */
+function From({ source }: { source: PriceSource }) {
+  const links = source.cites.filter((c) => c.text);
+  if (source.kind !== "rate" && links.length > 0) {
+    return (
+      <span className="flex flex-wrap gap-x-3 gap-y-0.5">
+        {links.slice(0, 3).map((c, i) =>
+          c.url ? (
+            <a
+              key={i}
+              href={c.url}
+              target="_blank"
+              rel="noreferrer"
+              className="text-primary hover:underline"
+            >
+              {shortName(c.text)}
+            </a>
+          ) : (
+            <span key={i}>{shortName(c.text)}</span>
+          ),
+        )}
+        {links.length > 3 ? <span>+{links.length - 3} more</span> : null}
+      </span>
+    );
+  }
+  if (source.url) {
+    return (
+      <a
+        href={source.url}
+        target="_blank"
+        rel="noreferrer"
+        title={source.detail}
+        className="text-primary hover:underline"
+      >
+        {site(source.url)}
+      </a>
+    );
+  }
+  if (source.status === "estimate") return <span>Reasoned by us</span>;
+  return <span title={source.detail}>{shortName(source.detail)}</span>;
+}
+
+/** A source's name where a row of the breakdown cites it: links to its line in the list. */
 function SourceRef({ source }: { source: PriceSource }) {
   return (
     <a
       href={`#source-${source.n}`}
-      title={`${source.title} · ${STATUS[source.status].label}`}
+      title={STATUS[source.status].label}
       className={cn(
-        "rounded px-1 font-mono text-xs tabular-nums hover:underline",
+        "hover:underline",
         source.status === "estimate" ? "text-warning" : "text-primary",
       )}
     >
-      [{source.n}]
+      {source.title}
     </a>
   );
 }
 
 function rateText(rate: RowSources["rates"][number]): string {
+  if (rate.label.includes("of the amount"))
+    return `${rate.label}: ${formatDecimal(Number(rate.amount) * 100, 2)}%`;
   const amount = Number(rate.amount).toLocaleString(
     rate.currency === "INR" ? "en-IN" : "en-US",
     { maximumFractionDigits: 2 },
@@ -110,7 +162,9 @@ export function RowSourcesNote({ row }: { row: string }) {
   const refs = found.sources
     .map((n) => byN.get(n))
     .filter((s): s is PriceSource => s !== undefined);
-  const guesses = refs.filter((s) => s.status === "estimate").length;
+  // the rules and the project's answers are in the Excel download, not the page's list
+  const shown = refs.filter((s) => LISTED.has(s.kind));
+  const guesses = shown.filter((s) => s.status === "estimate").length;
   return (
     <details className="group/src mt-1 text-sm">
       <summary className="w-fit cursor-pointer list-none text-primary hover:underline [&::-webkit-details-marker]:hidden">
@@ -164,17 +218,22 @@ export function RowSourcesNote({ row }: { row: string }) {
             .
           </p>
         ) : null}
-        <p>
-          <span className="font-medium text-foreground">Sources:</span>{" "}
-          {refs.map((s) => (
-            <SourceRef key={s.n} source={s} />
-          ))}
-          {guesses > 0 ? (
-            <span className="ml-1 text-xs">
-              ({guesses} of {refs.length} are our estimates, not yet checked)
-            </span>
-          ) : null}
-        </p>
+        {shown.length > 0 ? (
+          <p>
+            <span className="font-medium text-foreground">From:</span>{" "}
+            {shown.map((s, i) => (
+              <React.Fragment key={s.n}>
+                {i > 0 ? ", " : ""}
+                <SourceRef source={s} />
+              </React.Fragment>
+            ))}
+            {guesses > 0 ? (
+              <span className="ml-1 text-xs">
+                ({guesses} of {shown.length} are our estimates)
+              </span>
+            ) : null}
+          </p>
+        ) : null}
       </div>
     </details>
   );
@@ -186,10 +245,9 @@ export function AiSavingSources() {
   const ai = data?.sources.find((s) => s.kind === "ai_saving");
   if (!ai) return null;
   return (
-    <details className="group/ai rounded-2xl border bg-card px-5 py-4 text-sm">
-      <summary className="cursor-pointer list-none font-medium [&::-webkit-details-marker]:hidden">
-        How the AI saving is worked out{" "}
-        <span className="text-primary group-open/ai:hidden">show</span>
+    <details className="group/ai text-sm">
+      <summary className="w-fit cursor-pointer list-none text-primary hover:underline [&::-webkit-details-marker]:hidden">
+        How the AI saving is worked out
       </summary>
       <div className="mt-3 flex flex-col gap-3 text-muted-foreground">
         <p>
@@ -234,99 +292,127 @@ export function AiSavingSources() {
   );
 }
 
-function SourceItem({ source }: { source: PriceSource }) {
+/** The kinds of source the page lists; rules and answers are in the Excel download. */
+const LISTED = new Set<PriceSource["kind"]>([
+  "rate",
+  "hours",
+  "margin",
+  "ai_saving",
+]);
+
+function amountText(source: PriceSource): string {
+  if (source.amount === null || source.amount === undefined) return "";
+  if (source.title.includes("of the amount"))
+    return `${formatDecimal(Number(source.amount) * 100, 2)}%`;
+  const currency = (source.currency ?? "INR") as Parameters<
+    typeof currencySymbol
+  >[0];
+  const amount = Number(source.amount).toLocaleString(
+    currency === "INR" ? "en-IN" : "en-US",
+    { maximumFractionDigits: Number(source.amount) >= 100 ? 0 : 2 },
+  );
+  return `${currencySymbol(currency)}${amount}`;
+}
+
+/** One row: what it is, its value, where it comes from, and whether that is published. */
+function Row({ source, value }: { source: PriceSource; value?: string }) {
   return (
     <li
       id={`source-${source.n}`}
-      className="flex scroll-mt-24 flex-col gap-1 py-3"
+      className="grid scroll-mt-24 gap-x-6 gap-y-1 py-2.5 text-sm sm:grid-cols-[minmax(0,1.3fr)_minmax(0,0.6fr)_minmax(0,1.4fr)_auto] sm:items-baseline"
     >
-      <div className="flex flex-wrap items-center gap-2">
-        <span className="font-mono text-xs text-muted-foreground tabular-nums">
-          [{source.n}]
-        </span>
-        <span className="font-medium">{source.title}</span>
-        <StatusTag status={source.status} />
-        {source.confidence ? (
-          <span className="text-xs text-muted-foreground">
-            confidence: {source.confidence.replace("_", "-")}
-          </span>
-        ) : null}
-      </div>
-      {source.detail ? (
-        <p className="text-sm text-muted-foreground">{source.detail}</p>
-      ) : null}
-      {source.url ? (
-        <a
-          href={source.url}
-          target="_blank"
-          rel="noreferrer"
-          className="w-fit max-w-full truncate text-sm text-primary hover:underline"
-        >
-          {source.url}
-        </a>
-      ) : null}
-      {source.cites.length > 0 &&
-      (source.kind === "hours" || source.kind === "margin") ? (
-        <ul className="flex flex-col gap-0.5 text-sm text-muted-foreground">
-          {source.cites.map((c, i) => (
-            <li key={i}>
-              {c.url ? (
-                <a
-                  href={c.url}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="hover:underline"
-                >
-                  {c.text}
-                </a>
-              ) : (
-                c.text
-              )}
-            </li>
-          ))}
-        </ul>
-      ) : null}
-      {source.values.length > 0 ? (
-        <details className="text-sm text-muted-foreground">
-          <summary className="w-fit cursor-pointer list-none hover:text-foreground [&::-webkit-details-marker]:hidden">
-            Values used in this estimate ({source.values.length})
-          </summary>
-          <ul className="mt-1 flex flex-col gap-0.5 font-mono text-xs">
-            {source.values.map((v) => (
-              <li key={v}>{v}</li>
-            ))}
-          </ul>
-        </details>
-      ) : null}
-      <p className="text-xs text-muted-foreground">{source.version}</p>
+      <span className="font-medium">
+        {source.title.replace(/^Hours for /, "")}
+      </span>
+      <span className="tabular-nums">{value ?? ""}</span>
+      <span className="text-muted-foreground">
+        <From source={source} />
+      </span>
+      <StatusTag status={source.status} />
     </li>
   );
 }
 
-/** Every source this estimate used, numbered, with what each one is. */
+function Group({
+  title,
+  note,
+  sources,
+  value,
+}: {
+  title: string;
+  note?: string;
+  sources: PriceSource[];
+  value?: (s: PriceSource) => string;
+}) {
+  if (sources.length === 0) return null;
+  return (
+    <div className="flex flex-col gap-1">
+      <h3 className="font-semibold">{title}</h3>
+      {note ? <p className="text-sm text-muted-foreground">{note}</p> : null}
+      <ul className="flex flex-col divide-y">
+        {sources.map((s) => (
+          <Row key={s.n} source={s} value={value?.(s)} />
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+/** Where the price comes from, in four plain groups: the team's day rates, the prices of
+ * services and hardware, the hours each feature takes, and the profit and AI saving. Each
+ * row says whether it is published or our own estimate; the rules and settings behind them
+ * are in the Excel download (sheet "Sources"). */
 export function SourcesList() {
   const data = React.useContext(Sources);
   if (!data || data.sources.length === 0) return null;
-  const c = data.counts;
+  const listed = data.sources.filter((s) => LISTED.has(s.kind));
+  if (listed.length === 0) return null;
+  const published = listed.filter((s) => s.status !== "estimate").length;
+  const ours = listed.length - published;
+  const rates = listed.filter((s) => s.kind === "rate");
+  const margin = listed.find((s) => s.kind === "margin");
+  const ai = listed.find((s) => s.kind === "ai_saving");
   return (
     <Disclosure
-      title="Where every price comes from"
+      title="Where the price comes from"
       icon={SealCheckIcon}
-      hint={`${data.sources.length} sources: ${c.published ?? 0} published, ${c.worked_out ?? 0} worked out from published prices, ${c.estimate ?? 0} our estimates, plus the project details you gave`}
+      hint={`${published} of ${listed.length} from published prices and studies${ours > 0 ? ` · ${ours} our own estimates` : ""}`}
     >
       <p className="max-w-3xl text-sm text-muted-foreground">
-        Every number in this estimate is worked out by fixed rules from the
-        sources below, the same for everyone; the AI only reads documents and
-        never sets a price. The builder&rsquo;s profit and the AI saving are
-        shown openly: nothing is kept back out of sight. &ldquo;Our estimate,
-        not yet checked&rdquo; marks figures we reasoned out ourselves and are
-        still replacing with published ones.
+        The price is the hours of work × each person&rsquo;s day rate, plus the
+        prices below, worked out by fixed rules. The AI never sets a number.
+        &ldquo;Our estimate&rdquo; marks figures we worked out ourselves, still
+        being replaced with published ones.
       </p>
-      <ol className="flex flex-col divide-y">
-        {data.sources.map((s) => (
-          <SourceItem key={s.n} source={s} />
-        ))}
-      </ol>
+      <Group
+        title="Day rate of each person"
+        note="What one day of each person's work costs."
+        sources={rates.filter((s) => s.role)}
+        value={amountText}
+      />
+      <Group
+        title="Hours of work for each feature"
+        note="How long each feature takes to build, from published project data."
+        sources={listed.filter((s) => s.kind === "hours")}
+      />
+      <Group
+        title="Prices of services and hardware"
+        sources={rates.filter((s) => !s.role)}
+        value={amountText}
+      />
+      <Group
+        title="Profit and AI saving"
+        sources={[margin, ai].filter((s): s is PriceSource => s !== undefined)}
+        value={(s) =>
+          s.kind === "margin"
+            ? (s.values[0] ?? "").replace(/^profit = /, "")
+            : ""
+        }
+      />
+      <p className="text-sm text-muted-foreground">
+        The rules behind these (e.g. extra work for complex features) and every
+        value used are in the Excel download, sheet &ldquo;Sources&rdquo;.
+      </p>
     </Disclosure>
   );
 }

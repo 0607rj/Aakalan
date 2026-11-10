@@ -287,6 +287,12 @@ FORMULAS: dict[str, str] = {
     "commercial.margin.v1": (
         "margin_percent × (base_total + contingency + working_capital + pbg + penalty_reserve)"
     ),
+    "commercial.margin.v2": (
+        "v38+ (OPEN_QUESTIONS 236): margin_percent × (base_total − bought + contingency +"
+        " working_capital + pbg + penalty_reserve) + min(margin_percent, bought_items.margin) ×"
+        " bought, where bought = Σ lines whose key starts with bought_items.line_keys (own"
+        " servers bought, their AMC and yearly licences)"
+    ),
     "commercial.gst.v1": "Σ_line gst_percent(line) × value(line)",
     # the AI saving kept as margin, when the share passed to the client is answered
     "commercial.ai_saving_kept.v1": (

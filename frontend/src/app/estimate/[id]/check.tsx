@@ -1,12 +1,7 @@
 "use client";
 
 import * as React from "react";
-import {
-  ChatCircleDotsIcon,
-  FlagIcon,
-  QuestionIcon,
-  ShieldCheckIcon,
-} from "@phosphor-icons/react/dist/ssr";
+import { ShieldCheckIcon } from "@phosphor-icons/react/dist/ssr";
 
 import { ErrorNotice } from "@/components/status";
 import { Button } from "@/components/ui/button";
@@ -25,7 +20,7 @@ import {
 import { useLoad } from "@/lib/use-load";
 import { cn } from "@/lib/utils";
 
-import { Disclosure, SectionTitle } from "./cost-summary";
+import { SectionTitle } from "./cost-summary";
 
 /** True while the independent check asks for a look before the report can be exported. */
 export function exportBlocked(summary: QuickSummary): boolean {
@@ -207,6 +202,7 @@ export function IndependentCheckCard({
  * without AI tools) sits behind "How we checked". A check only: it never changes the price.
  */
 export function SizeCheckCard({ summary }: { summary: QuickSummary }) {
+  // a line in the price card (no card of its own)
   const check = summary.size_check;
   if (!check?.available) return null;
   const hours = (n: number) => `${n.toLocaleString("en-IN")} hours`;
@@ -218,7 +214,7 @@ export function SizeCheckCard({ summary }: { summary: QuickSummary }) {
   const good = check.methods_agree === true && check.features.length === 0;
   const warn = check.methods_agree === false || check.features.length > 0;
   return (
-    <section className="sheet">
+    <div className="flex flex-col gap-1">
       <p className="flex gap-2 text-sm">
         <span
           aria-hidden
@@ -280,12 +276,15 @@ export function SizeCheckCard({ summary }: { summary: QuickSummary }) {
           ) : null}
         </div>
       </details>
-    </section>
+    </div>
   );
 }
 
 /** "+₹ 16 L" / "−₹ 1 L": a rounded change to the most likely price. */
-function signed(paise: number, currency: QuickSummary["currency"]): string {
+export function signed(
+  paise: number,
+  currency: QuickSummary["currency"],
+): string {
   const amount = formatApprox(paise, currency).replace("about ", "");
   return paise > 0 ? `+${amount}` : amount;
 }
@@ -301,7 +300,7 @@ export function changeRange(
   return `${signed(low, currency)} to ${signed(high, currency)}`;
 }
 
-const NOT_INCLUDED_WHY: Record<
+export const NOT_INCLUDED_WHY: Record<
   QuickSummary["not_included"][number]["why"],
   string
 > = {
@@ -335,119 +334,4 @@ export function biggestOpenAnswer(
   options: PricedOption[],
 ): PricedOption | undefined {
   return options.find((o) => o.beyond_range);
-}
-
-export function OpenAnswers({
-  summary,
-  options,
-}: {
-  summary: QuickSummary;
-  options: PricedOption[];
-}) {
-  const open = options.filter((o) => o.why !== "left_out");
-  const leftOut = new Map(
-    options.filter((o) => o.why === "left_out").map((o) => [o.key, o]),
-  );
-  return (
-    <>
-      {summary.assumed.length > 0 ? (
-        <Disclosure
-          title="Assumed answers"
-          icon={QuestionIcon}
-          tone="warning"
-          hint={`${summary.assumed.length} answers nobody gave: check them`}
-        >
-          <ul className="flex flex-col gap-1.5 text-sm">
-            {summary.assumed.map((a) => (
-              <li key={a.key}>
-                <span className="text-muted-foreground">{a.question}</span>{" "}
-                <span className="font-medium">{a.answer}</span>
-                {a.detail ? (
-                  <span className="text-muted-foreground"> ({a.detail})</span>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-        </Disclosure>
-      ) : null}
-      {summary.not_included.length > 0 ? (
-        <Disclosure
-          title="Not included in this price"
-          icon={FlagIcon}
-          tone="warm"
-          hint={`${summary.not_included.length} items`}
-        >
-          <ul className="flex flex-col gap-2 text-sm">
-            {summary.not_included.map((item) => {
-              const option = leftOut.get(item.question_key ?? "");
-              return (
-                <li key={item.label}>
-                  <span className="font-medium">{item.label}</span>{" "}
-                  <span className="text-muted-foreground">
-                    ({NOT_INCLUDED_WHY[item.why]})
-                  </span>
-                  {option && option.low_change_paise !== null ? (
-                    <span>
-                      {" "}
-                      If required: {changeRange(option, summary.currency)}
-                      {option.usual_change_paise !== null &&
-                      option.usual_change_paise !== undefined ? (
-                        <span className="text-muted-foreground">
-                          {" "}
-                          ({signed(
-                            option.usual_change_paise,
-                            summary.currency,
-                          )}{" "}
-                          at the usual size)
-                        </span>
-                      ) : null}
-                      .
-                    </span>
-                  ) : null}
-                  {item.quote ? (
-                    <span className="block text-muted-foreground">
-                      “{item.quote}”
-                    </span>
-                  ) : null}
-                </li>
-              );
-            })}
-          </ul>
-        </Disclosure>
-      ) : null}
-      {open.length > 0 ? (
-        <Disclosure
-          title="Open answers"
-          icon={ChatCircleDotsIcon}
-          hint={`${open.length} priced at the usual answer`}
-        >
-          <ul className="flex flex-col gap-2 text-sm">
-            {open.map((o) => (
-              <li key={o.key}>
-                <span className="font-medium">{o.question}</span>{" "}
-                <span className="text-muted-foreground">
-                  ({o.why === "not_sure" ? "not sure" : "not in the document"}
-                  ): priced as {o.priced_as}.
-                </span>
-                {o.options.length > 0 ? (
-                  <span>
-                    {" "}
-                    Other answers {changeRange(o, summary.currency)}:{" "}
-                    {o.options
-                      .map((c) =>
-                        c.change_paise === null
-                          ? c.label
-                          : `${c.label} ${signed(c.change_paise, summary.currency)}`,
-                      )
-                      .join("; ")}
-                    .
-                  </span>
-                ) : null}
-              </li>
-            ))}
-          </ul>
-        </Disclosure>
-      ) : null}
-    </>
-  );
 }

@@ -27,7 +27,7 @@ from numpy.typing import NDArray
 from app.services.engine.commercial import BaseSums, Factors, derived_amounts
 from app.services.engine.money import float_to_paise, to_paise
 from app.services.engine.outputs import CostLineOut, RangeDriver
-from app.services.engine.reference import Taxonomy
+from app.services.engine.reference import BoughtItems, Taxonomy
 
 PERCENTILES = (10.0, 50.0, 90.0)  # definition of the reported P10 / P50 / P90
 SHARE_QUANTUM = Decimal("0.001")
@@ -72,6 +72,7 @@ def simulate(
     model_spread: tuple[Decimal, Decimal] | None = None,
     model_centre: str = "mode",
     model_name: str = "",
+    bought: BoughtItems | None = None,
 ) -> SimulationResult:
     base = [line for line in lines if not line.derived]
     quantiles: dict[str, FloatArray] = {}
@@ -84,7 +85,7 @@ def simulate(
             half = np.array([0.5], dtype=np.float64)
             model = model / float(triangular_inverse(half, 1 - down, 1.0, 1 + up)[0])
     plain = zeros.copy()  # the base total before the shared factor (range drivers)
-    total, build, run = zeros.copy(), zeros.copy(), zeros.copy()
+    total, build, run, sold = zeros.copy(), zeros.copy(), zeros.copy(), zeros.copy()
     by_rate: dict[Decimal, FloatArray] = defaultdict(lambda: zeros.copy())
     by_bucket: dict[str, FloatArray] = defaultdict(lambda: zeros.copy())
     for line in base:
@@ -107,11 +108,13 @@ def simulate(
         elif line.year > 0:
             run += x
         by_rate[line.gst_percent] += x
+        if bought is not None and bought.holds(line.line_key):  # v38+: resold hardware
+            sold += x
 
     # the runs add up paise: the AI saving kept (a fixed amount in rupees) is converted to paise
     float_factors = replace(factors.map(float), ai_kept=float(to_paise(factors.ai_kept)))
     derived = derived_amounts(
-        BaseSums(total, build, run, dict(by_rate)), float_factors, lambda r: float(r)
+        BaseSums(total, build, run, dict(by_rate), sold), float_factors, lambda r: float(r)
     )
     grand = total + sum(derived.values(), zeros)
     p10, p50, p90 = np.percentile(grand, PERCENTILES)

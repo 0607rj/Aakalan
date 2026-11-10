@@ -3,6 +3,7 @@ OPEN_QUESTIONS 231): shown only when wanted, sized from the load and uptime (not
 the same every time, and a list only: the price does not move."""
 
 from datetime import date
+from decimal import Decimal
 from typing import Any
 
 from app.core.config import get_settings
@@ -142,3 +143,44 @@ def test_old_sets_keep_the_old_price() -> None:
     lines = calculate(inputs(["bookings"], "v36", hosting="on_prem")).lines
     formulas = {ln.formula_id for ln in lines}
     assert "golive.onprem_capex.v1" in formulas and "golive.onprem_capex.v2" not in formulas
+
+
+def test_a_small_site_runs_on_one_own_server() -> None:
+    """v38 (OPEN_QUESTIONS 236): at 99.5% with the load of one server, own servers are one
+    server, one firewall and one switch, as on a cloud; 99.9% still gets two of each."""
+    one = hardware_list(inputs(["bookings"], "v38", hosting="on_prem"))
+    assert one is not None
+    assert count(one, "single_server") == 1 and count(one, "app_server") == 0
+    assert count(one, "firewall") == 1 and count(one, "switch") == 1
+    assert count(one, "load_balancer") == 0
+    two = hardware_list(inputs(["bookings"], "v38", hosting="on_prem", availability="high"))
+    assert two is not None and count(two, "single_server") == 2 and count(two, "firewall") == 2
+
+
+def test_bought_hardware_carries_a_resellers_margin() -> None:
+    """v38 (OPEN_QUESTIONS 236): the margin on hardware bought for the client is the lower of
+    margin_percent and bought_items.margin; the rest keeps margin_percent."""
+    inp = inputs(["bookings"], "v38", hosting="on_prem", support_years=3)
+    lines = calculate(inp).lines
+    margin = next(ln for ln in lines if ln.line_key == "commercial.margin/total")
+    assert margin.formula_id == "commercial.margin.v2" and "commercial.margin.v2" in FORMULAS
+    bought = inp.parameters.commercial.bought_items
+    assert bought is not None
+    sold = sum(ln.likely_paise for ln in lines if not ln.derived and bought.holds(ln.line_key))
+    rest = sum(
+        ln.likely_paise
+        for ln in lines
+        if not ln.derived and ln.stage != "commercial" and not bought.holds(ln.line_key)
+    )
+    assert sold > 0
+    pct = Decimal(str(next(d.value for d in margin.trace.drivers if d.key == "margin_percent")))
+    # contingency, working capital, PBG and the reserve also carry margin_percent: the margin
+    # is at least the full rate on the rest plus the reseller's on the hardware
+    assert margin.likely_paise >= int(pct * rest + min(pct, bought.margin) * sold) - 100
+    assert margin.likely_paise < int(pct * (rest + sold))
+    old = next(
+        ln
+        for ln in calculate(inputs(["bookings"], "v37", hosting="on_prem")).lines
+        if ln.line_key == "commercial.margin/total"
+    )
+    assert old.formula_id == "commercial.margin.v1"  # older estimates never change

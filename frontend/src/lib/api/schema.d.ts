@@ -4885,6 +4885,15 @@ export interface components {
              * @default []
              */
             cites: components["schemas"]["Cite"][];
+            /** Amount */
+            amount?: string | null;
+            /** Currency */
+            currency?: string | null;
+            /**
+             * Role
+             * @default false
+             */
+            role: boolean;
         };
         /**
          * SourceRef

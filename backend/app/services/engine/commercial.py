@@ -17,12 +17,14 @@ from app.services.engine import spreads
 from app.services.engine.context import LineBuilder, PricingContext, toward_lean
 from app.services.engine.money import ONE, ZERO, dsum, interpolate, paise_to_rupees
 from app.services.engine.outputs import CostLineOut, Timeline
+from app.services.engine.reference import BoughtItems
 from app.services.engine.timeline import band_value
 
 DERIVED_ORDER = ("contingency", "working_capital", "pbg", "penalty_reserve", "margin", "gst")
 FORMULA_IDS = {key: f"commercial.{key}.v1" for key in DERIVED_ORDER} | {
     "working_capital": "commercial.working_capital.v2"
 }
+MARGIN_V2 = "commercial.margin.v2"  # parameter sets v38+: a reseller's margin on bought hardware
 
 
 @dataclass(frozen=True)
@@ -33,6 +35,7 @@ class BaseSums:
     build: Any  # year-0 lines outside the commercial stage
     run: Any  # O&M-year lines
     by_gst_rate: dict[Decimal, Any]
+    bought: Any = ZERO  # v38+: hardware resold to the client (commercial.bought_items)
 
 
 @dataclass(frozen=True)
@@ -49,6 +52,7 @@ class Factors:
     gst_penalty_reserve: Any
     gst_margin: Any
     ai_kept: Any = ZERO  # the AI saving kept as margin: a fixed amount in rupees, not a factor
+    bought_margin: Any = ZERO  # v38+: the margin on bought hardware (≤ margin)
 
     def map(self, fn: Callable[[Decimal], Any]) -> "Factors":
         return replace(self, **{f.name: fn(getattr(self, f.name)) for f in fields(self)})
@@ -59,7 +63,8 @@ def derived_amounts(b: BaseSums, f: Factors, rate: Callable[[Decimal], Any]) -> 
     WC  = working_capital_factor × build
     PBG = pbg_factor × (total + C)
     LD  = ld_build × build + penalty_run × run
-    M   = margin × (total + C + WC + PBG + LD)
+    M   = margin × (total − bought + C + WC + PBG + LD) + bought_margin × bought
+          (bought = 0 before parameter sets v38: M = margin × (total + C + WC + PBG + LD))
     K   = the AI saving kept (commercial.ai_saving_kept.v1; a fixed amount, no margin on it)
     GST = Σ_rate rate × base_at_rate + Σ_derived gst_derived × derived + gst_margin × K
     """
@@ -67,7 +72,7 @@ def derived_amounts(b: BaseSums, f: Factors, rate: Callable[[Decimal], Any]) -> 
     wc = f.working_capital * b.build
     pbg = f.pbg * (b.total + c)
     ld = f.ld_build * b.build + f.penalty_run * b.run
-    m = f.margin * (b.total + c + wc + pbg + ld)
+    m = f.margin * (b.total - b.bought + c + wc + pbg + ld) + f.bought_margin * b.bought
     gst = sum((rate(r) * v for r, v in sorted(b.by_gst_rate.items())), rate(ZERO) * b.total)
     gst = (
         gst
@@ -89,9 +94,12 @@ def derived_amounts(b: BaseSums, f: Factors, rate: Callable[[Decimal], Any]) -> 
     }
 
 
-def base_sums(lines: Sequence[CostLineOut], attr: str) -> BaseSums:
-    """Decimal-rupee subtotals of base lines, using `attr` (low/likely/high_paise)."""
-    total = build = run = ZERO
+def base_sums(
+    lines: Sequence[CostLineOut], attr: str, bought: BoughtItems | None = None
+) -> BaseSums:
+    """Decimal-rupee subtotals of base lines, using `attr` (low/likely/high_paise); `bought`
+    (v38+) sums the hardware resold to the client."""
+    total = build = run = sold = ZERO
     by_rate: dict[Decimal, Decimal] = {}
     for line in lines:
         if line.derived:
@@ -103,7 +111,9 @@ def base_sums(lines: Sequence[CostLineOut], attr: str) -> BaseSums:
         elif line.year > 0:
             run += v
         by_rate[line.gst_percent] = by_rate.get(line.gst_percent, ZERO) + v
-    return BaseSums(total, build, run, by_rate)
+        if bought is not None and bought.holds(line.line_key):
+            sold += v
+    return BaseSums(total, build, run, by_rate, sold)
 
 
 # --- base commercial lines -------------------------------------------------------------------
@@ -231,6 +241,7 @@ def derived_lines(
         "margin": "Margin",
         "gst": ctx.p.commercial.tax_label,
     }
+    bought = ctx.p.commercial.bought_items
     for key in DERIVED_ORDER:
         builders[key] = ctx.builder(
             line_key=f"commercial.{key}/total",
@@ -238,7 +249,7 @@ def derived_lines(
             bucket=f"commercial.{key}",
             year=0,
             label=names[key],
-            formula_id=FORMULA_IDS[key],
+            formula_id=MARGIN_V2 if key == "margin" and bought else FORMULA_IDS[key],
         )
 
     t = builders["contingency"]
@@ -287,6 +298,14 @@ def derived_lines(
         penalty_run = t.param("commercial", "penalty_reserve_run_percent", t.driver("support_sla"))
 
     margin: Decimal = builders["margin"].driver("margin_percent")
+    bought_margin = ZERO
+    if bought is not None:  # v38+ (OPEN_QUESTIONS 236): hardware resold, not built
+        t = builders["margin"]
+        t.param("commercial", "bought_items", "line_keys")
+        own: Decimal = t.param("commercial", "bought_items", "margin")
+        bought_margin = t.step(
+            "margin on bought hardware", f"min({margin}, {own})", min(margin, own)
+        )
 
     gst_default = ctx.q.gst_percent
     g = builders["gst"]
@@ -311,23 +330,29 @@ def derived_lines(
         gst_penalty_reserve=gst_of("commercial.penalty_reserve"),
         gst_margin=gst_of("commercial.margin"),
         ai_kept=ai_kept[1] if ai_kept else ZERO,
+        bought_margin=bought_margin,
     )
-    shown = [f.name for f in fields(factors) if ai_kept or f.name != "ai_kept"]
+    hidden = {"ai_kept"} if not ai_kept else set()
+    if bought is None:
+        hidden.add("bought_margin")  # older estimates keep their trace
+    shown = [f.name for f in fields(factors) if f.name not in hidden]
 
     def ident(rate: Decimal) -> Decimal:
         return rate
 
     points = {
-        attr: derived_amounts(base_sums(base, attr), factors, ident)
+        attr: derived_amounts(base_sums(base, attr, bought), factors, ident)
         for attr in ("low_paise", "likely_paise", "high_paise")
     }
-    likely_base = base_sums(base, "likely_paise")
+    likely_base = base_sums(base, "likely_paise", bought)
     lines = []
     for key in DERIVED_ORDER:
         t = builders[key]
         t.step("base total", "Σ base lines (likely)", likely_base.total)
         t.step("build base", "Σ year-0 base lines", likely_base.build)
         t.step("run base", "Σ O&M-year base lines", likely_base.run)
+        if bought is not None and key == "margin":
+            t.step("bought hardware", "Σ lines in bought_items.line_keys", likely_base.bought)
         t.add_input(**{f"factor_{name}": str(getattr(factors, name)) for name in shown})
         lines.append(
             t.finish_three_point(

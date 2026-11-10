@@ -5,7 +5,6 @@ import {
   CaretRightIcon,
   ChartPieSliceIcon,
   ListChecksIcon,
-  ReceiptIcon,
 } from "@phosphor-icons/react/dist/ssr";
 
 import type { PricedOption, QuickSummary } from "@/lib/api/client";
@@ -17,7 +16,8 @@ import {
 } from "@/components/site/illustrations";
 import { cn } from "@/lib/utils";
 
-import { biggestOpenAnswer, changeRange } from "./check";
+import { PrerequisiteWarnings } from "../new/parts";
+import { changeRange, NOT_INCLUDED_WHY, signed } from "./check";
 
 type CostItem = QuickSummary["cost_items"][number];
 type Money = (paise: number | null | undefined) => string;
@@ -375,15 +375,6 @@ export function CostSummary({ summary }: { summary: QuickSummary }) {
         No one can know the exact cost in advance, so every part is a range: its
         share of the total range. The parts add up to the total.
       </p>
-      {summary.client_pays.length > 0 ? (
-        <p className="text-sm text-muted-foreground">
-          <strong className="text-foreground">Not in this price:</strong>{" "}
-          {summary.client_pays_first_year_paise > 0
-            ? `${money(summary.client_pays_first_year_paise)} in the first year that the client pays providers directly`
-            : "fees the client pays providers directly"}{" "}
-          ({summary.client_pays.map((c) => c.label.toLowerCase()).join(", ")}).
-        </p>
-      ) : null}
     </section>
   );
 }
@@ -429,27 +420,15 @@ function ListGroup({
   );
 }
 
-/** What the quote covers, what the client pays separately, and what still needs checking. */
-export function WhatsIncluded({
-  summary,
-  options = [],
-}: {
-  summary: QuickSummary;
-  options?: PricedOption[];
-}) {
+/** What the price covers: features, parts the features need, launch, support and charges
+ * (inside "More details"). */
+export function IncludedList({ summary }: { summary: QuickSummary }) {
   const money = moneyOf(summary);
-  const open = biggestOpenAnswer(options);
   const years = summary.support_years;
-  const scopeItems = summary.scope_items ?? [];
-  const priced = scopeItems.filter((s) => !s.partly_priced);
-  const partly = scopeItems.filter((s) => s.partly_priced);
+  const priced = (summary.scope_items ?? []).filter((s) => !s.partly_priced);
   const launch = summary.cost_items.filter((i) => i.group === "launch");
   const has = (key: string) =>
     summary.cost_items.some((i) => i.key.split(".")[0] === key);
-  const usage = summary.cost_items.filter((i) =>
-    USAGE_BASED.has(i.key.split(".")[0]),
-  );
-
   // the user's own features are priced from a general size block: said so, in client words
   const custom = new Set(summary.custom_features ?? []);
   const listed = summary.features.filter((f) => !custom.has(f));
@@ -511,237 +490,227 @@ export function WhatsIncluded({
         : "Margin, risk buffer and tax"}
     </span>,
   ];
+  return (
+    <ListGroup
+      title="What's included"
+      tone="included"
+      empty={null}
+      entries={included}
+    />
+  );
+}
 
-  const separate: React.ReactNode[] = summary.client_pays.map((c) => (
+/** One answer the price rests on: what it was priced as, and what other answers change. */
+interface AnswerRow {
+  key: string;
+  question: string;
+  answer: string;
+  why: string | null;
+  option: PricedOption | null;
+}
+
+function AnswerLine({
+  row,
+  currency,
+}: {
+  row: AnswerRow;
+  currency: QuickSummary["currency"];
+}) {
+  const others =
+    row.option?.options.filter(
+      (c) => c.change_paise !== null && c.change_paise !== 0,
+    ) ?? [];
+  return (
+    <li className="flex flex-col gap-0.5 py-2.5 text-sm">
+      <span>
+        <span className="text-muted-foreground">{row.question}</span>{" "}
+        <span className="font-medium">{row.answer}</span>
+        {row.why ? (
+          <span className="ml-2 text-xs text-muted-foreground">
+            ({row.why})
+          </span>
+        ) : null}
+      </span>
+      {others.length > 0 ? (
+        <span className="text-muted-foreground">
+          If not:{" "}
+          {others
+            .slice(0, 3)
+            .map((c) => `${c.label} ${signed(c.change_paise ?? 0, currency)}`)
+            .join(" · ")}
+        </span>
+      ) : null}
+    </li>
+  );
+}
+
+const SHOWN_ANSWERS = 4;
+
+/**
+ * Everything to check before the price is sent, in one place: the answers nobody gave
+ * (largest price effect first, each with what another answer would change), what is not in
+ * the price, what the client pays providers itself, what still needs confirming, and
+ * features that usually need something not ticked.
+ */
+export function CheckBeforeSending({
+  summary,
+  options,
+}: {
+  summary: QuickSummary;
+  options: PricedOption[];
+}) {
+  const money = moneyOf(summary);
+  const byKey = new Map(options.map((o) => [o.key, o]));
+  const open = options.filter((o) => o.why !== "left_out");
+  const openKeys = new Set(open.map((o) => o.key));
+  const assumed = new Map(summary.assumed.map((a) => [a.key, a]));
+  const answers: AnswerRow[] = [
+    ...open.map((o) => ({
+      key: o.key,
+      question: o.question,
+      answer: assumed.get(o.key)?.answer ?? o.priced_as,
+      why: o.why === "not_sure" ? "you said not sure" : null,
+      option: o,
+    })),
+    ...summary.assumed
+      .filter((a) => !openKeys.has(a.key))
+      .map((a) => ({
+        key: a.key,
+        question: a.question,
+        answer: a.answer,
+        why: null,
+        option: null,
+      })),
+  ];
+  const top = answers.slice(0, SHOWN_ANSWERS);
+  const more = answers.slice(SHOWN_ANSWERS);
+
+  const notIncluded = summary.not_included.map((item) => {
+    const option = byKey.get(item.question_key ?? "");
+    return (
+      <>
+        <span className="font-medium">{item.label}</span>
+        <span className="text-muted-foreground">
+          {NOT_INCLUDED_WHY[item.why]}
+          {option?.why === "left_out" && option.low_change_paise !== null
+            ? `. If required: ${changeRange(option, summary.currency)}`
+            : ""}
+        </span>
+      </>
+    );
+  });
+  const clientPays = summary.client_pays.map((c) => (
     <>
       <span className="font-medium">{c.label}</span>
       <span className="text-muted-foreground">
         {c.first_year_paise !== null
-          ? `${money(c.first_year_paise)} in the first year.`
-          : "Not estimated: depends on use."}
-        {c.note ? ` ${c.note}` : ""}
+          ? `${money(c.first_year_paise)} in the first year`
+          : "Depends on use"}
       </span>
     </>
   ));
-
+  const usage = summary.cost_items.filter((i) =>
+    USAGE_BASED.has(i.key.split(".")[0]),
+  );
   const confirm: React.ReactNode[] = [
-    ...partly.map((s) => (
-      <>
-        <span className="font-medium">{s.label} (partly priced)</span>
-        <span className="text-muted-foreground">
-          {s.amount_paise > 0 ? `${money(s.amount_paise)} added. ` : ""}
-          {s.note}
-        </span>
-      </>
-    )),
+    ...(summary.scope_items ?? [])
+      .filter((s) => s.partly_priced)
+      .map((s) => (
+        <>
+          <span className="font-medium">{s.label} (partly priced)</span>
+          <span className="text-muted-foreground">{s.note}</span>
+        </>
+      )),
     ...(summary.researched ?? []).map((r) => (
       <>
-        <span className="font-medium">
-          {r.name} (
-          {r.method === "web"
-            ? "hours from published sources"
-            : "hours from similar catalog blocks"}
-          )
-        </span>
+        <span className="font-medium">{r.name}</span>
         <span className="text-muted-foreground">
-          Not in the catalog; low confidence, confirm the scope.
-          {r.sources
-            .filter((s) => s.url)
-            .map((s, i) => (
-              <a
-                key={`${s.url}-${i}`}
-                href={s.url ?? undefined}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="ml-1 underline underline-offset-2"
-              >
-                Source {i + 1}
-              </a>
-            ))}
-        </span>
-      </>
-    )),
-    ...summary.not_sure.map((q) => (
-      <>
-        <span className="font-medium">{q}</span>
-        <span className="text-muted-foreground">
-          Answered &quot;Not sure&quot;.
+          Not in our price list: priced from{" "}
+          {r.method === "web" ? "published sources" : "similar features"}.
+          Confirm what it includes.
         </span>
       </>
     )),
     usage.length > 0 ? (
       <>
-        <span className="font-medium">Usage-based bills</span>
+        <span className="font-medium">Bills that follow use</span>
         <span className="text-muted-foreground">
-          {usage.map((i) => i.label).join(", ")}: priced from expected use; the
-          real bill follows real use.
+          {usage.map((i) => i.label).join(", ")}: the real bill follows real
+          use.
         </span>
       </>
     ) : null,
-    open || summary.biggest_uncertainty ? (
-      <>
-        <span className="font-medium">What could change the price most</span>
-        <span className="text-muted-foreground">
-          {open
-            ? `Your answer to "${open.question}" (priced as ${open.priced_as}): another answer changes the price by ${changeRange(open, summary.currency)}, past the range shown. `
-            : ""}
-          {summary.biggest_uncertainty}
-        </span>
-      </>
-    ) : null,
-  ];
-
-  return (
-    <Disclosure
-      title="What's included and what's not"
-      icon={ListChecksIcon}
-      hint={`${included.filter(Boolean).length} included · ${separate.length} paid separately · ${confirm.filter(Boolean).length} to confirm`}
-    >
-      <div className="grid gap-6 md:grid-cols-3">
-        <ListGroup
-          title="Included in this estimate"
-          tone="included"
-          empty={null}
-          entries={included}
-        />
-        <ListGroup
-          title="Paid separately by the client"
-          tone="separate"
-          empty="Nothing found that the client pays providers directly."
-          entries={separate}
-        />
-        <ListGroup
-          title="Needs confirmation"
-          tone="confirm"
-          empty="No open points were recorded for this estimate."
-          entries={confirm}
-        />
-      </div>
-    </Disclosure>
-  );
-}
-
-function Tile({
-  label,
-  value,
-  note,
-  strong = false,
-}: {
-  label: string;
-  value: string;
-  note: string;
-  strong?: boolean;
-}) {
-  return (
-    <div
-      className={cn(
-        "flex flex-col gap-1 border-l pl-4",
-        strong && "border-primary",
-      )}
-    >
-      <span className="figure-label">{label}</span>
-      <span
-        className={cn(
-          "text-xl font-semibold tracking-tight tabular-nums",
-          strong && "text-primary",
-        )}
-      >
-        {value}
-      </span>
-      {note ? (
-        <span className="text-xs text-muted-foreground">{note}</span>
-      ) : null}
-    </div>
-  );
-}
-
-/** One-time vs running costs and the total cost of ownership over the support years. */
-export function OngoingCosts({ summary }: { summary: QuickSummary }) {
-  const items = summary.cost_items;
-  if (items.length === 0 || summary.likely_paise === null) return null;
-  const money = moneyOf(summary);
-  const years = summary.support_years;
-  const running = items.filter(isRecurring);
-  const fixed = running.filter((i) => !USAGE_BASED.has(i.key.split(".")[0]));
-  const usage = running.filter((i) => USAGE_BASED.has(i.key.split(".")[0]));
-  const oneTime = items.filter(
-    (i) => !isRecurring(i) && categoryOf(i) !== "charges",
-  );
-  const perYear = runningPerYear(summary);
-  const sized = summary.client_pays.filter((c) => c.total_paise !== null);
-  const unsized = summary.client_pays.filter((c) => c.total_paise === null);
-  const clientTotal = sized.reduce((s, c) => s + (c.total_paise ?? 0), 0);
-  const ownership = summary.likely_paise + clientTotal;
+  ].filter(Boolean);
+  const warnings = summary.prerequisites ?? [];
+  const lists = notIncluded.length + clientPays.length + confirm.length;
+  if (answers.length + lists + warnings.length === 0) return null;
 
   return (
     <section className="sheet">
       <div>
-        <SectionTitle icon={ReceiptIcon}>
-          One-time and running costs
+        <SectionTitle icon={ListChecksIcon} tone="warning">
+          Check before you send
         </SectionTitle>
-        <p className="figure-label pl-11">Before margin, risk buffer and tax</p>
-      </div>
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-        <Tile
-          label="One-time: build and launch"
-          value={money(sum(oneTime))}
-          note=""
-        />
-        <Tile
-          label="Running cost per year"
-          value={perYear !== null ? money(perYear) : "Not included"}
-          note={perYear !== null ? `Average of ${yearsText(years)}` : ""}
-        />
-        <Tile
-          label="Running cost per month"
-          value={perYear !== null ? money(perYear / 12) : "Not included"}
-          note=""
-        />
-        <Tile
-          strong
-          label={
-            years > 0
-              ? `Total cost over ${yearsText(years)}`
-              : "Total cost with client-paid items"
-          }
-          value={money(ownership)}
-          note={
-            clientTotal > 0
-              ? `Includes ${money(clientTotal)} paid to providers`
-              : ""
-          }
-        />
-      </div>
-      {running.length > 0 ? (
-        <dl className="grid gap-x-8 gap-y-3 text-sm sm:grid-cols-2">
-          {fixed.length > 0 ? (
-            <div>
-              <dt className="font-medium">
-                Fixed every year ({money(sum(fixed))} over {yearsText(years)})
-              </dt>
-              <dd className="text-muted-foreground">
-                {fixed.map((i) => i.label).join(", ")}
-              </dd>
-            </div>
-          ) : null}
-          {usage.length > 0 ? (
-            <div>
-              <dt className="font-medium">
-                Depends on use ({money(sum(usage))} over {yearsText(years)})
-              </dt>
-              <dd className="text-muted-foreground">
-                {usage.map((i) => i.label).join(", ")}
-              </dd>
-            </div>
-          ) : null}
-        </dl>
-      ) : null}
-      {unsized.length > 0 ? (
-        <p className="text-sm text-muted-foreground">
-          Not counted in the total because it depends on use:{" "}
-          {unsized.map((c) => c.label.toLowerCase()).join(", ")}.
+        <p className="pl-11 text-sm text-muted-foreground">
+          The price rests on these. If one is wrong, change it and price it
+          again.
         </p>
+      </div>
+      {answers.length > 0 ? (
+        <div className="flex flex-col">
+          <h3 className="font-semibold">
+            Answers we assumed{" "}
+            <span className="font-normal text-muted-foreground">
+              ({answers.length}
+              {open.length > 0 ? ", biggest effect first" : ""})
+            </span>
+          </h3>
+          <ul className="flex flex-col divide-y">
+            {top.map((r) => (
+              <AnswerLine key={r.key} row={r} currency={summary.currency} />
+            ))}
+          </ul>
+          {more.length > 0 ? (
+            <details className="text-sm">
+              <summary className="w-fit cursor-pointer list-none py-1 font-medium text-primary hover:underline [&::-webkit-details-marker]:hidden">
+                Show {more.length} more
+              </summary>
+              <ul className="flex flex-col divide-y">
+                {more.map((r) => (
+                  <AnswerLine key={r.key} row={r} currency={summary.currency} />
+                ))}
+              </ul>
+            </details>
+          ) : null}
+        </div>
       ) : null}
+      {lists > 0 ? (
+        <div className="grid gap-6 md:grid-cols-3">
+          <ListGroup
+            title="Not in this price"
+            tone="separate"
+            empty={null}
+            entries={notIncluded}
+          />
+          <ListGroup
+            title={
+              summary.mode === "client"
+                ? "Also budget for (other providers)"
+                : "The client pays providers directly"
+            }
+            tone="separate"
+            empty={null}
+            entries={clientPays}
+          />
+          <ListGroup
+            title="To confirm"
+            tone="confirm"
+            empty={null}
+            entries={confirm}
+          />
+        </div>
+      ) : null}
+      <PrerequisiteWarnings items={warnings} />
     </section>
   );
 }

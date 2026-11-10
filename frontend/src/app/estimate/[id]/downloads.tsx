@@ -56,16 +56,14 @@ export function Downloads({
           disabled={busy !== null || blocked}
           onClick={() => download("pdf")}
         >
-          {busy === "pdf" ? "Preparing report…" : "Download report (PDF)"}
+          {busy === "pdf" ? "Preparing report…" : "Download PDF"}
         </Button>
         <Button
           variant="outline"
           disabled={busy !== null || blocked}
           onClick={() => download("xlsx")}
         >
-          {busy === "xlsx"
-            ? "Preparing spreadsheet…"
-            : "Download bill of quantities (Excel)"}
+          {busy === "xlsx" ? "Preparing spreadsheet…" : "Download Excel"}
         </Button>
       </div>
       {blocked ? (

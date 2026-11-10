@@ -626,6 +626,9 @@ class SmallSite(Sourced):
     # v26+: the most vCPUs that one server takes at those uptime levels (one standard server);
     # without it, the small server's small_app_server_max_vcpus
     single_max_vcpus: Decimal | None = None
+    # v38+ (OPEN_QUESTIONS 236): the same one-server rule on own servers (hosting on_prem),
+    # which have no small cloud server price; the load limit is single_max_vcpus
+    single_on_own_servers: bool = False
 
 
 class BandSpread(Frozen):
@@ -756,6 +759,18 @@ class Escalation(Sourced):
     prices: Decimal
 
 
+class BoughtItems(Sourced):
+    """v38+ (OPEN_QUESTIONS 236): hardware resold to the client carries this margin, not
+    margin_percent (the lower of the two); its lines are those whose key starts with one of
+    line_keys."""
+
+    margin: Decimal = Field(ge=0, le=1)
+    line_keys: list[str]
+
+    def holds(self, line_key: str) -> bool:
+        return line_key.startswith(tuple(self.line_keys))
+
+
 class Commercial(Sourced):
     tax_label: str = "GST"
     cost_of_capital: Decimal
@@ -769,6 +784,7 @@ class Commercial(Sourced):
     # v19+: the penalty reserve only when the contract has a penalty clause (questionnaire
     # penalty_clause, cited from the document); False = always, as before.
     penalty_needs_clause: bool = False
+    bought_items: BoughtItems | None = None  # v38+: a reseller's margin on bought hardware
 
 
 class ClaritySpread(Frozen):

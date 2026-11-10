@@ -2,12 +2,10 @@
 
 import * as React from "react";
 import {
-  BuildingsIcon,
   HardDrivesIcon,
   ScalesIcon,
   TimerIcon,
   TreeStructureIcon,
-  UsersThreeIcon,
 } from "@phosphor-icons/react/dist/ssr";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -31,18 +29,16 @@ import { useLoad } from "@/lib/use-load";
 import { BidResultCard } from "./bid-result";
 import { CompareOptions } from "./compare";
 import {
+  CheckBeforeSending,
   Chevron,
   CostSummary,
   Disclosure,
-  OngoingCosts,
-  runningPerYear,
+  IncludedList,
   SectionTitle,
-  WhatsIncluded,
 } from "./cost-summary";
 import {
   exportBlocked,
   IndependentCheckCard,
-  OpenAnswers,
   SizeCheckCard,
   usePricedOptions,
 } from "./check";
@@ -55,7 +51,6 @@ import {
   SourcesList,
   SourcesProvider,
 } from "./sources";
-import { PrerequisiteWarnings, ProjectContextLine } from "../new/parts";
 
 function Fact({ label, value }: { label: string; value: string }) {
   return (
@@ -129,34 +124,12 @@ function RangeBand({ summary }: { summary: QuickSummary }) {
   );
 }
 
-/** Industry, type and users, and what usually goes with the features: shown only, never priced. */
-function ProjectContextCard({ summary }: { summary: QuickSummary }) {
-  const c = summary.context;
-  const warnings = summary.prerequisites ?? [];
-  if (!c && warnings.length === 0) return null;
-  return (
-    <section className="soft-card flex flex-col gap-3 px-6 py-4 sm:px-10">
-      {c ? (
-        <ProjectContextLine
-          domain={c.domain}
-          projectType={c.project_type}
-          roles={c.user_roles}
-        />
-      ) : null}
-      <PrerequisiteWarnings items={warnings} />
-    </section>
-  );
-}
-
 function Headline({ summary }: { summary: QuickSummary }) {
   const years = summary.support_years;
-  const range = (low: number | null, high: number | null) =>
-    formatRange(low, high, summary.currency);
   const approx = (paise: number | null) =>
     formatApprox(paise, summary.currency);
   const risk = summary.risk_allowance_paise;
   const tax = summary.currency === "INR" ? "GST" : "tax";
-  const perYear = runningPerYear(summary);
   // a description is quoted as vendors quote (build, then running, + tax); a tender bids the
   // whole contract, so its total leads
   const quoteFirst =
@@ -218,11 +191,7 @@ function Headline({ summary }: { summary: QuickSummary }) {
         <p className="settle max-w-xs text-sm text-muted-foreground [--d:2]">
           An early estimate, not a quotation.{" "}
           {quoteFirst
-            ? `Includes margin and a safety buffer. Whole price with ${
-                summary.support_term_open || years === 1
-                  ? "one year"
-                  : `${years} years`
-              } of running and ${tax}: ${shortMoney(summary.likely_paise, summary.currency)}.`
+            ? "Includes margin and a safety buffer."
             : summary.support_term_open
               ? "Includes one year of support, margin and tax."
               : years > 0
@@ -231,7 +200,22 @@ function Headline({ summary }: { summary: QuickSummary }) {
         </p>
       </div>
 
-      <RangeBand summary={summary} />
+      <div className="flex flex-col gap-1">
+        <p className="text-sm text-muted-foreground">
+          {quoteFirst
+            ? `Whole price with ${
+                summary.support_term_open || years === 1
+                  ? "one year"
+                  : `${years} years`
+              } of running and ${tax}: most likely `
+            : "Most likely "}
+          <span className="font-medium text-foreground tabular-nums">
+            {shortMoney(summary.likely_paise, summary.currency)}
+          </span>
+          , and it could be anywhere in this range:
+        </p>
+        <RangeBand summary={summary} />
+      </div>
 
       {summary.deadline_priced_months && summary.deadline_asked_months ? (
         <p className="settle rounded-lg bg-warning-muted px-4 py-3 text-sm text-warning">
@@ -245,33 +229,15 @@ function Headline({ summary }: { summary: QuickSummary }) {
         </p>
       ) : null}
 
-      <dl className="settle grid grid-cols-2 gap-x-8 gap-y-5 border-t pt-6 [--d:4] sm:grid-cols-3 lg:grid-cols-5">
-        <Fact
-          label="Building and launch only"
-          value={range(
-            summary.build_only_low_paise,
-            summary.build_only_high_paise,
-          )}
-        />
-        {perYear !== null ? (
-          // one-time and yearly apart, so the build is not read as the whole price
-          <Fact
-            label="Then, running per year"
-            value={formatApprox(perYear, summary.currency)}
-          />
-        ) : null}
+      <dl className="settle grid grid-cols-2 gap-x-8 gap-y-5 border-t pt-6 [--d:4] sm:grid-cols-3">
         <Fact
           label="Time to build"
           value={`${formatDecimal(summary.build_months, 1)} months`}
         />
-        {summary.project_size ? (
+        {summary.team.length > 0 ? (
           <Fact
-            label="Build size"
-            value={
-              summary.size_points
-                ? `${summary.project_size} · ${summary.size_points} pts`
-                : summary.project_size
-            }
+            label="Team"
+            value={`${Math.max(1, Math.round(Number(summary.team_people ?? 0)))} people`}
           />
         ) : null}
         {summary.peak_online ? (
@@ -281,20 +247,13 @@ function Headline({ summary }: { summary: QuickSummary }) {
             value={`${summary.peak_online.toLocaleString("en-IN")} online at once`}
           />
         ) : null}
-        <Fact
-          label="Support"
-          value={
-            summary.support_term_open
-              ? "Per year"
-              : years > 0
-                ? `${years} year${years === 1 ? "" : "s"}`
-                : "None"
-          }
-        />
       </dl>
 
-      <AiSaving summary={summary} />
-      <AiSavingSources />
+      <div className="flex flex-col gap-2 border-t pt-5">
+        <AiSaving summary={summary} />
+        <RealityCheck summary={summary} />
+        <SizeCheckCard summary={summary} />
+      </div>
 
       <details className="fold group text-sm">
         <summary className="w-fit cursor-pointer list-none rounded font-medium text-muted-foreground transition-colors hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none [&::-webkit-details-marker]:hidden">
@@ -364,75 +323,34 @@ function MarketBox({ summary }: { summary: QuickSummary }) {
   );
 }
 
-/** "AI saving: ₹X (Y%), all of it passed on in the price" (OPEN_QUESTIONS 227: nothing is
- * kept back out of sight). */
-function Passthrough({ summary }: { summary: QuickSummary }) {
-  const s = summary.ai_saving;
-  if (!s) return null;
-  return (
-    <span className="text-sm font-medium">
-      AI saving: {formatApprox(s.identified_paise, summary.currency)} (
-      {s.percent}%), all of it passed on in the price
-    </span>
-  );
-}
-
-/** The whole project with the team's AI tools and without them: price, build time, saving. */
+/** The AI saving in one line; how it is worked out opens below it. */
 function AiSaving({ summary }: { summary: QuickSummary }) {
   const withAi = summary.likely_paise;
   const withoutAi = summary.traditional_paise;
-  if (withAi === null || withoutAi === null || withoutAi <= withAi) {
-    return summary.ai_saving ? (
-      <div className="dark-card glow-low rounded-2xl px-5 py-4 sm:px-6">
-        <Passthrough summary={summary} />
-      </div>
-    ) : null;
-  }
-  const money = (paise: number | null) => formatApprox(paise, summary.currency);
-  const months = Number(summary.build_months);
-  const oldMonths = summary.traditional_build_months
-    ? Number(summary.traditional_build_months)
-    : null;
-  const monthsSaved = oldMonths !== null ? oldMonths - months : 0;
+  const saved =
+    withAi !== null && withoutAi !== null && withoutAi > withAi
+      ? withoutAi - withAi
+      : (summary.ai_saving?.identified_paise ?? null);
+  if (saved === null || saved <= 0) return null;
+  const percent = summary.ai_saving_percent ?? summary.ai_saving?.percent;
+  const passed = !summary.ai_saving || summary.ai_saving.passed_percent >= 100;
   return (
-    <div className="dark-card glow-low grid gap-5 rounded-2xl p-5 sm:p-6 md:grid-cols-[1fr_auto_auto] md:items-center">
-      <div className="flex flex-col gap-2">
-        <span className="font-wide text-xl leading-snug">
-          AI tools save{" "}
-          <span className="text-peach">{money(withoutAi - withAi)}</span>
-          {summary.ai_saving_percent ? ` (${summary.ai_saving_percent}%)` : ""}
-          {monthsSaved >= 0.1
-            ? ` and ${formatDecimal(monthsSaved, 1)} months`
-            : ""}
+    <div className="flex flex-col gap-1 text-sm">
+      <p className="flex gap-2">
+        <span aria-hidden className="font-semibold text-success">
+          ✓
         </span>
-        <Passthrough summary={summary} />
-        <span className="text-xs text-white/55">
-          {summary.ai_saving && summary.ai_saving.passed_percent < 100
-            ? "Partly passed on in the price"
-            : "Already in the price"}
-          , after the cost of the tools and of checking their work. Not
-          guaranteed.
+        <span>
+          AI tools save {formatApprox(saved, summary.currency)}
+          {percent ? ` (${percent}%)` : ""}:{" "}
+          {passed
+            ? "already taken off this price"
+            : "partly taken off this price"}
+          , after the cost of the tools and of checking their work.
         </span>
-      </div>
-      <div className="rounded-xl border border-white/12 bg-white/6 px-4 py-3">
-        <p className="text-xs text-white/60">Without AI tools</p>
-        <p className="font-wide mt-1 text-2xl text-white/55 tabular-nums line-through decoration-2">
-          {money(withoutAi)}
-        </p>
-        {oldMonths !== null ? (
-          <p className="text-xs text-white/50">
-            {formatDecimal(oldMonths, 1)} months
-          </p>
-        ) : null}
-      </div>
-      <div className="rounded-xl bg-white px-4 py-3 text-foreground">
-        <p className="text-xs text-muted-foreground">With AI tools</p>
-        <p className="font-wide mt-1 text-2xl text-tape-bright tabular-nums">
-          {money(withAi)}
-        </p>
-        <p className="text-xs text-muted-foreground">
-          {formatDecimal(months, 1)} months
-        </p>
+      </p>
+      <div className="pl-5">
+        <AiSavingSources />
       </div>
     </div>
   );
@@ -884,57 +802,6 @@ function FeatureCosts({ summary }: { summary: QuickSummary }) {
   );
 }
 
-function MoneyBreakdown({ summary }: { summary: QuickSummary }) {
-  const risk = summary.risk_allowance_paise;
-  const money = (paise: number | null) => formatApprox(paise, summary.currency);
-  return (
-    <section className="flex flex-col gap-5">
-      <h3 className="text-base font-semibold">Where the money goes</h3>
-      <ul className="flex flex-col gap-4">
-        {summary.parts.map((part) => (
-          <li key={part.key} className="flex flex-col gap-1.5">
-            <div className="flex flex-wrap items-baseline justify-between gap-x-4">
-              <span className="font-medium">{part.label}</span>
-              <span className="tabular-nums">
-                <span className="font-semibold">
-                  {formatRange(
-                    part.low_paise,
-                    part.high_paise,
-                    summary.currency,
-                  )}
-                </span>{" "}
-                <span className="text-sm text-muted-foreground">
-                  ({part.share_percent}%)
-                </span>
-              </span>
-            </div>
-            <div className="h-3 w-full overflow-hidden rounded-full bg-muted">
-              <div
-                className="h-full rounded-full bg-primary"
-                style={{ width: `${Math.max(0, part.share_percent)}%` }}
-              />
-            </div>
-          </li>
-        ))}
-      </ul>
-      {risk !== null && risk > 0 ? (
-        <p className="border-t pt-4 text-sm text-muted-foreground">
-          Planned cost{" "}
-          <strong className="text-foreground">
-            {money(summary.planned_paise)}
-          </strong>{" "}
-          + expected overrun{" "}
-          <strong className="text-foreground">{money(risk)}</strong> = most
-          likely{" "}
-          <strong className="text-foreground">
-            {money(summary.likely_paise)}
-          </strong>
-        </p>
-      ) : null}
-    </section>
-  );
-}
-
 function CostItems({ summary }: { summary: QuickSummary }) {
   if (summary.cost_items.length === 0) return null;
   const range = (low: number, high: number) =>
@@ -1019,61 +886,6 @@ function workRange(item: QuickSummary["cost_items"][number]): string {
   return low === high
     ? `about ${fmt(low)} person-days`
     : `about ${fmt(low)} – ${fmt(high)} person-days`;
-}
-
-function ClientPays({ summary }: { summary: QuickSummary }) {
-  if (summary.client_pays.length === 0) return null;
-  const range = (low?: number | null, high?: number | null) =>
-    formatRange(low, high, summary.currency);
-  const years = summary.support_years;
-  return (
-    <section className="flex flex-col gap-4">
-      <div>
-        <h3 className="text-base font-semibold">
-          {summary.mode === "client"
-            ? "Also budget for (paid to other providers)"
-            : "Paid directly by the client"}
-        </h3>
-        <p className="figure-label">Not in the price above</p>
-      </div>
-      <ul className="flex flex-col divide-y">
-        {summary.client_pays.map((item) => (
-          <li
-            key={item.key}
-            className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 py-3"
-          >
-            <div className="flex flex-col">
-              <span className="font-medium">{item.label}</span>
-              {item.note ? (
-                <span className="text-sm text-muted-foreground">
-                  {item.note}
-                </span>
-              ) : null}
-            </div>
-            {item.first_year_paise !== null ? (
-              <span className="text-right tabular-nums">
-                <span className="font-semibold">
-                  {range(item.first_year_low_paise, item.first_year_high_paise)}
-                </span>
-                <span className="text-sm text-muted-foreground">
-                  {" "}
-                  first year
-                </span>
-                {item.total_paise !== null &&
-                item.total_paise !== item.first_year_paise ? (
-                  <span className="block text-sm text-muted-foreground">
-                    {range(item.total_low_paise, item.total_high_paise)} over{" "}
-                    {years} year
-                    {years === 1 ? "" : "s"}
-                  </span>
-                ) : null}
-              </span>
-            ) : null}
-          </li>
-        ))}
-      </ul>
-    </section>
-  );
 }
 
 const CLIENT_TYPES: Record<string, string> = {
@@ -1197,20 +1009,6 @@ function SaveTemplate({ summary }: { summary: QuickSummary }) {
   );
 }
 
-/** One line for the collapsed team panel: hours, people, months and AI hours saved. */
-function effortHint(summary: QuickSummary): string {
-  const h = summary.hours;
-  const bits: string[] = [];
-  if (h && h.rows.length > 0) bits.push(`${hoursText(h.with_ai)} hours`);
-  if (summary.team.length > 0)
-    bits.push(
-      `${Math.max(1, Math.round(Number(summary.team_people ?? 0)))} people, ${formatDecimal(Number(summary.build_months), 1)} months`,
-    );
-  if (h && (h.saved ?? 0) > 0)
-    bits.push(`${hoursText(h.saved ?? 0)} hours saved by AI`);
-  return bits.join(" · ");
-}
-
 function SummaryView({
   summary,
   onChange,
@@ -1221,9 +1019,7 @@ function SummaryView({
   const user = useCurrentUser();
   const options = usePricedOptions(summary.estimate_id);
   const hasTeam =
-    (summary.hours?.rows.length ?? 0) > 0 ||
-    summary.team.length > 0 ||
-    (summary.traditional_paise !== null && summary.likely_paise !== null);
+    (summary.hours?.rows.length ?? 0) > 0 || summary.team.length > 0;
   const hasMarket =
     Boolean(summary.market) || summary.similar_projects.length > 0;
   return (
@@ -1260,7 +1056,6 @@ function SummaryView({
                 name={summary.name}
                 blocked={exportBlocked(summary)}
               />
-              <SaveTemplate summary={summary} />
             </div>
           </div>
         </AppHero>
@@ -1268,26 +1063,11 @@ function SummaryView({
         {summary.feasible ? (
           <>
             <Headline summary={summary} />
-            <ProjectContextCard summary={summary} />
             <IndependentCheckCard summary={summary} onChange={onChange} />
-            <SizeCheckCard summary={summary} />
-            <RealityCheck summary={summary} />
-            <OpenAnswers summary={summary} options={options} />
             <BidCheckCard summary={summary} />
+            <CheckBeforeSending summary={summary} options={options} />
             <CostSummary summary={summary} />
-            <WhatsIncluded summary={summary} options={options} />
-            <FeatureStoriesSection summary={summary} onChange={onChange} />
-            <OngoingCosts summary={summary} />
-
-            {hasTeam ? (
-              <Disclosure
-                title="Team and hours"
-                icon={UsersThreeIcon}
-                hint={effortHint(summary)}
-              >
-                <TeamAndHours summary={summary} />
-              </Disclosure>
-            ) : null}
+            <SourcesList />
 
             {summary.hardware ? (
               <Disclosure
@@ -1304,34 +1084,35 @@ function SummaryView({
             ) : null}
 
             <Disclosure
-              title="Detailed breakdown"
+              title="More details"
               icon={TreeStructureIcon}
-              hint="Each feature, where the money goes, every cost item"
+              hint="Each feature, the team and hours, every cost item, and other choices compared"
             >
+              <IncludedList summary={summary} />
               <FeatureCosts summary={summary} />
-              <MoneyBreakdown summary={summary} />
+              <FeatureStoriesSection
+                summary={summary}
+                onChange={onChange}
+                bare
+              />
+              {hasTeam ? (
+                <section className="flex flex-col gap-4">
+                  <TeamAndHours summary={summary} />
+                </section>
+              ) : null}
               <CostItems summary={summary} />
-              <ClientPays summary={summary} />
+              {hasMarket ? (
+                <section className="flex flex-col gap-4">
+                  <MarketBox summary={summary} />
+                  <SimilarProjects summary={summary} />
+                </section>
+              ) : null}
+              <CompareOptions
+                estimateId={summary.estimate_id}
+                currency={summary.currency}
+                country={summary.country}
+              />
             </Disclosure>
-
-            <SourcesList />
-
-            {hasMarket ? (
-              <Disclosure
-                title="Market comparison"
-                icon={BuildingsIcon}
-                hint="What similar real projects were bought for"
-              >
-                <MarketBox summary={summary} />
-                <SimilarProjects summary={summary} />
-              </Disclosure>
-            ) : null}
-
-            <CompareOptions
-              estimateId={summary.estimate_id}
-              currency={summary.currency}
-              country={summary.country}
-            />
           </>
         ) : (
           <section className="slab app-rise flex flex-col items-start gap-4 px-6 py-8 sm:px-10">
@@ -1359,6 +1140,7 @@ function SummaryView({
           <Link href="/estimate/new" className={buttonVariants({ size: "lg" })}>
             Start another estimate
           </Link>
+          <SaveTemplate summary={summary} />
           <Link
             href={`/projects/${summary.project_id}?tab=estimate`}
             className="text-sm text-muted-foreground underline hover:text-foreground"

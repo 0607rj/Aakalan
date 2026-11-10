@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { SealCheckIcon } from "@phosphor-icons/react/dist/ssr";
 
 import { ErrorNotice } from "@/components/status";
 import { Button } from "@/components/ui/button";
@@ -13,8 +12,6 @@ import {
 } from "@/lib/api/client";
 import { useLoad } from "@/lib/use-load";
 import { cn } from "@/lib/utils";
-
-import { Disclosure } from "./cost-summary";
 
 const KIND_LABEL: Record<string, string> = {
   level_too_high: "Level may be too high",
@@ -120,40 +117,49 @@ function SecondOpinion({ estimateId }: { estimateId: string }) {
   );
 }
 
+/** "Does this price look real?" as one line in the price card; the checks open below it. */
 export function RealityCheck({ summary }: { summary: QuickSummary }) {
   const reality = summary.reality;
   if (!reality) return null;
   const ok = reality.verdict === "realistic";
+  const passed = reality.checks.filter((c) => c.ok).length;
   return (
-    <Disclosure
-      title="Does this price look real?"
-      icon={SealCheckIcon}
-      hint={
-        <span className={ok ? "text-success" : "text-warning"}>
-          {ok ? "Looks realistic" : "Worth a second look"} ·{" "}
-          {reality.checks.filter((c) => c.ok).length} of {reality.checks.length}{" "}
-          checks pass
+    <details className="group/real text-sm">
+      <summary className="flex w-fit cursor-pointer list-none gap-2 [&::-webkit-details-marker]:hidden">
+        <span
+          aria-hidden
+          className={cn("font-semibold", ok ? "text-success" : "text-warning")}
+        >
+          {ok ? "✓" : "⚠"}
         </span>
-      }
-    >
-      <ul className="flex flex-col gap-2">
-        {reality.checks.map((c) => (
-          <li key={c.key} className="flex gap-2 text-sm">
-            <span
-              aria-hidden
-              className={cn(
-                "mt-[0.5em] size-1.5 shrink-0 rounded-full",
-                c.ok ? "bg-success" : "bg-warning",
-              )}
-            />
-            <span>
-              <span className="font-medium">{c.title}.</span>{" "}
-              <span className="text-muted-foreground">{c.detail}</span>
-            </span>
-          </li>
-        ))}
-      </ul>
-      <SecondOpinion estimateId={summary.estimate_id} />
-    </Disclosure>
+        <span className={cn(!ok && "font-medium")}>
+          {ok ? "Looks realistic" : "Worth a second look"}: {passed} of{" "}
+          {reality.checks.length} checks pass{" "}
+          <span className="text-primary group-open/real:hidden">
+            how we checked
+          </span>
+        </span>
+      </summary>
+      <div className="mt-3 flex flex-col gap-3 pl-5">
+        <ul className="flex flex-col gap-2">
+          {reality.checks.map((c) => (
+            <li key={c.key} className="flex gap-2">
+              <span
+                aria-hidden
+                className={cn(
+                  "mt-[0.5em] size-1.5 shrink-0 rounded-full",
+                  c.ok ? "bg-success" : "bg-warning",
+                )}
+              />
+              <span>
+                <span className="font-medium">{c.title}.</span>{" "}
+                <span className="text-muted-foreground">{c.detail}</span>
+              </span>
+            </li>
+          ))}
+        </ul>
+        <SecondOpinion estimateId={summary.estimate_id} />
+      </div>
+    </details>
   );
 }
