@@ -32,6 +32,8 @@ TASK_SAVINGS = "ai_productivity.task_savings."
 PLACEHOLDER = "placeholder"
 WORKED_OUT = ("derived from", "worked out from")
 REASONED_ONLY = "expert_judgement"
+BUILDER_FACTOR = "builder.rate_factor_by_builder."  # who builds it (parameter sets v32+)
+ROLE = "role."
 UNITS = {
     "per_person_day": "a day",
     "per_month": "a month",
@@ -78,6 +80,9 @@ class Source(BaseModel):
     amount: str | None = None  # rates: the price (Decimal string, major units)
     currency: str | None = None  # rates: its currency
     role: bool = False  # rates: a person's day rate (role.*)
+    # rates: how the price-list amount became the amount used ("₹3,121 on the rate list × 0.75
+    # for a small company"); None when used as listed
+    note: str | None = None
 
 
 class Rate(BaseModel):
@@ -154,9 +159,32 @@ def _value(v: object) -> str:
     return str(v)
 
 
+def builder_factor(lines: Iterable[CostLine]) -> tuple[str, Decimal] | None:
+    """Who builds it and the factor on every person's day rate, as the engine recorded it in the
+    trace (role_rate.v2); None when no line used one (older sets, or a factor of 1 not
+    recorded as a step)."""
+    for ln in lines:
+        for p in (ln.trace or {}).get("parameters", []):
+            path = str(p.get("path", ""))
+            if path.startswith(BUILDER_FACTOR):
+                return path[len(BUILDER_FACTOR) :], Decimal(str(p["value"]))
+    return None
+
+
+def _money(amount: Decimal, currency: str) -> str:
+    symbol = "₹" if currency == "INR" else "$" if currency == "USD" else f"{currency} "
+    return f"{symbol}{amount:,.0f}"
+
+
 class _Collector:
-    def __init__(self, cfg: QuickConfig, snapshot: dict[str, Any]) -> None:
+    def __init__(
+        self,
+        cfg: QuickConfig,
+        snapshot: dict[str, Any],
+        builder: tuple[str, Decimal] | None = None,
+    ) -> None:
         self.cfg = cfg
+        self.builder = builder
         self.words = cfg.price_sources
         self.catalog = {c["key"]: c for c in snapshot.get("catalog", {}).get("components", [])}
         self.catalog_version = str(snapshot.get("catalog", {}).get("version", ""))
@@ -170,7 +198,26 @@ class _Collector:
             self.by_key[key] = make(len(self.by_key) + 1)
         return self.by_key[key]
 
+    def used(self, item: dict[str, Any]) -> tuple[Decimal | None, str | None]:
+        """The amount the price used and, when it differs from the list, how."""
+        if item.get("amount") is None:
+            return None, None
+        listed = Decimal(str(item["amount"]))
+        if self.builder is None or not str(item["key"]).startswith(ROLE):
+            return listed, None
+        who, factor = self.builder
+        if factor == 1:
+            return listed, None
+        question = self.cfg.questions.get("builder")
+        label = next(
+            (o.label for o in (question.options if question else []) if o.value == who), who
+        )
+        currency = str(item.get("currency") or "")
+        note = f"{_money(listed, currency)} on the rate list × {factor} for {label.lower()}"
+        return (listed * factor).quantize(Decimal("0.01")), note
+
     def rate(self, item: dict[str, Any]) -> Source:
+        amount, note = self.used(item)
         return self._add(
             f"rate:{item['key']}",
             lambda n: Source(
@@ -181,9 +228,10 @@ class _Collector:
                 url=item.get("source_url"),
                 version=f"rate card {item.get('rate_card_version', '')}",
                 status=_rate_status(item),
-                amount=str(item["amount"]) if item.get("amount") is not None else None,
+                amount=str(amount) if amount is not None else None,
                 currency=str(item.get("currency") or "") or None,
-                role=str(item["key"]).startswith("role."),
+                role=str(item["key"]).startswith(ROLE),
+                note=note,
             ),
         )
 
@@ -355,7 +403,7 @@ def estimate_sources(
 ) -> EstimateSources:
     """Every source the estimate used, numbered in the order the rows first need them, and the
     sources, work, rates, asking sentences and AI saving behind each results-page row."""
-    collect = _Collector(cfg, estimate.inputs_snapshot)
+    collect = _Collector(cfg, estimate.inputs_snapshot, builder_factor(estimate.lines))
     owners = feature_owners(estimate.inputs_snapshot)
     rows: dict[str, dict[str, Any]] = {}
     ai_by_row: dict[str, dict[str, AiTask]] = {}
@@ -401,7 +449,7 @@ def estimate_sources(
                 rates=[
                     Rate(
                         label=rate_title(cfg, r["key"], r["unit"]),
-                        amount=str(r["amount"]),
+                        amount=str(collect.used(r)[0] or r["amount"]),
                         currency=str(r.get("currency", "")),
                         unit=UNITS.get(r["unit"], r["unit"]),
                     )

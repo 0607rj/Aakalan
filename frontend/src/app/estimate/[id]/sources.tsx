@@ -324,7 +324,13 @@ function Row({ source, value }: { source: PriceSource; value?: string }) {
       <span className="font-medium">
         {source.title.replace(/^Hours for /, "")}
       </span>
-      <span className="tabular-nums">{value ?? ""}</span>
+      <span className="flex flex-col tabular-nums">
+        {value ?? ""}
+        {source.note ? (
+          // the rate the price used, from the rate list × who builds it
+          <span className="text-xs text-muted-foreground">{source.note}</span>
+        ) : null}
+      </span>
       <span className="text-muted-foreground">
         <From source={source} />
       </span>

@@ -16,6 +16,7 @@ from app.services.engine.reference import (
     Driver,
     EffortCaps,
     Size,
+    Staffing,
     TaskType,
 )
 
@@ -679,6 +680,7 @@ def staff_team(ctx: PricingContext) -> staffing.Team | None:
     if ctx.p.staffing is None:
         return None
     if ctx.team is None:
+        rules = team_rules(ctx)
         work: dict[str, Decimal] = {}
         scratch: LineBuilder | None = None
         for ci in ctx.inp.components:
@@ -689,13 +691,52 @@ def staff_team(ctx: PricingContext) -> staffing.Team | None:
                 for role, share in task_role_shares(scratch, task):
                     work[role] = work.get(role, ZERO) + pd * share
         if scratch is None:
-            ctx.team = staffing.Team(staffing=ctx.p.staffing)
+            ctx.team = staffing.Team(staffing=rules)
         else:
             rates = scratch  # a throw-away trace: the rates as every line prices them
             ctx.team = staffing.decide(
-                ctx.p.staffing, work, rates.rate_local, lambda key: getattr(ctx.q, key)
+                rules, work, rates.rate_local, lambda key: getattr(ctx.q, key)
             )
     return ctx.team
+
+
+def staffed(t: LineBuilder, role: str, pd: Decimal) -> tuple[str, Decimal]:
+    """Who does `role`'s work on a line outside the build (training, hypercare, support,
+    handover), parameter sets v39+ (staffing.by_builder, OPEN_QUESTIONS 238): a role the team
+    has no place for hands the work to the person who does that work in the build, slowed
+    as there (staffing.v1); a project manager this builder never books, to the team's lead.
+    Older sets, or a role on the team: (role, pd) unchanged."""
+    ctx = t.ctx
+    if ctx.p.staffing is None or not ctx.p.staffing.by_builder:
+        return role, pd
+    team = staff_team(ctx)
+    if team is None:
+        return role, pd
+    rules = team.staffing
+    if role == ctx.p.programme.pm_role:
+        if rules.pm is None or rules.pm.booking != "never":
+            return role, pd
+        who, further = team.done_by(rules.pm.fallback)
+        slowdown = rules.pm.slowdown * further
+    else:
+        who, slowdown = team.done_by(role)
+    if who == role:
+        return role, pd
+    if ctx.q.builder_type in ctx.p.staffing.by_builder:  # recorded in the trace
+        t.param("staffing", "by_builder", ctx.q.builder_type)
+    t.param("staffing", *(("roles", role) if role in rules.roles else ("pm",)))
+    plain = staffing.plain
+    return who, t.step(
+        f"{plain(role)} work done by the {plain(who)} (no {plain(role)} on the team)",
+        f"{pd:.2f} × {slowdown}",
+        pd * slowdown,
+    )
+
+
+def team_rules(ctx: PricingContext) -> Staffing:
+    """The staffing rules for who builds it (v39+ staffing.by_builder; as written before)."""
+    assert ctx.p.staffing is not None
+    return ctx.p.staffing.for_builder(ctx.q.builder_type)
 
 
 def task_role_shares(t: LineBuilder, task: TaskType) -> list[tuple[str, Decimal]]:

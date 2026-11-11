@@ -10,6 +10,10 @@ work handed to it by roles decided before it):
             (booking the specialist for the minimum costs no more than handing the work over);
   else   the fallback does it: work_pd × slowdown is added to the fallback's work, decided later.
 
+Who builds it changes the rules (parameter sets v39+, staffing.by_builder, OPEN_QUESTIONS 238):
+a role the builder never books goes to its fallback, one it always books joins with any work,
+and without `book_when_cheaper` only a booking's worth of work (or an answer) books a role.
+
 A role with no work is not on the team. The work is never dropped: a role left out hands all of
 it on, priced at the person who does it, slowed by the slowdowns along the way. Pure: no trace,
 no database; the callers record the decisions on the lines they change."""
@@ -43,12 +47,20 @@ class Team:
         or is not decided at all (the developer, always on a team that builds anything)."""
         factor = ONE
         seen: set[str] = set()
-        while role in self.decisions and not self.decisions[role].joins and role not in seen:
+        while self._hands_on(role) and role not in seen:
             seen.add(role)
             staff = self.staffing.roles[role]
             factor *= staff.slowdown
             role = staff.fallback
         return role, factor
+
+    def _hands_on(self, role: str) -> bool:
+        """The role's work goes to its fallback: decided out, or never booked by this builder
+        (v39+), even with no build work of its own (e.g. a freelancer's training sessions)."""
+        if role in self.decisions:
+            return not self.decisions[role].joins
+        staff = self.staffing.roles.get(role)
+        return staff is not None and staff.booking == "never"
 
     def notes(self, roles: set[str]) -> dict[str, dict[str, str]]:
         """For a line's inputs: each role left out, who does its work and why (read by the
@@ -86,8 +98,24 @@ def choose(
         given = answer(key)
         if given in values:
             return True, f"needed: {key.replace('_', ' ')} is {given}"
+    if staff.booking == "never":
+        return False, (
+            f"{staff.builder} works without a {plain(role)}: the {plain(staff.fallback)} does"
+            f" its {work_pd:.1f} person-days in {work_pd * staff.slowdown:.1f}"
+        )
+    if staff.booking == "always":
+        return (
+            True,
+            f"{staff.builder} books a {plain(role)} for this work ({work_pd:.1f} person-days)",
+        )
     if work_pd >= staff.min_booking_pd:
         return True, f"{work_pd:.1f} person-days, at least a {staff.min_booking_pd} day booking"
+    if not staff.when_cheaper:
+        return False, (
+            f"only {work_pd:.1f} person-days: {staff.builder} books a {plain(role)} for"
+            f" {staff.min_booking_pd} or more; the {plain(staff.fallback)} does it in"
+            f" {work_pd * staff.slowdown:.1f}"
+        )
     booked = staff.min_booking_pd * rate(role)
     shared = work_pd * staff.slowdown * rate(staff.fallback)
     if booked <= shared:

@@ -216,7 +216,8 @@
     "launch_help": "usual",
     "onsite_period": "support",
     "hardware_list": "no",
-    "hardware_supply": "we_supply"
+    "hardware_supply": "we_supply",
+    "cloud_provider": "aws"
    },
    "scope": [
     "public_api",
@@ -414,7 +415,8 @@
     "launch_help": "usual",
     "onsite_period": "support",
     "hardware_list": "no",
-    "hardware_supply": "we_supply"
+    "hardware_supply": "we_supply",
+    "cloud_provider": "aws"
    },
    "scope": [
     "otp_codes",
@@ -605,7 +607,8 @@
     "launch_help": "usual",
     "onsite_period": "support",
     "hardware_list": "no",
-    "hardware_supply": "we_supply"
+    "hardware_supply": "we_supply",
+    "cloud_provider": "aws"
    },
    "scope": [],
    "overrides": {
@@ -784,7 +787,8 @@
     "launch_help": "usual",
     "onsite_period": "support",
     "hardware_list": "no",
-    "hardware_supply": "we_supply"
+    "hardware_supply": "we_supply",
+    "cloud_provider": "aws"
    },
    "scope": [
     "workflow_audit",
@@ -1055,7 +1059,8 @@
     "launch_help": "usual",
     "onsite_period": "support",
     "hardware_list": "no",
-    "hardware_supply": "we_supply"
+    "hardware_supply": "we_supply",
+    "cloud_provider": "aws"
    },
    "scope": [
     "otp_codes",
@@ -1326,7 +1331,8 @@
     "launch_help": "usual",
     "onsite_period": "support",
     "hardware_list": "no",
-    "hardware_supply": "we_supply"
+    "hardware_supply": "we_supply",
+    "cloud_provider": "aws"
    },
    "scope": [
     "audit_log",
@@ -1661,7 +1667,8 @@
     "launch_help": "usual",
     "onsite_period": "support",
     "hardware_list": "no",
-    "hardware_supply": "we_supply"
+    "hardware_supply": "we_supply",
+    "cloud_provider": "aws"
    },
    "scope": [
     "otp_codes",
@@ -1871,7 +1878,8 @@
     "launch_help": "usual",
     "onsite_period": "support",
     "hardware_list": "no",
-    "hardware_supply": "we_supply"
+    "hardware_supply": "we_supply",
+    "cloud_provider": "aws"
    },
    "scope": [
     "audit_log",

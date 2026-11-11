@@ -4,6 +4,7 @@ from `services/hosting`."""
 from decimal import Decimal
 
 from app.services.engine import spreads
+from app.services.engine.components import staffed
 from app.services.engine.context import LineBuilder, PricingContext
 from app.services.engine.inputs import OnsiteResource
 from app.services.engine.money import ONE, ZERO, ceil, interpolate
@@ -185,6 +186,7 @@ def maintenance_lines(ctx: PricingContext, build_effort_pd: Decimal) -> list[Cos
         if scaled:  # mandated onsite staff are not scaled by calibration
             run = t.calibration("run_multiplier")
             pd = t.step("support effort × run multiplier", f"{pd:.2f} × {run}", pd * run)
+            role, pd = staffed(t, role, pd)  # v39+: the team does it (mandated staff are as named)
         t.add_role_pd(role, pd)
         esc = t.escalation("labour", year)
         spreads.clarity(t, clarity)
@@ -311,10 +313,11 @@ def maintenance_lines(ctx: PricingContext, build_effort_pd: Decimal) -> list[Cos
             beyond / total * run,
         )
         amount = ZERO
-        for role, pd in parts:
+        for part, pd in parts:
             if pd:
-                t.add_role_pd(role, pd * factor)
-                amount += pd * factor * t.rate_local(role)
+                role, done = staffed(t, part, pd * factor)
+                t.add_role_pd(role, done)
+                amount += done * t.rate_local(role)
         esc = t.escalation("labour", year)
         spreads.clarity(t, clarity)
         spreads.om_year(t, year)

@@ -505,6 +505,11 @@ questions:
     label: How will it be built?
     topic: build
     default: custom
+    # OPEN_QUESTIONS 238: left unanswered, a freelancer or small company is priced building on a
+    # framework's ready parts (login, admin screens, forms), as such teams usually work; a
+    # mid-size or large company keeps "made fully to order" (the calibrated level). Reasoned,
+    # a default only: an answer given always wins.
+    default_by: {builder: {freelancer: framework, small_firm: framework}}
     options:
       # plain words for anyone (2026-10-27); the examples in brackets help the document reader
       - {value: custom, label: Made fully to order, hint: "Every screen made just for you, working exactly your way. Most flexible, costs the most", answers: {build_type: custom}}
@@ -525,6 +530,20 @@ questions:
       - {value: on_prem, label: Own server room, hint: "Servers are bought and set up in your own building", answers: {hosting_provider: on_prem, hosting_in_scope: true}}
       - {value: existing, label: Servers you already have, hint: "e.g. NIC, a State Data Centre or your own cloud account: no new server cost (an estimate is shown separately)", answers: {hosting_provider: aws, hosting_in_scope: false}}
       - {value: not_sure, label: Not sure, hint: "We price a public cloud and show a wider range", unsure: true, answers: {hosting_provider: aws, hosting_in_scope: true}}
+  cloud_provider:
+    # OPEN_QUESTIONS 240: which public cloud, each priced from its own Indian-region list prices
+    # (rate card v13). Asked only for "Public cloud"; after `hosting`, whose provider it replaces.
+    # Amazon sets nothing, so a hidden answer never undoes another hosting choice.
+    label: Which public cloud?
+    topic: hosting
+    group: detail  # optional: skipped = Amazon
+    default: aws
+    hide_when: {hosting: [indian_cloud, on_prem, existing, not_sure], build_part: [frontend_only]}
+    default_by: {hosting: {indian_cloud: aws, on_prem: aws, existing: aws, not_sure: aws}, build_part: {frontend_only: aws}}  # a hidden answer is dropped
+    options:
+      - {value: aws, label: Amazon Web Services (AWS), hint: "Mumbai region", answers: {}}
+      - {value: azure, label: Microsoft Azure, hint: "Central India region (Pune)", answers: {hosting_provider: azure}}
+      - {value: gcp, label: Google Cloud, hint: "Mumbai region", answers: {hosting_provider: gcp}}
   hardware_list:
     # OPEN_QUESTIONS 231, 232: optional, and asked only for "Servers you already have" (e.g. a
     # State Data Centre where the department buys the hardware); on a cloud nobody buys
@@ -1830,11 +1849,15 @@ keywords:
 # Licences and devices are left out: quick estimates never price them.
 client_provided:
   source: "Outside review of the PBD and clinic estimates (2026-10-23); phrase lists reasoned"
-  give: [will be provided, shall be provided, would be provided, to be provided, will provide, shall provide, provided by, provided from, will be made available, shall be made available, infrastructure provided by, provisioned by, be hosted on, hosted on, hosted in]
+  give: [will be provided, shall be provided, would be provided, to be provided, will provide, shall provide, provided by, provided from, will be made available, shall be made available, infrastructure provided by, provisioned by, be hosted on, hosted on, hosted in, will be procured, shall be procured, would be procured, procured by, will procure, shall procure]
   by_client: [department, client, ministry, purchaser, employer]
   by_vendor: [by the agency, by the bidder, by the vendor, by the selected agency, by the successful bidder, by the contractor, by the system integrator, by the service provider, agency shall, agency will, bidder shall, bidder will, vendor shall, vendor will, contractor shall, contractor will]
   max_sentence_chars: 400
   items:
+    # OPEN_QUESTIONS 239: hardware the department buys itself (its own tender or GeM) means its
+    # own server room, with the hardware list shown out of the price; it wins over "servers you
+    # already have" in the same sentence. Reasoned.
+    - {words: [hardware, hardware items, it hardware], question: hardware_supply, value: client_buys, also: {hosting: on_prem}}
     - {words: [hosting, hosted, server, servers, server space, cloud, cloud space, data centre, data center, infrastructure], question: hosting, value: existing}
     - {words: [domain, domain name, web address, url], question: web_domain, value: client}
     - {words: [ssl, ssl certificate, tls certificate], question: ssl_certificate, value: client}

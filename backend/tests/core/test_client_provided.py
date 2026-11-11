@@ -55,3 +55,20 @@ def test_the_client_by_its_own_name() -> None:
     # a cloud brand or the bidder is not the client
     assert found("The application shall be hosted on AWS's cloud provisioned by AWS.") == {}
     assert found("The portal shall be hosted on the bidder's cloud.") == {}
+
+
+def test_hardware_the_department_buys_is_its_own_server_room() -> None:
+    """OPEN_QUESTIONS 239: the department buying the hardware answers "who buys the hardware"
+    and means its own server room, winning over "servers you already have" in the sentence;
+    hardware the bidder supplies answers nothing."""
+    quote = "The hardware and servers for the portal will be procured by the department."
+    assert found(quote) == {
+        "hardware_supply": ("client_buys", quote, 1),
+        "hosting": ("on_prem", quote, 1),
+    }
+    gem = "The Department will procure the required hardware through GeM."
+    assert found(gem)["hardware_supply"] == ("client_buys", gem, 1)
+    assert found("All hardware shall be supplied and installed by the bidder.") == {}
+    assert found("Hosting will be provided by the department.") == {
+        "hosting": ("existing", "Hosting will be provided by the department.", 1)
+    }

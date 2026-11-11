@@ -106,3 +106,23 @@ def test_prices_have_plain_names() -> None:
     assert rate_title(cfg, "role.qa_engineer", "per_person_day") == "QA engineer day rate"
     assert rate_title(cfg, "licence.ssl_certificate_dv", "per_year") == "SSL certificate (a year)"
     assert rate_title(cfg, "forex.USD_INR", "inr_per_usd") == "Exchange rate (rupees per dollar)"
+
+
+def test_day_rates_are_shown_as_used(client: TestClient, admin_headers: H) -> None:
+    """OPEN_QUESTIONS 238: a person's day rate is shown at the rate the price used, after who
+    builds it, with the rate list's figure and the factor; a mid-size firm shows the list."""
+
+    def developer(builder: str) -> Any:
+        r = client.post(
+            "/quick-estimates",
+            json={"name": "Rates", "features": ["bookings"], "choices": {"builder": builder}},
+            headers=admin_headers,
+        )
+        assert r.status_code == 201, r.text
+        out = _sources(client, admin_headers, r.json()["estimate_id"])
+        return next(s for s in out["sources"] if s["title"] == "Developer day rate")
+
+    mid, small = developer("mid_firm"), developer("small_firm")
+    assert mid["role"] and mid["note"] is None
+    assert float(small["amount"]) == round(float(mid["amount"]) * 0.75, 2)
+    assert "× 0.75" in small["note"] and "small company" in small["note"]

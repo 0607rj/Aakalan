@@ -4,7 +4,7 @@ travel, environments) lines."""
 from decimal import Decimal
 
 from app.services.engine import spreads, staffing
-from app.services.engine.components import staff_team
+from app.services.engine.components import staff_team, staffed, team_rules
 from app.services.engine.context import LineBuilder, PricingContext, toward_lean
 from app.services.engine.money import ONE, ZERO, ceil
 from app.services.engine.outputs import CostLineOut, Timeline
@@ -73,6 +73,7 @@ def golive_lines(ctx: PricingContext, timeline: Timeline) -> list[CostLineOut]:
         pd_per: Decimal = t.param("go_live", "training_pd_per_session")
         role: str = t.param("go_live", "trainer_role")
         pd = t.step("trainer person-days", f"{sessions} × {pd_per}", sessions * pd_per)
+        role, pd = staffed(t, role, pd)
         t.add_role_pd(role, pd)
         spreads.clarity(t, overall)
         lines.append(t.finish(pd * t.rate_local(role)))
@@ -119,8 +120,8 @@ def golive_lines(ctx: PricingContext, timeline: Timeline) -> list[CostLineOut]:
             )
             scale = toward_lean(t, "hypercare scale", ONE, scale, lean)
         total = ZERO
-        for role, fte in team.items():
-            pd = weeks * pd_per_week * fte * scale
+        for member, fte in team.items():
+            role, pd = staffed(t, member, weeks * pd_per_week * fte * scale)
             t.add_role_pd(role, pd)
             total += t.step(
                 f"hypercare {role}",
@@ -140,6 +141,9 @@ def pm_lead(
     fallback, down its own fallbacks) at pd × slowdown. Decided once; the O&M years follow."""
     if ctx.pm_lead is None:
         staff = t.param("staffing", "pm")
+        if ctx.q.builder_type in t.ctx.p.staffing.by_builder:  # type: ignore[union-attr]
+            t.param("staffing", "by_builder", ctx.q.builder_type)  # recorded in the trace
+            staff = team_rules(ctx).pm
         booking: Decimal = staff.min_booking_pd
         joins, why = staffing.choose(
             pm_role, staff, pm_pd, t.rate_local, lambda key: getattr(ctx.q, key)

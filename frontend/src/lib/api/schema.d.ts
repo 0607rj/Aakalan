@@ -4894,6 +4894,8 @@ export interface components {
              * @default false
              */
             role: boolean;
+            /** Note */
+            note?: string | null;
         };
         /**
          * SourceRef

@@ -10,6 +10,8 @@ from collections.abc import Iterable
 from app.services.extraction.tender import VerifiedEvidence
 from app.services.quick.config import ClientProvided, ClientProvidedItem
 
+Answer = tuple[str, str]  # (question, option value)
+
 # sentence ends, and list items that start a new line (bullets, "o ", "1." / "a)"); PDF
 # symbol fonts give bullets as private-use characters (U+F0A7, U+F0B7, U+F0D8)
 BULLETS = "•▪●◦\\-*"
@@ -57,6 +59,15 @@ def client_provides(rules: ClientProvided, sentence: str) -> list[ClientProvided
     return [item for item in rules.items if _has(low, item.words)]
 
 
+def answers_of(items: list[ClientProvidedItem]) -> list[Answer]:
+    """The answers a sentence's items give: each item's own, and the answers it sets with it
+    (`also`), which win over another item's answer to the same question ("the hardware will be
+    procured by the department" is its own server room, not servers it already has)."""
+    with_it = {q: v for item in items for q, v in item.also.items()}
+    own = [(item.question, item.value) for item in items if item.question not in with_it]
+    return own + list(with_it.items())
+
+
 def find_client_provided(
     rules: ClientProvided, pages: Iterable[tuple[int, str]], document: str = ""
 ) -> dict[str, tuple[str, VerifiedEvidence]]:
@@ -65,10 +76,10 @@ def find_client_provided(
     found: dict[str, tuple[str, VerifiedEvidence]] = {}
     for number, text in pages:
         for sentence in sentences(text):
-            for item in client_provides(rules, sentence):
-                if item.question not in found:
+            for question, value in answers_of(client_provides(rules, sentence)):
+                if question not in found:
                     evidence = VerifiedEvidence(
                         page=number, clause_ref=f"Page {number}", quote=sentence, document=document
                     )
-                    found[item.question] = (item.value, evidence)
+                    found[question] = (value, evidence)
     return found

@@ -17,7 +17,11 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.models import Document, Project
-from app.services.extraction.client_provided import client_provides, find_client_provided
+from app.services.extraction.client_provided import (
+    answers_of,
+    client_provides,
+    find_client_provided,
+)
 from app.services.extraction.coverage import find_uncovered, terms_page
 from app.services.extraction.staffing import apply_staffing
 from app.services.extraction.stated_counts import StatedCount, find_stated_counts
@@ -381,8 +385,8 @@ def _client_provided(merged: TenderExtraction, docs: list[Document]) -> None:
     # clause and still charges for it.
     for answer in list(merged.choices.values()):
         for evidence in answer.evidence:
-            for item in client_provides(cfg.client_provided, evidence.quote):
-                found.setdefault(item.question, (item.value, evidence))
+            for question, value in answers_of(client_provides(cfg.client_provided, evidence.quote)):
+                found.setdefault(question, (value, evidence))
     for key, (value, evidence) in found.items():
         current = merged.choices.get(key)
         if current is not None and current.value == value:

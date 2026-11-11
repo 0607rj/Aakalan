@@ -291,6 +291,16 @@ backend/
                           #   server, firewall and switch at 99.5% (`small_site.single_on_own_servers`);
                           #   bought hardware, its AMC and licences carry a reseller's margin
                           #   (`commercial.bought_items`, formula commercial.margin.v2)
+                          #   parameters v39+ / rate card v13 (OPEN_QUESTIONS 238): day rates from
+                          #   Gujarat's 2026 IT manpower rate contract (Tier II = mid-size firm,
+                          #   ÷ 22 days ÷ 1.15); builder factors large 2.5 (freelancer 0.5); the team
+                          #   follows who builds it (`staffing.by_builder`: not_booked / always_booked /
+                          #   min_booking_pd / book_when_cheaper), go-live and support work too
+                          #   (`components.staffed`); an unanswered build type is `framework` for a
+                          #   freelancer or small company (question `build_type` default_by)
+                          #   + Azure / Google Cloud (question `cloud_provider`, rate card v13
+                          #   items and price points, OPEN_QUESTIONS 240); hardware the department
+                          #   buys answers `hardware_supply` (client_provided `also`, 239)
                           #   catalog v7+: a tech-stack `section` per component (core, web,
                           #   mobile, ecommerce, ai_ml, security, ...) and a `url` per source
                           #   catalog v8 (OPEN_QUESTIONS 213): + 15 industry blocks (education,

@@ -770,6 +770,9 @@ class ClientProvidedItem(Frozen):
     words: list[str]  # any one names the item in the sentence
     question: str
     value: str
+    # other answers the same sentence gives (OPEN_QUESTIONS 239): hardware the department buys
+    # means its own server room; these win over another item's answer in that sentence
+    also: dict[str, str] = {}
 
 
 class ClientProvided(Frozen):

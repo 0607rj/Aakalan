@@ -449,6 +449,25 @@ class StaffRole(Frozen):
     min_booking_pd: Decimal = Field(gt=0)  # nobody joins for less; a booking's worth always joins
     # questionnaire answers that always need the specialist, e.g. {security_level: [very_high]}
     required_when: dict[str, list[str | bool]] = {}
+    # set by Staffing.for_builder (v39+), never in a parameter file: "never" = this builder does
+    # not book the role (unless an answer needs it), "always" = it books it for any work;
+    # when_cheaper False = only a booking's worth of work books it; builder = its words
+    booking: Literal["by_work", "always", "never"] = "by_work"
+    when_cheaper: bool = True
+    builder: str = ""
+
+
+class BuilderTeam(Frozen):
+    """v39+ (OPEN_QUESTIONS 238): how one kind of builder staffs a project. A freelancer does
+    the specialists' work itself, a small company books a specialist only with about a month
+    of work, a large company books a separate person for every kind of work. Keys are
+    `staffing.roles` keys or "pm" (the project manager)."""
+
+    label: str  # "a freelancer", in the words of a team decision
+    min_booking_pd: dict[str, Decimal] = {}  # replaces the role's own booking
+    not_booked: list[str] = []
+    always_booked: list[str] = []
+    book_when_cheaper: bool = True
 
 
 class Staffing(Sourced):
@@ -459,9 +478,44 @@ class Staffing(Sourced):
 
     roles: dict[str, StaffRole]
     pm: StaffRole | None = None
+    by_builder: dict[str, BuilderTeam] = {}  # v39+: who builds it changes the bookings
+
+    def for_builder(self, builder: str) -> "Staffing":
+        """The rules for this builder (by_builder applied); the rules as they are without one."""
+        team = self.by_builder.get(builder)
+        if team is None:
+            return self
+
+        def adjust(key: str, staff: StaffRole) -> StaffRole:
+            update: dict[str, object] = {
+                "builder": team.label,
+                "when_cheaper": team.book_when_cheaper,
+            }
+            if key in team.min_booking_pd:
+                update["min_booking_pd"] = team.min_booking_pd[key]
+            if key in team.not_booked:
+                update["booking"] = "never"
+            elif key in team.always_booked:
+                update["booking"] = "always"
+            return staff.model_copy(update=update)
+
+        return self.model_copy(
+            update={
+                "roles": {k: adjust(k, s) for k, s in self.roles.items()},
+                "pm": adjust("pm", self.pm) if self.pm is not None else None,
+                "by_builder": {},
+            }
+        )
 
     @model_validator(mode="after")
     def _order(self) -> "Staffing":
+        known = {*self.roles, "pm"}
+        for builder, team in self.by_builder.items():
+            named = {*team.min_booking_pd, *team.not_booked, *team.always_booked}
+            if named - known:
+                raise ValueError(f"staffing.by_builder.{builder}: unknown {sorted(named - known)}")
+            if set(team.not_booked) & set(team.always_booked):
+                raise ValueError(f"staffing.by_builder.{builder}: a role both never and always")
         order = list(self.roles)
         for i, (role, staff) in enumerate(self.roles.items()):
             if staff.fallback == role:

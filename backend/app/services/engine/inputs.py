@@ -123,7 +123,7 @@ class Questionnaire(Strict):
     chatbot_queries_per_day: int = Field(ge=0)
     tokens_in_per_query: int = Field(ge=0)
     tokens_out_per_query: int = Field(ge=0)
-    hosting_provider: Literal["aws", "indian_cloud", "on_prem"]
+    hosting_provider: Literal["aws", "azure", "gcp", "indian_cloud", "on_prem"]  # azure, gcp: v39+
     hosting_pricing: Literal["on_demand", "reserved"]
     ai_runtime_mode: Literal["api", "self_hosted_gpu"]
     licensing: Literal["open_source", "licensed"]

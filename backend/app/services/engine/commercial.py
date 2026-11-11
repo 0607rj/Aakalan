@@ -14,6 +14,7 @@ from itertools import pairwise
 from typing import Any
 
 from app.services.engine import spreads
+from app.services.engine.components import staffed
 from app.services.engine.context import LineBuilder, PricingContext, toward_lean
 from app.services.engine.money import ONE, ZERO, dsum, interpolate, paise_to_rupees
 from app.services.engine.outputs import CostLineOut, Timeline
@@ -168,6 +169,7 @@ def base_commercial_lines(ctx: PricingContext, timeline: Timeline) -> list[CostL
                 lean_share,
             )
         role: str = t.param("commercial", "exit_role")
+        role, pd = staffed(t, role, pd)
         t.add_role_pd(role, pd)
         spreads.clarity(t, ctx.overall_clarity())
         lines.append(t.finish(pd * t.rate_local(role)))
