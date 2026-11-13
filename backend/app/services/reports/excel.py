@@ -9,7 +9,7 @@ from openpyxl.styles import Alignment, Font, PatternFill
 from openpyxl.utils import get_column_letter
 from openpyxl.worksheet.worksheet import Worksheet
 
-from app.services.reports.data import SOURCE_STATUS, ReportData, rupees
+from app.services.reports.data import QUOTE_COVERS, SOURCE_STATUS, ReportData, rupees
 
 MONEY_INR = "#,##,##0.00"  # Indian digit grouping
 MONEY_OTHER = "#,##0.00"
@@ -253,6 +253,26 @@ def build_boq(data: ReportData) -> bytes:
         )
         for row in prebid.iter_rows(min_row=2):
             row[3].alignment = Alignment(wrap_text=True, vertical="top")
+
+    if data.quotes is not None and data.quotes.quotes:
+        quotes = wb.create_sheet("Quotes compared")
+        _table(
+            money_fmt,
+            quotes,
+            ["Quote from", "Covers", "Amount (before tax)", "Against likely", "What it tells you"],
+            ([n, c, _money(a), vs, w] for n, c, a, vs, w in data.quote_rows()),
+            {3},
+        )
+        quotes.column_dimensions["E"].width = WIDE
+        quotes.append([])
+        for rng in data.quotes.ranges:
+            quotes.append(
+                [f"Range, {QUOTE_COVERS[rng.covers].lower()}", "", _money(rng.low_paise), "low"]
+            )
+            quotes.append(["", "", _money(rng.likely_paise), "likely"])
+            quotes.append(["", "", _money(rng.high_paise), "high"])
+            for row in quotes.iter_rows(min_row=quotes.max_row - 2, max_row=quotes.max_row):
+                row[2].number_format = money_fmt
 
     if data.sources is not None and data.sources.sources:
         sources = wb.create_sheet("Sources")

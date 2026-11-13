@@ -1,7 +1,9 @@
 """Quick estimate for non-technical users: tick features, answer a few plain questions, get a
 plain-language cost summary. The detailed estimate stays available under /estimates/{id}."""
 
-from fastapi import APIRouter, HTTPException, status
+import re
+
+from fastapi import APIRouter, HTTPException, Response, status
 from pydantic import BaseModel, Field
 
 from app.api.deps import CurrentUser, DbSession, EditorUser, can_see_margin
@@ -14,6 +16,13 @@ from app.services.extraction.tender import IndustrySuggestion
 from app.services.quick import second_opinion
 from app.services.quick.config import PrerequisiteRule, QuickConfig, quick_config
 from app.services.quick.prefill import form_country, form_questions
+from app.services.quick.quotes import (
+    QuotesIn,
+    QuotesOut,
+    build_quote_form,
+    quotes_out,
+    save_quotes,
+)
 from app.services.quick.second_opinion import SecondOpinionOut
 from app.services.quick.service import (
     AI_USE,
@@ -417,6 +426,44 @@ def save_stories_of(
     cfg = quick_config()
     save_stories(db, cfg, project, body.stories)
     return estimate_stories(db, cfg, project, can_draft=ai_available())
+
+
+@router.get("/estimates/{estimate_id}/quotes", response_model=QuotesOut)
+def quotes_of(estimate_id: str, db: DbSession, user: CurrentUser) -> QuotesOut:
+    """The quotes typed in for this project, each placed against this estimate's range before
+    tax (OPEN_QUESTIONS 241). Nothing is priced from them."""
+    estimate = get_owned(db, Estimate, estimate_id, user.org_id)
+    project = get_owned(db, Project, estimate.project_id, user.org_id)
+    summary = summary_for(
+        db, estimate, project, quick_config(), margin_visible=can_see_margin(user)
+    )
+    return quotes_out(db, project, summary)
+
+
+@router.put("/estimates/{estimate_id}/quotes", response_model=QuotesOut)
+def save_quotes_of(estimate_id: str, body: QuotesIn, db: DbSession, user: EditorUser) -> QuotesOut:
+    """Replace the project's quotes (every version of the estimate compares the same ones)."""
+    estimate = get_owned(db, Estimate, estimate_id, user.org_id)
+    project = get_owned(db, Project, estimate.project_id, user.org_id)
+    save_quotes(db, project, body.quotes)
+    summary = summary_for(
+        db, estimate, project, quick_config(), margin_visible=can_see_margin(user)
+    )
+    return quotes_out(db, project, summary)
+
+
+@router.get("/estimates/{estimate_id}/quote-form.xlsx")
+def quote_form(estimate_id: str, db: DbSession, user: CurrentUser) -> Response:
+    """The items to price, without our prices, to send to whoever is quoting."""
+    estimate = get_owned(db, Estimate, estimate_id, user.org_id)
+    project = get_owned(db, Project, estimate.project_id, user.org_id)
+    summary = summary_for(db, estimate, project, quick_config(), margin_visible=False)
+    stem = re.sub(r"[^A-Za-z0-9]+", "-", project.name).strip("-")[:60] or "project"
+    return Response(
+        build_quote_form(project.name, summary),
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f'attachment; filename="{stem}-items-to-quote.xlsx"'},
+    )
 
 
 @router.get("/estimates/{estimate_id}/options", response_model=list[PricedOption])

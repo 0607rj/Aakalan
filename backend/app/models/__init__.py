@@ -20,6 +20,7 @@ from app.models.project import (
     Outcome,
     Project,
     QuestionnaireAnswer,
+    Quote,
     Requirement,
     Template,
 )
@@ -52,6 +53,7 @@ __all__ = [
     "ParameterSet",
     "Project",
     "QuestionnaireAnswer",
+    "Quote",
     "RateCard",
     "RateEvent",
     "RateItem",

@@ -28,6 +28,7 @@ import { useLoad } from "@/lib/use-load";
 
 import { BidResultCard } from "./bid-result";
 import { CompareOptions } from "./compare";
+import { CompareQuotes } from "./quotes";
 import {
   CheckBeforeSending,
   Chevron,
@@ -1068,6 +1069,10 @@ function SummaryView({
             <CheckBeforeSending summary={summary} options={options} />
             <CostSummary summary={summary} />
             <SourcesList />
+            <CompareQuotes
+              estimateId={summary.estimate_id}
+              name={summary.name}
+            />
 
             {summary.hardware ? (
               <Disclosure

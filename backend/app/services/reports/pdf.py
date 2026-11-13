@@ -27,6 +27,7 @@ from reportlab.platypus import (
 )
 
 from app.services.reports.data import (
+    QUOTE_COVERS,
     SOURCE_STATUS,
     ReportData,
     fmt_approx,
@@ -378,6 +379,22 @@ def build_pdf(data: ReportData) -> bytes:
         for q in data.prebid:
             where = f" (clause {q.clause_ref or '-'}, page {q.page})" if q.page else ""
             story.append(_p(f"{q.number}. {q.query}{where}", BODY))
+    quote_rows = data.quote_rows()
+    if quote_rows and data.quotes is not None:
+        ranges = "; ".join(
+            f"{QUOTE_COVERS[q.covers].lower()}: {span(q.low_paise, q.high_paise)}, likely {money(q.likely_paise)}"
+            for q in data.quotes.ranges
+        )
+        story += [
+            _p("Quotes compared", H2),
+            _p(f"Each quote against the estimate's range before tax ({ranges}).", BODY),
+            _table(
+                ["Quote from", "Covers", "Amount", "Against likely", "What it tells you"],
+                [[n, c, money(a), vs, w] for n, c, a, vs, w in quote_rows],
+                [width * 0.2, width * 0.17, width * 0.15, width * 0.18, width * 0.3],
+                {2},
+            ),
+        ]
     if data.sources is not None and data.sources.sources:
         counts = data.sources.counts
         story += [

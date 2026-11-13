@@ -14,6 +14,7 @@ from app.services.estimates.service import UNRECORDED_ASSUMPTIONS
 from app.services.extraction.prebid import PrebidQuery, prebid_queries
 from app.services.extraction.tender import TenderExtraction
 from app.services.quick.config import quick_config
+from app.services.quick.quotes import QuotesOut, quotes_out
 from app.services.quick.service import PricedOption, QuickSummary, priced_options, summary_for
 from app.services.quick.sources import EstimateSources, estimate_sources
 
@@ -179,6 +180,15 @@ SOURCE_STATUS = {
 }
 
 
+# quotes compared (OPEN_QUESTIONS 241), in the words of the results page
+QUOTE_COVERS = {"all": "Whole project", "build": "Building and launch"}
+QUOTE_VERDICT = {
+    "below": "Below the range: ask how they will deliver it",
+    "in": "In the range",
+    "above": "Above the range: ask what they priced that the estimate does not",
+}
+
+
 @dataclass
 class ReportData:
     project_name: str
@@ -194,6 +204,35 @@ class ReportData:
     options: list[PricedOption] = field(default_factory=list)
     # where every price comes from (OPEN_QUESTIONS 226)
     sources: EstimateSources | None = None
+    # quotes typed in, each against the range (OPEN_QUESTIONS 241)
+    quotes: QuotesOut | None = None
+
+    def quote_rows(self) -> list[tuple[str, str, int, str, str]]:
+        """(who, covers, amount, against the likely, what it tells you) for every quote."""
+        if self.quotes is None:
+            return []
+        rows = []
+        for q in self.quotes.quotes:
+            pct = q.versus_likely_percent
+            vs = (
+                ""
+                if pct is None
+                else (
+                    "same as likely"
+                    if pct == 0
+                    else f"{abs(pct)}% {'above' if pct > 0 else 'below'} likely"
+                )
+            )
+            rows.append(
+                (
+                    q.name,
+                    QUOTE_COVERS[q.covers],
+                    q.amount_paise,
+                    vs,
+                    QUOTE_VERDICT.get(q.verdict or "", ""),
+                )
+            )
+        return rows
 
     def row_sources(self, row: str) -> str:
         """ "[1] [5] [12]": the numbered sources one results row rests on."""
@@ -282,10 +321,11 @@ def build_report(
     if doc is not None and doc.extraction:
         prebid = prebid_queries(cfg, TenderExtraction.model_validate(doc.extraction))
     options = priced_options(db, cfg, estimate, project) if estimate.feasible else []
+    summary = summary_for(db, estimate, project, cfg, margin_visible=margin_visible)
     return ReportData(
         project_name=project.name,
         estimate=estimate,
-        summary=summary_for(db, estimate, project, cfg, margin_visible=margin_visible),
+        summary=summary,
         result=result,
         lines=lines,
         margin_visible=margin_visible,
@@ -294,4 +334,5 @@ def build_report(
         prebid=prebid,
         options=options,
         sources=estimate_sources(cfg, estimate, margin_visible=margin_visible),
+        quotes=quotes_out(db, project, summary),
     )

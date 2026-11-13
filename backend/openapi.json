@@ -2110,6 +2110,156 @@
         }
       }
     },
+    "/estimates/{estimate_id}/quotes": {
+      "get": {
+        "tags": [
+          "quick estimate"
+        ],
+        "summary": "Quotes Of",
+        "description": "The quotes typed in for this project, each placed against this estimate's range before\ntax (OPEN_QUESTIONS 241). Nothing is priced from them.",
+        "operationId": "quotes_of_estimates__estimate_id__quotes_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "estimate_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Estimate Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuotesOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "quick estimate"
+        ],
+        "summary": "Save Quotes Of",
+        "description": "Replace the project's quotes (every version of the estimate compares the same ones).",
+        "operationId": "save_quotes_of_estimates__estimate_id__quotes_put",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "estimate_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Estimate Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/QuotesIn"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QuotesOut"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/estimates/{estimate_id}/quote-form.xlsx": {
+      "get": {
+        "tags": [
+          "quick estimate"
+        ],
+        "summary": "Quote Form",
+        "description": "The items to price, without our prices, to send to whoever is quoting.",
+        "operationId": "quote_form_estimates__estimate_id__quote_form_xlsx_get",
+        "security": [
+          {
+            "HTTPBearer": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "estimate_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "title": "Estimate Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/estimates/{estimate_id}/options": {
       "get": {
         "tags": [
@@ -11263,6 +11413,171 @@
           "ai_saving_percent"
         ],
         "title": "QuickSummary"
+      },
+      "QuoteIn": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 120,
+            "minLength": 1,
+            "title": "Name"
+          },
+          "amount_paise": {
+            "type": "integer",
+            "exclusiveMinimum": 0.0,
+            "title": "Amount Paise"
+          },
+          "covers": {
+            "type": "string",
+            "enum": [
+              "all",
+              "build"
+            ],
+            "title": "Covers",
+            "default": "all"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "amount_paise"
+        ],
+        "title": "QuoteIn"
+      },
+      "QuoteOut": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "title": "Name"
+          },
+          "amount_paise": {
+            "type": "integer",
+            "title": "Amount Paise"
+          },
+          "covers": {
+            "type": "string",
+            "enum": [
+              "all",
+              "build"
+            ],
+            "title": "Covers"
+          },
+          "verdict": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "below",
+                  "in",
+                  "above"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Verdict"
+          },
+          "versus_likely_percent": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Versus Likely Percent"
+          }
+        },
+        "type": "object",
+        "required": [
+          "name",
+          "amount_paise",
+          "covers",
+          "verdict",
+          "versus_likely_percent"
+        ],
+        "title": "QuoteOut"
+      },
+      "QuoteRange": {
+        "properties": {
+          "covers": {
+            "type": "string",
+            "enum": [
+              "all",
+              "build"
+            ],
+            "title": "Covers"
+          },
+          "low_paise": {
+            "type": "integer",
+            "title": "Low Paise"
+          },
+          "likely_paise": {
+            "type": "integer",
+            "title": "Likely Paise"
+          },
+          "high_paise": {
+            "type": "integer",
+            "title": "High Paise"
+          }
+        },
+        "type": "object",
+        "required": [
+          "covers",
+          "low_paise",
+          "likely_paise",
+          "high_paise"
+        ],
+        "title": "QuoteRange",
+        "description": "The estimate's range for what a quote covers, before tax."
+      },
+      "QuotesIn": {
+        "properties": {
+          "quotes": {
+            "items": {
+              "$ref": "#/components/schemas/QuoteIn"
+            },
+            "type": "array",
+            "maxItems": 20,
+            "title": "Quotes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "quotes"
+        ],
+        "title": "QuotesIn"
+      },
+      "QuotesOut": {
+        "properties": {
+          "currency": {
+            "type": "string",
+            "title": "Currency"
+          },
+          "ranges": {
+            "items": {
+              "$ref": "#/components/schemas/QuoteRange"
+            },
+            "type": "array",
+            "title": "Ranges"
+          },
+          "quotes": {
+            "items": {
+              "$ref": "#/components/schemas/QuoteOut"
+            },
+            "type": "array",
+            "title": "Quotes"
+          }
+        },
+        "type": "object",
+        "required": [
+          "currency",
+          "ranges",
+          "quotes"
+        ],
+        "title": "QuotesOut"
       },
       "RangeDriver": {
         "properties": {

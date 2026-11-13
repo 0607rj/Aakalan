@@ -679,6 +679,51 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/estimates/{estimate_id}/quotes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Quotes Of
+         * @description The quotes typed in for this project, each placed against this estimate's range before
+         *     tax (OPEN_QUESTIONS 241). Nothing is priced from them.
+         */
+        get: operations["quotes_of_estimates__estimate_id__quotes_get"];
+        /**
+         * Save Quotes Of
+         * @description Replace the project's quotes (every version of the estimate compares the same ones).
+         */
+        put: operations["save_quotes_of_estimates__estimate_id__quotes_put"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/estimates/{estimate_id}/quote-form.xlsx": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Quote Form
+         * @description The items to price, without our prices, to send to whoever is quoting.
+         */
+        get: operations["quote_form_estimates__estimate_id__quote_form_xlsx_get"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/estimates/{estimate_id}/options": {
         parameters: {
             query?: never;
@@ -4180,6 +4225,66 @@ export interface components {
              */
             custom_features: string[];
         };
+        /** QuoteIn */
+        QuoteIn: {
+            /** Name */
+            name: string;
+            /** Amount Paise */
+            amount_paise: number;
+            /**
+             * Covers
+             * @default all
+             * @enum {string}
+             */
+            covers: "all" | "build";
+        };
+        /** QuoteOut */
+        QuoteOut: {
+            /** Name */
+            name: string;
+            /** Amount Paise */
+            amount_paise: number;
+            /**
+             * Covers
+             * @enum {string}
+             */
+            covers: "all" | "build";
+            /** Verdict */
+            verdict: ("below" | "in" | "above") | null;
+            /** Versus Likely Percent */
+            versus_likely_percent: number | null;
+        };
+        /**
+         * QuoteRange
+         * @description The estimate's range for what a quote covers, before tax.
+         */
+        QuoteRange: {
+            /**
+             * Covers
+             * @enum {string}
+             */
+            covers: "all" | "build";
+            /** Low Paise */
+            low_paise: number;
+            /** Likely Paise */
+            likely_paise: number;
+            /** High Paise */
+            high_paise: number;
+        };
+        /** QuotesIn */
+        QuotesIn: {
+            /** Quotes */
+            quotes: components["schemas"]["QuoteIn"][];
+        };
+        /** QuotesOut */
+        QuotesOut: {
+            /** Currency */
+            currency: string;
+            /** Ranges */
+            ranges: components["schemas"]["QuoteRange"][];
+            /** Quotes */
+            quotes: components["schemas"]["QuoteOut"][];
+        };
         /** RangeDriver */
         RangeDriver: {
             /** Bucket */
@@ -6959,6 +7064,103 @@ export interface operations {
                 };
                 content: {
                     "application/json": components["schemas"]["StoriesOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    quotes_of_estimates__estimate_id__quotes_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                estimate_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuotesOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    save_quotes_of_estimates__estimate_id__quotes_put: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                estimate_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["QuotesIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["QuotesOut"];
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    quote_form_estimates__estimate_id__quote_form_xlsx_get: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                estimate_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
                 };
             };
             /** @description Validation Error */

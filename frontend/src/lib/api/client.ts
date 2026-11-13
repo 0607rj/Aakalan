@@ -60,6 +60,9 @@ export type SecondOpinionState = Schemas["SecondOpinionState"];
 export type IndependentCheck = Schemas["IndependentCheckOut"];
 export type PricedOption = Schemas["PricedOption"];
 export type EstimateStories = Schemas["StoriesOut"];
+export type QuoteIn = Schemas["QuoteIn"];
+export type QuoteOut = Schemas["QuoteOut"];
+export type QuotesOut = Schemas["QuotesOut"];
 export type FeatureStories = Schemas["FeatureStories"];
 export type NotIncluded = Schemas["NotIncluded"];
 export type StandardBlock = Schemas["StandardBlockOut"];
@@ -335,6 +338,11 @@ export const api = {
     send<EstimateStories>("PUT", `/estimates/${estimateId}/stories`, {
       stories,
     }),
+  getQuotes: (estimateId: string) =>
+    request<QuotesOut>(`/estimates/${estimateId}/quotes`),
+  /** Replaces the project's quotes; every version of the estimate compares the same ones. */
+  saveQuotes: (estimateId: string, quotes: QuoteIn[]) =>
+    send<QuotesOut>("PUT", `/estimates/${estimateId}/quotes`, { quotes }),
   suggestionPrices: (
     body: QuickRequest,
     suggestions: IndustrySuggestion[],

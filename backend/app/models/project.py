@@ -241,6 +241,22 @@ class Outcome(IdTimestampMixin, TenantMixin, Base):
     recorded_by: Mapped[str | None] = mapped_column(String(36), ForeignKey("users.id"))
 
 
+class Quote(IdTimestampMixin, TenantMixin, Base):
+    """A price someone quoted for the project, typed in by the user to compare with the
+    estimate's range (services/quick/quotes.py, OPEN_QUESTIONS 241). Kept per project, so a
+    re-priced version compares the same quotes. Never priced from, never fed to the engine."""
+
+    __tablename__ = "quotes"
+
+    project_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("projects.id", ondelete="CASCADE"), index=True
+    )
+    position: Mapped[int] = mapped_column(Integer)  # the order the user typed them in
+    name: Mapped[str] = mapped_column(String(120))
+    amount_paise: Mapped[int] = mapped_column(BigInteger)  # before GST, minor units
+    covers: Mapped[str] = mapped_column(String(10))  # all / build
+
+
 class Template(IdTimestampMixin, TenantMixin, Base):
     """A saved starting point for new estimates: the quick-form answers of an earlier one."""
 

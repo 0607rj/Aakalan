@@ -102,6 +102,11 @@ backend/
                           #   each feature includes", GET/PUT /estimates/{id}/stories), the user
                           #   checks and saves them (`feature_stories`; the typed `description`
                           #   is saved for it); size check only, never price or seed
+                          #   quotes.py: compare quotes (OPEN_QUESTIONS 241): quotes typed in per
+                          #   project (table `quotes`, GET/PUT /estimates/{id}/quotes) placed against
+                          #   the estimate's range before tax (below / in / above), in the PDF and
+                          #   Excel; GET /estimates/{id}/quote-form.xlsx = the items to price, no
+                          #   prices of ours; nothing is priced from quotes
                           #   sources.py: where every price comes from, read from each line's
                           #   trace (GET /estimates/{id}/sources; results page, PDF page, Excel
                           #   "Sources" sheet); words in config `price_sources` (ai_studies,
